@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. Smooth Scroll Handling for Anchor Links
     const setupSmoothScrolling = () => {
-        const links = document.querySelectorAll('.desktop-nav a, .hero-actions a[href^="#"]');
+        const links = document.querySelectorAll('.hero-actions a[href^="#"]');
         links.forEach(link => {
             link.addEventListener('click', (e) => {
                 const targetId = link.getAttribute('href');
@@ -24,46 +24,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // 2. Interactive Category Matrix Filters
+    // 2. Interactive Category Matrix Filters (dropdown + tags stay in sync)
     const setupCategoryFilters = () => {
-        const filterButtons = document.querySelectorAll('.filter-btn');
+        const tagButtons = document.querySelectorAll('.interest-tag');
+        const select = document.querySelector('.interest-select');
         const categories = document.querySelectorAll('.category-block');
 
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Change Active Filter Button
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
+        const applyFilter = (targetFilter) => {
+            tagButtons.forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-filter') === targetFilter));
+            if (select) select.value = targetFilter;
 
-                const targetFilter = button.getAttribute('data-filter');
+            categories.forEach(block => {
+                const blockCategory = block.getAttribute('data-category');
 
-                categories.forEach(block => {
-                    const blockCategory = block.getAttribute('data-category');
-                    
-                    if (targetFilter === 'all') {
-                        block.style.display = 'block';
-                        setTimeout(() => {
-                            block.style.opacity = '1';
-                            block.style.transform = 'translateY(0)';
-                        }, 50);
-                    } else if (blockCategory === targetFilter) {
-                        block.style.display = 'block';
-                        setTimeout(() => {
-                            block.style.opacity = '1';
-                            block.style.transform = 'translateY(0)';
-                        }, 50);
-                    } else {
-                        block.style.opacity = '0';
-                        block.style.transform = 'translateY(20px)';
-                        // Short timeout to match aesthetic ease transition
-                        setTimeout(() => {
-                            block.style.style.display = 'none';
-                        }, 400);
+                if (targetFilter === 'all' || blockCategory === targetFilter) {
+                    block.style.display = 'block';
+                    setTimeout(() => {
+                        block.style.opacity = '1';
+                        block.style.transform = 'translateY(0)';
+                    }, 50);
+                } else {
+                    block.style.opacity = '0';
+                    block.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
                         block.style.display = 'none';
-                    }
-                });
+                    }, 400);
+                }
             });
+        };
+
+        tagButtons.forEach(button => {
+            button.addEventListener('click', () => applyFilter(button.getAttribute('data-filter')));
         });
+
+        if (select) {
+            select.addEventListener('change', () => applyFilter(select.value));
+        }
     };
 
     // 3. Subtle Motion Scroll Reveal with Intersection Observer
@@ -89,8 +85,40 @@ document.addEventListener('DOMContentLoaded', () => {
         revealElements.forEach(element => observer.observe(element));
     };
 
+    // 4. Language Switcher (EL / EN)
+    const setupLanguageSwitcher = () => {
+        const langButtons = document.querySelectorAll('.lang-btn');
+        const translatable = document.querySelectorAll('[data-en]');
+
+        const applyLanguage = (lang) => {
+            document.documentElement.setAttribute('lang', lang);
+            document.documentElement.setAttribute('data-lang', lang);
+
+            translatable.forEach(el => {
+                if (!el.dataset.el) {
+                    el.dataset.el = el.textContent;
+                }
+                el.textContent = lang === 'en' ? el.dataset.en : el.dataset.el;
+            });
+
+            langButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+
+            localStorage.setItem('site-lang', lang);
+        };
+
+        langButtons.forEach(btn => {
+            btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
+        });
+
+        const savedLang = localStorage.getItem('site-lang') || 'el';
+        applyLanguage(savedLang);
+    };
+
     // Initialize UI Actions
     setupSmoothScrolling();
     setupCategoryFilters();
     setupScrollReveal();
+    setupLanguageSwitcher();
 });

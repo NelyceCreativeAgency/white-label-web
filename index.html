@@ -6,7 +6,7 @@
     <title>White Label Creative Services Pricing | Nelyce Design Partners</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
 <link type="text/css" rel="stylesheet" href="css/style.css"/>
 </head>
 <body>
@@ -17,19 +17,16 @@
     <header class="main-header">
         <div class="nav-container">
             <div class="logo">
-                <span class="logo-text">NELYCE</span>
+                <img src="https://www.nelycedesign.com/assets/img/logo.svg" alt="Nelyce Design" class="logo-img">
                 <span class="logo-badge">PARTNERS</span>
             </div>
-            <nav class="desktop-nav">
-                <a href="#uiux" class="nav-link">UI/UX</a>
-                <a href="#branding" class="nav-link">Branding</a>
-                <a href="#webdev" class="nav-link">Web Dev</a>
-                <a href="#social" class="nav-link">Social</a>
-                <a href="#video" class="nav-link">Video & Motion</a>
-                <a href="#ads" class="nav-link">Advertising</a>
-                <a href="#management" class="nav-link">Management</a>
-            </nav>
-            <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="nav-cta">Contact Hub</a>
+            <div class="nav-right">
+                <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="nav-cta">Contact Hub</a>
+                <div class="lang-switcher">
+                    <button class="lang-btn active" data-lang="el">EL</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -37,14 +34,14 @@
         <div class="container text-center">
             <div class="hero-badge animate-fade">White Label Creative Services</div>
             <h1 class="hero-title animate-fade">Curated Pricing For Agencies & Partners</h1>
-            <p class="hero-subtitle animate-fade">
+            <p class="hero-subtitle animate-fade" data-en="An indicative price list of services for partners, agencies, and professionals who need reliable creative support in design, branding, websites, content, and digital marketing.">
                 Ενδεικτικός τιμοκατάλογος υπηρεσιών για συνεργάτες, agencies και επαγγελματίες που χρειάζονται αξιόπιστη δημιουργική υποστήριξη σε design, branding, websites, content και digital marketing.
             </p>
             <div class="hero-actions animate-fade">
-                <a href="#services-matrix" class="btn btn-primary">Δες τις υπηρεσίες</a>
-                <a href="mailto:info@nelycedesign.com?subject=White%20Label%20Partnership%20Quote" class="btn btn-secondary">Ζήτησε εξατομικευμένη προσφορά</a>
+                <a href="#services-matrix" class="btn btn-primary" data-en="View Services">Δες τις υπηρεσίες</a>
+                <a href="mailto:info@nelycedesign.com?subject=White%20Label%20Partnership%20Quote" class="btn btn-secondary" data-en="Request a Custom Quote">Ζήτησε εξατομικευμένη προσφορά</a>
             </div>
-            <p class="hero-note animate-fade">
+            <p class="hero-note animate-fade" data-en="* Prices are indicative and vary depending on the scope, needs, and requirements of each project.">
                 * Οι τιμές είναι ενδεικτικές και διαμορφώνονται ανάλογα με το scope, τις ανάγκες και τις απαιτήσεις κάθε project.
             </p>
         </div>
@@ -52,12 +49,22 @@
 
     <section id="services-matrix" class="filter-section scroll-reveal">
         <div class="container">
-            <div class="filter-wrapper">
-                <button class="filter-btn active" data-filter="all">Όλες οι Υπηρεσίες</button>
-                <button class="filter-btn" data-filter="design">UI/UX & Branding</button>
-                <button class="filter-btn" data-filter="web">Web Development</button>
-                <button class="filter-btn" data-filter="marketing">Social & Advertising</button>
-                <button class="filter-btn" data-filter="motion">Video & Content</button>
+            <div class="interest-card">
+                <label class="interest-label" for="interest-select" data-en="I'm interested in:">Ενδιαφέρομαι για:</label>
+                <select id="interest-select" class="interest-select">
+                    <option value="all" data-en="All Services">Όλες οι Υπηρεσίες</option>
+                    <option value="design" data-en="UI/UX & Branding">UI/UX & Branding</option>
+                    <option value="web" data-en="Web Development">Web Development</option>
+                    <option value="marketing" data-en="Social & Advertising">Social & Advertising</option>
+                    <option value="motion" data-en="Video & Content">Video & Content</option>
+                </select>
+                <div class="interest-tags">
+                    <button class="interest-tag active" data-filter="all" data-en="All Services">Όλες οι Υπηρεσίες</button>
+                    <button class="interest-tag" data-filter="design" data-en="UI/UX & Branding">UI/UX & Branding</button>
+                    <button class="interest-tag" data-filter="web" data-en="Web Development">Web Development</button>
+                    <button class="interest-tag" data-filter="marketing" data-en="Social & Advertising">Social & Advertising</button>
+                    <button class="interest-tag" data-filter="motion" data-en="Video & Content">Video & Content</button>
+                </div>
             </div>
         </div>
     </section>
@@ -71,24 +78,24 @@
                     <h2 class="category-title">UI/UX Design, Figma</h2>
                 </div>
                 <div class="pricing-grid">
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="homepage-design">
                         <div class="card-body">
                             <h3 class="item-title">Custom Homepage Design</h3>
-                            <p class="item-desc">Premium, bespoke UI/UX σχεδιασμός αρχικής σελίδας στο Figma, βασισμένος στη στρατηγική του brand.</p>
+                            <p class="item-desc" data-en="Premium, bespoke UI/UX design for the homepage in Figma, based on the brand's strategy.">Premium, bespoke UI/UX σχεδιασμός αρχικής σελίδας στο Figma, βασισμένος στη στρατηγική του brand.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">300€</span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="internal-pages">
                         <div class="card-body">
-                            <h3 class="item-title">Εσωτερικές Σελίδες</h3>
-                            <p class="item-desc">Σχεδιασμός εσωτερικών υποσελίδων στο Figma, με βάση ήδη εγκριθείσα και σχεδιασμένη homepage.</p>
+                            <h3 class="item-title" data-en="Internal Pages">Εσωτερικές Σελίδες</h3>
+                            <p class="item-desc" data-en="Design of internal subpages in Figma, based on an already approved and designed homepage.">Σχεδιασμός εσωτερικών υποσελίδων στο Figma, με βάση ήδη εγκριθείσα και σχεδιασμένη homepage.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">150€<span class="price-unit"> / σελίδα</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">150€<span class="price-unit" data-en=" / page"> / σελίδα</span></span>
                         </div>
                     </div>
                 </div>
@@ -100,55 +107,55 @@
                     <h2 class="category-title">Brand Identity</h2>
                 </div>
                 <div class="pricing-grid grid-3">
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="basic-logo">
                         <div class="card-body">
                             <h3 class="item-title">Basic Logo Package</h3>
-                            <p class="item-desc">2 αρχικές σχεδιαστικές προτάσεις, 2 γύροι αναθεωρήσεων, παραδοτέα primary & secondary logo versions και βασική χρωματική παλέτα.</p>
+                            <p class="item-desc" data-en="2 initial design concepts, 2 rounds of revisions, deliverables include primary & secondary logo versions and a basic color palette.">2 αρχικές σχεδιαστικές προτάσεις, 2 γύροι αναθεωρήσεων, παραδοτέα primary & secondary logo versions και βασική χρωματική παλέτα.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">350€</span>
                         </div>
                     </div>
-                    <div class="price-card feature-highlight">
+                    <div class="price-card feature-highlight" data-service-id="plus-brand">
                         <div class="card-body">
                             <div class="card-badge">Popular Choice</div>
                             <h3 class="item-title">Plus Brand Identity</h3>
-                            <p class="item-desc">3 σχεδιαστικές προτάσεις, 3 γύροι αναθεωρήσεων, πλήρη λογότυπα, χρωματική παλέτα και βασικός οδηγός επωνυμίας (Branding Guide).</p>
+                            <p class="item-desc" data-en="3 design concepts, 3 rounds of revisions, complete logo files, color palette, and a basic branding guide.">3 σχεδιαστικές προτάσεις, 3 γύροι αναθεωρήσεων, πλήρη λογότυπα, χρωματική παλέτα και βασικός οδηγός επωνυμίας (Branding Guide).</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">600€</span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="full-brand">
                         <div class="card-body">
                             <h3 class="item-title">Full Brand Identity</h3>
-                            <p class="item-desc">3 ολοκληρωμένες προτάσεις, 3 αναθεωρήσεις, λογότυπα, χρωματολόγιο, τυπογραφία και ένας εκτενής, μεγάλος οδηγός branding (Branding Guide).</p>
+                            <p class="item-desc" data-en="3 complete concepts, 3 revisions, logos, color scheme, typography, and an extensive, in-depth branding guide.">3 ολοκληρωμένες προτάσεις, 3 αναθεωρήσεις, λογότυπα, χρωματολόγιο, τυπογραφία και ένας εκτενής, μεγάλος οδηγός branding (Branding Guide).</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">800€</span>
                         </div>
                     </div>
-                    <div class="price-card wide-card">
+                    <div class="price-card wide-card" data-service-id="full-brand-custom">
                         <div class="card-body">
-                            <h3 class="item-title">Full Brand Identity με Custom Graphics</h3>
-                            <p class="item-desc">3 προτάσεις, 3 αναθεωρήσεις, λογότυπα, χρωματική παλέτα, μεγάλος οδηγός branding, καθώς και πλήρης σχεδιασμός custom γραφικών, εικονογραφήσεων ή μοτίβων αποκλειστικά για το brand.</p>
+                            <h3 class="item-title" data-en="Full Brand Identity with Custom Graphics">Full Brand Identity με Custom Graphics</h3>
+                            <p class="item-desc" data-en="3 concepts, 3 revisions, logos, color palette, an extensive branding guide, plus full design of custom graphics, illustrations, or patterns exclusively for the brand.">3 προτάσεις, 3 αναθεωρήσεις, λογότυπα, χρωματική παλέτα, μεγάλος οδηγός branding, καθώς και πλήρης σχεδιασμός custom γραφικών, εικονογραφήσεων ή μοτίβων αποκλειστικά για το brand.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">1.000€</span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="extra-concepts">
                         <div class="card-body">
-                            <h3 class="item-title">Extra Προτάσεις</h3>
-                            <p class="item-desc">Δημιουργία επιπλέον σχεδιαστικής κατεύθυνσης ή εναλλακτικής πρότασης πέρα από το αρχικό scope.</p>
+                            <h3 class="item-title" data-en="Extra Concepts">Extra Προτάσεις</h3>
+                            <p class="item-desc" data-en="Creation of an additional design direction or alternative concept beyond the original scope.">Δημιουργία επιπλέον σχεδιαστικής κατεύθυνσης ή εναλλακτικής πρότασης πέρα από το αρχικό scope.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">100€<span class="price-unit"> / πρόταση</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">100€<span class="price-unit" data-en=" / concept"> / πρόταση</span></span>
                         </div>
                     </div>
                 </div>
@@ -160,39 +167,39 @@
                     <h2 class="category-title">Custom Web Design & Development</h2>
                 </div>
                 <div class="pricing-grid">
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="responsive-theme">
                         <div class="card-body">
                             <h3 class="item-title">Responsive Website (Theme & Dev)</h3>
-                            <p class="item-desc">Ανάπτυξη responsive ιστοσελίδας με χρήση template και custom development, βασική εξατομίκευση δομής. Δεν περιλαμβάνει UI/UX design.</p>
+                            <p class="item-desc" data-en="Development of a responsive website using a template and custom development, with basic structural customization. Does not include UI/UX design.">Ανάπτυξη responsive ιστοσελίδας με χρήση template και custom development, βασική εξατομίκευση δομής. Δεν περιλαμβάνει UI/UX design.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">1.300€</span>
                         </div>
                     </div>
-                    <div class="price-card feature-highlight">
+                    <div class="price-card feature-highlight" data-service-id="full-custom-website">
                         <div class="card-body">
                             <h3 class="item-title">Full Custom Website</h3>
-                            <p class="item-desc">Tailor-made υλοποίηση. Περιλαμβάνει πλήρη σχεδιασμό UI/UX Design σε Figma από το μηδέν και Custom Development σύμφωνα με τις προδιαγραφές.</p>
+                            <p class="item-desc" data-en="A tailor-made implementation. Includes full UI/UX design in Figma from scratch and custom development according to specifications.">Tailor-made υλοποίηση. Περιλαμβάνει πλήρη σχεδιασμό UI/UX Design σε Figma από το μηδέν και Custom Development σύμφωνα με τις προδιαγραφές.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">3.000€</span>
                         </div>
                     </div>
-                    <div class="price-card wide-card">
+                    <div class="price-card wide-card" data-service-id="full-package">
                         <div class="card-body">
                             <h3 class="item-title">Full Package (Brand, UI/UX & Development)</h3>
-                            <p class="item-desc">Η απόλυτη white label λύση: Στρατηγική Brand Identity, πλήρης σχεδιασμός UI/UX στο Figma και custom high-end ανάπτυξη κώδικα για ολόκληρο το website.</p>
+                            <p class="item-desc" data-en="The ultimate white label solution: strategic brand identity, complete UI/UX design in Figma, and custom high-end code development for the entire website.">Η απόλυτη white label λύση: Στρατηγική Brand Identity, πλήρης σχεδιασμός UI/UX στο Figma και custom high-end ανάπτυξη κώδικα για ολόκληρο το website.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">4.000€</span>
                         </div>
                     </div>
                 </div>
                 <div class="category-disclaimer">
-                    <p><strong>Note:</strong> Οι παραπάνω τιμές περιλαμβάνουν βασική εισαγωγή περιεχομένου για τη δημοσίευση της ιστοσελίδας. Δεν περιλαμβάνουν πλήρη συγγραφή κειμένων, μαζική καταχώρηση περιεχομένου ή εκτεταμένη μεταφορά δεδομένων, τα οποία κοστολογούνται ξεχωριστά όπου απαιτείται.</p>
+                    <p data-en="Note: The above prices include basic content input for publishing the website. They do not include full copywriting, bulk content entry, or extensive data migration, which are quoted separately where required."><strong>Note:</strong> Οι παραπάνω τιμές περιλαμβάνουν βασική εισαγωγή περιεχομένου για τη δημοσίευση της ιστοσελίδας. Δεν περιλαμβάνουν πλήρη συγγραφή κειμένων, μαζική καταχώρηση περιεχομένου ή εκτεταμένη μεταφορά δεδομένων, τα οποία κοστολογούνται ξεχωριστά όπου απαιτείται.</p>
                 </div>
             </div>
 
@@ -202,69 +209,69 @@
                     <h2 class="category-title">AI-Assisted Web Design & Development</h2>
                 </div>
                 <div class="pricing-grid grid-3">
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="ai-responsive-website">
                         <div class="card-body">
                             <h3 class="item-title">AI-Assisted Responsive Website</h3>
-                            <p class="item-desc">Ανάπτυξη responsive ιστοσελίδας με custom design και ενσωμάτωση AI-driven αυτοματοποιήσεων ή εργαλείων.</p>
+                            <p class="item-desc" data-en="Development of a responsive website with custom design and integration of AI-driven automations or tools.">Ανάπτυξη responsive ιστοσελίδας με custom design και ενσωμάτωση AI-driven αυτοματοποιήσεων ή εργαλείων.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">900€</span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="ai-static-website">
                         <div class="card-body">
                             <h3 class="item-title">AI-Assisted Static Website</h3>
-                            <p class="item-desc">Στατική ιστοσελίδα υψηλής ταχύτητας με custom design και AI-assisted βελτιστοποιήσεις δομής.</p>
+                            <p class="item-desc" data-en="A high-speed static website with custom design and AI-assisted structural optimizations.">Στατική ιστοσελίδα υψηλής ταχύτητας με custom design και AI-assisted βελτιστοποιήσεις δομής.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">600€</span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="ai-static-template">
                         <div class="card-body">
                             <h3 class="item-title">AI-Assisted Static (Template)</h3>
-                            <p class="item-desc">Στατικό website βασισμένο σε έτοιμο template με πλήρη παραμετροποίηση και εναρμόνιση στο brand του πελάτη.</p>
+                            <p class="item-desc" data-en="A static website based on a ready-made template, fully customized and aligned with the client's brand.">Στατικό website βασισμένο σε έτοιμο template με πλήρη παραμετροποίηση και εναρμόνιση στο brand του πελάτη.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">350€</span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="ai-responsive-template">
                         <div class="card-body">
                             <h3 class="item-title">AI-Assisted Responsive (Template)</h3>
-                            <p class="item-desc">Responsive δυναμικό website με βάση έτοιμο template και εκτεταμένη παραμετροποίηση στα brand guidelines.</p>
+                            <p class="item-desc" data-en="A responsive dynamic website based on a ready-made template with extensive customization to brand guidelines.">Responsive δυναμικό website με βάση έτοιμο template και εκτεταμένη παραμετροποίηση στα brand guidelines.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">650€</span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="cms-setup">
                         <div class="card-body">
-                            <h3 class="item-title">Δημιουργία CMS για Υπάρχον Website</h3>
-                            <p class="item-desc">Ενσωμάτωση και παραμετροποίηση συστήματος διαχείρισης περιεχομένου (CMS) σε ήδη υπάρχουσα δομή ιστοσελίδας.</p>
+                            <h3 class="item-title" data-en="CMS Setup for Existing Website">Δημιουργία CMS για Υπάρχον Website</h3>
+                            <p class="item-desc" data-en="Integration and configuration of a content management system (CMS) into an existing website structure.">Ενσωμάτωση και παραμετροποίηση συστήματος διαχείρισης περιεχομένου (CMS) σε ήδη υπάρχουσα δομή ιστοσελίδας.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">300€</span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="static-management">
                         <div class="card-body">
-                            <h3 class="item-title">Διαχείριση Static Website</h3>
-                            <p class="item-desc">Μηνιαία τεχνική υποστήριξη, συντήρηση και ενημερώσεις περιεχομένου για static websites χωρίς CMS.</p>
+                            <h3 class="item-title" data-en="Static Website Management">Διαχείριση Static Website</h3>
+                            <p class="item-desc" data-en="Monthly technical support, maintenance, and content updates for static websites without a CMS.">Μηνιαία τεχνική υποστήριξη, συντήρηση και ενημερώσεις περιεχομένου για static websites χωρίς CMS.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">60€<span class="price-unit"> / μήνα</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">60€<span class="price-unit" data-en=" / month"> / μήνα</span></span>
                         </div>
                     </div>
                 </div>
                 <div class="category-disclaimer">
-                    <p><strong>Note:</strong> Οι παραπάνω τιμές περιλαμβάνουν βασική εισαγωγή περιεχομένου για τη δημοσίευση της ιστοσελίδας. Δεν περιλαμβάνουν πλήρη συγγραφή κειμένων, μαζική καταχώρηση περιεχομένου ή εκτεταμένη μεταφορά δεδομένων, τα οποία κοστολογούνται ξεχωριστά όπου απαιτείται.</p>
+                    <p data-en="Note: The above prices include basic content input for publishing the website. They do not include full copywriting, bulk content entry, or extensive data migration, which are quoted separately where required."><strong>Note:</strong> Οι παραπάνω τιμές περιλαμβάνουν βασική εισαγωγή περιεχομένου για τη δημοσίευση της ιστοσελίδας. Δεν περιλαμβάνουν πλήρη συγγραφή κειμένων, μαζική καταχώρηση περιεχομένου ή εκτεταμένη μεταφορά δεδομένων, τα οποία κοστολογούνται ξεχωριστά όπου απαιτείται.</p>
                 </div>
             </div>
 
@@ -274,43 +281,43 @@
                     <h2 class="category-title">E-Commerce Websites</h2>
                 </div>
                 <div class="pricing-grid">
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="shopify-theme">
                         <div class="card-body">
                             <h3 class="item-title">Shopify / WooCommerce (Theme Setup)</h3>
-                            <p class="item-desc">Στήσιμο με έτοιμο theme, παραμετροποίηση, προσαρμογή στο brand identity, δημιουργία βασικών σελίδων και αρχική ρύθμιση του καταστήματος.</p>
+                            <p class="item-desc" data-en="Setup with a ready-made theme, configuration, brand identity adaptation, creation of basic pages, and initial store setup.">Στήσιμο με έτοιμο theme, παραμετροποίηση, προσαρμογή στο brand identity, δημιουργία βασικών σελίδων και αρχική ρύθμιση του καταστήματος.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">800€</span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="eshop-template">
                         <div class="card-body">
-                            <h3 class="item-title">E-Shop με Template & Custom Dev</h3>
-                            <p class="item-desc">Ανάπτυξη ηλεκτρονικού καταστήματος με βάση δομημένο template και custom κώδικα για εξειδικευμένες λειτουργίες.</p>
+                            <h3 class="item-title" data-en="E-Shop with Template & Custom Dev">E-Shop με Template & Custom Dev</h3>
+                            <p class="item-desc" data-en="Development of an online store based on a structured template and custom code for specialized functions.">Ανάπτυξη ηλεκτρονικού καταστήματος με βάση δομημένο template και custom κώδικα για εξειδικευμένες λειτουργίες.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">2.500€</span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="custom-eshop">
                         <div class="card-body">
                             <h3 class="item-title">Custom E-Shop (Figma & Custom Dev)</h3>
-                            <p class="item-desc">Σχεδιασμός πρωτοτύπου UI/UX στο Figma από το μηδέν και πλήρης custom ανάπτυξη (development) για μέγιστη ταχύτητα και μετατροπή (conversion).</p>
+                            <p class="item-desc" data-en="UI/UX prototype design in Figma from scratch and full custom development for maximum speed and conversion.">Σχεδιασμός πρωτοτύπου UI/UX στο Figma από το μηδέν και πλήρης custom ανάπτυξη (development) για μέγιστη ταχύτητα και μετατροπή (conversion).</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">5.000€</span>
                         </div>
                     </div>
-                    <div class="price-card feature-highlight">
+                    <div class="price-card feature-highlight" data-service-id="full-ecommerce">
                         <div class="card-body">
                             <h3 class="item-title">Full E-Commerce Package</h3>
-                            <p class="item-desc">Ολοκληρωμένο high-end οικοσύστημα: Brand Identity, UI/UX Design στο Figma και Custom Development του e-shop.</p>
+                            <p class="item-desc" data-en="A complete high-end ecosystem: brand identity, UI/UX design in Figma, and custom development of the e-shop.">Ολοκληρωμένο high-end οικοσύστημα: Brand Identity, UI/UX Design στο Figma και Custom Development του e-shop.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">6.000€</span>
                         </div>
                     </div>
@@ -320,20 +327,20 @@
                     <h4 class="addons-title">E-Commerce Add-ons</h4>
                     <div class="addons-grid">
                         <div class="addon-item">
-                            <span class="addon-name">Μεταφορά Προϊόντων</span>
-                            <span class="addon-value">Κατόπιν εκτίμησης</span>
+                            <span class="addon-name" data-en="Product Migration">Μεταφορά Προϊόντων</span>
+                            <span class="addon-value" data-en="Upon estimation">Κατόπιν εκτίμησης</span>
+                        </div>
+                        <div class="addon-item" data-service-id="multilingual">
+                            <span class="addon-name" data-en="Multilingual Support">Πολυγλωσσικότητα</span>
+                            <span class="addon-value" data-en="from 300€">από 300€</span>
                         </div>
                         <div class="addon-item">
-                            <span class="addon-name">Πολυγλωσσικότητα</span>
-                            <span class="addon-value">από 300€</span>
-                        </div>
-                        <div class="addon-item">
-                            <span class="addon-name">Custom Λειτουργίες</span>
-                            <span class="addon-value">Κατόπιν εκτίμησης</span>
+                            <span class="addon-name" data-en="Custom Functions">Custom Λειτουργίες</span>
+                            <span class="addon-value" data-en="Upon estimation">Κατόπιν εκτίμησης</span>
                         </div>
                         <div class="addon-item">
                             <span class="addon-name">Σύνδεση ERP / CRM</span>
-                            <span class="addon-value">Κατόπιν εκτίμησης</span>
+                            <span class="addon-value" data-en="Upon estimation">Κατόπιν εκτίμησης</span>
                         </div>
                     </div>
                 </div>
@@ -348,31 +355,31 @@
                     <div class="price-card">
                         <div class="card-body">
                             <h3 class="item-title">Light Plan</h3>
-                            <p class="item-desc">Βασική μηνιαία διαχείριση, επιμελημένο περιεχόμενο και σταθερή παρουσία στα κυριότερα κανάλια κοινωνικής δικτύωσης.</p>
+                            <p class="item-desc" data-en="Basic monthly management, curated content, and a consistent presence on the main social media channels.">Βασική μηνιαία διαχείριση, επιμελημένο περιεχόμενο και σταθερή παρουσία στα κυριότερα κανάλια κοινωνικής δικτύωσης.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">250€<span class="price-unit"> / μήνα</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">250€<span class="price-unit" data-en=" / month"> / μήνα</span></span>
                         </div>
                     </div>
                     <div class="price-card feature-highlight">
                         <div class="card-body">
                             <h3 class="item-title">Standard Plan</h3>
-                            <p class="item-desc">Ολοκληρωμένο πλάνο διαχείρισης με custom γραφικά, copy, προγραμματισμό αναρτήσεων και monthly reporting.</p>
+                            <p class="item-desc" data-en="A comprehensive management plan with custom graphics, copywriting, post scheduling, and monthly reporting.">Ολοκληρωμένο πλάνο διαχείρισης με custom γραφικά, copy, προγραμματισμό αναρτήσεων και monthly reporting.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">350€<span class="price-unit"> / μήνα</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">350€<span class="price-unit" data-en=" / month"> / μήνα</span></span>
                         </div>
                     </div>
                     <div class="price-card">
                         <div class="card-body">
                             <h3 class="item-title">Plus Plan</h3>
-                            <p class="item-desc">Advanced strategy, αυξημένος αριθμός posts/stories, premium περιεχόμενο, community management και monitoring.</p>
+                            <p class="item-desc" data-en="Advanced strategy, an increased number of posts/stories, premium content, community management, and monitoring.">Advanced strategy, αυξημένος αριθμός posts/stories, premium περιεχόμενο, community management και monitoring.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">650€<span class="price-unit"> / μήνα</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">650€<span class="price-unit" data-en=" / month"> / μήνα</span></span>
                         </div>
                     </div>
                 </div>
@@ -380,15 +387,15 @@
                 <div class="resource-links-grid">
                     <a href="https://www.nelycedesign.com/gr/ypiresies/8/social-media-management" target="_blank" class="resource-card">
                         <div class="resource-content">
-                            <h4>Πληροφορίες Πακέτων Social</h4>
-                            <p>Αναλυτικές λεπτομέρειες και παραδοτέα στην επίσημη σελίδα μας.</p>
+                            <h4 data-en="Social Package Information">Πληροφορίες Πακέτων Social</h4>
+                            <p data-en="Detailed information and deliverables on our official page.">Αναλυτικές λεπτομέρειες και παραδοτέα στην επίσημη σελίδα μας.</p>
                         </div>
                         <span class="resource-arrow">→</span>
                     </a>
                     <a href="https://nelyce-social-calculator.vercel.app/" target="_blank" class="resource-card">
                         <div class="resource-content">
                             <h4>Social Media Calculator</h4>
-                            <p>Υπολόγισε το custom budget και το ROI live με το έξυπνο εργαλείο μας.</p>
+                            <p data-en="Calculate your custom budget and ROI live with our smart tool.">Υπολόγισε το custom budget και το ROI live με το έξυπνο εργαλείο μας.</p>
                         </div>
                         <span class="resource-arrow">→</span>
                     </a>
@@ -401,53 +408,53 @@
                     <h2 class="category-title">Video Editing & Motion Graphics</h2>
                 </div>
                 <div class="pricing-grid">
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="video-basic-motion">
                         <div class="card-body">
                             <h3 class="item-title">Commercial Video & Basic Motion</h3>
-                            <p class="item-desc">Διαφημιστικό Video Editing / Montage + Basic Motion Graphics: έως 1 λεπτό. Για video άνω των 10 λεπτών, η τιμή διαμορφώνεται σε 60€/λεπτό.</p>
+                            <p class="item-desc" data-en="Commercial video editing/montage + basic motion graphics: up to 1 minute. For videos over 10 minutes, the price is set at €60/minute.">Διαφημιστικό Video Editing / Montage + Basic Motion Graphics: έως 1 λεπτό. Για video άνω των 10 λεπτών, η τιμή διαμορφώνεται σε 60€/λεπτό.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">150€</span>
                         </div>
                     </div>
-                    <div class="price-card feature-highlight">
+                    <div class="price-card feature-highlight" data-service-id="video-complex-motion">
                         <div class="card-body">
                             <h3 class="item-title">Commercial Video & Complex Motion</h3>
-                            <p class="item-desc">Διαφημιστικό Video Editing με Complex Motion Graphics: έως 1 λεπτό. Για video άνω των 10 λεπτών, η τιμή διαμορφώνεται σε 100€/λεπτό.</p>
+                            <p class="item-desc" data-en="Commercial video editing with complex motion graphics: up to 1 minute. For videos over 10 minutes, the price is set at €100/minute.">Διαφημιστικό Video Editing με Complex Motion Graphics: έως 1 λεπτό. Για video άνω των 10 λεπτών, η τιμή διαμορφώνεται σε 100€/λεπτό.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">250€</span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="reel-editing">
                         <div class="card-body">
                             <h3 class="item-title">Instagram Reel / Shorts Editing</h3>
-                            <p class="item-desc">Μοντάζ, ρυθμός, sound design και προσθήκη basic Motion Graphics ή captions: έως 1 λεπτό διάρκειας.</p>
+                            <p class="item-desc" data-en="Editing, pacing, sound design, and addition of basic motion graphics or captions: up to 1 minute in length.">Μοντάζ, ρυθμός, sound design και προσθήκη basic Motion Graphics ή captions: έως 1 λεπτό διάρκειας.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">60€</span>
                         </div>
                     </div>
                     <div class="price-card container-sub-block">
                         <div class="sub-block-title">Logo Animation</div>
                         <div class="sub-pricing-row">
-                            <div class="sub-item">
+                            <div class="sub-item" data-service-id="logo-anim-basic">
                                 <h5>Basic Logo Animation</h5>
-                                <span class="sub-price">από 150€</span>
+                                <span class="sub-price" data-en="from 150€">από 150€</span>
                             </div>
-                            <div class="sub-item">
+                            <div class="sub-item" data-service-id="logo-anim-advanced">
                                 <h5>Advanced / Complex Animation</h5>
-                                <span class="sub-price">από 300€</span>
+                                <span class="sub-price" data-en="from 300€">από 300€</span>
                             </div>
                         </div>
                     </div>
                     <div class="price-card full-width-accent">
                         <div class="card-body">
                             <h3 class="item-title">Custom Illustration</h3>
-                            <p class="item-desc">Σχεδιασμός custom εικονογραφήσεων, χαρακτήρων ή vector στοιχείων. Κοστολογείται κατόπιν εκτίμησης ανάλογα με το brief και το επίπεδο λεπτομέρειας.</p>
+                            <p class="item-desc" data-en="Design of custom illustrations, characters, or vector elements. Priced upon estimation depending on the brief and level of detail.">Σχεδιασμός custom εικονογραφήσεων, χαρακτήρων ή vector στοιχείων. Κοστολογείται κατόπιν εκτίμησης ανάλογα με το brief και το επίπεδο λεπτομέρειας.</p>
                         </div>
                         <div class="card-footer">
                             <span class="price-amount">Custom</span>
@@ -462,50 +469,50 @@
                     <h2 class="category-title">Advertising Services</h2>
                 </div>
                 <div class="pricing-grid">
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="google-ads">
                         <div class="card-body">
                             <h3 class="item-title">Google Ads (Setup & Management)</h3>
-                            <p class="item-desc">Στήσιμο, έρευνα λέξεων-κλειδιών & μηνιαία διαχείριση καμπάνιας. Ισχύει και ανά καμπάνια για one-off projects.</p>
+                            <p class="item-desc" data-en="Setup, keyword research & monthly campaign management. Also available per campaign for one-off projects.">Στήσιμο, έρευνα λέξεων-κλειδιών & μηνιαία διαχείριση καμπάνιας. Ισχύει και ανά καμπάνια για one-off projects.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">300€<span class="price-unit"> / μήνα</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">300€<span class="price-unit" data-en=" / month"> / μήνα</span></span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="meta-ads-setup">
                         <div class="card-body">
                             <h3 class="item-title">Meta Ads Setup & Campaign</h3>
-                            <p class="item-desc">Στήσιμο διαφημιστικής καμπάνιας μαζί με basic creative (στατικό ή απλό βίντεο) για Facebook & Instagram.</p>
+                            <p class="item-desc" data-en="Setup of an advertising campaign along with basic creative (static or simple video) for Facebook & Instagram.">Στήσιμο διαφημιστικής καμπάνιας μαζί με basic creative (στατικό ή απλό βίντεο) για Facebook & Instagram.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">250€<span class="price-unit"> / καμπάνια</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">250€<span class="price-unit" data-en=" / campaign"> / καμπάνια</span></span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="meta-ads-optimization">
                         <div class="card-body">
                             <h3 class="item-title">Meta Ads Optimization</h3>
-                            <p class="item-desc">Συνεχής βελτιστοποίηση, AB testing, scale-up και παρακολούθηση αποδόσεων διαφημίσεων όταν απαιτείται.</p>
+                            <p class="item-desc" data-en="Continuous optimization, A/B testing, scale-up, and performance monitoring of ads when required.">Συνεχής βελτιστοποίηση, AB testing, scale-up και παρακολούθηση αποδόσεων διαφημίσεων όταν απαιτείται.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">100€<span class="price-unit"> / μήνα</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">100€<span class="price-unit" data-en=" / month"> / μήνα</span></span>
                         </div>
                     </div>
                     <div class="price-card container-sub-block">
-                        <div class="sub-block-title">Πρόσθετα Διαφημιστικά Δημιουργικά (Creatives)</div>
+                        <div class="sub-block-title" data-en="Additional Advertising Creatives">Πρόσθετα Διαφημιστικά Δημιουργικά (Creatives)</div>
                         <div class="sub-pricing-row row-3">
-                            <div class="sub-item">
-                                <h5>Στατικό Creative</h5>
-                                <span class="sub-price">από 30€</span>
+                            <div class="sub-item" data-service-id="static-creative">
+                                <h5 data-en="Static Creative">Στατικό Creative</h5>
+                                <span class="sub-price" data-en="from 30€">από 30€</span>
                             </div>
-                            <div class="sub-item">
+                            <div class="sub-item" data-service-id="carousel-design">
                                 <h5>Carousel Design</h5>
-                                <span class="sub-price">από 80€</span>
+                                <span class="sub-price" data-en="from 80€">από 80€</span>
                             </div>
-                            <div class="sub-item">
-                                <h5>Motion Video (έως 15”)</h5>
-                                <span class="sub-price">από 130€</span>
+                            <div class="sub-item" data-service-id="motion-video-ads">
+                                <h5 data-en="Motion Video (up to 15”)">Motion Video (έως 15”)</h5>
+                                <span class="sub-price" data-en="from 130€">από 130€</span>
                             </div>
                         </div>
                     </div>
@@ -518,59 +525,59 @@
                     <h2 class="category-title">Content & Website Management</h2>
                 </div>
                 <div class="pricing-grid">
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="blog-single">
                         <div class="card-body">
                             <h3 class="item-title">AI-Assisted Blog Content (Single)</h3>
-                            <p class="item-desc">Συγγραφή ενός AI-Assisted άρθρου με ενδελεχή ανθρώπινη επιμέλεια, σωστή μορφοποίηση και βασικό SEO.</p>
+                            <p class="item-desc" data-en="Writing of one AI-assisted article with thorough human editing, proper formatting, and basic SEO.">Συγγραφή ενός AI-Assisted άρθρου με ενδελεχή ανθρώπινη επιμέλεια, σωστή μορφοποίηση και βασικό SEO.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">60€<span class="price-unit"> / άρθρο</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">60€<span class="price-unit" data-en=" / article"> / άρθρο</span></span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="blog-pack">
                         <div class="card-body">
                             <h3 class="item-title">AI-Assisted Blog (3-Article Pack)</h3>
-                            <p class="item-desc">Μηνιαίο πακέτο 3 άρθρων με στρατηγική θεματολογία, SEO optimization και έτοιμα παραδοτέα προς δημοσίευση.</p>
+                            <p class="item-desc" data-en="Monthly package of 3 articles with strategic topics, SEO optimization, and ready-to-publish deliverables.">Μηνιαίο πακέτο 3 άρθρων με στρατηγική θεματολογία, SEO optimization και έτοιμα παραδοτέα προς δημοσίευση.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">130€<span class="price-unit"> / μήνα</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">130€<span class="price-unit" data-en=" / month"> / μήνα</span></span>
                         </div>
                     </div>
-                    <div class="price-card">
+                    <div class="price-card" data-service-id="content-population">
                         <div class="card-body">
                             <h3 class="item-title">Website Content Population</h3>
-                            <p class="item-desc">Εισαγωγή και διάταξη SEO-friendly περιεχομένου στην ιστοσελίδα. Μεγάλου όγκου περιεχόμενο ή πολλαπλές σελίδες: κατόπιν εκτίμησης.</p>
+                            <p class="item-desc" data-en="Input and layout of SEO-friendly content on the website. Large volumes of content or multiple pages: upon estimation.">Εισαγωγή και διάταξη SEO-friendly περιεχομένου στην ιστοσελίδα. Μεγάλου όγκου περιεχόμενο ή πολλαπλές σελίδες: κατόπιν εκτίμησης.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
+                            <span class="price-label" data-en="from">από</span>
                             <span class="price-amount">150€</span>
                         </div>
                     </div>
-                    <div class="price-card feature-highlight">
+                    <div class="price-card feature-highlight" data-service-id="website-management">
                         <div class="card-body">
                             <h3 class="item-title">Website Management (Full Plan)</h3>
-                            <p class="item-desc">Πλήρης διαχείριση ιστοσελίδας. Περιλαμβάνει: Έως 2 AI-Assisted άρθρα/μήνα, δημοσίευση νέων υπηρεσιών/projects/portfolio, βασικές ενημερώσεις περιεχομένου, μικρές διορθώσεις κειμένων και εικόνων.</p>
+                            <p class="item-desc" data-en="Full website management. Includes: up to 2 AI-assisted articles/month, publishing of new services/projects/portfolio, basic content updates, minor text and image corrections.">Πλήρης διαχείριση ιστοσελίδας. Περιλαμβάνει: Έως 2 AI-Assisted άρθρα/μήνα, δημοσίευση νέων υπηρεσιών/projects/portfolio, βασικές ενημερώσεις περιεχομένου, μικρές διορθώσεις κειμένων και εικόνων.</p>
                         </div>
                         <div class="card-footer">
-                            <span class="price-label">από</span>
-                            <span class="price-amount">250€<span class="price-unit"> / μήνα</span></span>
+                            <span class="price-label" data-en="from">από</span>
+                            <span class="price-amount">250€<span class="price-unit" data-en=" / month"> / μήνα</span></span>
                         </div>
                     </div>
                 </div>
                 <div class="category-disclaimer">
-                    <p><strong>Note:</strong> Η τελική τιμή διαμορφώνεται ανάλογα με τον όγκο του περιεχομένου που απαιτείται να δημοσιεύεται σε μηνιαία βάση. Επιχειρήσεις με συχνές ενημερώσεις, μεγάλο αριθμό νέων projects, υπηρεσιών, άρθρων ή άλλου υλικού ενδέχεται να απαιτούν προσαρμοσμένο πακέτο διαχείρισης κατόπιν συνεννόησης.</p>
+                    <p data-en="Note: The final price depends on the volume of content that needs to be published on a monthly basis. Businesses with frequent updates, a large number of new projects, services, articles, or other material may require a customized management package upon consultation."><strong>Note:</strong> Η τελική τιμή διαμορφώνεται ανάλογα με τον όγκο του περιεχομένου που απαιτείται να δημοσιεύεται σε μηνιαία βάση. Επιχειρήσεις με συχνές ενημερώσεις, μεγάλο αριθμό νέων projects, υπηρεσιών, άρθρων ή άλλου υλικού ενδέχεται να απαιτούν προσαρμοσμένο πακέτο διαχείρισης κατόπιν συνεννόησης.</p>
                 </div>
 
-                <div class="ecommerce-management-box">
+                <div class="ecommerce-management-box" data-service-id="ecommerce-management">
                     <div class="emb-content">
-                        <h3>E-Commerce Management</h3>
-                        <p>Κατόπιν εκτίμησης ανάλογα με τον αριθμό προϊόντων, τη συχνότητα ενημερώσεων και τον συνολικό όγκο εργασίας.</p>
+                        <h3 data-en="E-Commerce Management">E-Commerce Management</h3>
+                        <p data-en="Upon estimation depending on the number of products, update frequency, and overall workload.">Κατόπιν εκτίμησης ανάλογα με τον αριθμό προϊόντων, τη συχνότητα ενημερώσεων και τον συνολικό όγκο εργασίας.</p>
                     </div>
                     <div class="emb-price">
-                        <span class="emb-label">Ενδεικτική Τιμή</span>
-                        <span class="emb-value">από 600€<span class="emb-unit">/μήνα</span></span>
+                        <span class="emb-label" data-en="Indicative Price">Ενδεικτική Τιμή</span>
+                        <span class="emb-value" data-en="from 600€">από 600€<span class="emb-unit" data-en="/month">/μήνα</span></span>
                     </div>
                 </div>
             </div>
@@ -580,12 +587,12 @@
 
     <section class="final-cta-section scroll-reveal">
         <div class="container text-center">
-            <h2 class="cta-title">Έχεις project με διαφορετικό scope;</h2>
-            <p class="cta-desc">
+            <h2 class="cta-title" data-en="Have a project with a different scope?">Έχεις project με διαφορετικό scope;</h2>
+            <p class="cta-desc" data-en="For any project, we can discuss the specific needs, requirements, and deliverables separately, so the final offer reflects the actual scope of work.">
                 Για οποιοδήποτε project μπορούμε να συζητήσουμε ξεχωριστά τις ανάγκες, τις απαιτήσεις και τα παραδοτέα, ώστε να διαμορφωθεί η τελική προσφορά με βάση το πραγματικό εύρος εργασίας.
             </p>
             <div class="cta-button-holder">
-                <a href="mailto:info@nelycedesign.com?subject=Custom%20White%20Label%20Project" class="btn btn-primary btn-large">Συζήτηση για custom προσφορά</a>
+                <a href="mailto:info@nelycedesign.com?subject=Custom%20White%20Label%20Project" class="btn btn-primary btn-large" data-en="Discuss a Custom Quote">Συζήτηση για custom προσφορά</a>
             </div>
         </div>
     </section>
@@ -596,6 +603,8 @@
         </div>
     </footer>
 
+<script type="text/javascript" src="js/customize-data.js"></script>
+<script type="text/javascript" src="js/customize.js"></script>
 <script type="text/javascript" src="js/script.js"></script>
 </body>
 </html>
