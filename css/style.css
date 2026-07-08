@@ -16,14 +16,14 @@
     --accent-amber: #ffb800;
     --border-color: rgba(255, 255, 255, 0.06);
     --border-hover: rgba(255, 107, 53, 0.3);
-    --font-sans: 'Geologica', sans-serif;
-    --font-serif: 'Geologica', sans-serif;
+    --font-sans: 'Montserrat', sans-serif;
+    --font-serif: 'Montserrat', sans-serif;
     --transition-smooth: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-html[data-lang="en"] {
-    --font-sans: 'Montserrat', sans-serif;
-    --font-serif: 'Montserrat', sans-serif;
+html[data-lang="el"] {
+    --font-sans: 'Geologica', sans-serif;
+    --font-serif: 'Geologica', sans-serif;
 }
 
 html {
@@ -842,6 +842,11 @@ footer.main-footer {
 
     .interest-card {
         max-width: 100%;
+    }
+
+    .interest-tags {
+        flex-wrap: wrap;
+        overflow-x: visible;
     }
 
     .pricing-grid {

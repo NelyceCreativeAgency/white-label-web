@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
         });
 
-        const savedLang = localStorage.getItem('site-lang') || 'el';
+        const savedLang = localStorage.getItem('site-lang') || 'en';
         applyLanguage(savedLang);
     };
 

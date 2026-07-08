@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const getLang = () => document.documentElement.getAttribute('data-lang') || 'el';
+    const getLang = () => document.documentElement.getAttribute('data-lang') || 'en';
 
     // --- Parse a "150€ / σελίδα" style price element into { amount, unitText } ---
     const parsePrice = (root, priceSelector, unitSelector) => {
