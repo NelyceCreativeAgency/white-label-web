@@ -180,7 +180,7 @@ const SERVICE_PARAMS = {
 
     "motion-video-ads": [
         { key: "quantity", type: "stepper", role: "multiplier", label: { el: "Αριθμός Videos", en: "Number of Videos" }, min: 1, max: 10, default: 1, pricePerUnit: 0 },
-        { key: "seconds", type: "stepper", label: { el: "Επιπλέον Δευτερόλεπτα", en: "Extra Seconds" }, min: 0, max: 30, default: 0, pricePerUnit: 5 }
+        { key: "seconds", type: "stepper", label: { el: "Επιπλέον Δευτερόλεπτα", en: "Extra Seconds" }, min: 0, max: 285, step: 15, default: 0, pricePerUnit: 5 }
     ],
 
     "blog-single": [

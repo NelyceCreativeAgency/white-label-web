@@ -256,6 +256,43 @@ body {
     margin-bottom: 40px;
 }
 
+.search-bar-wrapper {
+    position: relative;
+    max-width: 480px;
+    margin: 0 auto 32px auto;
+}
+
+.search-icon {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.search-input {
+    width: 100%;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    padding: 13px 18px 13px 46px;
+    transition: var(--transition-smooth);
+}
+
+.search-input::placeholder {
+    color: var(--text-secondary);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
 .interest-card {
     display: flex;
     flex-direction: column;
@@ -273,20 +310,57 @@ body {
     color: var(--text-primary);
 }
 
-.interest-select {
+.search-suggestions {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
     width: 100%;
-    max-width: 420px;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background: rgba(0,0,0,0.25) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1L6 6L11 1' stroke='%239da0aa' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 16px center;
+    background: var(--bg-card);
     border: 1px solid var(--border-hover);
-    border-radius: 8px;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    overflow: hidden;
+    z-index: 500;
+    display: none;
+}
+
+.search-suggestions.open {
+    display: block;
+}
+
+.search-suggestion {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    background: transparent;
+    border: none;
     color: var(--text-primary);
+    text-align: left;
+    padding: 12px 18px;
     font-family: var(--font-sans);
-    font-size: 15px;
-    padding: 14px 40px 14px 18px;
+    font-size: 14px;
     cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.search-suggestion + .search-suggestion {
+    border-top: 1px solid var(--border-color);
+}
+
+.search-suggestion:hover,
+.search-suggestion.active {
+    background: rgba(255, 107, 53, 0.08);
+    color: var(--accent-orange);
+}
+
+.search-suggestion-category {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .interest-tags {

@@ -93,11 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
             row.appendChild(label);
 
             if (p.type === 'stepper') {
+                const step = p.step || 1;
                 const qty = document.createElement('div');
                 qty.className = 'calc-qty';
                 qty.innerHTML = `
                     <button type="button" class="qty-btn param-minus">&minus;</button>
-                    <input type="number" class="qty-input param-input" value="${current.values[p.key]}" min="${p.min}" max="${p.max}">
+                    <input type="number" class="qty-input param-input" value="${current.values[p.key]}" min="${p.min}" max="${p.max}" step="${step}">
                     <button type="button" class="qty-btn param-plus">+</button>
                 `;
                 const input = qty.querySelector('.param-input');
@@ -112,8 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
 
                 input.addEventListener('input', () => setVal(parseInt(input.value, 10) || p.min));
-                minus.addEventListener('click', () => setVal(current.values[p.key] - 1));
-                plus.addEventListener('click', () => setVal(current.values[p.key] + 1));
+                minus.addEventListener('click', () => setVal(current.values[p.key] - step));
+                plus.addEventListener('click', () => setVal(current.values[p.key] + step));
 
                 row.appendChild(qty);
             } else if (p.type === 'toggle') {
