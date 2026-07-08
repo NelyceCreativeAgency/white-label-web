@@ -228,11 +228,27 @@ document.addEventListener('DOMContentLoaded', () => {
             document.documentElement.setAttribute('lang', lang);
             document.documentElement.setAttribute('data-lang', lang);
 
+            const ownText = (el) => {
+                let text = '';
+                el.childNodes.forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE) text += node.textContent;
+                });
+                return text.trim();
+            };
+
             translatable.forEach(el => {
                 if (!el.dataset.el) {
-                    el.dataset.el = el.textContent;
+                    el.dataset.el = ownText(el);
                 }
-                el.textContent = lang === 'en' ? el.dataset.en : el.dataset.el;
+                const newText = lang === 'en' ? el.dataset.en : el.dataset.el;
+                // Replace only direct text nodes so nested elements (e.g. a unit span
+                // with its own data-en) survive the swap instead of being wiped out.
+                const childElements = Array.from(el.children);
+                Array.from(el.childNodes).forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE) el.removeChild(node);
+                });
+                el.insertBefore(document.createTextNode(newText), el.firstChild);
+                childElements.forEach(child => el.appendChild(child));
             });
 
             translatablePlaceholders.forEach(el => {
@@ -257,9 +273,43 @@ document.addEventListener('DOMContentLoaded', () => {
         applyLanguage(savedLang);
     };
 
+    // 5. Mobile Sidebar (Contact Hub + Currency, hidden from the header on small screens)
+    const setupMobileSidebar = () => {
+        const menuBtn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.getElementById('mobile-sidebar');
+        const overlay = document.getElementById('mobile-sidebar-overlay');
+        const closeBtn = document.getElementById('mobile-sidebar-close');
+        if (!menuBtn || !sidebar || !overlay) return;
+
+        const openSidebar = () => {
+            menuBtn.classList.add('active');
+            sidebar.classList.add('open');
+            overlay.classList.add('open');
+        };
+
+        const closeSidebar = () => {
+            menuBtn.classList.remove('active');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('open');
+        };
+
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+        });
+        if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+
+        // The sidebar's currency button opens the currency modal on top of it —
+        // close the sidebar first so both aren't visible at once.
+        sidebar.querySelectorAll('.currency-btn').forEach(btn => {
+            btn.addEventListener('click', closeSidebar);
+        });
+    };
+
     // Initialize UI Actions
     setupSmoothScrolling();
     setupCategoryFilters();
     setupScrollReveal();
     setupLanguageSwitcher();
+    setupMobileSidebar();
 });

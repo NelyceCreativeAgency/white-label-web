@@ -37,6 +37,7 @@ html {
 body {
     overflow-x: hidden;
     position: relative;
+    max-width: 100vw;
 }
 
 .container {
@@ -49,6 +50,14 @@ body {
 .text-center { text-align: center; }
 
 /* --- Ambient Light Background Gradients --- */
+.bg-glow-wrapper {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+}
+
 .bg-glow {
     position: absolute;
     width: 600px;
@@ -158,6 +167,106 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
+}
+
+.mobile-menu-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.mobile-menu-btn span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: var(--transition-smooth);
+}
+
+.mobile-menu-btn.active span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.mobile-menu-btn.active span:nth-child(2) {
+    opacity: 0;
+}
+.mobile-menu-btn.active span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 5, 7, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1400;
+}
+
+.mobile-sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.mobile-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 280px;
+    max-width: 80vw;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border-color);
+    box-shadow: -20px 0 40px rgba(0,0,0,0.4);
+    z-index: 1500;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 80px 24px 24px;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.mobile-sidebar.open {
+    transform: translateX(0);
+}
+
+.mobile-sidebar-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.mobile-sidebar-link {
+    font-size: 15px;
+    color: var(--text-primary);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-orange);
+    padding-bottom: 2px;
+}
+
+.mobile-sidebar .currency-btn {
+    width: auto;
 }
 
 /* --- Hero Section --- */
@@ -831,6 +940,15 @@ footer.main-footer {
 @media (max-width: 768px) {
     .nav-container { padding: 0 16px; }
 
+    .nav-right .nav-cta-header,
+    .nav-right .currency-btn-header {
+        display: none;
+    }
+
+    .mobile-menu-btn {
+        display: flex;
+    }
+
     .hero-section { padding: 90px 0 50px 0; }
     .hero-title { font-size: 34px; }
     .hero-subtitle { font-size: 16px; }
@@ -952,7 +1070,8 @@ body.customize-open {
 }
 
 /* --- Customize Modal --- */
-.customize-overlay {
+.customize-overlay,
+.currency-overlay {
     position: fixed;
     inset: 0;
     background: rgba(5, 5, 7, 0.7);
@@ -968,9 +1087,87 @@ body.customize-open {
     z-index: 2000;
 }
 
-.customize-overlay.open {
+.customize-overlay.open,
+.currency-overlay.open {
     opacity: 1;
     pointer-events: auto;
+}
+
+.currency-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: var(--transition-smooth);
+}
+
+.currency-btn:hover {
+    color: var(--text-primary);
+}
+
+.currency-btn svg {
+    flex-shrink: 0;
+}
+
+.currency-modal {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-hover);
+    border-radius: 12px;
+    padding: 36px 32px 32px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+    text-align: center;
+    transform: translateY(10px);
+    transition: transform 0.3s ease;
+}
+
+.currency-overlay.open .currency-modal {
+    transform: translateY(0);
+}
+
+.currency-modal h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.currency-modal p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-weight: 300;
+    margin-bottom: 24px;
+}
+
+.currency-select {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: rgba(0,0,0,0.25) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1L6 6L11 1' stroke='%239da0aa' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 16px center;
+    border: 1px solid var(--border-hover);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    padding: 14px 40px 14px 18px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+#currency-confirm-btn {
+    width: 100%;
 }
 
 .customize-modal {

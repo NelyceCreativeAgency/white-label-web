@@ -50,6 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let current = null; // { title, desc, baseAmount, baseUnitText, params, values }
 
+    const rate = () => (window.CURRENCY ? window.CURRENCY.rate : 1);
+    const formatMoney = (amount) => window.formatCurrencyAmount ? window.formatCurrencyAmount(amount) : Math.round(amount) + '€';
+
     const recompute = () => {
         if (!current) return;
         let units = 1;
@@ -61,17 +64,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (p.role === 'multiplier') {
                     units = val;
                 } else {
-                    additive += (val - (p.baseline || 0)) * p.pricePerUnit;
+                    additive += (val - (p.baseline || 0)) * p.pricePerUnit * rate();
                 }
             } else if (p.type === 'toggle') {
-                if (val) additive += p.price;
+                if (val) additive += p.price * rate();
             } else if (p.type === 'select') {
-                additive += p.options[val].price;
+                additive += p.options[val].price * rate();
             }
         });
 
         const total = (current.baseAmount + additive) * units;
-        totalValue.textContent = total.toLocaleString('el-GR') + '€';
+        totalValue.textContent = formatMoney(total);
         current.total = total;
         current.units = units;
     };
@@ -132,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 p.options.forEach((opt, i) => {
                     const optionEl = document.createElement('option');
                     optionEl.value = i;
-                    optionEl.textContent = opt.label[lang] + (opt.price ? ` (+${opt.price}€)` : '');
+                    optionEl.textContent = opt.label[lang] + (opt.price ? ` (+${formatMoney(opt.price * rate())})` : '');
                     select.appendChild(optionEl);
                 });
                 select.value = current.values[p.key];
@@ -227,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
             '',
             ...lines,
             '',
-            (lang === 'en' ? 'Estimated Total: ' : 'Εκτιμώμενο Σύνολο: ') + current.total + '€'
+            (lang === 'en' ? 'Estimated Total: ' : 'Εκτιμώμενο Σύνολο: ') + formatMoney(current.total)
         ];
         const body = encodeURIComponent(bodyLines.join('\n'));
         window.location.href = `mailto:info@nelycedesign.com?subject=${subject}&body=${body}`;
@@ -243,13 +246,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return btn;
     };
 
-    const attachButton = (containerEl, serviceId, parsed, titleEl, descEl) => {
+    const attachButton = (containerEl, serviceId, priceSelector, unitSelector, titleEl, descEl) => {
         if (containerEl.querySelector('.customize-btn')) return;
         const params = SERVICE_PARAMS[serviceId];
         if (!params) return;
+        if (!parsePrice(containerEl, priceSelector, unitSelector)) return;
 
         const btn = makeButton();
         btn.addEventListener('click', () => {
+            // Re-parse live so any currency conversion applied after page load is respected.
+            const parsed = parsePrice(containerEl, priceSelector, unitSelector);
+            if (!parsed) return;
             openModal({
                 title: titleEl ? titleEl.textContent.trim() : '',
                 desc: descEl ? descEl.textContent.trim() : '',
@@ -265,31 +272,23 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.price-card[data-service-id]').forEach(card => {
         const footer = card.querySelector('.card-footer');
         if (!footer) return;
-        const parsed = parsePrice(footer, '.price-amount', '.price-unit');
-        if (!parsed) return;
-        attachButton(footer, card.dataset.serviceId, parsed, card.querySelector('.item-title'), card.querySelector('.item-desc'));
+        attachButton(footer, card.dataset.serviceId, '.price-amount', '.price-unit', card.querySelector('.item-title'), card.querySelector('.item-desc'));
     });
 
     // Sub-items (Logo Animation, Ads creatives)
     document.querySelectorAll('.sub-item[data-service-id]').forEach(subItem => {
-        const parsed = parsePrice(subItem, '.sub-price', null);
-        if (!parsed) return;
-        attachButton(subItem, subItem.dataset.serviceId, parsed, subItem.querySelector('h5'), null);
+        attachButton(subItem, subItem.dataset.serviceId, '.sub-price', null, subItem.querySelector('h5'), null);
     });
 
     // Add-ons
     document.querySelectorAll('.addon-item[data-service-id]').forEach(item => {
-        const parsed = parsePrice(item, '.addon-value', null);
-        if (!parsed) return;
-        attachButton(item, item.dataset.serviceId, parsed, item.querySelector('.addon-name'), null);
+        attachButton(item, item.dataset.serviceId, '.addon-value', null, item.querySelector('.addon-name'), null);
     });
 
     // E-Commerce Management special box
     document.querySelectorAll('.ecommerce-management-box[data-service-id]').forEach(box => {
         const priceBlock = box.querySelector('.emb-price');
         if (!priceBlock) return;
-        const parsed = parsePrice(priceBlock, '.emb-value', '.emb-unit');
-        if (!parsed) return;
-        attachButton(priceBlock, box.dataset.serviceId, parsed, box.querySelector('h3'), box.querySelector('.emb-content p'));
+        attachButton(priceBlock, box.dataset.serviceId, '.emb-value', '.emb-unit', box.querySelector('h3'), box.querySelector('.emb-content p'));
     });
 });
