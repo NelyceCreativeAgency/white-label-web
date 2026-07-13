@@ -49,7 +49,7 @@ const SERVICE_PARAMS = {
 
     "responsive-theme": [
         { key: "pages", type: "stepper", label: { el: "Αριθμός Σελίδων", en: "Number of Pages" }, min: 1, max: 15, default: 5, baseline: 5, pricePerUnit: 156 },
-        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 0, max: 5, default: 0, pricePerUnit: 360 },
+        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 360 },
         { key: "complexity", type: "select", label: { el: "Επίπεδο Λειτουργιών", en: "Feature Complexity" }, options: [
             { label: { el: "Βασική", en: "Basic" }, price: 0, note: { el: "Στατικές φόρμες, βασική λειτουργικότητα", en: "Static forms, basic functionality" } },
             { label: { el: "Προχωρημένη", en: "Advanced" }, price: 480, note: { el: "Dynamic filters, integrations, custom λειτουργίες", en: "Dynamic filters, integrations, custom functions" } }
@@ -58,7 +58,7 @@ const SERVICE_PARAMS = {
 
     "full-custom-website": [
         { key: "pages", type: "stepper", label: { el: "Αριθμός Σελίδων", en: "Number of Pages" }, min: 1, max: 20, default: 5, baseline: 5, pricePerUnit: 216 },
-        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 0, max: 5, default: 0, pricePerUnit: 420 },
+        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 420 },
         { key: "complexity", type: "select", label: { el: "Πολυπλοκότητα Custom Λειτουργιών", en: "Custom Feature Complexity" }, options: [
             { label: { el: "Βασική", en: "Basic" }, price: 0, note: { el: "Στατικό περιεχόμενο, βασικές φόρμες", en: "Static content, basic forms" } },
             { label: { el: "Προχωρημένη", en: "Advanced" }, price: 720, note: { el: "Dynamic λειτουργίες, integrations, dashboards", en: "Dynamic functions, integrations, dashboards" } },
@@ -68,7 +68,7 @@ const SERVICE_PARAMS = {
 
     "full-package": [
         { key: "pages", type: "stepper", label: { el: "Αριθμός Σελίδων", en: "Number of Pages" }, min: 1, max: 20, default: 5, baseline: 5, pricePerUnit: 240 },
-        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 0, max: 5, default: 0, pricePerUnit: 480 },
+        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 480 },
         { key: "customgraphics", type: "toggle", label: { el: "Custom Illustrations / Graphics", en: "Custom Illustrations / Graphics" }, price: 420 }
     ],
 
@@ -103,25 +103,25 @@ const SERVICE_PARAMS = {
 
     "shopify-theme": [
         { key: "productBlocks", type: "stepper", label: { el: "Καταχώρηση Προϊόντων από εμάς (ανά 50)", en: "Product Data Entry by Us (per 50)" }, min: 0, max: 10, default: 0, pricePerUnit: 60 },
-        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 0, max: 5, default: 0, pricePerUnit: 240 },
+        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 240 },
         { key: "payment", type: "toggle", label: { el: "Επιπλέον Payment Gateway", en: "Extra Payment Gateway" }, price: 96 }
     ],
 
     "eshop-template": [
         { key: "productBlocks", type: "stepper", label: { el: "Καταχώρηση Προϊόντων από εμάς (ανά 50)", en: "Product Data Entry by Us (per 50)" }, min: 0, max: 10, default: 0, pricePerUnit: 96 },
-        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 0, max: 5, default: 0, pricePerUnit: 300 },
+        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 300 },
         { key: "payment", type: "toggle", label: { el: "Επιπλέον Payment Gateway", en: "Extra Payment Gateway" }, price: 96 }
     ],
 
     "custom-eshop": [
         { key: "productBlocks", type: "stepper", label: { el: "Καταχώρηση Προϊόντων από εμάς (ανά 50)", en: "Product Data Entry by Us (per 50)" }, min: 0, max: 10, default: 0, pricePerUnit: 120 },
-        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 0, max: 5, default: 0, pricePerUnit: 420 },
+        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 420 },
         { key: "erp", type: "toggle", label: { el: "Σύνδεση ERP / CRM", en: "ERP / CRM Integration" }, price: 720 }
     ],
 
     "full-ecommerce": [
         { key: "productBlocks", type: "stepper", label: { el: "Καταχώρηση Προϊόντων από εμάς (ανά 50)", en: "Product Data Entry by Us (per 50)" }, min: 0, max: 10, default: 0, pricePerUnit: 144 },
-        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 0, max: 5, default: 0, pricePerUnit: 480 },
+        { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 480 },
         { key: "erp", type: "toggle", label: { el: "Σύνδεση ERP / CRM", en: "ERP / CRM Integration" }, price: 840 },
         { key: "customgraphics", type: "toggle", label: { el: "Custom Illustrations", en: "Custom Illustrations" }, price: 420 }
     ],
