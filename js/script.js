@@ -24,13 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // 2. Interactive Category Matrix Filters (tags + search stay in sync) + Search Suggestions
+    // 2. Interactive Category Sidebar Filter + Search Suggestions
     const setupCategoryFilters = () => {
-        const tagButtons = document.querySelectorAll('.interest-tag');
+        const sidebarLinks = document.querySelectorAll('.category-sidebar-link, .category-pill');
         const searchInput = document.getElementById('service-search');
         const suggestionsBox = document.getElementById('search-suggestions');
         const categories = document.querySelectorAll('.category-block');
 
+        // currentCategory is either "all", a group key (design/web/marketing/motion,
+        // matched against data-category) or a single block id (matched against the
+        // block's own id) so the sidebar can filter to one exact service.
         let currentCategory = 'all';
         let activeSuggestionIndex = -1;
 
@@ -63,7 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             categories.forEach(block => {
                 const blockCategory = block.getAttribute('data-category');
-                const categoryMatch = currentCategory === 'all' || blockCategory === currentCategory;
+                const categoryMatch = currentCategory === 'all'
+                    || blockCategory === currentCategory
+                    || block.id === currentCategory;
 
                 // Individual items directly inside the block (not sub-block containers)
                 const items = block.querySelectorAll('.price-card:not(.container-sub-block), .sub-item, .addon-item');
@@ -90,11 +95,42 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         };
 
-        tagButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                currentCategory = button.getAttribute('data-filter');
-                tagButtons.forEach(btn => btn.classList.toggle('active', btn === button));
-                applyFilters();
+        const setActiveFilter = (filterValue, scrollTarget) => {
+            currentCategory = filterValue;
+            sidebarLinks.forEach(link => link.classList.toggle('active', link.getAttribute('data-filter') === filterValue));
+            applyFilters();
+
+            if (scrollTarget) {
+                // Wait for hideBlock's 400ms display:none so collapsing categories
+                // aren't still occupying layout height when we measure the target's position.
+                setTimeout(() => {
+                    // Use the offsetTop chain rather than getBoundingClientRect(): the target's
+                    // scroll-reveal fade-in is still mid-transition at this point, and
+                    // getBoundingClientRect() would include that transform's live offset.
+                    // offsetTop is a pure layout value, unaffected by the transform animation.
+                    let layoutTop = 0;
+                    for (let el = scrollTarget; el; el = el.offsetParent) {
+                        layoutTop += el.offsetTop;
+                    }
+                    // Account for the sticky main header, plus the mobile pills bar
+                    // (also sticky, stacked below it) when that bar is visible.
+                    const header = document.querySelector('.main-header');
+                    const pillsBar = document.querySelector('.category-pills-mobile');
+                    let headerOffset = header ? header.offsetHeight : 90;
+                    if (pillsBar && getComputedStyle(pillsBar).display !== 'none') {
+                        headerOffset += pillsBar.offsetHeight;
+                    }
+                    headerOffset += 20;
+                    window.scrollTo({ top: layoutTop - headerOffset, behavior: 'smooth' });
+                }, 420);
+            }
+        };
+
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const filterValue = link.getAttribute('data-filter');
+                const target = filterValue === 'all' ? null : document.getElementById(filterValue);
+                setActiveFilter(filterValue, target);
             });
         });
 

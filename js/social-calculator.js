@@ -83,7 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (posts > 0) items.push(`${posts} ${t('posts / μήνα', 'posts / month')}`);
         if (stories > 0) items.push(`${stories} ${t('stories / μήνα', 'stories / month')}`);
-        if (visits > 0) items.push(`${visits} ${t('επισκέψεις / μήνα', 'visits / month')}`);
+        if (visits > 0) {
+            items.push(`${visits} ${t('επισκέψεις / μήνα', 'visits / month')}`);
+        } else {
+            items.push(t('Remote διαχείριση, χωρίς επισκέψεις', 'Remote management, no on-site visits'));
+        }
 
         items.push(t('Concepts περιεχομένου', 'Content concepts'));
         items.push('Captions');
@@ -163,6 +167,30 @@ document.addEventListener('DOMContentLoaded', () => {
             calculateCustom();
         });
     });
+
+    // --- Remote Only toggle: freezes Visits at 0 so the "no on-site visits" state is explicit ---
+    const remoteOnlyCheckbox = document.getElementById('remoteOnly');
+    const visitsInput = document.getElementById('visits');
+    const visitsQty = document.getElementById('visitsQty');
+    let visitsBeforeRemoteOnly = visitsInput ? visitsInput.value : 2;
+
+    if (remoteOnlyCheckbox && visitsInput && visitsQty) {
+        remoteOnlyCheckbox.addEventListener('change', () => {
+            if (remoteOnlyCheckbox.checked) {
+                visitsBeforeRemoteOnly = visitsInput.value;
+                visitsInput.value = 0;
+                visitsInput.disabled = true;
+                visitsQty.classList.add('calc-qty-disabled');
+                visitsQty.querySelectorAll('.qty-btn').forEach(btn => { btn.disabled = true; });
+            } else {
+                visitsInput.disabled = false;
+                visitsQty.classList.remove('calc-qty-disabled');
+                visitsQty.querySelectorAll('.qty-btn').forEach(btn => { btn.disabled = false; });
+                visitsInput.value = Number(visitsBeforeRemoteOnly) > 0 ? visitsBeforeRemoteOnly : 2;
+            }
+            calculateCustom();
+        });
+    }
 
     if (mainCta) {
         mainCta.addEventListener('click', openEmailQuote);

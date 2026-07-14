@@ -55,6 +55,7 @@
     <div class="mobile-sidebar" id="mobile-sidebar">
         <button class="mobile-sidebar-close" id="mobile-sidebar-close" aria-label="Close menu">&times;</button>
         <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="mobile-sidebar-link">Contact Hub</a>
+        <a href="social-calculator.html" class="mobile-sidebar-link" data-en="Social Media Calculator">Υπολογιστής Social Media</a>
         <button class="currency-btn currency-btn-sidebar" type="button" aria-label="Change currency">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/>
@@ -100,21 +101,43 @@
                 <input type="text" id="service-search" class="search-input" placeholder="Αναζήτησε μια υπηρεσία..." data-en-placeholder="Search for a service..." autocomplete="off">
                 <div class="search-suggestions" id="search-suggestions"></div>
             </div>
-            <div class="interest-card">
-                <span class="interest-label" data-en="I'm interested in:">Ενδιαφέρομαι για:</span>
-                <div class="interest-tags">
-                    <button class="interest-tag active" data-filter="all" data-en="All Services">Όλες οι Υπηρεσίες</button>
-                    <button class="interest-tag" data-filter="design" data-en="UI/UX & Branding">UI/UX & Branding</button>
-                    <button class="interest-tag" data-filter="web" data-en="Web Development">Web Development</button>
-                    <button class="interest-tag" data-filter="marketing" data-en="Social & Advertising">Social & Advertising</button>
-                    <button class="interest-tag" data-filter="motion" data-en="Video & Content">Video & Content</button>
-                </div>
-            </div>
         </div>
     </section>
 
-    <main class="catalog-section">
+    <nav class="category-pills-mobile" aria-label="Service category filters">
         <div class="container">
+            <div class="category-pills-scroll">
+                <button class="category-pill active" type="button" data-filter="all" data-en="All Services">Όλες οι Υπηρεσίες</button>
+                <button class="category-pill" type="button" data-filter="uiux">UI/UX Design</button>
+                <button class="category-pill" type="button" data-filter="branding">Brand Identity</button>
+                <button class="category-pill" type="button" data-filter="webdev">Custom Web Design</button>
+                <button class="category-pill" type="button" data-filter="aiweb">AI-Assisted Web</button>
+                <button class="category-pill" type="button" data-filter="ecommerce">E-Commerce</button>
+                <button class="category-pill" type="button" data-filter="social">Social Media</button>
+                <button class="category-pill" type="button" data-filter="video">Video &amp; Motion</button>
+                <button class="category-pill" type="button" data-filter="ads">Advertising</button>
+                <button class="category-pill" type="button" data-filter="management">Content Management</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="catalog-section">
+        <div class="container catalog-layout">
+
+            <nav class="category-sidebar">
+                <button class="category-sidebar-link active" type="button" data-filter="all" data-en="All Services">Όλες οι Υπηρεσίες</button>
+                <button class="category-sidebar-link" type="button" data-filter="uiux">UI/UX Design</button>
+                <button class="category-sidebar-link" type="button" data-filter="branding">Brand Identity</button>
+                <button class="category-sidebar-link" type="button" data-filter="webdev">Custom Web Design</button>
+                <button class="category-sidebar-link" type="button" data-filter="aiweb">AI-Assisted Web</button>
+                <button class="category-sidebar-link" type="button" data-filter="ecommerce">E-Commerce</button>
+                <button class="category-sidebar-link" type="button" data-filter="social">Social Media</button>
+                <button class="category-sidebar-link" type="button" data-filter="video">Video &amp; Motion</button>
+                <button class="category-sidebar-link" type="button" data-filter="ads">Advertising</button>
+                <button class="category-sidebar-link" type="button" data-filter="management">Content Management</button>
+            </nav>
+
+            <div class="catalog-content">
 
             <div class="category-block scroll-reveal" data-category="design" id="uiux">
                 <div class="category-header">
@@ -624,6 +647,8 @@
                         <span class="emb-value" data-en="from 720€">από 720€<span class="emb-unit" data-en="/month">/μήνα</span></span>
                     </div>
                 </div>
+            </div>
+
             </div>
 
         </div>

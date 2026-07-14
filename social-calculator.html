@@ -173,9 +173,16 @@
 
                             <div class="calc-form-block">
                                 <h3 data-en="Production">Παραγωγή</h3>
+                                <label class="customize-param-row calc-check-row">
+                                    <span data-en="Remote Only (client provides content)">Μόνο Online (ο πελάτης παρέχει το υλικό)</span>
+                                    <label class="customize-toggle">
+                                        <input type="checkbox" id="remoteOnly">
+                                        <span class="customize-toggle-track"></span>
+                                    </label>
+                                </label>
                                 <div class="customize-param-row">
                                     <span class="customize-param-label" data-en="Visits / month">Επισκέψεις / μήνα</span>
-                                    <div class="calc-qty">
+                                    <div class="calc-qty" id="visitsQty">
                                         <button type="button" class="qty-btn" data-target="visits" data-step="-1">&minus;</button>
                                         <input type="number" id="visits" class="qty-input" value="2" min="0">
                                         <button type="button" class="qty-btn" data-target="visits" data-step="1">+</button>

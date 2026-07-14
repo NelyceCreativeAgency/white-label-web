@@ -402,23 +402,6 @@ body {
     box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
 }
 
-.interest-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 18px;
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 0;
-    text-align: center;
-}
-
-.interest-label {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
 .search-suggestions {
     position: absolute;
     top: calc(100% + 8px);
@@ -472,40 +455,97 @@ body {
     white-space: nowrap;
 }
 
-.interest-tags {
+/* --- Catalog Sidebar Layout --- */
+.catalog-layout {
     display: flex;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: nowrap;
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
+    align-items: flex-start;
+    gap: 48px;
 }
 
-.interest-tag {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    padding: 7px 11px;
-    font-size: 12px;
-    font-weight: 500;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: var(--transition-smooth);
-    white-space: nowrap;
+.category-sidebar {
+    position: sticky;
+    top: 110px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 220px;
     flex-shrink: 0;
 }
 
-.interest-tag:hover {
-    color: var(--text-primary);
-    border-color: rgba(255,255,255,0.2);
+.category-sidebar-link {
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-left: 2px solid transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
 }
 
-.interest-tag.active {
-    background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
-    color: #000;
-    border-color: transparent;
+.category-sidebar-link:hover {
+    color: var(--text-primary);
+}
+
+.category-sidebar-link.active {
+    color: var(--accent-orange);
+    border-left-color: var(--accent-orange);
+    background: rgba(255, 107, 53, 0.06);
+}
+
+/* --- Mobile Category Pills (hidden on desktop, shown under 768px) --- */
+.category-pills-mobile {
+    display: none;
+}
+
+.category-pills-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 0 4px;
+    mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent);
+}
+
+.category-pills-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.category-pill {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.category-pill:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+}
+
+.category-pill.active {
+    color: var(--bg-dark);
+    background: var(--accent-orange);
+    border-color: var(--accent-orange);
+}
+
+.catalog-content {
+    flex: 1;
+    min-width: 0;
 }
 
 /* --- Catalog Blocks --- */
@@ -945,6 +985,21 @@ footer.main-footer {
         display: none;
     }
 
+    .category-sidebar {
+        display: none;
+    }
+
+    .category-pills-mobile {
+        display: block;
+        position: sticky;
+        top: 65px;
+        z-index: 900;
+        background: var(--bg-dark);
+        border-bottom: 1px solid var(--border-color);
+        padding: 12px 0;
+        margin-bottom: 28px;
+    }
+
     .mobile-menu-btn {
         display: flex;
     }
@@ -957,15 +1012,6 @@ footer.main-footer {
         gap: 12px;
     }
     .hero-actions .btn { width: 100%; }
-
-    .interest-card {
-        max-width: 100%;
-    }
-
-    .interest-tags {
-        flex-wrap: wrap;
-        overflow-x: visible;
-    }
 
     .pricing-grid {
         grid-template-columns: 1fr;
@@ -1359,6 +1405,11 @@ body.customize-open {
 .qty-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
+}
+
+.calc-qty.calc-qty-disabled {
+    opacity: 0.35;
+    pointer-events: none;
 }
 
 .customize-total-row {
