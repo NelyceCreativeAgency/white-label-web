@@ -1,0 +1,77 @@
+// Social Media Calculator — ported from nelyce-social-calculator.vercel.app,
+// restyled to match the Nelyce Partners design system and kept in sync with
+// this site's current (post-+20%) pricing.
+
+// Custom formula (same shape as the original tool, rates bumped +20% and
+// rounded to whole euros to match the rest of the catalog):
+const CALC_RATES = {
+    base: 60,
+    perPlatform: 18,
+    perPost: 14,
+    perStory: 2,
+    perVisit: 66,
+    graphics: 48,
+    carousels: 48,
+    comments: 60,
+    report: 30,
+    fullManagement: 144
+};
+
+// Ready-made packages — prices match the main pricing page exactly.
+const CALC_PACKAGES = {
+    light: {
+        title: { el: "Light", en: "Light" },
+        price: 300,
+        blurb: { el: "1 επίσκεψη, 6 posts, 6 stories, βασική δημοσίευση", en: "1 visit, 6 posts, 6 stories, basic publishing" },
+        items: [
+            { el: "Instagram & TikTok", en: "Instagram & TikTok" },
+            { el: "1 επίσκεψη / μήνα", en: "1 visit / month" },
+            { el: "Έως 1 ώρα / επίσκεψη", en: "Up to 1 hour / visit" },
+            { el: "6 posts / μήνα", en: "6 posts / month" },
+            { el: "6 stories / μήνα", en: "6 stories / month" },
+            { el: "Concepts περιεχομένου", en: "Content concepts" },
+            { el: "Captions", en: "Captions" },
+            { el: "Δημοσίευση περιεχομένου", en: "Content publishing" },
+            { el: "Video editing για Reels", en: "Video editing for Reels" },
+            { el: "Ο πελάτης μπορεί να ανεβάζει επιπλέον posts ή stories", en: "The client can upload extra posts or stories" }
+        ]
+    },
+    standard: {
+        title: { el: "Standard", en: "Standard" },
+        price: 420,
+        blurb: { el: "2 επισκέψεις, 8 posts, 8 stories, στρατηγική & concepts", en: "2 visits, 8 posts, 8 stories, strategy & concepts" },
+        items: [
+            { el: "Instagram & TikTok", en: "Instagram & TikTok" },
+            { el: "2 επισκέψεις / μήνα", en: "2 visits / month" },
+            { el: "Έως 1 ώρα / επίσκεψη", en: "Up to 1 hour / visit" },
+            { el: "8 posts / μήνα", en: "8 posts / month" },
+            { el: "8 stories / μήνα", en: "8 stories / month" },
+            { el: "Στρατηγική & concepts", en: "Strategy & concepts" },
+            { el: "Captions", en: "Captions" },
+            { el: "Δημοσίευση περιεχομένου", en: "Content publishing" },
+            { el: "Video editing για Reels", en: "Video editing for Reels" },
+            { el: "Ο πελάτης μπορεί να ανεβάζει επιπλέον posts ή stories", en: "The client can upload extra posts or stories" }
+        ]
+    },
+    plus: {
+        title: { el: "Plus", en: "Plus" },
+        price: 780,
+        blurb: { el: "Πλήρης διαχείριση, 16 posts, 16 stories, γραφικά, carousels & comments", en: "Full management, 16 posts, 16 stories, graphics, carousels & comments" },
+        items: [
+            { el: "Instagram & TikTok", en: "Instagram & TikTok" },
+            { el: "Πλήρης διαχείριση προφίλ", en: "Full profile management" },
+            { el: "4 επισκέψεις / μήνα", en: "4 visits / month" },
+            { el: "Έως 1 ώρα / επίσκεψη", en: "Up to 1 hour / visit" },
+            { el: "16 posts / μήνα", en: "16 posts / month" },
+            { el: "16 stories / μήνα", en: "16 stories / month" },
+            { el: "Στρατηγική & concepts", en: "Strategy & concepts" },
+            { el: "Captions", en: "Captions" },
+            { el: "Δημοσίευση περιεχομένου", en: "Content publishing" },
+            { el: "Video editing για Reels", en: "Video editing for Reels" },
+            { el: "Γραφικά posts", en: "Post graphics" },
+            { el: "Carousels", en: "Carousels" },
+            { el: "Διαχείριση comments", en: "Comment management" },
+            { el: "Αναφορά απόδοσης", en: "Performance report" }
+        ]
+    }
+};

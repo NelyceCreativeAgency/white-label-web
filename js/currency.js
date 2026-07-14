@@ -151,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         applyCurrencyToPage(currency);
         updateHeaderButton(currency);
         localStorage.setItem('site-currency', JSON.stringify(currency));
+        window.dispatchEvent(new CustomEvent('currencychange', { detail: currency }));
     };
 
     const fetchRate = async (code) => {
