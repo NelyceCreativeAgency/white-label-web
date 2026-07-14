@@ -2,14 +2,17 @@
 // restyled to match the Nelyce Partners design system and kept in sync with
 // this site's current (post-+20%) pricing.
 
-// Custom formula (same shape as the original tool, rates bumped +20% and
-// rounded to whole euros to match the rest of the catalog):
+// Custom formula (same shape as the original tool). Calibrated so that
+// configuring the exact spec of any ready-made package via the custom
+// builder always costs more than picking that package directly — i.e. the
+// packages are genuine bundle discounts (~9% for Light/Standard, ~30% for
+// Plus), never a premium, and consistently so across all three tiers.
 const CALC_RATES = {
-    base: 60,
-    perPlatform: 18,
-    perPost: 14,
-    perStory: 2,
-    perVisit: 66,
+    base: 90,
+    perPlatform: 19,
+    perPost: 15,
+    perStory: 3,
+    perVisit: 94,
     graphics: 48,
     carousels: 48,
     comments: 60,
