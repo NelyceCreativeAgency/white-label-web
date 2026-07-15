@@ -27,15 +27,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Interactive Category Sidebar Filter + Search Suggestions
     const setupCategoryFilters = () => {
         const sidebarLinks = document.querySelectorAll('.category-sidebar-link, .category-pill');
-        const searchInput = document.getElementById('service-search');
-        const suggestionsBox = document.getElementById('search-suggestions');
+        // There are two search bar instances in the DOM (desktop: in the header,
+        // mobile: in its own section) — only one is visible per breakpoint, but
+        // both stay wired and mirrored so switching viewport mid-search keeps the term.
+        const searchInputs = Array.from(document.querySelectorAll('.search-input'));
         const categories = document.querySelectorAll('.category-block');
 
         // currentCategory is either "all", a group key (design/web/marketing/motion,
         // matched against data-category) or a single block id (matched against the
         // block's own id) so the sidebar can filter to one exact service.
         let currentCategory = 'all';
-        let activeSuggestionIndex = -1;
+        // Populated by the mobile filter drawer with the full set of filterable item
+        // ids; null means "no drawer restriction" (every item is a candidate).
+        let selectedServiceIds = null;
 
         const showBlock = (block) => {
             block.style.display = 'block';
@@ -62,7 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const applyFilters = () => {
-            const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            const activeInput = searchInputs.find(input => input.value.trim() !== '');
+            const term = activeInput ? activeInput.value.trim().toLowerCase() : '';
 
             categories.forEach(block => {
                 const blockCategory = block.getAttribute('data-category');
@@ -74,7 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const items = block.querySelectorAll('.price-card:not(.container-sub-block), .sub-item, .addon-item');
                 let anyMatch = false;
                 items.forEach(item => {
-                    const matches = itemMatchesSearch(item, term);
+                    const matchesSelection = !selectedServiceIds || selectedServiceIds.has(item.dataset.filterId);
+                    const matches = matchesSelection && itemMatchesSearch(item, term);
                     item.style.display = matches ? '' : 'none';
                     if (matches) anyMatch = true;
                 });
@@ -86,7 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     wrapper.style.display = (term && visibleChildren.length === 0) ? 'none' : '';
                 });
 
-                const visible = categoryMatch && (!term || anyMatch);
+                // Hide the whole block once none of its items survive (search term and/or
+                // the drawer's per-service selection can both empty it out completely).
+                const visible = categoryMatch && (!items.length || anyMatch);
                 if (visible) {
                     showBlock(block);
                 } else {
@@ -147,54 +155,64 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         };
 
-        const renderSuggestions = (matches) => {
-            suggestionsBox.innerHTML = '';
-            activeSuggestionIndex = -1;
+        // Keep every search instance in sync so switching viewport mid-search carries the term over.
+        const syncSearchInputs = (value) => {
+            searchInputs.forEach(input => { input.value = value; });
+        };
 
-            if (!matches.length) {
+        searchInputs.forEach(searchInput => {
+            const suggestionsBox = searchInput.closest('.search-bar-wrapper').querySelector('.search-suggestions');
+            if (!suggestionsBox) return;
+            let activeSuggestionIndex = -1;
+
+            const renderSuggestions = (matches) => {
+                suggestionsBox.innerHTML = '';
+                activeSuggestionIndex = -1;
+
+                if (!matches.length) {
+                    suggestionsBox.classList.remove('open');
+                    return;
+                }
+
+                matches.forEach(match => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'search-suggestion';
+                    btn.innerHTML = `<span>${match.text}</span><span class="search-suggestion-category">${match.categoryTitle}</span>`;
+                    btn.addEventListener('click', () => selectSuggestion(match));
+                    suggestionsBox.appendChild(btn);
+                });
+
+                suggestionsBox.classList.add('open');
+            };
+
+            const selectSuggestion = (match) => {
+                syncSearchInputs(match.text);
                 suggestionsBox.classList.remove('open');
-                return;
-            }
+                applyFilters();
+                if (match.target) {
+                    setTimeout(() => {
+                        match.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                }
+            };
 
-            matches.forEach(match => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'search-suggestion';
-                btn.innerHTML = `<span>${match.text}</span><span class="search-suggestion-category">${match.categoryTitle}</span>`;
-                btn.addEventListener('click', () => selectSuggestion(match));
-                suggestionsBox.appendChild(btn);
-            });
+            const updateSuggestions = () => {
+                const term = searchInput.value.trim().toLowerCase();
+                if (!term) {
+                    suggestionsBox.classList.remove('open');
+                    return;
+                }
+                const source = getSuggestionSource();
+                const matches = source
+                    .filter(item => item.text.toLowerCase().includes(term))
+                    .sort((a, b) => a.text.toLowerCase().indexOf(term) - b.text.toLowerCase().indexOf(term))
+                    .slice(0, 6);
+                renderSuggestions(matches);
+            };
 
-            suggestionsBox.classList.add('open');
-        };
-
-        const selectSuggestion = (match) => {
-            searchInput.value = match.text;
-            suggestionsBox.classList.remove('open');
-            applyFilters();
-            if (match.target) {
-                setTimeout(() => {
-                    match.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-            }
-        };
-
-        const updateSuggestions = () => {
-            const term = searchInput.value.trim().toLowerCase();
-            if (!term) {
-                suggestionsBox.classList.remove('open');
-                return;
-            }
-            const source = getSuggestionSource();
-            const matches = source
-                .filter(item => item.text.toLowerCase().includes(term))
-                .sort((a, b) => a.text.toLowerCase().indexOf(term) - b.text.toLowerCase().indexOf(term))
-                .slice(0, 6);
-            renderSuggestions(matches);
-        };
-
-        if (searchInput) {
             searchInput.addEventListener('input', () => {
+                syncSearchInputs(searchInput.value);
                 applyFilters();
                 updateSuggestions();
             });
@@ -228,6 +246,138 @@ document.addEventListener('DOMContentLoaded', () => {
                     suggestionsBox.classList.remove('open');
                 }
             });
+        });
+
+        // --- Mobile Filter Drawer: per-service checkboxes, grouped by category ---
+        const drawerTrigger = document.getElementById('filter-drawer-trigger');
+        const drawer = document.getElementById('filter-drawer');
+        const drawerOverlay = document.getElementById('filter-drawer-overlay');
+        const drawerClose = document.getElementById('filter-drawer-close');
+        const drawerBody = document.getElementById('filter-drawer-body');
+        const drawerReset = document.getElementById('filter-drawer-reset');
+        const drawerApply = document.getElementById('filter-drawer-apply');
+
+        if (drawerTrigger && drawer && drawerOverlay && drawerBody) {
+            const allFilterIds = [];
+            // The drawer is built once, but the language switcher can relabel item/category
+            // titles afterwards — keep {span, sourceEl} pairs so text can be refreshed on open.
+            const labelSyncPairs = [];
+
+            categories.forEach(block => {
+                const items = block.querySelectorAll('.price-card:not(.container-sub-block), .sub-item, .addon-item');
+                const titleEl = block.querySelector('.category-title');
+
+                const group = document.createElement('div');
+                group.className = 'filter-group';
+
+                const header = document.createElement('label');
+                header.className = 'filter-group-header';
+                const groupCheckbox = document.createElement('input');
+                groupCheckbox.type = 'checkbox';
+                groupCheckbox.checked = true;
+                const headerText = document.createElement('span');
+                headerText.textContent = titleEl ? titleEl.textContent.trim() : block.id;
+                if (titleEl) labelSyncPairs.push({ span: headerText, sourceEl: titleEl });
+                header.appendChild(groupCheckbox);
+                header.appendChild(headerText);
+                group.appendChild(header);
+
+                const itemsWrap = document.createElement('div');
+                itemsWrap.className = 'filter-group-items';
+                const itemCheckboxes = [];
+
+                items.forEach((item, index) => {
+                    const id = item.dataset.serviceId || `${block.id}-${index}`;
+                    item.dataset.filterId = id;
+                    allFilterIds.push(id);
+
+                    const titleNode = item.querySelector('.item-title, h5, .addon-name');
+                    const label = document.createElement('label');
+                    label.className = 'filter-item-row';
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.checked = true;
+                    cb.dataset.filterId = id;
+                    const span = document.createElement('span');
+                    span.textContent = titleNode ? titleNode.textContent.trim() : id;
+                    if (titleNode) labelSyncPairs.push({ span, sourceEl: titleNode });
+                    label.appendChild(cb);
+                    label.appendChild(span);
+                    itemsWrap.appendChild(label);
+                    itemCheckboxes.push(cb);
+                });
+
+                if (!itemCheckboxes.length) return;
+
+                const updateGroupCheckboxState = () => {
+                    const checkedCount = itemCheckboxes.filter(cb => cb.checked).length;
+                    groupCheckbox.checked = checkedCount === itemCheckboxes.length;
+                    groupCheckbox.indeterminate = checkedCount > 0 && checkedCount < itemCheckboxes.length;
+                    updateTriggerState();
+                };
+
+                itemCheckboxes.forEach(cb => {
+                    cb.addEventListener('change', () => {
+                        if (cb.checked) selectedServiceIds.add(cb.dataset.filterId);
+                        else selectedServiceIds.delete(cb.dataset.filterId);
+                        updateGroupCheckboxState();
+                    });
+                });
+
+                groupCheckbox.addEventListener('change', () => {
+                    itemCheckboxes.forEach(cb => {
+                        cb.checked = groupCheckbox.checked;
+                        if (cb.checked) selectedServiceIds.add(cb.dataset.filterId);
+                        else selectedServiceIds.delete(cb.dataset.filterId);
+                    });
+                    groupCheckbox.indeterminate = false;
+                    updateTriggerState();
+                });
+
+                group.appendChild(itemsWrap);
+                drawerBody.appendChild(group);
+            });
+
+            // Everything selected by default so the drawer starts in sync with "All Services".
+            selectedServiceIds = new Set(allFilterIds);
+
+            const updateTriggerState = () => {
+                drawerTrigger.classList.toggle('has-custom-selection', selectedServiceIds.size < allFilterIds.length);
+            };
+
+            const openDrawer = () => {
+                labelSyncPairs.forEach(({ span, sourceEl }) => {
+                    span.textContent = sourceEl.textContent.trim();
+                });
+                drawer.classList.add('open');
+                drawerOverlay.classList.add('open');
+            };
+
+            const closeDrawer = () => {
+                drawer.classList.remove('open');
+                drawerOverlay.classList.remove('open');
+                // A drawer selection can span multiple categories, so drop back to
+                // "All Services" and let the checked-item set alone decide visibility.
+                currentCategory = 'all';
+                sidebarLinks.forEach(link => link.classList.toggle('active', link.getAttribute('data-filter') === 'all'));
+                applyFilters();
+            };
+
+            drawerTrigger.addEventListener('click', openDrawer);
+            drawerClose.addEventListener('click', closeDrawer);
+            drawerOverlay.addEventListener('click', closeDrawer);
+            if (drawerApply) drawerApply.addEventListener('click', closeDrawer);
+
+            if (drawerReset) {
+                drawerReset.addEventListener('click', () => {
+                    selectedServiceIds = new Set(allFilterIds);
+                    drawerBody.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        cb.checked = true;
+                        cb.indeterminate = false;
+                    });
+                    updateTriggerState();
+                });
+            }
         }
     };
 
@@ -334,12 +484,50 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
         overlay.addEventListener('click', closeSidebar);
+    };
 
-        // The sidebar's currency button opens the currency modal on top of it —
-        // close the sidebar first so both aren't visible at once.
-        sidebar.querySelectorAll('.currency-btn').forEach(btn => {
-            btn.addEventListener('click', closeSidebar);
-        });
+    // 6. Desktop Sidebar Scrollspy: highlight whichever category is currently in
+    // view as the user scrolls, without hiding the others (that only happens on click).
+    const setupCategoryScrollSpy = () => {
+        const blocks = Array.from(document.querySelectorAll('.category-block'));
+        const sidebarLinks = document.querySelectorAll('.category-sidebar-link');
+        if (!blocks.length || !sidebarLinks.length) return;
+
+        const desktopQuery = window.matchMedia('(min-width: 769px)');
+        let ticking = false;
+
+        const updateActive = () => {
+            ticking = false;
+            if (!desktopQuery.matches) return;
+
+            const header = document.querySelector('.main-header');
+            const refY = (header ? header.getBoundingClientRect().bottom : 0) + 40;
+
+            let current = null;
+            blocks.forEach(block => {
+                if (getComputedStyle(block).display === 'none') return;
+                if (block.getBoundingClientRect().top <= refY) {
+                    current = block;
+                }
+            });
+            if (!current) {
+                current = blocks.find(block => getComputedStyle(block).display !== 'none');
+            }
+            if (!current) return;
+
+            sidebarLinks.forEach(link => {
+                link.classList.toggle('active', link.getAttribute('data-filter') === current.id);
+            });
+        };
+
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                ticking = true;
+                requestAnimationFrame(updateActive);
+            }
+        }, { passive: true });
+
+        updateActive();
     };
 
     // Initialize UI Actions
@@ -348,4 +536,5 @@ document.addEventListener('DOMContentLoaded', () => {
     setupScrollReveal();
     setupLanguageSwitcher();
     setupMobileSidebar();
+    setupCategoryScrollSpy();
 });

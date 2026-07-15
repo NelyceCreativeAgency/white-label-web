@@ -181,9 +181,32 @@
     position: sticky;
     top: 110px;
     background: var(--bg-card);
-    border: 1px solid var(--border-hover);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 28px;
+}
+
+.calc-summary-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border-color);
+    transition: var(--transition-smooth);
+}
+
+.calc-summary-back svg {
+    flex-shrink: 0;
+}
+
+.calc-summary-back:hover {
+    color: var(--accent-orange);
 }
 
 .calc-summary-pill {

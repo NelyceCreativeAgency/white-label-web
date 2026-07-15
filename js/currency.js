@@ -53,20 +53,52 @@ window.formatCurrencyAmount = (amount, currency) => {
     return currency.symbol.length <= 3 ? currency.symbol + num : num + ' ' + currency.code;
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    const overlay = document.getElementById('currency-overlay');
-    const select = document.getElementById('currency-select');
-    const confirmBtn = document.getElementById('currency-confirm-btn');
-    const currencyButtons = document.querySelectorAll('.currency-btn');
-    if (!overlay || !select) return;
+// Best-effort UK / US / Canada detection from the browser's timezone and locale —
+// no IP lookup, runs instantly and silently, no network round-trip needed to pick a default.
+const US_CA_TIMEZONES = new Set([
+    'America/New_York', 'America/Detroit', 'America/Kentucky/Louisville', 'America/Kentucky/Monticello',
+    'America/Indiana/Indianapolis', 'America/Indiana/Vincennes', 'America/Indiana/Winamac',
+    'America/Indiana/Marengo', 'America/Indiana/Petersburg', 'America/Indiana/Vevay',
+    'America/Chicago', 'America/Indiana/Tell_City', 'America/Indiana/Knox', 'America/Menominee',
+    'America/North_Dakota/Center', 'America/North_Dakota/New_Salem', 'America/North_Dakota/Beulah',
+    'America/Denver', 'America/Boise', 'America/Phoenix', 'America/Los_Angeles',
+    'America/Anchorage', 'America/Juneau', 'America/Sitka', 'America/Metlakatla',
+    'America/Yakutat', 'America/Nome', 'America/Adak', 'Pacific/Honolulu',
+    'America/St_Johns', 'America/Halifax', 'America/Glace_Bay', 'America/Moncton',
+    'America/Goose_Bay', 'America/Blanc-Sablon', 'America/Toronto', 'America/Nipigon',
+    'America/Thunder_Bay', 'America/Iqaluit', 'America/Pangnirtung', 'America/Winnipeg',
+    'America/Rainy_River', 'America/Resolute', 'America/Rankin_Inlet', 'America/Regina',
+    'America/Swift_Current', 'America/Edmonton', 'America/Cambridge_Bay', 'America/Yellowknife',
+    'America/Inuvik', 'America/Creston', 'America/Dawson_Creek', 'America/Fort_Nelson',
+    'America/Vancouver', 'America/Whitehorse', 'America/Dawson'
+]);
 
-    // Build dropdown options
-    CURRENCIES.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.code;
-        opt.textContent = `${c.flag} ${c.code} — ${c.name}`;
-        select.appendChild(opt);
-    });
+const getLocaleRegion = () => {
+    const tag = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+    const match = tag.match(/-([A-Za-z]{2})$/);
+    return match ? match[1].toUpperCase() : '';
+};
+
+const detectCurrencyCode = () => {
+    let timeZone = '';
+    try {
+        timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    } catch (e) { /* Intl unsupported — fall through to locale-only detection */ }
+
+    if (timeZone === 'Europe/London') return 'GBP';
+    if (US_CA_TIMEZONES.has(timeZone)) return 'USD';
+
+    const region = getLocaleRegion();
+    if (region === 'GB') return 'GBP';
+    if (region === 'US' || region === 'CA') return 'USD';
+
+    return 'EUR';
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const dropdowns = Array.from(document.querySelectorAll('.currency-dropdown'));
+    const currencyButtons = document.querySelectorAll('.currency-btn');
+    if (!dropdowns.length) return;
 
     const getLang = () => document.documentElement.getAttribute('data-lang') || 'en';
     const PRICE_PATTERN = /[\d.]+€/;
@@ -137,12 +169,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateHeaderButton = (currency) => {
         currencyButtons.forEach(btn => {
+            const flagEl = btn.querySelector('.currency-btn-flag');
             const codeEl = btn.querySelector('.currency-btn-code');
+            if (flagEl) flagEl.textContent = currency.flag || '';
             if (codeEl) {
                 codeEl.textContent = currency.code;
-            } else {
-                btn.textContent = `${currency.flag} ${currency.code}`;
+            } else if (!flagEl) {
+                btn.textContent = `${currency.flag || ''} ${currency.code}`;
             }
+        });
+        document.querySelectorAll('.currency-dropdown-option').forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.code === currency.code);
         });
     };
 
@@ -169,50 +206,74 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const openModal = () => {
-        overlay.classList.add('open');
-        document.body.classList.add('customize-open');
-    };
-
-    const closeModal = () => {
-        overlay.classList.remove('open');
-        document.body.classList.remove('customize-open');
-    };
-
-    confirmBtn.addEventListener('click', async () => {
-        const code = select.value;
+    const selectCurrency = async (code) => {
         const meta = CURRENCIES.find(c => c.code === code);
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = getLang() === 'el' ? 'Φόρτωση...' : 'Loading...';
+        if (!meta) return;
         const rate = await fetchRate(code);
         setCurrency({ code: meta.code, rate, symbol: meta.symbol, flag: meta.flag });
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = confirmBtn.dataset.el && getLang() === 'el' ? confirmBtn.dataset.el : (confirmBtn.dataset.en || 'Continue');
-        closeModal();
-    });
+    };
 
-    currencyButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const saved = window.CURRENCY;
-            if (saved) select.value = saved.code;
-            openModal();
+    // --- Wire each dropdown instance (header + mobile sidebar) ---
+    const closeAllDropdowns = (except) => {
+        dropdowns.forEach(d => {
+            if (d !== except) {
+                d.classList.remove('open');
+                d.querySelector('.currency-btn').setAttribute('aria-expanded', 'false');
+            }
+        });
+    };
+
+    dropdowns.forEach(dropdown => {
+        const toggle = dropdown.querySelector('.currency-btn');
+        const list = dropdown.querySelector('.currency-dropdown-list');
+        if (!toggle || !list) return;
+
+        CURRENCIES.forEach(c => {
+            const opt = document.createElement('button');
+            opt.type = 'button';
+            opt.className = 'currency-dropdown-option';
+            opt.dataset.code = c.code;
+            opt.setAttribute('role', 'option');
+            opt.innerHTML = `<span>${c.flag} ${c.code}</span><span class="currency-dropdown-option-name">${c.name}</span>`;
+            opt.addEventListener('click', () => {
+                selectCurrency(c.code);
+                dropdown.classList.remove('open');
+                toggle.setAttribute('aria-expanded', 'false');
+            });
+            list.appendChild(opt);
+        });
+
+        toggle.addEventListener('click', () => {
+            const willOpen = !dropdown.classList.contains('open');
+            closeAllDropdowns();
+            dropdown.classList.toggle('open', willOpen);
+            toggle.setAttribute('aria-expanded', String(willOpen));
         });
     });
 
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeModal();
+    document.addEventListener('click', (e) => {
+        dropdowns.forEach(d => {
+            if (!d.contains(e.target)) {
+                d.classList.remove('open');
+                d.querySelector('.currency-btn').setAttribute('aria-expanded', 'false');
+            }
+        });
     });
 
-    // Init: restore saved currency, or show the picker on first visit
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeAllDropdowns();
+    });
+
+    // Init: restore a previously chosen currency, otherwise silently auto-detect
+    // from timezone/locale (no modal, no interruption) and use that as the default.
     const savedRaw = localStorage.getItem('site-currency');
     if (savedRaw) {
         try {
-            const saved = JSON.parse(savedRaw);
-            setCurrency(saved);
+            setCurrency(JSON.parse(savedRaw));
         } catch (e) {
-            openModal();
+            selectCurrency(detectCurrencyCode());
         }
     } else {
-        openModal();
+        selectCurrency(detectCurrencyCode());
     }
 });
