@@ -1,5 +1,37 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // 0. Ambient Sparkles (warm embers drifting upward)
+    const setupNightSky = () => {
+        const sky = document.querySelector('.night-sky');
+        if (!sky) return;
+
+        const SPARKLE_COLORS = ['#ff6b35', '#ffb800', '#ff9d4d'];
+        const SPARKLE_COUNT = 90;
+        for (let i = 0; i < SPARKLE_COUNT; i++) {
+            const sparkle = document.createElement('span');
+            sparkle.className = 'sparkle';
+
+            // Mostly-upward flow (like rising embers) with some side drift for variety.
+            const angle = -Math.PI / 2 + (Math.random() - 0.5) * (Math.PI / 2);
+            const distance = Math.random() * 200 + 120;
+            const dx = Math.cos(angle) * distance;
+            const dy = Math.sin(angle) * distance;
+            const size = (Math.random() * 2.5 + 2.5).toFixed(1);
+
+            sparkle.style.left = `${Math.random() * 100}%`;
+            sparkle.style.top = `${Math.random() * 100}%`;
+            sparkle.style.width = `${size}px`;
+            sparkle.style.height = `${size}px`;
+            sparkle.style.color = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
+            sparkle.style.setProperty('--dx', `${dx.toFixed(0)}px`);
+            sparkle.style.setProperty('--dy', `${dy.toFixed(0)}px`);
+            sparkle.style.setProperty('--flow-duration', `${(Math.random() * 6 + 8).toFixed(1)}s`);
+            sparkle.style.setProperty('--flow-delay', `${(Math.random() * 8).toFixed(1)}s`);
+            sparkle.style.setProperty('--sparkle-opacity', `${(Math.random() * 0.35 + 0.5).toFixed(2)}`);
+            sky.appendChild(sparkle);
+        }
+    };
+
     // 1. Smooth Scroll Handling for Anchor Links
     const setupSmoothScrolling = () => {
         const links = document.querySelectorAll('.hero-actions a[href^="#"]');
@@ -531,6 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Initialize UI Actions
+    setupNightSky();
     setupSmoothScrolling();
     setupCategoryFilters();
     setupScrollReveal();

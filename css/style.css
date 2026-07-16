@@ -6,13 +6,12 @@
 }
 
 :root {
-    --bg-dark: #141417;
+    --bg-dark: #0a0a0e;
     --bg-card: #232329;
     --bg-card-hover: #2b2b33;
     --text-primary: #f5f5f7;
     --text-secondary: #9da0aa;
     --accent-orange: #ff6b35;
-    --accent-glow: rgba(255, 107, 53, 0.15);
     --accent-amber: #ffb800;
     --border-color: rgba(255, 255, 255, 0.06);
     --border-hover: rgba(255, 107, 53, 0.3);
@@ -49,27 +48,38 @@ body {
 
 .text-center { text-align: center; }
 
-/* --- Ambient Light Background Gradients --- */
-.bg-glow-wrapper {
-    position: absolute;
+/* --- Ambient Night Sky Background --- */
+.night-sky {
+    position: fixed;
     inset: 0;
     overflow: hidden;
     pointer-events: none;
     z-index: -1;
+    background: radial-gradient(ellipse at 50% 100%, rgba(255, 107, 53, 0.07) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% -10%, rgba(255, 184, 0, 0.05) 0%, transparent 55%);
 }
 
-.bg-glow {
+.sparkle {
     position: absolute;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    background: radial-gradient(circle, var(--accent-glow) 0%, rgba(0,0,0,0) 70%);
-    z-index: -1;
-    pointer-events: none;
-    filter: blur(80px);
+    background: currentColor;
+    clip-path: polygon(50% 0%, 61% 35%, 100% 50%, 61% 65%, 50% 100%, 39% 65%, 0% 50%, 39% 35%);
+    opacity: 0;
+    filter: drop-shadow(0 0 5px currentColor);
+    animation: sparkle-flow var(--flow-duration, 16s) ease-in-out infinite;
+    animation-delay: var(--flow-delay, 0s);
 }
-.glow-1 { top: -100px; right: -100px; }
-.glow-2 { top: 1200px; left: -200px; }
+
+@keyframes sparkle-flow {
+    0% { transform: translate(0, 0) rotate(0deg) scale(0.3); opacity: 0; }
+    12% { opacity: var(--sparkle-opacity, 0.5); transform: translate(calc(var(--dx) * 0.12), calc(var(--dy) * 0.12)) rotate(60deg) scale(1); }
+    50% { opacity: var(--sparkle-opacity, 0.5); transform: translate(calc(var(--dx) * 0.5), calc(var(--dy) * 0.5)) rotate(180deg) scale(0.85); }
+    88% { opacity: var(--sparkle-opacity, 0.5); transform: translate(calc(var(--dx) * 0.88), calc(var(--dy) * 0.88)) rotate(300deg) scale(1); }
+    100% { transform: translate(var(--dx), var(--dy)) rotate(360deg) scale(0.3); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sparkle { animation: none; opacity: 0.2; }
+}
 
 /* --- Elegant Sticky Navigation --- */
 .main-header {
@@ -995,8 +1005,62 @@ body {
     margin-top: auto;
 }
 
+/* The Customize button becomes a full-bleed bottom bar on standard price
+   cards, separated from the content above by a divider line — it bleeds
+   past the card's own 32px padding and relies on .price-card's
+   overflow:hidden to get clipped back to the card's rounded corners. */
 .card-footer .customize-btn {
-    margin-left: auto;
+    order: 99;
+    flex: 1 0 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: calc(100% + 64px);
+    margin: 20px -32px -32px -32px;
+    padding: 14px 32px;
+    border: none;
+    border-top: 1px solid var(--border-color);
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.card-footer .customize-btn:hover {
+    background: var(--accent-orange);
+    color: #000;
+    border-top-color: var(--accent-orange);
+}
+
+.card-footer .customize-btn::before {
+    content: '';
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    background-color: currentColor;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35c-.59.24-1.13.56-1.62.94L5.24 5.33c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58C4.84 11.36 4.8 11.69 4.8 12s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41L9.25 5.35c-.59.24-1.13.56-1.62.94L5.24 5.33c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58C4.84 11.36 4.8 11.69 4.8 12s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
+.card-footer .customize-btn:hover::before {
+    animation: gear-spin 3.5s linear infinite;
+}
+
+@keyframes gear-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+    .card-footer .customize-btn {
+        width: calc(100% + 48px);
+        margin: 16px -24px -24px -24px;
+        padding: 12px 24px;
+    }
 }
 
 .addon-item .customize-btn {
@@ -1467,9 +1531,9 @@ footer.main-footer {
     font-family: var(--font-sans);
     font-size: 12px;
     font-weight: 600;
-    color: var(--accent-orange);
-    background: rgba(255, 107, 53, 0.08);
-    border: 1px solid rgba(255, 107, 53, 0.25);
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 6px;
     padding: 8px 14px;
     cursor: pointer;
