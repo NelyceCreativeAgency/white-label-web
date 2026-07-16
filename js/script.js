@@ -1,5 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // Experimental: inertia smooth scrolling, desktop only
+    let lenisInstance = null;
+    const setupInertiaScroll = () => {
+        const isDesktop = window.matchMedia('(min-width: 769px)').matches;
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!isDesktop || prefersReducedMotion || typeof Lenis === 'undefined') return;
+
+        lenisInstance = new Lenis({
+            duration: 1.1,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        });
+
+        const raf = (time) => {
+            lenisInstance.raf(time);
+            requestAnimationFrame(raf);
+        };
+        requestAnimationFrame(raf);
+    };
+
+    // Force the sticky category sidebar to release before the final CTA
+    // section, since Lenis doesn't reliably trigger the browser's native
+    // re-evaluation of sticky state during its own scroll loop.
+    const setupSidebarUnstick = () => {
+        const sidebar = document.querySelector('.category-sidebar');
+        const ctaSection = document.querySelector('.final-cta-section');
+        if (!sidebar || !ctaSection || !('IntersectionObserver' in window)) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                sidebar.classList.toggle('is-unstuck', entry.isIntersecting);
+            });
+        }, { rootMargin: '-110px 0px 0px 0px', threshold: 0 });
+
+        observer.observe(ctaSection);
+    };
+
     // 0. Ambient Sparkles (warm embers drifting upward)
     const setupNightSky = () => {
         const sky = document.querySelector('.night-sky');
@@ -44,13 +80,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     const targetElement = document.querySelector(targetId);
                     if (targetElement) {
                         const headerOffset = 90;
-                        const elementPosition = targetElement.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
-                        window.scrollTo({
-                            top: offsetPosition,
-                            behavior: 'smooth'
-                        });
+                        if (lenisInstance) {
+                            lenisInstance.scrollTo(targetElement, { offset: -headerOffset });
+                        } else {
+                            const elementPosition = targetElement.getBoundingClientRect().top;
+                            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                            window.scrollTo({
+                                top: offsetPosition,
+                                behavior: 'smooth'
+                            });
+                        }
                     }
                 }
             });
@@ -564,7 +604,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Initialize UI Actions
+    setupInertiaScroll();
     setupNightSky();
+    setupSidebarUnstick();
     setupSmoothScrolling();
     setupCategoryFilters();
     setupScrollReveal();

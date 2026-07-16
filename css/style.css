@@ -33,6 +33,12 @@ html {
     -webkit-font-smoothing: antialiased;
 }
 
+/* Lenis (experimental desktop-only inertia scroll) drives its own smoothing;
+   native smooth-scroll would otherwise fight it and produce stutter. */
+html.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+
 body {
     overflow-x: hidden;
     position: relative;
@@ -650,6 +656,13 @@ body {
     flex-shrink: 0;
 }
 
+/* Forced release before the next section, since Lenis's own scroll
+   loop doesn't always trigger the browser's native sticky re-evaluation. */
+.category-sidebar.is-unstuck {
+    position: relative;
+    top: auto;
+}
+
 .category-sidebar-link {
     text-align: left;
     background: transparent;
@@ -809,9 +822,12 @@ body {
 }
 
 /* --- Refined Premium Cards --- */
+/* Glassy look done cheaply: translucent fill + gradient sheen + inset
+   highlight, no backdrop-filter blur (too costly across ~18 cards on screen
+   at once, especially over the animated sparkle layer during scroll). */
 .price-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 45%), rgba(35, 35, 41, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.09);
     border-radius: 8px;
     padding: 32px;
     display: flex;
@@ -819,6 +835,7 @@ body {
     justify-content: space-between;
     position: relative;
     overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
     transition: var(--transition-smooth);
 }
 
@@ -832,10 +849,10 @@ body {
 }
 
 .price-card:hover {
-    background: var(--bg-card-hover);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 45%), rgba(43, 43, 51, 0.6);
     border-color: var(--border-hover);
     transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 107, 53, 0.03);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 107, 53, 0.03);
 }
 
 .price-card:hover::before {
