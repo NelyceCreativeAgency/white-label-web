@@ -77,6 +77,10 @@ body {
     100% { transform: translate(var(--dx), var(--dy)) rotate(360deg) scale(0.3); opacity: 0; }
 }
 
+@media (max-width: 768px) {
+    .sparkle { filter: drop-shadow(0 0 2.5px currentColor); }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .sparkle { animation: none; opacity: 0.2; }
 }
