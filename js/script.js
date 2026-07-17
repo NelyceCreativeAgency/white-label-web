@@ -19,6 +19,27 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(raf);
     };
 
+    // Prefetch Geologica on EL hover/focus/touch, so switching to Greek
+    // doesn't cause a flash while the 5 weight files download on demand.
+    const setupGeologicaPrefetch = () => {
+        if (!('fonts' in document)) return;
+
+        let prefetched = false;
+        const prefetch = () => {
+            if (prefetched) return;
+            prefetched = true;
+            ['300', '400', '500', '600', '700'].forEach(weight => {
+                document.fonts.load(`${weight} 16px Geologica`).catch(() => {});
+            });
+        };
+
+        document.querySelectorAll('.lang-btn[data-lang="el"]').forEach(btn => {
+            btn.addEventListener('mouseenter', prefetch, { once: true });
+            btn.addEventListener('focus', prefetch, { once: true });
+            btn.addEventListener('touchstart', prefetch, { once: true, passive: true });
+        });
+    };
+
     // Force the sticky category sidebar to release before the final CTA
     // section, since Lenis doesn't reliably trigger the browser's native
     // re-evaluation of sticky state during its own scroll loop.
@@ -605,6 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize UI Actions
     setupInertiaScroll();
+    setupGeologicaPrefetch();
     setupNightSky();
     setupSidebarUnstick();
     setupSmoothScrolling();
