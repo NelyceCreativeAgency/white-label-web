@@ -54,18 +54,33 @@ body {
 
 .text-center { text-align: center; }
 
-/* --- Ambient Liquid Mesh Gradient (behind the sparkle layer) ---
-   3 blurred blobs animate `transform` + `border-radius` only (both are
-   compositor/paint-only — no layout, no re-blurring) for an organic,
-   non-repeating flow. A flat scrim sits between the blobs and the
-   sparkle/content layers so blob vibrancy never compromises text
-   contrast, regardless of how saturated the blobs themselves are. */
-.mesh-gradient-wrapper {
+/* --- Ambient Orbital Gradient (behind the sparkle layer) ---
+   Adapted from the "Animated Morphing Gradients" reference: 5 soft
+   radial blobs, each orbiting/drifting via `transform` on a fixed
+   `transform-origin` offset (rotate around an off-center pivot = a
+   circular sweep, no per-frame JS or layout). One shared blur on the
+   container melts the overlaps together instead of the reference's
+   SVG goo filter. A flat scrim sits between this layer and the
+   sparkle/content layers so blob vibrancy can't compromise contrast. */
+.gradient-bg {
     position: fixed;
     inset: 0;
     overflow: hidden;
     pointer-events: none;
     z-index: -3;
+    --g-circle-size: 80%;
+    --g-color1: #ff810a;
+    --g-color2: #ffbe0b;
+    --g-color3: #ff0054;
+    --g-color4: #ffb37a;
+    --g-color5: #ff9385;
+}
+
+.gradients-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    filter: blur(130px);
 }
 
 .mesh-gradient-scrim {
@@ -73,74 +88,82 @@ body {
     inset: 0;
     pointer-events: none;
     z-index: -2;
-    background: rgba(8, 8, 12, 0.55);
+    background: rgba(8, 8, 12, 0.45);
 }
 
-.blob {
+.g1, .g2, .g3, .g4, .g5 {
     position: absolute;
+    width: var(--g-circle-size);
+    height: var(--g-circle-size);
+    top: calc(50% - var(--g-circle-size) / 2);
+    left: calc(50% - var(--g-circle-size) / 2);
     border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.34;
+    opacity: 0.42;
     will-change: transform;
 }
 
-.blob-1 {
-    width: 640px;
-    height: 640px;
-    top: -14%;
-    left: -10%;
-    background: #ff810a;
-    animation: blob-morph-1 20s ease-in-out infinite;
+.g1 {
+    background: radial-gradient(circle at center, var(--g-color1) 0%, transparent 70%);
+    transform-origin: center center;
+    animation: gradient-move-vertical 25s ease infinite;
 }
 
-.blob-2 {
-    width: 580px;
-    height: 580px;
-    top: 30%;
-    right: -14%;
-    background: #ffbe0b;
-    animation: blob-morph-2 25s ease-in-out infinite;
+.g2 {
+    background: radial-gradient(circle at center, var(--g-color2) 0%, transparent 70%);
+    transform-origin: calc(50% - 300px) center;
+    animation: gradient-move-circle 30s reverse infinite;
 }
 
-.blob-3 {
-    width: 560px;
-    height: 560px;
-    bottom: -16%;
-    left: 24%;
-    background: #ff0054;
-    animation: blob-morph-3 30s ease-in-out infinite;
+.g3 {
+    background: radial-gradient(circle at center, var(--g-color3) 0%, transparent 70%);
+    top: calc(50% - var(--g-circle-size) / 2 + 150px);
+    left: calc(50% - var(--g-circle-size) / 2 - 150px);
+    transform-origin: calc(50% + 300px) center;
+    animation: gradient-move-circle 35s linear infinite;
 }
 
-@keyframes blob-morph-1 {
-    0%   { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 42% 58% 65% 35% / 45% 45% 55% 55%; }
-    25%  { transform: translate(60px, 40px) rotate(15deg) scale(1.08); border-radius: 60% 40% 45% 55% / 55% 60% 40% 45%; }
-    50%  { transform: translate(30px, 90px) rotate(-10deg) scale(0.95); border-radius: 50% 50% 40% 60% / 40% 55% 45% 60%; }
-    75%  { transform: translate(-40px, 50px) rotate(20deg) scale(1.05); border-radius: 55% 45% 60% 40% / 50% 45% 55% 50%; }
-    100% { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 42% 58% 65% 35% / 45% 45% 55% 55%; }
+.g4 {
+    background: radial-gradient(circle at center, var(--g-color4) 0%, transparent 70%);
+    transform-origin: calc(50% - 150px) center;
+    animation: gradient-move-horizontal 40s ease infinite;
+    opacity: 0.35;
 }
 
-@keyframes blob-morph-2 {
-    0%   { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 55% 45% 40% 60% / 50% 60% 40% 50%; }
-    30%  { transform: translate(-70px, 30px) rotate(-18deg) scale(1.1); border-radius: 45% 55% 60% 40% / 55% 40% 60% 45%; }
-    60%  { transform: translate(-30px, -60px) rotate(12deg) scale(0.92); border-radius: 60% 40% 45% 55% / 40% 55% 45% 60%; }
-    100% { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 55% 45% 40% 60% / 50% 60% 40% 50%; }
+.g5 {
+    background: radial-gradient(circle at center, var(--g-color5) 0%, transparent 70%);
+    width: calc(var(--g-circle-size) * 1.3);
+    height: calc(var(--g-circle-size) * 1.3);
+    top: calc(50% - var(--g-circle-size) * 0.65);
+    left: calc(50% - var(--g-circle-size) * 0.65);
+    transform-origin: calc(50% - 400px) calc(50% + 150px);
+    animation: gradient-move-circle 45s ease infinite;
 }
 
-@keyframes blob-morph-3 {
-    0%   { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 48% 52% 55% 45% / 60% 45% 55% 40%; }
-    20%  { transform: translate(50px, -50px) rotate(10deg) scale(1.06); border-radius: 58% 42% 48% 52% / 45% 55% 45% 55%; }
-    55%  { transform: translate(90px, 20px) rotate(-16deg) scale(0.94); border-radius: 40% 60% 55% 45% / 55% 40% 60% 45%; }
-    80%  { transform: translate(20px, 70px) rotate(8deg) scale(1.02); border-radius: 52% 48% 45% 55% / 48% 52% 48% 52%; }
-    100% { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 48% 52% 55% 45% / 60% 45% 55% 40%; }
+@keyframes gradient-move-circle {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes gradient-move-vertical {
+    0%   { transform: translateY(-30%); }
+    50%  { transform: translateY(30%); }
+    100% { transform: translateY(-30%); }
+}
+
+@keyframes gradient-move-horizontal {
+    0%   { transform: translateX(-25%) translateY(-5%); }
+    50%  { transform: translateX(25%) translateY(5%); }
+    100% { transform: translateX(-25%) translateY(-5%); }
 }
 
 @media (max-width: 768px) {
-    .blob { filter: blur(80px); opacity: 0.28; }
-    .mesh-gradient-scrim { background: rgba(8, 8, 12, 0.5); }
+    .gradients-container { filter: blur(80px); }
+    .g1, .g2, .g3, .g4, .g5 { opacity: 0.35; }
+    .mesh-gradient-scrim { background: rgba(8, 8, 12, 0.4); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .blob { animation: none; }
+    .g1, .g2, .g3, .g4, .g5 { animation: none; }
 }
 
 /* --- Ambient Night Sky Background --- */
