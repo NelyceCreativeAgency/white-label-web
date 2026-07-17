@@ -10,7 +10,7 @@
     --bg-card: #232329;
     --bg-card-hover: #2b2b33;
     --text-primary: #f5f5f7;
-    --text-secondary: #9da0aa;
+    --text-secondary: #b8bac2;
     --accent-orange: #ff6b35;
     --accent-amber: #ffb800;
     --border-color: rgba(255, 255, 255, 0.06);
@@ -572,7 +572,7 @@ body {
 
 .hero-subtitle {
     font-size: 18px;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.72);
     max-width: 700px;
     margin: 0 auto 40px auto;
     line-height: 1.6;
