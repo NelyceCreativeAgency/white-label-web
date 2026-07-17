@@ -337,7 +337,7 @@ body {
     flex: 0 0 auto;
 }
 
-.filter-drawer-header h3 {
+.filter-drawer-header h2 {
     font-size: 18px;
     font-weight: 600;
 }
@@ -519,7 +519,7 @@ body {
 
 .hero-note {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.6);
     font-style: italic;
 }
 
@@ -1173,7 +1173,7 @@ body {
     gap: 8px 14px;
 }
 
-.sub-item h5 {
+.sub-item h4 {
     font-size: 15px;
     font-weight: 500;
 }
@@ -1381,7 +1381,7 @@ footer.main-footer {
     padding: 40px 0;
     border-top: 1px solid var(--border-color);
     font-size: 13px;
-    color: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.6);
     letter-spacing: 0.5px;
 }
 
