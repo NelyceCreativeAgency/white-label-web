@@ -54,75 +54,93 @@ body {
 
 .text-center { text-align: center; }
 
-/* --- Ambient Mesh Gradient (behind the sparkle layer) ---
-   Pure CSS: 3 static, heavily-blurred circles animated with `transform`
-   only, so the blur is rasterized once and the compositor just slides
-   the cached layer around — no per-frame repaint, no JS. */
+/* --- Ambient Liquid Mesh Gradient (behind the sparkle layer) ---
+   3 blurred blobs animate `transform` + `border-radius` only (both are
+   compositor/paint-only — no layout, no re-blurring) for an organic,
+   non-repeating flow. A flat scrim sits between the blobs and the
+   sparkle/content layers so blob vibrancy never compromises text
+   contrast, regardless of how saturated the blobs themselves are. */
 .mesh-gradient-wrapper {
     position: fixed;
     inset: 0;
     overflow: hidden;
     pointer-events: none;
-    z-index: -2;
+    z-index: -3;
 }
 
-.mesh-blob {
+.mesh-gradient-scrim {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -2;
+    background: rgba(8, 8, 12, 0.55);
+}
+
+.blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(100px);
-    opacity: 0.16;
+    filter: blur(120px);
+    opacity: 0.34;
     will-change: transform;
 }
 
-.mesh-blob-1 {
-    width: 620px;
-    height: 620px;
-    top: -12%;
+.blob-1 {
+    width: 640px;
+    height: 640px;
+    top: -14%;
     left: -10%;
-    background: #ffb98a;
-    animation: mesh-drift-1 34s ease-in-out infinite alternate;
+    background: #ff810a;
+    animation: blob-morph-1 20s ease-in-out infinite;
 }
 
-.mesh-blob-2 {
+.blob-2 {
+    width: 580px;
+    height: 580px;
+    top: 30%;
+    right: -14%;
+    background: #ffbe0b;
+    animation: blob-morph-2 25s ease-in-out infinite;
+}
+
+.blob-3 {
     width: 560px;
     height: 560px;
-    top: 32%;
-    right: -14%;
-    background: #ff9385;
-    animation: mesh-drift-2 40s ease-in-out infinite alternate;
+    bottom: -16%;
+    left: 24%;
+    background: #ff0054;
+    animation: blob-morph-3 30s ease-in-out infinite;
 }
 
-.mesh-blob-3 {
-    width: 540px;
-    height: 540px;
-    bottom: -14%;
-    left: 22%;
-    background: #ffe3ad;
-    animation: mesh-drift-3 46s ease-in-out infinite alternate;
+@keyframes blob-morph-1 {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 42% 58% 65% 35% / 45% 45% 55% 55%; }
+    25%  { transform: translate(60px, 40px) rotate(15deg) scale(1.08); border-radius: 60% 40% 45% 55% / 55% 60% 40% 45%; }
+    50%  { transform: translate(30px, 90px) rotate(-10deg) scale(0.95); border-radius: 50% 50% 40% 60% / 40% 55% 45% 60%; }
+    75%  { transform: translate(-40px, 50px) rotate(20deg) scale(1.05); border-radius: 55% 45% 60% 40% / 50% 45% 55% 50%; }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 42% 58% 65% 35% / 45% 45% 55% 55%; }
 }
 
-@keyframes mesh-drift-1 {
-    from { transform: translate(0, 0); }
-    to   { transform: translate(90px, 70px); }
+@keyframes blob-morph-2 {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 55% 45% 40% 60% / 50% 60% 40% 50%; }
+    30%  { transform: translate(-70px, 30px) rotate(-18deg) scale(1.1); border-radius: 45% 55% 60% 40% / 55% 40% 60% 45%; }
+    60%  { transform: translate(-30px, -60px) rotate(12deg) scale(0.92); border-radius: 60% 40% 45% 55% / 40% 55% 45% 60%; }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 55% 45% 40% 60% / 50% 60% 40% 50%; }
 }
-@keyframes mesh-drift-2 {
-    from { transform: translate(0, 0); }
-    to   { transform: translate(-80px, 60px); }
-}
-@keyframes mesh-drift-3 {
-    from { transform: translate(0, 0); }
-    to   { transform: translate(70px, -80px); }
+
+@keyframes blob-morph-3 {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 48% 52% 55% 45% / 60% 45% 55% 40%; }
+    20%  { transform: translate(50px, -50px) rotate(10deg) scale(1.06); border-radius: 58% 42% 48% 52% / 45% 55% 45% 55%; }
+    55%  { transform: translate(90px, 20px) rotate(-16deg) scale(0.94); border-radius: 40% 60% 55% 45% / 55% 40% 60% 45%; }
+    80%  { transform: translate(20px, 70px) rotate(8deg) scale(1.02); border-radius: 52% 48% 45% 55% / 48% 52% 48% 52%; }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); border-radius: 48% 52% 55% 45% / 60% 45% 55% 40%; }
 }
 
 @media (max-width: 768px) {
-    .mesh-blob {
-        filter: blur(60px);
-        opacity: 0.13;
-    }
+    .blob { filter: blur(80px); opacity: 0.28; }
+    .mesh-gradient-scrim { background: rgba(8, 8, 12, 0.5); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .mesh-blob { animation: none; }
+    .blob { animation: none; }
 }
 
 /* --- Ambient Night Sky Background --- */
