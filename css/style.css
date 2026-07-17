@@ -54,6 +54,77 @@ body {
 
 .text-center { text-align: center; }
 
+/* --- Ambient Mesh Gradient (behind the sparkle layer) ---
+   Pure CSS: 3 static, heavily-blurred circles animated with `transform`
+   only, so the blur is rasterized once and the compositor just slides
+   the cached layer around — no per-frame repaint, no JS. */
+.mesh-gradient-wrapper {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -2;
+}
+
+.mesh-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.16;
+    will-change: transform;
+}
+
+.mesh-blob-1 {
+    width: 620px;
+    height: 620px;
+    top: -12%;
+    left: -10%;
+    background: #ffb98a;
+    animation: mesh-drift-1 34s ease-in-out infinite alternate;
+}
+
+.mesh-blob-2 {
+    width: 560px;
+    height: 560px;
+    top: 32%;
+    right: -14%;
+    background: #ff9385;
+    animation: mesh-drift-2 40s ease-in-out infinite alternate;
+}
+
+.mesh-blob-3 {
+    width: 540px;
+    height: 540px;
+    bottom: -14%;
+    left: 22%;
+    background: #ffe3ad;
+    animation: mesh-drift-3 46s ease-in-out infinite alternate;
+}
+
+@keyframes mesh-drift-1 {
+    from { transform: translate(0, 0); }
+    to   { transform: translate(90px, 70px); }
+}
+@keyframes mesh-drift-2 {
+    from { transform: translate(0, 0); }
+    to   { transform: translate(-80px, 60px); }
+}
+@keyframes mesh-drift-3 {
+    from { transform: translate(0, 0); }
+    to   { transform: translate(70px, -80px); }
+}
+
+@media (max-width: 768px) {
+    .mesh-blob {
+        filter: blur(60px);
+        opacity: 0.13;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mesh-blob { animation: none; }
+}
+
 /* --- Ambient Night Sky Background --- */
 .night-sky {
     position: fixed;
