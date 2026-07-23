@@ -54,14 +54,15 @@ body {
 
 .text-center { text-align: center; }
 
-/* --- Ambient Orbital Gradient (behind the sparkle layer) ---
-   Adapted from the "Animated Morphing Gradients" reference: 5 soft
-   radial blobs, each orbiting/drifting via `transform` on a fixed
-   `transform-origin` offset (rotate around an off-center pivot = a
-   circular sweep, no per-frame JS or layout). One shared blur on the
-   container melts the overlaps together instead of the reference's
-   SVG goo filter. A flat scrim sits between this layer and the
-   sparkle/content layers so blob vibrancy can't compromise contrast. */
+/* --- Ambient Orbital Gradient (glowing from behind the header) ---
+   5 soft radial blobs, clustered near the top of the fixed viewport
+   so the glow reads as coming from just below the sticky header, and
+   fading out by mid-page. Each orbits/drifts via `transform` on a
+   fixed `transform-origin` offset (no per-frame JS or layout). One
+   shared blur on the container melts the overlaps together. The
+   scrim is a top-to-bottom gradient rather than a flat tint, so it's
+   lighter near the header (letting the glow read) and darkens by
+   the time it reaches body copy further down, protecting contrast. */
 .gradient-bg {
     position: fixed;
     inset: 0;
@@ -69,11 +70,11 @@ body {
     pointer-events: none;
     z-index: -3;
     --g-circle-size: 80%;
-    --g-color1: #ff810a;
-    --g-color2: #ffbe0b;
-    --g-color3: #ff0054;
-    --g-color4: #ffb37a;
-    --g-color5: #ff9385;
+    --g-color1: #3b5bdb;
+    --g-color2: #7c3fd1;
+    --g-color3: #2c2a6b;
+    --g-color4: #5a4fe0;
+    --g-color5: #8a3fb0;
 }
 
 .gradients-container {
@@ -88,14 +89,18 @@ body {
     inset: 0;
     pointer-events: none;
     z-index: -2;
-    background: rgba(8, 8, 12, 0.45);
+    background: linear-gradient(to bottom,
+        rgba(8, 8, 12, 0.22) 0%,
+        rgba(8, 8, 12, 0.5) 30%,
+        rgba(8, 8, 12, 0.72) 60%,
+        rgba(8, 8, 12, 0.8) 100%);
 }
 
 .g1, .g2, .g3, .g4, .g5 {
     position: absolute;
     width: var(--g-circle-size);
     height: var(--g-circle-size);
-    top: calc(50% - var(--g-circle-size) / 2);
+    top: calc(12% - var(--g-circle-size) / 2);
     left: calc(50% - var(--g-circle-size) / 2);
     border-radius: 50%;
     opacity: 0.42;
@@ -116,7 +121,7 @@ body {
 
 .g3 {
     background: radial-gradient(circle at center, var(--g-color3) 0%, transparent 70%);
-    top: calc(50% - var(--g-circle-size) / 2 + 150px);
+    top: calc(12% - var(--g-circle-size) / 2 + 100px);
     left: calc(50% - var(--g-circle-size) / 2 - 150px);
     transform-origin: calc(50% + 300px) center;
     animation: gradient-move-circle 35s linear infinite;
@@ -133,7 +138,7 @@ body {
     background: radial-gradient(circle at center, var(--g-color5) 0%, transparent 70%);
     width: calc(var(--g-circle-size) * 1.3);
     height: calc(var(--g-circle-size) * 1.3);
-    top: calc(50% - var(--g-circle-size) * 0.65);
+    top: calc(12% - var(--g-circle-size) * 0.65);
     left: calc(50% - var(--g-circle-size) * 0.65);
     transform-origin: calc(50% - 400px) calc(50% + 150px);
     animation: gradient-move-circle 45s ease infinite;
@@ -159,7 +164,13 @@ body {
 @media (max-width: 768px) {
     .gradients-container { filter: blur(80px); }
     .g1, .g2, .g3, .g4, .g5 { opacity: 0.35; }
-    .mesh-gradient-scrim { background: rgba(8, 8, 12, 0.4); }
+    .mesh-gradient-scrim {
+        background: linear-gradient(to bottom,
+            rgba(8, 8, 12, 0.3) 0%,
+            rgba(8, 8, 12, 0.55) 25%,
+            rgba(8, 8, 12, 0.75) 55%,
+            rgba(8, 8, 12, 0.82) 100%);
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
