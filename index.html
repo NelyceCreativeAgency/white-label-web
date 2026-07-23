@@ -39,15 +39,19 @@
                 <img src="https://www.nelycedesign.com/assets/img/logo.svg" alt="Nelyce Design" width="273" height="58" class="logo-img">
                 <span class="logo-badge">PARTNERS</span>
             </div>
-            <div class="search-bar-wrapper nav-search-wrapper">
-                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
-                    <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <input type="text" class="search-input" placeholder="Αναζήτησε μια υπηρεσία..." data-en-placeholder="Search for a service..." autocomplete="off">
-                <div class="search-suggestions"></div>
-            </div>
             <div class="nav-right">
+                <div class="search-bar-wrapper nav-search-wrapper" id="header-search">
+                    <button class="search-toggle-btn" id="search-toggle-btn" type="button" aria-label="Search" aria-expanded="false">
+                        <svg class="search-toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+                            <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <div class="search-collapse">
+                        <input type="text" class="search-input" placeholder="Αναζήτησε μια υπηρεσία..." data-en-placeholder="Search for a service..." autocomplete="off">
+                    </div>
+                    <div class="search-suggestions"></div>
+                </div>
                 <a href="social-calculator.html" class="nav-cta nav-cta-header" data-en="Social Calculator">Υπολογιστής Social Media</a>
                 <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="nav-cta nav-cta-header">Contact Hub</a>
                 <div class="currency-dropdown currency-dropdown-header" id="currency-dropdown-header">

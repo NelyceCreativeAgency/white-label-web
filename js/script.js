@@ -118,6 +118,45 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // Collapsed header search: icon by default, click to reveal the input inline
+    const setupHeaderSearchToggle = () => {
+        const wrapper = document.getElementById('header-search');
+        const toggleBtn = document.getElementById('search-toggle-btn');
+        const input = wrapper ? wrapper.querySelector('.search-input') : null;
+        if (!wrapper || !toggleBtn || !input) return;
+
+        const open = () => {
+            wrapper.classList.add('is-open');
+            toggleBtn.setAttribute('aria-expanded', 'true');
+            input.focus();
+        };
+        const close = () => {
+            wrapper.classList.remove('is-open');
+            toggleBtn.setAttribute('aria-expanded', 'false');
+        };
+
+        toggleBtn.addEventListener('click', () => {
+            if (wrapper.classList.contains('is-open')) {
+                if (input.value.trim() === '') close();
+                else input.focus();
+            } else {
+                open();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!wrapper.contains(e.target) && input.value.trim() === '') close();
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                input.value = '';
+                close();
+                toggleBtn.blur();
+            }
+        });
+    };
+
     // 2. Interactive Category Sidebar Filter + Search Suggestions
     const setupCategoryFilters = () => {
         const sidebarLinks = document.querySelectorAll('.category-sidebar-link, .category-pill');
@@ -630,6 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupNightSky();
     setupSidebarUnstick();
     setupSmoothScrolling();
+    setupHeaderSearchToggle();
     setupCategoryFilters();
     setupScrollReveal();
     setupLanguageSwitcher();
