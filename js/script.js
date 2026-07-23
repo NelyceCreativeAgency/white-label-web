@@ -157,6 +157,58 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // --- Forgiving search matching: accent/case-insensitive, tolerates typos
+    // and partial words (e.g. "λογο" or "logot" both reach "Λογότυπο"/"Logo"). ---
+    const normalizeSearchText = (str) => (str || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // strip Greek tonos / other combining accents
+        .replace(/ς/g, 'σ'); // treat final sigma same as regular sigma
+
+    const levenshteinDistance = (a, b) => {
+        const m = a.length, n = b.length;
+        if (m === 0) return n;
+        if (n === 0) return m;
+        let prevRow = Array.from({ length: n + 1 }, (_, j) => j);
+        for (let i = 1; i <= m; i++) {
+            const currRow = [i];
+            for (let j = 1; j <= n; j++) {
+                currRow[j] = a[i - 1] === b[j - 1]
+                    ? prevRow[j - 1]
+                    : 1 + Math.min(prevRow[j], currRow[j - 1], prevRow[j - 1]);
+            }
+            prevRow = currRow;
+        }
+        return prevRow[n];
+    };
+
+    // Returns a match rank (lower = better) or -1 if the term doesn't match at all.
+    const fuzzyMatchScore = (haystack, term) => {
+        const normHaystack = normalizeSearchText(haystack);
+        const normTerm = normalizeSearchText(term).trim();
+        if (!normTerm) return 0;
+
+        const exactIndex = normHaystack.indexOf(normTerm);
+        if (exactIndex !== -1) return exactIndex; // exact substring: best, earlier match ranks higher
+
+        const words = normHaystack.split(/[\s,/&()\-·]+/).filter(Boolean);
+        const maxDist = normTerm.length <= 4 ? 1 : normTerm.length <= 8 ? 2 : 3;
+        let best = -1;
+        words.forEach(word => {
+            if (word.startsWith(normTerm) || normTerm.startsWith(word)) {
+                best = best === -1 ? 500 : best; // prefix match: good, but ranks below exact substrings
+                return;
+            }
+            if (Math.abs(word.length - normTerm.length) > maxDist + 2) return;
+            const dist = levenshteinDistance(word, normTerm);
+            if (dist <= maxDist) {
+                const score = 1000 + dist; // fuzzy/typo match: still surfaced, ranked last
+                if (best === -1 || score < best) best = score;
+            }
+        });
+        return best;
+    };
+
     // 2. Interactive Category Sidebar Filter + Search Suggestions
     const setupCategoryFilters = () => {
         const sidebarLinks = document.querySelectorAll('.category-sidebar-link, .category-pill');
@@ -195,7 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = (item.querySelector('.item-title, h5') || {}).textContent || '';
             const desc = (item.querySelector('.item-desc') || {}).textContent || '';
             const own = item.matches('.item-title, h5, .addon-name') ? item.textContent : '';
-            return (title + ' ' + desc + ' ' + own).toLowerCase().includes(term);
+            const block = item.closest('.category-block');
+            const keywords = block ? (block.dataset.keywords || '') : '';
+            return fuzzyMatchScore(title + ' ' + desc + ' ' + own + ' ' + keywords, term) !== -1;
         };
 
         const applyFilters = () => {
@@ -283,8 +337,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return Array.from(nodes).map(el => {
                 const block = el.closest('.category-block');
                 const categoryTitle = block ? (block.querySelector('.category-title') || {}).textContent : '';
+                const keywords = block ? (block.dataset.keywords || '') : '';
                 const target = el.closest('.price-card, .sub-item, .addon-item');
-                return { text: el.textContent.trim(), categoryTitle: categoryTitle || '', target };
+                // `text` is what's shown in the dropdown; `keywords` (category synonyms,
+                // Greek/English) only widen what the term can match against, invisibly.
+                return { text: el.textContent.trim(), categoryTitle: categoryTitle || '', keywords, target };
             });
         };
 
@@ -331,15 +388,17 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             const updateSuggestions = () => {
-                const term = searchInput.value.trim().toLowerCase();
+                const term = searchInput.value.trim();
                 if (!term) {
                     suggestionsBox.classList.remove('open');
                     return;
                 }
                 const source = getSuggestionSource();
                 const matches = source
-                    .filter(item => item.text.toLowerCase().includes(term))
-                    .sort((a, b) => a.text.toLowerCase().indexOf(term) - b.text.toLowerCase().indexOf(term))
+                    .map(item => ({ item, score: fuzzyMatchScore(item.text + ' ' + item.keywords, term) }))
+                    .filter(({ score }) => score !== -1)
+                    .sort((a, b) => a.score - b.score)
+                    .map(({ item }) => item)
                     .slice(0, 6);
                 renderSuggestions(matches);
             };
