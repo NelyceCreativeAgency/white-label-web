@@ -723,9 +723,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // 7. Portfolio preview carousels: a preview banner can hold more than one
-    // .preview-slide (each with its own image + link). Slides push-transition
-    // left (the outgoing slide exits left, the next one enters from the
-    // right), which reads clearly as "advancing" rather than a plain fade.
+    // .preview-slide (each just an image). Slides push-transition left (the
+    // outgoing slide exits left, the next one enters from the right), which
+    // reads clearly as "advancing" rather than a plain fade. The "Browse
+    // Project" link sits outside the slides so it stays put while the image
+    // moves — only its href is swapped to match whichever slide is active.
     // A random slide shows first, then it auto-advances every 5s (paused on
     // hover/focus and restarted on manual dot clicks).
     const setupPortfolioCarousels = () => {
@@ -734,6 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.category-preview-carousel').forEach(carousel => {
             const slides = Array.from(carousel.querySelectorAll('.preview-slide'));
             const dots = Array.from(carousel.querySelectorAll('.preview-dot'));
+            const link = carousel.querySelector('.category-preview-link');
             if (slides.length < 2 || dots.length !== slides.length) return;
 
             let current = 0;
@@ -750,6 +753,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 void carousel.offsetWidth;
                 slides.forEach(slide => slide.classList.remove('no-transition'));
+                if (link) link.href = slides[current].dataset.href;
                 dots.forEach((dot, i) => dot.classList.toggle('active', i === current));
             };
 
@@ -780,6 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 current = next;
+                if (link) link.href = incoming.dataset.href;
                 dots.forEach((dot, i) => dot.classList.toggle('active', i === current));
             };
 

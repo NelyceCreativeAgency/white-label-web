@@ -1152,13 +1152,15 @@ body {
     transform: translateX(3px);
 }
 
-/* Carousel variant: stacks multiple slides (image + link) absolutely and
-   pushes between them by translating on the X axis, so the container needs
-   an explicit height matching .category-preview-img since no child is left
-   in flow. A slide at rest (no state class) waits off-screen to the right,
-   ready to be pulled in as the next one; .is-leaving is the outgoing slide
-   mid-exit to the left. Direction is always "forward" — simple and reads
-   clearly as advancing to the next slide. */
+/* Carousel variant: stacks multiple slides (each just an image) absolutely
+   and pushes between them by translating on the X axis, so the container
+   needs an explicit height matching .category-preview-img since no child is
+   left in flow. The "Browse Project" link lives outside the slides so it
+   stays put while the image moves (its href is swapped via JS instead). A
+   slide at rest (no state class) waits off-screen to the right, ready to be
+   pulled in as the next one; .is-leaving is the outgoing slide mid-exit to
+   the left. Direction is always "forward" — simple and reads clearly as
+   advancing to the next slide. */
 .category-preview-carousel {
     height: 320px;
 }
@@ -1167,13 +1169,11 @@ body {
     position: absolute;
     inset: 0;
     transform: translateX(100%);
-    pointer-events: none;
     transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 .preview-slide.is-active {
     transform: translateX(0);
-    pointer-events: auto;
 }
 
 .preview-slide.is-leaving {
