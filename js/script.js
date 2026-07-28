@@ -722,29 +722,31 @@ document.addEventListener('DOMContentLoaded', () => {
         updateActive();
     };
 
-    // 7. Portfolio preview carousels: a preview banner can offer more than one
-    // project shot via data-slide-{n}-src/alt/href attributes + dot buttons.
-    // A random slide is shown on load; visitors can flip between the rest.
+    // 7. Portfolio preview carousels: a preview banner can hold more than one
+    // .preview-slide (each with its own image + link). Slides cross-fade via
+    // CSS opacity; a random one shows first, then it auto-advances every 5s
+    // (paused on hover/focus and restarted on manual dot clicks).
     const setupPortfolioCarousels = () => {
-        document.querySelectorAll('.category-preview-carousel').forEach(carousel => {
-            const img = carousel.querySelector('.category-preview-img');
-            const link = carousel.querySelector('.category-preview-link');
-            const dots = Array.from(carousel.querySelectorAll('.preview-dot'));
-            if (!img || !link || !dots.length) return;
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            const slides = dots.map((_, i) => ({
-                src: carousel.dataset[`slide${i}Src`],
-                alt: carousel.dataset[`slide${i}Alt`],
-                href: carousel.dataset[`slide${i}Href`],
-            }));
+        document.querySelectorAll('.category-preview-carousel').forEach(carousel => {
+            const slides = Array.from(carousel.querySelectorAll('.preview-slide'));
+            const dots = Array.from(carousel.querySelectorAll('.preview-dot'));
+            if (slides.length < 2 || dots.length !== slides.length) return;
+
+            let current = 0;
+            let timer = null;
 
             const showSlide = (index) => {
-                const slide = slides[index];
-                if (!slide) return;
-                img.src = slide.src;
-                img.alt = slide.alt;
-                link.href = slide.href;
-                dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
+                current = (index + slides.length) % slides.length;
+                slides.forEach((slide, i) => slide.classList.toggle('is-active', i === current));
+                dots.forEach((dot, i) => dot.classList.toggle('active', i === current));
+            };
+
+            const startAutoplay = () => {
+                if (prefersReducedMotion) return;
+                clearInterval(timer);
+                timer = setInterval(() => showSlide(current + 1), 5000);
             };
 
             dots.forEach((dot, i) => {
@@ -752,10 +754,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.preventDefault();
                     e.stopPropagation();
                     showSlide(i);
+                    startAutoplay();
                 });
             });
 
+            carousel.addEventListener('mouseenter', () => clearInterval(timer));
+            carousel.addEventListener('mouseleave', startAutoplay);
+
             showSlide(Math.floor(Math.random() * slides.length));
+            startAutoplay();
         });
     };
 

@@ -1152,6 +1152,35 @@ body {
     transform: translateX(3px);
 }
 
+/* Carousel variant: stacks multiple slides (image + link) absolutely and
+   cross-fades between them via opacity, so the container needs an explicit
+   height matching .category-preview-img since no child is left in flow. */
+.category-preview-carousel {
+    height: 320px;
+}
+
+.preview-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.9s ease;
+}
+
+.preview-slide.is-active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.preview-slide .category-preview-img {
+    height: 100%;
+    max-height: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .preview-slide { transition: none; }
+}
+
 /* Dot selector for preview banners with more than one project shot */
 .preview-dots {
     position: absolute;
@@ -1199,6 +1228,10 @@ body {
     .category-preview-img {
         height: 240px;
         max-height: 240px;
+    }
+
+    .category-preview-carousel {
+        height: 240px;
     }
 
     .category-preview-inline .category-preview-img {
