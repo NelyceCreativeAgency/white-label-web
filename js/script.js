@@ -722,6 +722,43 @@ document.addEventListener('DOMContentLoaded', () => {
         updateActive();
     };
 
+    // 7. Portfolio preview carousels: a preview banner can offer more than one
+    // project shot via data-slide-{n}-src/alt/href attributes + dot buttons.
+    // A random slide is shown on load; visitors can flip between the rest.
+    const setupPortfolioCarousels = () => {
+        document.querySelectorAll('.category-preview-carousel').forEach(carousel => {
+            const img = carousel.querySelector('.category-preview-img');
+            const link = carousel.querySelector('.category-preview-link');
+            const dots = Array.from(carousel.querySelectorAll('.preview-dot'));
+            if (!img || !link || !dots.length) return;
+
+            const slides = dots.map((_, i) => ({
+                src: carousel.dataset[`slide${i}Src`],
+                alt: carousel.dataset[`slide${i}Alt`],
+                href: carousel.dataset[`slide${i}Href`],
+            }));
+
+            const showSlide = (index) => {
+                const slide = slides[index];
+                if (!slide) return;
+                img.src = slide.src;
+                img.alt = slide.alt;
+                link.href = slide.href;
+                dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
+            };
+
+            dots.forEach((dot, i) => {
+                dot.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showSlide(i);
+                });
+            });
+
+            showSlide(Math.floor(Math.random() * slides.length));
+        });
+    };
+
     // Initialize UI Actions
     setupInertiaScroll();
     setupGeologicaPrefetch();
@@ -734,4 +771,5 @@ document.addEventListener('DOMContentLoaded', () => {
     setupLanguageSwitcher();
     setupMobileSidebar();
     setupCategoryScrollSpy();
+    setupPortfolioCarousels();
 });

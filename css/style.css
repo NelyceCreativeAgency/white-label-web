@@ -1152,6 +1152,37 @@ body {
     transform: translateX(3px);
 }
 
+/* Dot selector for preview banners with more than one project shot */
+.preview-dots {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    z-index: 2;
+    display: flex;
+    gap: 8px;
+}
+
+.preview-dot {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.preview-dot:hover,
+.preview-dot:focus-visible {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.preview-dot.active {
+    background: #ff6b35;
+    transform: scale(1.2);
+}
+
 /* Inline variant: used for a specific card (e.g. Custom Illustration) rather than
    a whole category — sits inside the grid, spanning its full row width, shorter. */
 .category-preview-inline {
