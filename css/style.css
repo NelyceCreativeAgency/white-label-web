@@ -1153,8 +1153,12 @@ body {
 }
 
 /* Carousel variant: stacks multiple slides (image + link) absolutely and
-   cross-fades between them via opacity, so the container needs an explicit
-   height matching .category-preview-img since no child is left in flow. */
+   pushes between them by translating on the X axis, so the container needs
+   an explicit height matching .category-preview-img since no child is left
+   in flow. A slide at rest (no state class) waits off-screen to the right,
+   ready to be pulled in as the next one; .is-leaving is the outgoing slide
+   mid-exit to the left. Direction is always "forward" — simple and reads
+   clearly as advancing to the next slide. */
 .category-preview-carousel {
     height: 320px;
 }
@@ -1162,14 +1166,24 @@ body {
 .preview-slide {
     position: absolute;
     inset: 0;
-    opacity: 0;
+    transform: translateX(100%);
     pointer-events: none;
-    transition: opacity 0.9s ease;
+    transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 .preview-slide.is-active {
-    opacity: 1;
+    transform: translateX(0);
     pointer-events: auto;
+}
+
+.preview-slide.is-leaving {
+    transform: translateX(-100%);
+}
+
+/* Applied for one frame to snap an exited slide back to its resting position
+   (off-screen right) without animating the reset itself */
+.preview-slide.no-transition {
+    transition: none;
 }
 
 .preview-slide .category-preview-img {

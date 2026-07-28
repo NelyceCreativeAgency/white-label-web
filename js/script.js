@@ -723,9 +723,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // 7. Portfolio preview carousels: a preview banner can hold more than one
-    // .preview-slide (each with its own image + link). Slides cross-fade via
-    // CSS opacity; a random one shows first, then it auto-advances every 5s
-    // (paused on hover/focus and restarted on manual dot clicks).
+    // .preview-slide (each with its own image + link). Slides push-transition
+    // left (the outgoing slide exits left, the next one enters from the
+    // right), which reads clearly as "advancing" rather than a plain fade.
+    // A random slide shows first, then it auto-advances every 5s (paused on
+    // hover/focus and restarted on manual dot clicks).
     const setupPortfolioCarousels = () => {
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -737,9 +739,47 @@ document.addEventListener('DOMContentLoaded', () => {
             let current = 0;
             let timer = null;
 
-            const showSlide = (index) => {
+            // Sets the initial slide with no animation (avoids an unwanted
+            // push effect firing on page load for the random starting pick).
+            const setActiveInstantly = (index) => {
                 current = (index + slides.length) % slides.length;
-                slides.forEach((slide, i) => slide.classList.toggle('is-active', i === current));
+                slides.forEach((slide, i) => {
+                    slide.classList.add('no-transition');
+                    slide.classList.remove('is-leaving');
+                    slide.classList.toggle('is-active', i === current);
+                });
+                void carousel.offsetWidth;
+                slides.forEach(slide => slide.classList.remove('no-transition'));
+                dots.forEach((dot, i) => dot.classList.toggle('active', i === current));
+            };
+
+            const showSlide = (index) => {
+                const next = (index + slides.length) % slides.length;
+                if (next === current) return;
+
+                const outgoing = slides[current];
+                const incoming = slides[next];
+                outgoing.classList.remove('is-leaving');
+                incoming.classList.remove('is-leaving');
+
+                if (prefersReducedMotion) {
+                    outgoing.classList.remove('is-active');
+                    incoming.classList.add('is-active');
+                } else {
+                    outgoing.classList.remove('is-active');
+                    outgoing.classList.add('is-leaving');
+                    outgoing.addEventListener('transitionend', function reset(e) {
+                        if (e.propertyName !== 'transform') return;
+                        outgoing.removeEventListener('transitionend', reset);
+                        outgoing.classList.add('no-transition');
+                        outgoing.classList.remove('is-leaving');
+                        void outgoing.offsetWidth;
+                        outgoing.classList.remove('no-transition');
+                    });
+                    incoming.classList.add('is-active');
+                }
+
+                current = next;
                 dots.forEach((dot, i) => dot.classList.toggle('active', i === current));
             };
 
@@ -761,7 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
             carousel.addEventListener('mouseenter', () => clearInterval(timer));
             carousel.addEventListener('mouseleave', startAutoplay);
 
-            showSlide(Math.floor(Math.random() * slides.length));
+            setActiveInstantly(Math.floor(Math.random() * slides.length));
             startAutoplay();
         });
     };
