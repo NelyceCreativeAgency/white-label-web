@@ -1,0 +1,170 @@
+// ---------------------------------------------------------------------------
+// DEMO DATA — every price in this file is a placeholder.
+//
+// The numbers are fake on purpose; the SHAPE is not. Each service carries the
+// same fields the real services.json will carry, so the design is exercised by
+// realistic data and will not need rebuilding once real prices land:
+//
+//   basePrice     starting price, net (no VAT)
+//   floorPrice    the quote never drops below this, however the params are set
+//   params[]      stepper | toggle | select
+//                   role:"multiplier"  the param the subtotal is multiplied by
+//                   scope:"flat"       one-off extra, added AFTER the multiply
+//                   baseline           units already covered by basePrice
+//
+//   total = (basePrice + per-unit extras) * units + flat extras, floored
+// ---------------------------------------------------------------------------
+
+const PORTAL_CATEGORIES = [
+    { id: "brand",  icon: "◆", label: { el: "Brand Identity", en: "Brand Identity" },
+      blurb: { el: "Λογότυπο, ταυτότητα, εφαρμογές", en: "Logo, identity, applications" } },
+    { id: "web",    icon: "▤", label: { el: "Website & UX", en: "Website & UX" },
+      blurb: { el: "Από landing page μέχρι e-shop", en: "From landing page to e-shop" } },
+    { id: "motion", icon: "▶", label: { el: "Video & Motion", en: "Video & Motion" },
+      blurb: { el: "Reels, animation, διαφημιστικά", en: "Reels, animation, ads" } },
+    { id: "social", icon: "◈", label: { el: "Social Media", en: "Social Media" },
+      blurb: { el: "Μηνιαία διαχείριση περιεχομένου", en: "Monthly content management" } }
+];
+
+const PORTAL_SERVICES = [
+    // --- Brand Identity ----------------------------------------------------
+    {
+        id: "logo-basic", category: "brand",
+        name: { el: "Basic Logo Package", en: "Basic Logo Package" },
+        desc: { el: "Λογότυπο με βασικές εφαρμογές και αρχεία παράδοσης.",
+                en: "Logo with core applications and delivery files." },
+        basePrice: 400, floorPrice: 400,
+        params: [
+            { key: "concepts", type: "stepper", label: { el: "Επιπλέον προτάσεις", en: "Extra concepts" },
+              min: 0, max: 5, default: 0, pricePerUnit: 100 },
+            { key: "revisions", type: "stepper", label: { el: "Επιπλέον αναθεωρήσεις", en: "Extra revisions" },
+              min: 0, max: 5, default: 0, pricePerUnit: 50 },
+            { key: "socialkit", type: "toggle", scope: "flat", label: { el: "Social media kit", en: "Social media kit" },
+              price: 100 }
+        ]
+    },
+    {
+        id: "brand-full", category: "brand",
+        name: { el: "Full Brand Identity", en: "Full Brand Identity" },
+        desc: { el: "Ολοκληρωμένη ταυτότητα με brand book και custom γραφικά.",
+                en: "Complete identity with brand book and custom graphics." },
+        basePrice: 1000, floorPrice: 800,
+        params: [
+            { key: "scope", type: "select", label: { el: "Έκταση ταυτότητας", en: "Identity scope" }, options: [
+                { label: { el: "Βασική", en: "Core" }, price: 0,
+                  note: { el: "Λογότυπο, χρώματα, τυπογραφία", en: "Logo, colours, typography" } },
+                { label: { el: "Εκτεταμένη", en: "Extended" }, price: 400,
+                  note: { el: "+ patterns, εικονογράφηση, stationery", en: "+ patterns, illustration, stationery" } },
+                { label: { el: "Πλήρης", en: "Complete" }, price: 900,
+                  note: { el: "+ brand book, art direction, φωτογραφία", en: "+ brand book, art direction, photography" } }
+            ]},
+            { key: "applications", type: "stepper", label: { el: "Εφαρμογές (κάρτες, συσκευασία…)", en: "Applications (cards, packaging…)" },
+              min: 0, max: 10, default: 0, pricePerUnit: 80 },
+            { key: "rush", type: "toggle", scope: "flat", label: { el: "Επείγουσα παράδοση", en: "Rush delivery" },
+              price: 200 }
+        ]
+    },
+
+    // --- Website & UX ------------------------------------------------------
+    {
+        id: "site-starter", category: "web",
+        name: { el: "Starter Website", en: "Starter Website" },
+        desc: { el: "Responsive site σε έτοιμη βάση, πλήρως προσαρμοσμένο στο brand.",
+                en: "Responsive site on a ready base, fully brand-adapted." },
+        basePrice: 800, floorPrice: 600,
+        params: [
+            { key: "pages", type: "stepper", label: { el: "Αριθμός σελίδων", en: "Number of pages" },
+              min: 1, max: 15, default: 5, baseline: 5, pricePerUnit: 100 },
+            { key: "languages", type: "stepper", label: { el: "Γλώσσες", en: "Languages" },
+              min: 1, max: 4, default: 1, baseline: 1, pricePerUnit: 300 },
+            { key: "seo", type: "toggle", scope: "flat", label: { el: "SEO setup", en: "SEO setup" }, price: 200 }
+        ]
+    },
+    {
+        id: "site-custom", category: "web",
+        name: { el: "Full Custom Website", en: "Full Custom Website" },
+        desc: { el: "Σχεδιασμός και ανάπτυξη από το μηδέν, με custom λειτουργίες.",
+                en: "Designed and built from scratch, with custom functionality." },
+        basePrice: 3600, floorPrice: 2500,
+        params: [
+            { key: "pages", type: "stepper", label: { el: "Αριθμός σελίδων", en: "Number of pages" },
+              min: 1, max: 20, default: 5, baseline: 5, pricePerUnit: 200 },
+            { key: "complexity", type: "select", label: { el: "Πολυπλοκότητα", en: "Complexity" }, options: [
+                { label: { el: "Βασική", en: "Basic" }, price: 0,
+                  note: { el: "Στατικό περιεχόμενο, φόρμες", en: "Static content, forms" } },
+                { label: { el: "Προχωρημένη", en: "Advanced" }, price: 700,
+                  note: { el: "Dynamic λειτουργίες, integrations", en: "Dynamic features, integrations" } },
+                { label: { el: "Enterprise", en: "Enterprise" }, price: 1800,
+                  note: { el: "Custom APIs, automations, dashboards", en: "Custom APIs, automations, dashboards" } }
+            ]},
+            { key: "cms", type: "toggle", scope: "flat", label: { el: "CMS & εκπαίδευση", en: "CMS & training" }, price: 400 }
+        ]
+    },
+    {
+        id: "eshop", category: "web",
+        name: { el: "E-Commerce", en: "E-Commerce" },
+        desc: { el: "Ηλεκτρονικό κατάστημα με πληρωμές, αποστολές και διαχείριση.",
+                en: "Online store with payments, shipping and management." },
+        basePrice: 4000, floorPrice: 3000,
+        params: [
+            { key: "products", type: "stepper", scope: "flat", label: { el: "Καταχώρηση προϊόντων (ανά 50)", en: "Product entry (per 50)" },
+              min: 0, max: 10, default: 0, pricePerUnit: 100 },
+            { key: "mydata", type: "toggle", scope: "flat", market: "GR",
+              label: { el: "Διασύνδεση myDATA / ΑΑΔΕ", en: "myDATA integration" }, price: 250 },
+            { key: "gateway", type: "toggle", scope: "flat", market: "GR",
+              label: { el: "Ελληνικό payment gateway", en: "Greek payment gateway" }, price: 150 }
+        ]
+    },
+
+    // --- Video & Motion ----------------------------------------------------
+    {
+        id: "reels", category: "motion",
+        name: { el: "Reels / Shorts Editing", en: "Reels / Shorts Editing" },
+        desc: { el: "Μοντάζ κάθετου βίντεο για Instagram και TikTok.",
+                en: "Vertical video editing for Instagram and TikTok." },
+        basePrice: 80, floorPrice: 80,
+        params: [
+            { key: "quantity", type: "stepper", role: "multiplier", label: { el: "Αριθμός βίντεο", en: "Number of videos" },
+              min: 1, max: 20, default: 4, pricePerUnit: 0 },
+            { key: "subs", type: "toggle", label: { el: "Υπότιτλοι & captions", en: "Subtitles & captions" }, price: 20 },
+            { key: "brief", type: "toggle", scope: "flat", label: { el: "Creative brief & σενάριο", en: "Creative brief & script" },
+              price: 150 }
+        ]
+    },
+    {
+        id: "logo-animation", category: "motion",
+        name: { el: "Logo Animation", en: "Logo Animation" },
+        desc: { el: "Κινούμενο λογότυπο για intro, outro και social.",
+                en: "Animated logo for intros, outros and social." },
+        basePrice: 200, floorPrice: 200,
+        params: [
+            { key: "level", type: "select", label: { el: "Επίπεδο", en: "Level" }, options: [
+                { label: { el: "Βασικό", en: "Basic" }, price: 0, note: { el: "Απλή κίνηση, 3-5 δευτ.", en: "Simple motion, 3-5 sec" } },
+                { label: { el: "Προχωρημένο", en: "Advanced" }, price: 180, note: { el: "3D, particles, sound design", en: "3D, particles, sound design" } }
+            ]},
+            { key: "formats", type: "stepper", label: { el: "Επιπλέον formats", en: "Extra formats" },
+              min: 0, max: 5, default: 0, pricePerUnit: 40 }
+        ]
+    },
+
+    // --- Social Media ------------------------------------------------------
+    {
+        id: "social-managed", category: "social",
+        name: { el: "Social Media Management", en: "Social Media Management" },
+        desc: { el: "Μηνιαία παραγωγή και δημοσίευση περιεχομένου.",
+                en: "Monthly content production and publishing." },
+        basePrice: 300, floorPrice: 300, unit: { el: "/ μήνα", en: "/ month" },
+        params: [
+            { key: "months", type: "stepper", role: "multiplier", label: { el: "Διάρκεια σε μήνες", en: "Duration in months" },
+              min: 1, max: 12, default: 3, pricePerUnit: 0 },
+            { key: "platforms", type: "stepper", label: { el: "Πλατφόρμες", en: "Platforms" },
+              min: 1, max: 5, default: 2, baseline: 2, pricePerUnit: 40 },
+            { key: "posts", type: "stepper", label: { el: "Posts / μήνα", en: "Posts / month" },
+              min: 4, max: 30, default: 8, baseline: 8, pricePerUnit: 15 },
+            { key: "shooting", type: "toggle", label: { el: "Επίσκεψη φωτογράφισης / μήνα", en: "Shooting visit / month" },
+              price: 100 },
+            { key: "strategy", type: "toggle", scope: "flat", label: { el: "Αρχική στρατηγική & content plan", en: "Initial strategy & content plan" },
+              price: 300 }
+        ]
+    }
+];
