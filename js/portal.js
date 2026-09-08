@@ -55,14 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
         remove:     { el: 'Αφαίρεση',                en: 'Remove' },
         oneItem:    { el: 'υπηρεσία',                en: 'service' },
         nItems:     { el: 'υπηρεσίες',               en: 'services' },
-        buildIt:    { el: 'Φτιάξε το βήμα-βήμα',      en: 'Build it step by step' },
         soon:       { el: 'Σε εξέλιξη',               en: 'In progress' },
         soonBody:   { el: 'Εδώ θα μπορείς να συνδυάσεις υπηρεσίες από όλες τις κατηγορίες σε ένα πακέτο. Μέχρι τότε, γράψε μας τι χρειάζεσαι και το διαμορφώνουμε μαζί.',
                       en: 'This is where you will be able to combine services from every category into one package. Until then, write to us and we will put it together with you.' },
         soonCta:    { el: 'Πες μας τι χρειάζεσαι',    en: 'Tell us what you need' },
         pickCat:    { el: 'Διάλεξε κατηγορία',       en: 'Choose a category' },
         allCats:    { el: 'Όλες οι κατηγορίες',      en: 'All categories' },
-        oneService: { el: 'υπηρεσία',                en: 'service' },
         nServices:  { el: 'υπηρεσίες',               en: 'services' }
     };
     const u = (key) => t(UI[key]);
@@ -115,30 +113,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const catNav = document.getElementById('cat-nav');
     const grid = document.getElementById('service-grid');
 
-    const countIn = (catId) => PORTAL_SERVICES.filter(s => s.category === catId).length;
-
     const renderCats = () => {
         // Landing view: the four categories and nothing else.
         if (!state.activeCat) {
             catNav.innerHTML = `
                 <div class="cat-list">
                     ${PORTAL_CATEGORIES.map(c => {
-                        const n = countIn(c.id);
                         return `
                         <button class="cat-row t-${c.tile}${c.custom ? ' is-custom' : ''}" data-cat="${c.id}">
-                            <span class="cat-mark">
-                                ${c.custom
-                                    ? `<svg class="cat-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                           <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                       </svg>`
-                                    : `<img class="cat-icon" src="${c.icon}" alt="" width="36" height="36" loading="lazy">`}
-                            </span>
-                            <span class="cat-go" aria-hidden="true">→</span>
-                            <span class="cat-text">
-                                <span class="cat-name">${t(c.intent)}</span>
-                                <span class="cat-line">${t(c.label)}</span>
-                                <span class="cat-blurb">${t(c.blurb)}</span>
-                                <span class="cat-count">${c.custom ? u('buildIt') : `${n} ${n === 1 ? u('oneService') : u('nServices')}`}</span>
+                            ${c.custom
+                                ? `<svg class="cat-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                       <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                   </svg>`
+                                : `<img class="cat-icon" src="${c.icon}" alt="" width="56" height="56" loading="lazy">`}
+                            <span class="cat-name">${t(c.intent)}</span>
+                            <span class="cat-go" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </span>
                         </button>`;
                     }).join('')}
