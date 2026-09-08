@@ -119,7 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="cat-num">${String(i + 1).padStart(2, '0')}</span>
                             <img class="cat-icon" src="${c.icon}" alt="" width="30" height="30" loading="lazy">
                             <span class="cat-text">
-                                <span class="cat-name">${t(c.label)}</span>
+                                <span class="cat-name">${t(c.intent)}</span>
+                                <span class="cat-line">${t(c.label)}</span>
                                 <span class="cat-blurb">${t(c.blurb)}</span>
                             </span>
                             <span class="cat-count">${n} ${n === 1 ? u('oneService') : u('nServices')}</span>

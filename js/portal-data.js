@@ -17,30 +17,41 @@
 
 // Category icons are the same glyphs used on nelycedesign.com/en/services,
 // linked from there like the header logo already is.
+// "intent" is what the client says on the landing screen, answering the hero's
+// question in the first person. "label" is the formal service-line name, used
+// once you are inside the category.
 const PORTAL_CATEGORIES = [
     { id: "brand",
       icon: "https://www.nelycedesign.com/assets/files/services/icons/20260226022006t4DBHU.Design.webp",
-      label: { el: "Brand Identity & Visual Direction", en: "Brand Identity & Visual Direction" },
-      blurb: { el: "Λογότυπο, ταυτότητα, brand book και εφαρμογές.",
-               en: "Logo, identity, brand book and applications." } },
+      intent: { el: "Θέλω να ανανεώσω την εταιρική μου ταυτότητα",
+                en: "I want to refresh my brand identity" },
+      label:  { el: "Brand Identity & Visual Direction", en: "Brand Identity & Visual Direction" },
+      blurb:  { el: "Λογότυπο, χρώματα, τυπογραφία, brand book και εφαρμογές.",
+                en: "Logo, colours, typography, brand book and applications." } },
 
     { id: "web",
       icon: "https://www.nelycedesign.com/assets/files/services/icons/20250814092053XYuov2.20231106123421G0eJFq.Frame_1448.webp",
-      label: { el: "Custom Website & UX Design", en: "Custom Website & UX Design" },
-      blurb: { el: "Από landing page μέχρι ολοκληρωμένο e-shop.",
-               en: "From a landing page to a full online store." } },
+      intent: { el: "Θέλω ένα website που να μου φέρνει δουλειά",
+                en: "I want a website that brings me work" },
+      label:  { el: "Custom Website & UX Design", en: "Custom Website & UX Design" },
+      blurb:  { el: "Από landing page μέχρι custom site και ηλεκτρονικό κατάστημα.",
+                en: "From a landing page to a custom site or online store." } },
 
     { id: "motion",
       icon: "https://www.nelycedesign.com/assets/files/services/icons/20260226022050BhKj7p.Cinema.webp",
-      label: { el: "Video, Animation & Motion Graphics", en: "Video, Animation & Motion Graphics" },
-      blurb: { el: "Reels, logo animation και διαφημιστικά βίντεο.",
-               en: "Reels, logo animation and commercial video." } },
+      intent: { el: "Θέλω να δώσω κίνηση στο brand μου",
+                en: "I want to put my brand in motion" },
+      label:  { el: "Video, Animation & Motion Graphics", en: "Video, Animation & Motion Graphics" },
+      blurb:  { el: "Reels, logo animation και διαφημιστικά βίντεο.",
+                en: "Reels, logo animation and commercial video." } },
 
     { id: "social",
       icon: "https://www.nelycedesign.com/assets/files/services/icons/20260226022621gJPSrV.social.webp",
-      label: { el: "Social Media Management", en: "Social Media Management" },
-      blurb: { el: "Μηνιαία παραγωγή, δημοσίευση και διαχείριση περιεχομένου.",
-               en: "Monthly content production, publishing and management." } }
+      intent: { el: "Θέλω σταθερή παρουσία στα social media",
+                en: "I want a steady presence on social media" },
+      label:  { el: "Social Media Management", en: "Social Media Management" },
+      blurb:  { el: "Μηνιαία παραγωγή, δημοσίευση και διαχείριση περιεχομένου.",
+                en: "Monthly content production, publishing and management." } }
 ];
 
 const PORTAL_SERVICES = [

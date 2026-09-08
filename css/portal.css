@@ -85,7 +85,17 @@
 .cat-row .cat-icon { width: 30px; height: 30px; object-fit: contain; }
 
 .cat-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.cat-name { font-size: 1.32rem; font-weight: 600; line-height: 1.25; }
+.cat-name { font-size: 1.32rem; font-weight: 600; line-height: 1.28; }
+
+/* The formal service-line name, kept small under the sentence so the row still
+   says which part of the catalogue it opens. */
+.cat-line {
+    order: -1;
+    color: var(--text-secondary); opacity: .7;
+    font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    transition: var(--transition-smooth);
+}
+.cat-row:hover .cat-line { color: var(--accent-orange); opacity: 1; }
 .cat-blurb {
     color: var(--text-secondary); font-size: .86rem; line-height: 1.5;
     max-width: 52ch;
@@ -264,6 +274,7 @@
     .cat-row:hover { padding-top: 20px; padding-bottom: 20px; }
     .cat-row .cat-icon { width: 26px; height: 26px; }
     .cat-name { font-size: 1.05rem; }
+    .cat-line { font-size: .64rem; }
     .cat-blurb { max-height: 4em; opacity: 1; font-size: .8rem; }
     .cat-count { display: none; }
     .cat-go { width: 32px; height: 32px; }
