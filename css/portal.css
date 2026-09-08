@@ -39,8 +39,8 @@
 .cat-row {
     position: relative; isolation: isolate; overflow: hidden;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center; gap: 34px;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center; gap: 30px;
     width: 100%; padding: 44px 44px; cursor: pointer; text-align: left;
     font: inherit; color: var(--text-primary);
     background: rgba(255, 255, 255, .04);
@@ -70,7 +70,16 @@
 }
 .cat-row:hover::before { opacity: .42; transform: translateX(0); }
 
-/* icon chip, with the row number floating above it */
+/* the index sits in its own column, level with the panel, not on the chip */
+.cat-num {
+    align-self: start;
+    font-size: .78rem; font-weight: 600; letter-spacing: .14em;
+    line-height: 1; color: var(--text-secondary); opacity: .45;
+    transition: var(--transition-smooth);
+}
+.cat-row:hover .cat-num { color: var(--accent-orange); opacity: 1; }
+
+/* icon chip */
 .cat-mark { position: relative; display: grid; place-items: center; width: 84px; height: 84px; }
 .cat-mark::after {
     content: ""; position: absolute; inset: 0; border-radius: 24px;
@@ -82,14 +91,6 @@
     background: rgba(255, 107, 53, .14); border-color: rgba(255, 107, 53, .34);
 }
 .cat-row .cat-icon { position: relative; width: 36px; height: 36px; object-fit: contain; }
-
-.cat-num {
-    position: absolute; top: -10px; left: -6px;
-    font-size: .68rem; font-weight: 600; letter-spacing: .12em;
-    color: var(--text-secondary); opacity: .5;
-    transition: var(--transition-smooth);
-}
-.cat-row:hover .cat-num { color: var(--accent-orange); opacity: 1; }
 
 .cat-text { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
 .cat-name { font-size: 1.68rem; font-weight: 600; line-height: 1.24; letter-spacing: -.01em; }
@@ -268,7 +269,7 @@
     #quote-summary { position: static; }
 }
 @media (max-width: 900px) {
-    .cat-row { padding: 32px 28px; gap: 22px; }
+    .cat-row { padding: 32px 28px; gap: 20px; }
     .cat-mark { width: 66px; height: 66px; }
     .cat-mark::after { border-radius: 19px; }
     .cat-row .cat-icon { width: 30px; height: 30px; }
@@ -284,7 +285,7 @@
 @media (max-width: 600px) {
     .cat-list { gap: 14px; }
     .cat-row { grid-template-columns: auto minmax(0, 1fr); gap: 18px; padding: 26px 22px; }
-    .cat-side { display: none; }
+    .cat-side, .cat-num { display: none; }
     .cat-mark { width: 54px; height: 54px; }
     .cat-mark::after { border-radius: 16px; }
     .cat-row .cat-icon { width: 26px; height: 26px; }

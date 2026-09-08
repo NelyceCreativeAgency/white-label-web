@@ -26,32 +26,32 @@ const PORTAL_CATEGORIES = [
       intent: { el: "Θέλω να ανανεώσω την εταιρική μου ταυτότητα",
                 en: "I want to refresh my brand identity" },
       label:  { el: "Brand Identity & Visual Direction", en: "Brand Identity & Visual Direction" },
-      blurb:  { el: "Λογότυπο, χρώματα, τυπογραφία, brand book και εφαρμογές.",
-                en: "Logo, colours, typography, brand book and applications." } },
+      blurb:  { el: "Λογότυπο, χρώματα και τυπογραφία, μέχρι ολοκληρωμένο brand book.",
+                en: "Logo, colours and typography, through to a full brand book." } },
 
     { id: "web",
       icon: "https://www.nelycedesign.com/assets/files/services/icons/20250814092053XYuov2.20231106123421G0eJFq.Frame_1448.webp",
-      intent: { el: "Θέλω ένα website που να μου φέρνει δουλειά",
-                en: "I want a website that brings me work" },
+      intent: { el: "Θέλω νέο website ή ηλεκτρονικό κατάστημα",
+                en: "I want a new website or online store" },
       label:  { el: "Custom Website & UX Design", en: "Custom Website & UX Design" },
-      blurb:  { el: "Από landing page μέχρι custom site και ηλεκτρονικό κατάστημα.",
-                en: "From a landing page to a custom site or online store." } },
+      blurb:  { el: "Από μια απλή landing page μέχρι custom κατασκευή και e-shop με πληρωμές.",
+                en: "From a single landing page to a custom build or a store with payments." } },
 
     { id: "motion",
       icon: "https://www.nelycedesign.com/assets/files/services/icons/20260226022050BhKj7p.Cinema.webp",
-      intent: { el: "Θέλω να δώσω κίνηση στο brand μου",
-                en: "I want to put my brand in motion" },
+      intent: { el: "Θέλω βίντεο και animation για το brand μου",
+                en: "I want video and animation for my brand" },
       label:  { el: "Video, Animation & Motion Graphics", en: "Video, Animation & Motion Graphics" },
-      blurb:  { el: "Reels, logo animation και διαφημιστικά βίντεο.",
-                en: "Reels, logo animation and commercial video." } },
+      blurb:  { el: "Reels για social, κινούμενο λογότυπο και διαφημιστικά βίντεο.",
+                en: "Reels for social, animated logo and commercial video." } },
 
     { id: "social",
       icon: "https://www.nelycedesign.com/assets/files/services/icons/20260226022621gJPSrV.social.webp",
       intent: { el: "Θέλω σταθερή παρουσία στα social media",
                 en: "I want a steady presence on social media" },
       label:  { el: "Social Media Management", en: "Social Media Management" },
-      blurb:  { el: "Μηνιαία παραγωγή, δημοσίευση και διαχείριση περιεχομένου.",
-                en: "Monthly content production, publishing and management." } }
+      blurb:  { el: "Μηνιαία παραγωγή περιεχομένου, δημοσιεύσεις και διαχείριση λογαριασμών.",
+                en: "Monthly content production, publishing and account management." } }
 ];
 
 const PORTAL_SERVICES = [

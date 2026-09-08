@@ -116,8 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const n = countIn(c.id);
                         return `
                         <button class="cat-row" data-cat="${c.id}">
+                            <span class="cat-num">${String(i + 1).padStart(2, '0')}</span>
                             <span class="cat-mark">
-                                <span class="cat-num">${String(i + 1).padStart(2, '0')}</span>
                                 <img class="cat-icon" src="${c.icon}" alt="" width="36" height="36" loading="lazy">
                             </span>
                             <span class="cat-text">
