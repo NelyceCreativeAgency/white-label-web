@@ -1815,6 +1815,14 @@ footer.main-footer {
         border-left: none;
     }
 
+    /* No narrowing on phones: there is not enough width for the pill to
+       shrink without the nav overflowing it. Full width, no movement. */
+    .main-header.scrolled .nav-container {
+        width: 100%;
+        max-width: none;
+        padding: 12px 16px;
+    }
+
     .nav-search-wrapper {
         display: none;
     }
