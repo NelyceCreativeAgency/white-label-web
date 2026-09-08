@@ -1823,6 +1823,12 @@ footer.main-footer {
         padding: 12px 16px;
     }
 
+    /* Solid strip behind the pill, so the page does not show through
+       between the header and the stuck category bar below it. */
+    .main-header.scrolled {
+        background: var(--bg-dark);
+    }
+
     .nav-search-wrapper {
         display: none;
     }
