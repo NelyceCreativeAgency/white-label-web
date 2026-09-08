@@ -218,12 +218,20 @@ body {
 .main-header {
     position: sticky;
     top: 0;
-    background: rgba(10, 10, 12, 0.75);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border-color);
+    background: transparent;
     z-index: 1000;
-    padding: 16px 0;
+    padding: 16px 24px;
+    transition: padding 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.main-header.scrolled {
+    padding: 10px 24px;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .main-header.scrolled .nav-container {
+        background: rgba(10, 10, 12, 0.94);
+    }
 }
 
 .nav-container {
@@ -232,8 +240,26 @@ body {
     align-items: center;
     width: 100%;
     margin: 0 auto;
-    padding: 0 40px;
+    padding: 0 16px;
     position: relative;
+    max-width: 3000px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.main-header.scrolled .nav-container {
+    width: calc(100% - 72px);
+    max-width: 1140px;
+    padding: 15px 28px;
+    background: rgba(18, 18, 24, 0.55);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+        0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 .logo {
@@ -253,23 +279,19 @@ body {
 .lang-switcher {
     display: flex;
     align-items: center;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
-    padding: 3px;
     gap: 2px;
 }
 
 .lang-btn {
     font-family: var(--font-sans);
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 600;
     letter-spacing: 0.5px;
     color: var(--text-secondary);
     background: transparent;
     border: none;
     border-radius: 999px;
-    padding: 7px 14px;
+    padding: 4px 6px;
     cursor: pointer;
     transition: var(--transition-smooth);
 }
@@ -279,37 +301,81 @@ body {
 }
 
 .lang-btn.active {
-    background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
-    color: #000;
+    color: var(--text-primary);
 }
 
 .logo-badge {
     font-size: 9px;
-    background: linear-gradient(135deg, var(--accent-orange), var(--accent-amber));
-    color: #000;
+    background: transparent;
+    color: var(--accent-orange);
+    border: 1px solid var(--border-hover);
     font-weight: 700;
     padding: 2px 6px;
-    border-radius: 2px;
+    border-radius: 3px;
     letter-spacing: 1px;
 }
 
 .nav-cta {
+    position: relative;
     font-size: 15px;
-    color: var(--text-primary);
+    color: var(--text-secondary);
     text-decoration: none;
-    border-bottom: 1px solid var(--accent-orange);
-    padding-bottom: 2px;
-    transition: var(--transition-smooth);
+    padding-bottom: 3px;
+    transition: color 0.3s ease;
     white-space: nowrap;
 }
+
+.nav-cta::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--accent-orange);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
 .nav-cta:hover {
-    color: var(--accent-orange);
+    color: var(--text-primary);
+}
+
+.nav-cta:hover::after {
+    transform: scaleX(1);
+}
+
+.nav-cta-primary {
+    color: var(--bg-dark);
+    background: var(--text-primary);
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 999px;
+    transition: var(--transition-smooth);
+}
+
+.nav-cta-primary::after {
+    display: none;
+}
+
+.nav-cta-primary:hover {
+    color: var(--bg-dark);
+    background: var(--accent-orange);
 }
 
 .nav-right {
     display: flex;
     align-items: center;
     gap: 20px;
+}
+
+.nav-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-left: 20px;
+    border-left: 1px solid var(--border-color);
 }
 
 .mobile-menu-btn {
@@ -347,12 +413,12 @@ body {
 .mobile-sidebar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(5, 5, 7, 0.6);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    background: rgba(5, 5, 7, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.35s ease;
     z-index: 1400;
 }
 
@@ -366,19 +432,26 @@ body {
     top: 0;
     right: 0;
     height: 100%;
-    width: 280px;
-    max-width: 80vw;
-    background: var(--bg-card);
-    border-left: 1px solid var(--border-color);
-    box-shadow: -20px 0 40px rgba(0,0,0,0.4);
+    width: 330px;
+    max-width: 88vw;
+    background: rgba(18, 18, 24, 0.72);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -24px 0 60px rgba(0, 0, 0, 0.5);
     z-index: 1500;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 80px 24px 24px;
+    align-items: stretch;
+    padding: 92px 22px 28px;
     transform: translateX(100%);
-    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .mobile-sidebar {
+        background: rgba(14, 14, 18, 0.98);
+    }
 }
 
 .mobile-sidebar.open {
@@ -387,25 +460,71 @@ body {
 
 .mobile-sidebar-close {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 32px;
-    height: 32px;
+    top: 22px;
+    right: 22px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    border: none;
-    background: rgba(255,255,255,0.05);
-    color: var(--text-primary);
-    font-size: 20px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 22px;
     line-height: 1;
     cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.mobile-sidebar-close:hover,
+.mobile-sidebar-close:active {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+    transform: rotate(90deg);
+}
+
+.mobile-sidebar-nav {
+    display: flex;
+    flex-direction: column;
 }
 
 .mobile-sidebar-link {
-    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 19px;
+    font-weight: 500;
     color: var(--text-primary);
     text-decoration: none;
-    border-bottom: 1px solid var(--accent-orange);
-    padding-bottom: 2px;
+    padding: 17px 2px;
+    border-bottom: 1px solid var(--border-color);
+    transition: var(--transition-smooth);
+}
+
+.mobile-sidebar-link::after {
+    content: '\2192';
+    font-size: 17px;
+    color: var(--text-secondary);
+    opacity: 0.35;
+    transition: var(--transition-smooth);
+}
+
+.mobile-sidebar-link:hover,
+.mobile-sidebar-link:active {
+    color: var(--accent-orange);
+    padding-left: 10px;
+}
+
+.mobile-sidebar-link:hover::after,
+.mobile-sidebar-link:active::after {
+    color: var(--accent-orange);
+    opacity: 1;
+    transform: translateX(4px);
+}
+
+.mobile-sidebar-footer {
+    margin-top: auto;
+    padding-top: 22px;
+    border-top: 1px solid var(--border-color);
 }
 
 .mobile-sidebar .currency-btn {
@@ -1682,11 +1801,18 @@ footer.main-footer {
 }
 
 @media (max-width: 768px) {
+    .main-header,
+    .main-header.scrolled { padding-left: 12px; padding-right: 12px; }
     .nav-container { padding: 0 16px; }
 
     .nav-right .nav-cta-header,
     .nav-right .currency-dropdown-header {
         display: none;
+    }
+
+    .nav-meta {
+        padding-left: 0;
+        border-left: none;
     }
 
     .nav-search-wrapper {
@@ -1704,7 +1830,7 @@ footer.main-footer {
     .category-pills-mobile {
         display: block;
         position: sticky;
-        top: 65px;
+        top: 74px;
         z-index: 900;
         background: var(--bg-dark);
         border-bottom: 1px solid var(--border-color);
@@ -1964,6 +2090,11 @@ body.customize-open {
     left: 0;
     right: 0;
     width: auto;
+}
+
+.mobile-sidebar-footer .currency-dropdown-list {
+    top: auto;
+    bottom: calc(100% + 10px);
 }
 
 .customize-modal {

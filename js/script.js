@@ -57,6 +57,18 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(ctaSection);
     };
 
+    const setupHeaderScrollState = () => {
+        const header = document.querySelector('.main-header');
+        if (!header) return;
+
+        const update = () => {
+            header.classList.toggle('scrolled', window.scrollY > 40);
+        };
+
+        window.addEventListener('scroll', update, { passive: true });
+        update();
+    };
+
     // 0. Ambient Sparkles (warm embers drifting upward)
     const setupNightSky = () => {
         const sky = document.querySelector('.night-sky');
@@ -816,6 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupGeologicaPrefetch();
     setupNightSky();
     setupSidebarUnstick();
+    setupHeaderScrollState();
     setupSmoothScrolling();
     setupHeaderSearchToggle();
     setupCategoryFilters();

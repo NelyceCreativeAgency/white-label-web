@@ -43,20 +43,23 @@
             <div class="nav-right">
                 <a href="index.html" class="nav-cta nav-cta-header" data-en="Back to Pricing">Πίσω στον Τιμοκατάλογο</a>
                 <a href="social-calculator.html" class="nav-cta nav-cta-header" data-en="Social Calculator">Υπολογιστής Social Media</a>
-                <div class="currency-dropdown currency-dropdown-header" id="currency-dropdown-header">
-                    <button class="currency-btn currency-btn-header" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Change currency">
-                        <span class="currency-btn-flag">🇪🇺</span>
-                        <span class="currency-btn-code">EUR</span>
-                        <svg class="currency-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-                    <div class="currency-dropdown-list" role="listbox"></div>
+                <div class="nav-meta">
+                    <div class="currency-dropdown currency-dropdown-header" id="currency-dropdown-header">
+                        <button class="currency-btn currency-btn-header" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Change currency">
+                            <span class="currency-btn-flag">🇪🇺</span>
+                            <span class="currency-btn-code">EUR</span>
+                            <svg class="currency-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <div class="currency-dropdown-list" role="listbox"></div>
+                    </div>
+                    <div class="lang-switcher">
+                        <button class="lang-btn" data-lang="el">EL</button>
+                        <button class="lang-btn active" data-lang="en">EN</button>
+                    </div>
                 </div>
-                <div class="lang-switcher">
-                    <button class="lang-btn" data-lang="el">EL</button>
-                    <button class="lang-btn active" data-lang="en">EN</button>
-                </div>
+                <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="nav-cta nav-cta-header nav-cta-primary">Contact Hub</a>
                 <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle menu">
                     <span></span>
                     <span></span>
@@ -69,17 +72,23 @@
     <div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay"></div>
     <div class="mobile-sidebar" id="mobile-sidebar">
         <button class="mobile-sidebar-close" id="mobile-sidebar-close" aria-label="Close menu">&times;</button>
-        <a href="index.html" class="mobile-sidebar-link" data-en="Back to Pricing">Πίσω στον Τιμοκατάλογο</a>
-        <a href="social-calculator.html" class="mobile-sidebar-link" data-en="Social Media Calculator">Υπολογιστής Social Media</a>
-        <div class="currency-dropdown currency-dropdown-mobile" id="currency-dropdown-mobile">
-            <button class="currency-btn currency-btn-sidebar" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Change currency">
-                <span class="currency-btn-flag">🇪🇺</span>
-                <span class="currency-btn-code">EUR</span>
-                <svg class="currency-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-            <div class="currency-dropdown-list" role="listbox"></div>
+        <nav class="mobile-sidebar-nav">
+            <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="mobile-sidebar-link">Contact Hub</a>
+            <a href="index.html" class="mobile-sidebar-link" data-en="Back to Pricing">Πίσω στον Τιμοκατάλογο</a>
+            <a href="social-calculator.html" class="mobile-sidebar-link" data-en="Social Media Calculator">Υπολογιστής Social Media</a>
+        </nav>
+
+        <div class="mobile-sidebar-footer">
+            <div class="currency-dropdown currency-dropdown-mobile" id="currency-dropdown-mobile">
+                <button class="currency-btn currency-btn-sidebar" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Change currency">
+                    <span class="currency-btn-flag">🇪🇺</span>
+                    <span class="currency-btn-code">EUR</span>
+                    <svg class="currency-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <div class="currency-dropdown-list" role="listbox"></div>
+            </div>
         </div>
     </div>
 
