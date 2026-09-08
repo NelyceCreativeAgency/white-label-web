@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         floor:      { el: 'Ελάχιστη χρέωση έργου:',  en: 'Project minimum:' },
         add:        { el: 'Προσθήκη στην προσφορά',  en: 'Add to quote' },
         added:      { el: 'Στην προσφορά',           en: 'In your quote' },
-        quote:      { el: 'Η προσφορά σου',          en: 'Your quote' },
+        quote:      { el: 'Η προσφορά μου',          en: 'My quote' },
         empty:      { el: 'Διάλεξε υπηρεσίες για να δεις το σύνολο.',
                       en: 'Pick services to see the total.' },
         subtotal:   { el: 'Υποσύνολο',               en: 'Subtotal' },
@@ -53,6 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
         disclaimer: { el: 'Εκτίμηση, όχι δεσμευτική προσφορά.',
                       en: 'An estimate, not a binding quote.' },
         remove:     { el: 'Αφαίρεση',                en: 'Remove' },
+        oneItem:    { el: 'υπηρεσία',                en: 'service' },
+        nItems:     { el: 'υπηρεσίες',               en: 'services' },
         pickCat:    { el: 'Διάλεξε κατηγορία',       en: 'Choose a category' },
         allCats:    { el: 'Όλες οι κατηγορίες',      en: 'All categories' },
         oneService: { el: 'υπηρεσία',                en: 'service' },
@@ -248,8 +250,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- rendering: quote summary -----------------------------------------
     const summaryEl = document.getElementById('quote-summary');
+    const drawer = document.getElementById('quote-drawer');
+    const scrim = document.getElementById('quote-scrim');
+    const fab = document.getElementById('quote-fab');
+    const closeBtn = document.getElementById('quote-close');
+
+    const setDrawer = (open) => {
+        drawer.classList.toggle('is-open', open);
+        drawer.setAttribute('aria-hidden', String(!open));
+        scrim.hidden = !open;
+        fab.setAttribute('aria-expanded', String(open));
+        document.body.classList.toggle('quote-open', open);
+        if (open) closeBtn.focus();
+    };
+
+    // The floating button is the only way in, so it carries the running count
+    // and total. An empty quote has nothing to open, so it stays hidden.
+    const renderFab = () => {
+        const n = state.cart.length;
+        fab.hidden = n === 0;
+        if (!n) { setDrawer(false); return; }
+        const net = state.cart.reduce((sum, c) => sum + c.total, 0);
+        fab.innerHTML = `
+            <span class="fab-label">${u('quote')}</span>
+            <span class="fab-meta">${n} ${n === 1 ? u('oneItem') : u('nItems')}</span>
+            <span class="fab-total">${money(net)}</span>`;
+    };
 
     const renderSummary = () => {
+        renderFab();
+
         if (!state.cart.length) {
             summaryEl.innerHTML = `
                 <h2>${u('quote')}</h2>
@@ -294,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!btn) return;
         state.activeCat = btn.dataset.cat || null;
         state.openService = null;
-        renderCats(); renderGrid(); layout();
+        renderCats(); renderGrid();
         if (!state.activeCat) window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
@@ -322,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const existing = state.cart.findIndex(c => c.id === service.id);
             if (existing > -1) state.cart.splice(existing, 1);
             else state.cart.push({ id: service.id, total: price(service).total });
-            renderGrid(); renderSummary(); layout();
+            renderGrid(); renderSummary();
         }
     });
 
@@ -340,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const rm = e.target.closest('[data-remove]');
         if (!rm) return;
         state.cart = state.cart.filter(c => c.id !== rm.dataset.remove);
-        renderGrid(); renderSummary(); layout();
+        renderGrid(); renderSummary();
     });
 
     const syncCart = (service) => {
@@ -349,7 +379,14 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSummary();
     };
 
-    const renderAll = () => { renderCats(); renderGrid(); renderSummary(); layout(); };
+    fab.addEventListener('click', () => setDrawer(!drawer.classList.contains('is-open')));
+    scrim.addEventListener('click', () => setDrawer(false));
+    closeBtn.addEventListener('click', () => setDrawer(false));
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && drawer.classList.contains('is-open')) setDrawer(false);
+    });
+
+    const renderAll = () => { renderCats(); renderGrid(); renderSummary(); };
 
     // The header's language switcher rewrites data-lang on <html>; the currency
     // dropdown fires 'currencychange'. Neither touches nodes rendered here, so

@@ -99,11 +99,8 @@
     <main class="catalog-section">
         <div class="container">
             <div class="portal-body">
-                <div class="portal-catalogue">
-                    <nav id="cat-nav" aria-label="Categories"></nav>
-                    <div id="service-grid"></div>
-                </div>
-                <aside id="quote-summary" aria-live="polite"></aside>
+                <nav id="cat-nav" aria-label="Categories"></nav>
+                <div id="service-grid"></div>
             </div>
         </div>
     </main>
@@ -118,6 +115,15 @@
             </div>
         </div>
     </section>
+
+    <button type="button" class="quote-fab" id="quote-fab" hidden aria-controls="quote-drawer" aria-expanded="false"></button>
+
+    <div class="quote-scrim" id="quote-scrim" hidden></div>
+
+    <aside class="quote-drawer" id="quote-drawer" data-lenis-prevent aria-hidden="true" aria-label="My quote">
+        <button type="button" class="quote-close" id="quote-close" aria-label="Close">&times;</button>
+        <div id="quote-summary" aria-live="polite"></div>
+    </aside>
 
     <footer class="main-footer">
         <div class="container text-center">
