@@ -122,11 +122,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!state.activeCat) {
             catNav.innerHTML = `
                 <div class="cat-list">
-                    ${PORTAL_CATEGORIES.map((c, i) => {
+                    ${PORTAL_CATEGORIES.map(c => {
                         const n = countIn(c.id);
                         return `
                         <button class="cat-row${c.custom ? ' is-custom' : ''}" data-cat="${c.id}">
-                            <span class="cat-num">${String(i + 1).padStart(2, '0')}</span>
                             <span class="cat-mark">
                                 ${c.custom
                                     ? `<svg class="cat-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
