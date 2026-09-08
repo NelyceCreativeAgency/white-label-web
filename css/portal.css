@@ -2,29 +2,14 @@
    The page chrome (background, header, hero, footer) comes from style.css.
    Only the catalogue and quote panel live here. */
 
-/* --- hero, tightened so the categories sit higher --------------------- */
-.hero-section { padding: 96px 0 24px; }
+/* --- hero ------------------------------------------------------------- */
+.hero-section { padding: 104px 0 64px; }
 .hero-section .hero-subtitle { margin-bottom: 0; }
-
-/* --- market switch, under the hero ------------------------------------ */
-.market-switch { display: flex; justify-content: center; margin-top: 22px; }
-#market-toggle {
-    display: inline-flex; gap: 4px; padding: 4px;
-    background: rgba(255, 255, 255, .04); border: 1px solid var(--border-color);
-    border-radius: 100px; backdrop-filter: blur(8px);
-}
-#market-toggle button {
-    padding: 9px 22px; border: 0; border-radius: 100px; cursor: pointer;
-    font: inherit; font-size: .85rem; color: var(--text-secondary);
-    background: transparent; transition: var(--transition-smooth);
-}
-#market-toggle button:hover { color: var(--text-primary); }
-#market-toggle button.is-active { background: var(--accent-orange); color: #fff; }
 
 /* --- layout ----------------------------------------------------------- */
 .portal-body {
     display: grid; grid-template-columns: minmax(0, 1fr) 340px;
-    gap: 32px; align-items: start; padding: 4px 0 40px;
+    gap: 40px; align-items: start; padding: 0 0 96px;
 }
 
 /* Category screen with an empty quote: nothing to show on the right. */
@@ -34,7 +19,7 @@
 /* --- category screen -------------------------------------------------- */
 /* Four large, airy panels answering the question in the hero. Separate cards
    with space between them rather than rows divided by rules. */
-.cat-list { display: flex; flex-direction: column; gap: 18px; margin-bottom: 8px; }
+.cat-list { display: flex; flex-direction: column; gap: 18px; }
 
 .cat-row {
     position: relative; isolation: isolate; overflow: hidden;
@@ -121,7 +106,7 @@
 /* --- back bar, once you are inside a category ------------------------- */
 .cat-bar {
     display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-    margin-bottom: 24px; padding-bottom: 16px;
+    margin-bottom: 36px; padding-bottom: 20px;
     border-bottom: 1px solid var(--border-color);
 }
 .cat-back {
@@ -137,7 +122,7 @@
 .cat-current strong { font-size: 1.02rem; font-weight: 600; }
 
 /* --- service cards ---------------------------------------------------- */
-#service-grid { display: flex; flex-direction: column; gap: 12px; }
+#service-grid { display: flex; flex-direction: column; gap: 16px; }
 .svc-card {
     background: var(--bg-card); border: 1px solid var(--border-color);
     border-radius: 16px; overflow: hidden; transition: var(--transition-smooth);
@@ -228,7 +213,7 @@
 
 /* --- quote summary ---------------------------------------------------- */
 #quote-summary {
-    position: sticky; top: 96px; padding: 24px;
+    position: sticky; top: 100px; padding: 26px;
     background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px;
 }
 #quote-summary h2 { margin: 0 0 16px; font-size: 1rem; font-weight: 600; }
@@ -269,6 +254,7 @@
     #quote-summary { position: static; }
 }
 @media (max-width: 900px) {
+    .hero-section { padding: 96px 0 48px; }
     .cat-row { padding: 32px 28px; gap: 20px; }
     .cat-mark { width: 66px; height: 66px; }
     .cat-mark::after { border-radius: 19px; }
@@ -291,7 +277,8 @@
     .cat-row .cat-icon { width: 26px; height: 26px; }
     .cat-name { font-size: 1.12rem; }
     .cat-blurb { font-size: .84rem; }
-    .hero-section { padding: 84px 0 20px; }
+    .hero-section { padding: 88px 0 40px; }
+    .portal-body { padding-bottom: 64px; }
 }
 
 @media (max-width: 560px) {
@@ -299,5 +286,4 @@
     .svc-price { text-align: left; }
     .param { flex-direction: column; align-items: flex-start; gap: 10px; }
     .param-toggle { flex-direction: row; align-items: center; justify-content: space-between; }
-    #market-toggle button { padding: 9px 16px; font-size: .8rem; }
 }

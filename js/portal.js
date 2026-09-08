@@ -6,8 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const VAT_RATE = 0.24;
     const INSTALMENT_THRESHOLD = 2500;
 
+    // One market for now: Greek VAT, Greek add-ons shown. The data model still
+    // carries market filters, so a switch can come back without a rewrite.
+    const MARKET = 'GR';
+
     const state = {
-        market: 'GR',        // GR = 24% VAT, INT = 0% (reverse charge)
         activeCat: null,   // null = the category screen
         openService: null,   // service id whose configurator is open
         values: {},          // serviceId -> { paramKey: value }
@@ -61,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- pricing ----------------------------------------------------------
     const visibleParams = (service) =>
-        service.params.filter(p => !p.market || p.market === state.market);
+        service.params.filter(p => !p.market || p.market === MARKET);
 
     const defaults = (service) => {
         const v = {};
@@ -255,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const net = state.cart.reduce((sum, c) => sum + c.total, 0);
-        const vat = state.market === 'GR' ? net * VAT_RATE : 0;
+        const vat = MARKET === 'GR' ? net * VAT_RATE : 0;
         const gross = net + vat;
 
         summaryEl.innerHTML = `
@@ -271,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <div class="quote-totals">
                 <div class="qt-row"><span>${u('subtotal')}</span><span>${money(net)}</span></div>
-                <div class="qt-row"><span>${u('vat')} ${state.market === 'GR' ? '24%' : u('reverse')}</span><span>${money(vat)}</span></div>
+                <div class="qt-row"><span>${u('vat')} ${MARKET === 'GR' ? '24%' : u('reverse')}</span><span>${money(vat)}</span></div>
                 <div class="qt-row qt-total"><span>${u('total')}</span><span>${money(gross)}</span></div>
             </div>
 
@@ -344,25 +347,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const line = state.cart.find(c => c.id === service.id);
         if (line) line.total = price(service).total;
         renderSummary();
-    };
-
-    document.getElementById('market-toggle').addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-market]');
-        if (!btn) return;
-        state.market = btn.dataset.market;
-        document.querySelectorAll('#market-toggle [data-market]')
-            .forEach(b => b.classList.toggle('is-active', b.dataset.market === state.market));
-        // market-specific params appear or vanish, so reset their stored values
-        PORTAL_SERVICES.forEach(s => { delete state.values[s.id]; });
-        state.cart.forEach(c => { c.total = price(svc(c.id)).total; });
-        renderGrid(); renderSummary();
-    });
-
-    // On the category screen with an empty quote there is nothing to put in the
-    // second column, so the catalogue takes the full width.
-    const layout = () => {
-        const body = document.querySelector('.portal-body');
-        if (body) body.classList.toggle('is-browsing', !state.activeCat && !state.cart.length);
     };
 
     const renderAll = () => { renderCats(); renderGrid(); renderSummary(); layout(); };
