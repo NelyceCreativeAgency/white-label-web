@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const state = {
         activeCat: null,   // null = the category screen
+        slide: 0,          // which category is at the front of the carousel
         openService: null,   // service id whose configurator is open
         values: {},          // serviceId -> { paramKey: value }
         cart: []             // [{ id, total, summary }]
@@ -53,6 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
         disclaimer: { el: 'Εκτίμηση, όχι δεσμευτική προσφορά.',
                       en: 'An estimate, not a binding quote.' },
         remove:     { el: 'Αφαίρεση',                en: 'Remove' },
+        prev:       { el: 'Προηγούμενο',             en: 'Previous' },
+        next:       { el: 'Επόμενο',                 en: 'Next' },
         oneItem:    { el: 'υπηρεσία',                en: 'service' },
         nItems:     { el: 'υπηρεσίες',               en: 'services' },
         soon:       { el: 'Σε εξέλιξη',               en: 'In progress' },
@@ -113,26 +116,78 @@ document.addEventListener('DOMContentLoaded', () => {
     const catNav = document.getElementById('cat-nav');
     const grid = document.getElementById('service-grid');
 
+    // Scale carousel: the active tile sits in front at full size, its
+    // neighbours shrink and fade behind it, and anything further out is hidden.
+    // Positions are transforms on absolutely placed tiles, so the wrap-around
+    // needs no cloned slides.
+    const positionSlides = () => {
+        const slides = catNav.querySelectorAll('[data-slide]');
+        if (!slides.length) return;
+        const total = PORTAL_CATEGORIES.length;
+
+        slides.forEach((el, i) => {
+            // shortest signed distance from the active slide, wrapping around
+            let offset = i - state.slide;
+            if (offset > total / 2) offset -= total;
+            if (offset < -total / 2) offset += total;
+
+            const dist = Math.abs(offset);
+            const scale = dist === 0 ? 1 : dist === 1 ? 0.84 : 0.7;
+            const shift = offset * 46;
+
+            el.style.transform = `translate(calc(-50% + ${shift}%), 0) scale(${scale})`;
+            el.style.opacity = dist > 1 ? 0 : dist === 1 ? 0.42 : 1;
+            el.style.zIndex = String(30 - dist);
+            el.style.pointerEvents = dist > 1 ? 'none' : 'auto';
+            el.classList.toggle('is-active', dist === 0);
+            el.setAttribute('aria-hidden', String(dist > 1));
+            el.tabIndex = dist === 0 ? 0 : -1;
+        });
+
+        catNav.querySelectorAll('[data-go-slide]').forEach((dot, i) => {
+            dot.classList.toggle('is-active', i === state.slide);
+        });
+    };
+
+    const goToSlide = (index) => {
+        const total = PORTAL_CATEGORIES.length;
+        state.slide = ((index % total) + total) % total;
+        positionSlides();
+    };
+
     const renderCats = () => {
         // Landing view: the four categories and nothing else.
         if (!state.activeCat) {
             catNav.innerHTML = `
-                <div class="cat-list">
-                    ${PORTAL_CATEGORIES.map(c => {
-                        return `
-                        <button class="cat-row t-${c.tile}${c.custom ? ' is-custom' : ''}" data-cat="${c.id}">
+                <div class="cat-carousel">
+                    <div class="cat-stage">
+                        ${PORTAL_CATEGORIES.map((c, i) => `
+                        <button class="cat-row${c.custom ? ' is-custom' : ''}" data-slide="${i}" data-cat="${c.id}">
                             ${c.custom
                                 ? `<svg class="cat-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                       <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                       <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
                                    </svg>`
-                                : `<img class="cat-icon" src="${c.icon}" alt="" width="56" height="56" loading="lazy">`}
+                                : `<img class="cat-icon" src="${c.icon}" alt="" width="40" height="40" loading="lazy">`}
                             <span class="cat-name">${t(c.intent)}</span>
                             <span class="cat-go" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h13M12 5l7 7-7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </span>
-                        </button>`;
-                    }).join('')}
+                        </button>`).join('')}
+                    </div>
+
+                    <button type="button" class="slide-nav slide-prev" data-step-slide="-1" aria-label="${u('prev')}">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <button type="button" class="slide-nav slide-next" data-step-slide="1" aria-label="${u('next')}">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+
+                    <div class="slide-dots">
+                        ${PORTAL_CATEGORIES.map((c, i) =>
+                            `<button type="button" class="slide-dot" data-go-slide="${i}" aria-label="${t(c.label)}"></button>`).join('')}
+                    </div>
                 </div>`;
+            positionSlides();
             return;
         }
 
@@ -328,8 +383,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- events ------------------------------------------------------------
     catNav.addEventListener('click', (e) => {
+        const step = e.target.closest('[data-step-slide]');
+        if (step) return goToSlide(state.slide + Number(step.dataset.stepSlide));
+
+        const dot = e.target.closest('[data-go-slide]');
+        if (dot) return goToSlide(Number(dot.dataset.goSlide));
+
         const btn = e.target.closest('[data-cat]');
         if (!btn) return;
+
+        // A tile off to the side is asking to come to the front, not to open.
+        if (btn.dataset.slide !== undefined && Number(btn.dataset.slide) !== state.slide) {
+            return goToSlide(Number(btn.dataset.slide));
+        }
+
         state.activeCat = btn.dataset.cat || null;
         state.openService = null;
         renderCats(); renderGrid();
@@ -386,6 +453,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (line) line.total = price(service).total;
         renderSummary();
     };
+
+    document.addEventListener('keydown', (e) => {
+        if (state.activeCat || drawer.classList.contains('is-open')) return;
+        if (e.key === 'ArrowLeft') goToSlide(state.slide - 1);
+        if (e.key === 'ArrowRight') goToSlide(state.slide + 1);
+    });
+
+    // Horizontal drag / swipe on the stage
+    let dragX = null;
+    catNav.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('.cat-stage')) dragX = e.clientX;
+    });
+    catNav.addEventListener('pointerup', (e) => {
+        if (dragX === null) return;
+        const dx = e.clientX - dragX;
+        dragX = null;
+        if (Math.abs(dx) > 45) goToSlide(state.slide + (dx < 0 ? 1 : -1));
+    });
 
     fab.addEventListener('click', () => setDrawer(!drawer.classList.contains('is-open')));
     scrim.addEventListener('click', () => setDrawer(false));
