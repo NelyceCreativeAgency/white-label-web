@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.createElement('div');
     overlay.className = 'customize-overlay';
     overlay.innerHTML = `
-        <div class="customize-modal">
+        <div class="customize-modal" data-lenis-prevent>
             <button type="button" class="customize-close" aria-label="Close">&times;</button>
             <h3 class="customize-title"></h3>
             <p class="customize-desc"></p>

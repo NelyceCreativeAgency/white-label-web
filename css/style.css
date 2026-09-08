@@ -2039,6 +2039,26 @@ body.customize-open {
     box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     z-index: 1200;
     display: none;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.currency-dropdown-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.currency-dropdown-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.currency-dropdown-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 100px;
+}
+
+.currency-dropdown-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .currency-dropdown.open .currency-dropdown-list {

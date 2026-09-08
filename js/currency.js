@@ -228,6 +228,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const list = dropdown.querySelector('.currency-dropdown-list');
         if (!toggle || !list) return;
 
+        // Lenis drives the page scroll from wheel events, so a wheel over an
+        // inner scroller moves the page instead of the list. This opts the
+        // list out and hands those events back to the browser.
+        list.setAttribute('data-lenis-prevent', '');
+
         CURRENCIES.forEach(c => {
             const opt = document.createElement('button');
             opt.type = 'button';
