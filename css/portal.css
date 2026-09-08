@@ -32,90 +32,89 @@
 .portal-body.is-browsing #quote-summary { display: none; }
 
 /* --- category screen -------------------------------------------------- */
-/* Not a grid of boxes: four numbered rows, read like a list of answers to the
-   question in the hero. Each one opens as you hover it. */
-.cat-list {
-    display: flex; flex-direction: column;
-    border-top: 1px solid var(--border-color);
-    margin-bottom: 8px;
-}
+/* Four large, airy panels answering the question in the hero. Separate cards
+   with space between them rather than rows divided by rules. */
+.cat-list { display: flex; flex-direction: column; gap: 18px; margin-bottom: 8px; }
 
 .cat-row {
     position: relative; isolation: isolate; overflow: hidden;
     display: grid;
-    grid-template-columns: auto 30px minmax(0, 1fr) auto auto;
-    align-items: center; gap: 22px;
-    width: 100%; padding: 26px 24px; cursor: pointer; text-align: left;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center; gap: 34px;
+    width: 100%; padding: 44px 44px; cursor: pointer; text-align: left;
     font: inherit; color: var(--text-primary);
-    background: transparent;
-    border: 0; border-bottom: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, .04);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 26px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
     transition: var(--transition-smooth);
-}
-
-/* Frosted pane, drawn only on hover so the resting state stays typographic. */
-.cat-row::after {
-    content: ""; position: absolute; inset: 0; z-index: -2;
-    background: rgba(255, 255, 255, .05);
-    -webkit-backdrop-filter: blur(16px) saturate(130%);
-    backdrop-filter: blur(16px) saturate(130%);
-    opacity: 0; transition: var(--transition-smooth);
 }
 
 /* Brand artwork sweeps in from the right edge on hover. */
 .cat-row::before {
-    content: ""; position: absolute; inset: 0 0 0 auto; width: 42%; z-index: -1;
+    content: ""; position: absolute; inset: 0 0 0 auto; width: 46%; z-index: -1;
     background: url("../images/services.webp") no-repeat right center / cover;
-    opacity: 0; transform: translateX(28px);
+    opacity: .12; transform: translateX(18px);
     -webkit-mask-image: linear-gradient(to left, #000 0%, transparent 92%);
     mask-image: linear-gradient(to left, #000 0%, transparent 92%);
     transition: var(--transition-smooth);
 }
 
-.cat-row:hover { padding-top: 34px; padding-bottom: 34px; }
-.cat-row:hover::after { opacity: 1; }
-.cat-row:hover::before { opacity: .5; transform: translateX(0); }
+.cat-row:hover {
+    background: rgba(255, 255, 255, .07);
+    border-color: rgba(255, 107, 53, .38);
+    transform: translateY(-4px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 18px 44px rgba(0, 0, 0, .28);
+}
+.cat-row:hover::before { opacity: .42; transform: translateX(0); }
+
+/* icon chip, with the row number floating above it */
+.cat-mark { position: relative; display: grid; place-items: center; width: 84px; height: 84px; }
+.cat-mark::after {
+    content: ""; position: absolute; inset: 0; border-radius: 24px;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .08);
+    transition: var(--transition-smooth);
+}
+.cat-row:hover .cat-mark::after {
+    background: rgba(255, 107, 53, .14); border-color: rgba(255, 107, 53, .34);
+}
+.cat-row .cat-icon { position: relative; width: 36px; height: 36px; object-fit: contain; }
 
 .cat-num {
-    font-size: .78rem; font-weight: 600; letter-spacing: .1em;
-    color: var(--text-secondary); opacity: .55;
+    position: absolute; top: -10px; left: -6px;
+    font-size: .68rem; font-weight: 600; letter-spacing: .12em;
+    color: var(--text-secondary); opacity: .5;
     transition: var(--transition-smooth);
 }
 .cat-row:hover .cat-num { color: var(--accent-orange); opacity: 1; }
 
-.cat-row .cat-icon { width: 30px; height: 30px; object-fit: contain; }
+.cat-text { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.cat-name { font-size: 1.68rem; font-weight: 600; line-height: 1.24; letter-spacing: -.01em; }
+.cat-blurb { color: var(--text-secondary); font-size: .94rem; line-height: 1.6; max-width: 56ch; }
 
-.cat-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.cat-name { font-size: 1.32rem; font-weight: 600; line-height: 1.28; }
-
-/* The formal service-line name, kept small under the sentence so the row still
-   says which part of the catalogue it opens. */
+/* the formal service-line name, above the sentence */
 .cat-line {
     order: -1;
-    color: var(--text-secondary); opacity: .7;
-    font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text-secondary); opacity: .65;
+    font-size: .69rem; font-weight: 600; letter-spacing: .13em; text-transform: uppercase;
     transition: var(--transition-smooth);
 }
 .cat-row:hover .cat-line { color: var(--accent-orange); opacity: 1; }
-.cat-blurb {
-    color: var(--text-secondary); font-size: .86rem; line-height: 1.5;
-    max-width: 52ch;
-    /* held closed at rest, opens with the row */
-    max-height: 0; opacity: 0; overflow: hidden;
-    transition: var(--transition-smooth);
-}
-.cat-row:hover .cat-blurb { max-height: 3.5em; opacity: 1; }
 
-.cat-count { color: var(--accent-amber); font-size: .78rem; white-space: nowrap; }
-
+.cat-side { display: flex; align-items: center; gap: 20px; }
+.cat-count { color: var(--accent-amber); font-size: .8rem; white-space: nowrap; }
 .cat-go {
-    display: grid; place-items: center; width: 38px; height: 38px;
-    border: 1px solid var(--border-color); border-radius: 50%;
-    color: var(--text-secondary); font-size: .95rem;
+    display: grid; place-items: center; width: 52px; height: 52px;
+    border: 1px solid rgba(255, 255, 255, .12); border-radius: 50%;
+    color: var(--text-secondary); font-size: 1.1rem;
     transition: var(--transition-smooth);
 }
 .cat-row:hover .cat-go {
     border-color: var(--accent-orange); background: var(--accent-orange);
-    color: #fff; transform: translateX(4px);
+    color: #fff; transform: translateX(5px);
 }
 
 /* --- back bar, once you are inside a category ------------------------- */
@@ -268,20 +267,29 @@
     .portal-body { grid-template-columns: 1fr; gap: 24px; }
     #quote-summary { position: static; }
 }
-/* Touch has no hover, so rows open permanently and stay compact. */
-@media (max-width: 760px), (hover: none) {
-    .cat-row { grid-template-columns: auto 26px minmax(0, 1fr) auto; gap: 14px; padding: 20px 4px; }
-    .cat-row:hover { padding-top: 20px; padding-bottom: 20px; }
-    .cat-row .cat-icon { width: 26px; height: 26px; }
-    .cat-name { font-size: 1.05rem; }
-    .cat-line { font-size: .64rem; }
-    .cat-blurb { max-height: 4em; opacity: 1; font-size: .8rem; }
+@media (max-width: 900px) {
+    .cat-row { padding: 32px 28px; gap: 22px; }
+    .cat-mark { width: 66px; height: 66px; }
+    .cat-mark::after { border-radius: 19px; }
+    .cat-row .cat-icon { width: 30px; height: 30px; }
+    .cat-name { font-size: 1.32rem; }
     .cat-count { display: none; }
-    .cat-go { width: 32px; height: 32px; }
-    .cat-row::before { width: 60%; opacity: .28; transform: none; }
 }
 
-@media (max-width: 760px) {
+/* Touch has no hover, so the artwork is simply always on. */
+@media (hover: none) {
+    .cat-row::before { opacity: .3; transform: none; }
+}
+
+@media (max-width: 600px) {
+    .cat-list { gap: 14px; }
+    .cat-row { grid-template-columns: auto minmax(0, 1fr); gap: 18px; padding: 26px 22px; }
+    .cat-side { display: none; }
+    .cat-mark { width: 54px; height: 54px; }
+    .cat-mark::after { border-radius: 16px; }
+    .cat-row .cat-icon { width: 26px; height: 26px; }
+    .cat-name { font-size: 1.12rem; }
+    .cat-blurb { font-size: .84rem; }
     .hero-section { padding: 84px 0 20px; }
 }
 

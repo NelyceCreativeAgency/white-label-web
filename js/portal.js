@@ -116,15 +116,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         const n = countIn(c.id);
                         return `
                         <button class="cat-row" data-cat="${c.id}">
-                            <span class="cat-num">${String(i + 1).padStart(2, '0')}</span>
-                            <img class="cat-icon" src="${c.icon}" alt="" width="30" height="30" loading="lazy">
+                            <span class="cat-mark">
+                                <span class="cat-num">${String(i + 1).padStart(2, '0')}</span>
+                                <img class="cat-icon" src="${c.icon}" alt="" width="36" height="36" loading="lazy">
+                            </span>
                             <span class="cat-text">
                                 <span class="cat-name">${t(c.intent)}</span>
                                 <span class="cat-line">${t(c.label)}</span>
                                 <span class="cat-blurb">${t(c.blurb)}</span>
                             </span>
-                            <span class="cat-count">${n} ${n === 1 ? u('oneService') : u('nServices')}</span>
-                            <span class="cat-go" aria-hidden="true">→</span>
+                            <span class="cat-side">
+                                <span class="cat-count">${n} ${n === 1 ? u('oneService') : u('nServices')}</span>
+                                <span class="cat-go" aria-hidden="true">→</span>
+                            </span>
                         </button>`;
                     }).join('')}
                 </div>`;
