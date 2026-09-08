@@ -1,6 +1,9 @@
 // Per-service customization parameters.
-// Pricing model: total = (basePrice + sum of additive extras) * units
+// Pricing model: total = (basePrice + sum of per-unit extras) * units + sum of flat extras
 // "units" comes from the one param flagged role:"multiplier" (defaults to 1 if none).
+// Extras scale with the multiplier by default (e.g. "/month", "per page"). One-off
+// work that happens once per project no matter the multiplier is marked
+// scope:"flat" and is added after the multiplication instead of inside it.
 const SERVICE_PARAMS = {
 
     "homepage-design": [
@@ -44,7 +47,7 @@ const SERVICE_PARAMS = {
 
     "extra-concepts": [
         { key: "concepts", type: "stepper", role: "multiplier", label: { el: "Αριθμός Προτάσεων", en: "Number of Concepts" }, min: 1, max: 10, default: 1, pricePerUnit: 0 },
-        { key: "rush", type: "toggle", label: { el: "Rush Delivery", en: "Rush Delivery" }, price: 60 }
+        { key: "rush", type: "toggle", scope: "flat", label: { el: "Rush Delivery", en: "Rush Delivery" }, price: 60 }
     ],
 
     "responsive-theme": [
@@ -205,6 +208,6 @@ const SERVICE_PARAMS = {
 
     "ecommerce-management": [
         { key: "months", type: "stepper", role: "multiplier", label: { el: "Διάρκεια σε Μήνες", en: "Duration in Months" }, min: 1, max: 12, default: 1, pricePerUnit: 0 },
-        { key: "productBlocks", type: "stepper", label: { el: "Καταχώρηση Προϊόντων από εμάς (ανά 50)", en: "Product Data Entry by Us (per 50)" }, min: 0, max: 10, default: 0, pricePerUnit: 96 }
+        { key: "productBlocks", type: "stepper", scope: "flat", label: { el: "Καταχώρηση Προϊόντων από εμάς (ανά 50)", en: "Product Data Entry by Us (per 50)" }, min: 0, max: 10, default: 0, pricePerUnit: 96 }
     ]
 };

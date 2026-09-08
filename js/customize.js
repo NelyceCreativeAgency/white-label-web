@@ -57,6 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!current) return;
         let units = 1;
         let additive = 0;
+        let flat = 0;
+
+        // Extras marked scope:"flat" are one-off per project, so they land outside
+        // the multiplication instead of being charged once per unit.
+        const addExtra = (p, amount) => {
+            if (p.scope === 'flat') flat += amount;
+            else additive += amount;
+        };
 
         current.params.forEach(p => {
             const val = current.values[p.key];
@@ -64,16 +72,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (p.role === 'multiplier') {
                     units = val;
                 } else {
-                    additive += (val - (p.baseline || 0)) * p.pricePerUnit * rate();
+                    addExtra(p, (val - (p.baseline || 0)) * p.pricePerUnit * rate());
                 }
             } else if (p.type === 'toggle') {
-                if (val) additive += p.price * rate();
+                if (val) addExtra(p, p.price * rate());
             } else if (p.type === 'select') {
-                additive += p.options[val].price * rate();
+                addExtra(p, p.options[val].price * rate());
             }
         });
 
-        const total = (current.baseAmount + additive) * units;
+        const total = (current.baseAmount + additive) * units + flat;
         totalValue.textContent = formatMoney(total);
         current.total = total;
         current.units = units;
