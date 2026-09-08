@@ -21,7 +21,7 @@
 // question in the first person. "label" is the formal service-line name, used
 // once you are inside the category.
 const PORTAL_CATEGORIES = [
-    { id: "brand",
+    { id: "brand", tile: "lg",
       icon: "https://www.nelycedesign.com/assets/files/services/icons/20260226022006t4DBHU.Design.webp",
       intent: { el: "Θέλω να ανανεώσω την εταιρική μου ταυτότητα",
                 en: "I want to refresh my brand identity" },
@@ -29,7 +29,7 @@ const PORTAL_CATEGORIES = [
       blurb:  { el: "Λογότυπο, χρώματα και τυπογραφία, μέχρι ολοκληρωμένο brand book.",
                 en: "Logo, colours and typography, through to a full brand book." } },
 
-    { id: "web",
+    { id: "web", tile: "sm",
       icon: "https://www.nelycedesign.com/assets/files/services/icons/20250814092053XYuov2.20231106123421G0eJFq.Frame_1448.webp",
       intent: { el: "Θέλω νέο website ή ηλεκτρονικό κατάστημα",
                 en: "I want a new website or online store" },
@@ -37,7 +37,7 @@ const PORTAL_CATEGORIES = [
       blurb:  { el: "Από μια απλή landing page μέχρι custom κατασκευή και e-shop με πληρωμές.",
                 en: "From a single landing page to a custom build or a store with payments." } },
 
-    { id: "motion",
+    { id: "motion", tile: "sm",
       icon: "https://www.nelycedesign.com/assets/files/services/icons/20260226022050BhKj7p.Cinema.webp",
       intent: { el: "Θέλω βίντεο και animation για το brand μου",
                 en: "I want video and animation for my brand" },
@@ -45,7 +45,7 @@ const PORTAL_CATEGORIES = [
       blurb:  { el: "Reels για social, κινούμενο λογότυπο και διαφημιστικά βίντεο.",
                 en: "Reels for social, animated logo and commercial video." } },
 
-    { id: "social",
+    { id: "social", tile: "md",
       icon: "https://www.nelycedesign.com/assets/files/services/icons/20260226022621gJPSrV.social.webp",
       intent: { el: "Θέλω σταθερή παρουσία στα social media",
                 en: "I want a steady presence on social media" },
@@ -56,7 +56,7 @@ const PORTAL_CATEGORIES = [
     // Not a service line: an open path for combining anything, or for a client
     // who does not recognise their project in the four above. custom:true keeps
     // it out of the service catalogue and gives it its own treatment.
-    { id: "custom", custom: true,
+    { id: "custom", custom: true, tile: "md",
       intent: { el: "Θέλω να φτιάξω το δικό μου πακέτο",
                 en: "I want to build my own package" },
       label:  { el: "Custom Package", en: "Custom Package" },

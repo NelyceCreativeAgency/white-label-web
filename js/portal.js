@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${PORTAL_CATEGORIES.map(c => {
                         const n = countIn(c.id);
                         return `
-                        <button class="cat-row${c.custom ? ' is-custom' : ''}" data-cat="${c.id}">
+                        <button class="cat-row t-${c.tile}${c.custom ? ' is-custom' : ''}" data-cat="${c.id}">
                             <span class="cat-mark">
                                 ${c.custom
                                     ? `<svg class="cat-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -133,14 +133,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                        </svg>`
                                     : `<img class="cat-icon" src="${c.icon}" alt="" width="36" height="36" loading="lazy">`}
                             </span>
+                            <span class="cat-go" aria-hidden="true">→</span>
                             <span class="cat-text">
                                 <span class="cat-name">${t(c.intent)}</span>
                                 <span class="cat-line">${t(c.label)}</span>
                                 <span class="cat-blurb">${t(c.blurb)}</span>
-                            </span>
-                            <span class="cat-side">
                                 <span class="cat-count">${c.custom ? u('buildIt') : `${n} ${n === 1 ? u('oneService') : u('nServices')}`}</span>
-                                <span class="cat-go" aria-hidden="true">→</span>
                             </span>
                         </button>`;
                     }).join('')}
