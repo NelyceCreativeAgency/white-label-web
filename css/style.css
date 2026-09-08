@@ -1825,7 +1825,7 @@ footer.main-footer {
 
     /* Solid strip behind the pill, so the page does not show through
        between the header and the stuck category bar below it. */
-    .main-header.scrolled {
+    .main-header.pills-stuck {
         background: var(--bg-dark);
     }
 

@@ -69,6 +69,23 @@ document.addEventListener('DOMContentLoaded', () => {
         update();
     };
 
+    const setupCategoryBarStuck = () => {
+        const header = document.querySelector('.main-header');
+        const pills = document.querySelector('.category-pills-mobile');
+        if (!header || !pills) return;
+
+        const update = () => {
+            const onScreen = pills.offsetParent !== null;
+            const stickyTop = parseFloat(getComputedStyle(pills).top) || 0;
+            const stuck = onScreen && pills.getBoundingClientRect().top <= stickyTop + 1;
+            header.classList.toggle('pills-stuck', stuck);
+        };
+
+        window.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update, { passive: true });
+        update();
+    };
+
     // 0. Ambient Sparkles (warm embers drifting upward)
     const setupNightSky = () => {
         const sky = document.querySelector('.night-sky');
@@ -829,6 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupNightSky();
     setupSidebarUnstick();
     setupHeaderScrollState();
+    setupCategoryBarStuck();
     setupSmoothScrolling();
     setupHeaderSearchToggle();
     setupCategoryFilters();
