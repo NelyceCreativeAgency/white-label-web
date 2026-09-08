@@ -41,13 +41,17 @@
                 border-color .4s, background .4s;
 }
 
-/* artwork as a corner wash */
+/* Artwork as a colour wash, never as a picture with edges. The layer is blown
+   out well past the tile and covers it, so the image's own rectangle is always
+   outside the frame; the blur removes what is left of its hard boundary, and
+   the mask fades the colour away before it reaches the sentence. */
 .cat-row::before {
-    content: ""; position: absolute; inset: -10%; z-index: -1;
-    background: url("../images/services.webp") no-repeat right -8% top -18% / 66%;
-    opacity: .34;
-    -webkit-mask-image: radial-gradient(120% 90% at 88% 6%, #000 0%, transparent 68%);
-    mask-image: radial-gradient(120% 90% at 88% 6%, #000 0%, transparent 68%);
+    content: ""; position: absolute; inset: -35%; z-index: -1;
+    background: url("../images/services.webp") no-repeat right top / cover;
+    filter: blur(26px) saturate(125%);
+    opacity: .42;
+    -webkit-mask-image: radial-gradient(78% 62% at 96% 4%, #000 0%, rgba(0,0,0,.55) 42%, transparent 74%);
+    mask-image: radial-gradient(78% 62% at 96% 4%, #000 0%, rgba(0,0,0,.55) 42%, transparent 74%);
     transition: opacity .5s;
 }
 
@@ -55,7 +59,7 @@
     background: rgba(255, 255, 255, .07);
     border-color: rgba(255, 107, 53, .4);
 }
-.cat-row.is-active:hover::before { opacity: .55; }
+.cat-row.is-active:hover::before { opacity: .62; }
 
 .cat-icon {
     width: 40px; height: 40px; object-fit: contain;
