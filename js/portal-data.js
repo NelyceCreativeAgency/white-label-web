@@ -51,7 +51,17 @@ const PORTAL_CATEGORIES = [
                 en: "I want a steady presence on social media" },
       label:  { el: "Social Media Management", en: "Social Media Management" },
       blurb:  { el: "Μηνιαία παραγωγή περιεχομένου, δημοσιεύσεις και διαχείριση λογαριασμών.",
-                en: "Monthly content production, publishing and account management." } }
+                en: "Monthly content production, publishing and account management." } },
+
+    // Not a service line: an open path for combining anything, or for a client
+    // who does not recognise their project in the four above. custom:true keeps
+    // it out of the service catalogue and gives it its own treatment.
+    { id: "custom", custom: true,
+      intent: { el: "Θέλω να φτιάξω το δικό μου πακέτο",
+                en: "I want to build my own package" },
+      label:  { el: "Custom Package", en: "Custom Package" },
+      blurb:  { el: "Συνδύασε ελεύθερα υπηρεσίες από όλες τις κατηγορίες, ή πες μας τι έχεις στο μυαλό σου.",
+                en: "Combine services freely across every category, or tell us what you have in mind." } }
 ];
 
 const PORTAL_SERVICES = [

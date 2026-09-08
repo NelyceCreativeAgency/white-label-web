@@ -96,6 +96,50 @@
     color: #fff; transform: translateX(5px);
 }
 
+/* The open-ended path is not a service line, so it reads as an outline rather
+   than a filled panel: no artwork, a dashed edge, a drawn plus. */
+.cat-row.is-custom {
+    background: transparent;
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, .16);
+    box-shadow: none;
+}
+.cat-row.is-custom::before { content: none; }
+.cat-row.is-custom .cat-mark::after {
+    background: transparent;
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, .16);
+}
+.cat-row.is-custom .cat-icon { width: 30px; height: 30px; color: var(--text-secondary); transition: var(--transition-smooth); }
+.cat-row.is-custom:hover {
+    background: rgba(255, 255, 255, .04);
+    border-style: solid;
+    border-color: rgba(255, 107, 53, .38);
+}
+.cat-row.is-custom:hover .cat-mark::after { border-style: solid; }
+.cat-row.is-custom:hover .cat-icon { color: var(--accent-orange); }
+.cat-row.is-custom .cat-count { color: var(--text-secondary); }
+.cat-row.is-custom:hover .cat-count { color: var(--accent-orange); }
+
+/* --- the custom package screen, until the builder exists --------------- */
+.custom-panel {
+    padding: 44px; border-radius: 22px; text-align: center;
+    background: rgba(255, 255, 255, .04);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, .09);
+}
+.custom-tag {
+    display: inline-block; margin-bottom: 16px; padding: 6px 14px;
+    font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--accent-amber); background: rgba(255, 184, 0, .1);
+    border: 1px solid rgba(255, 184, 0, .26); border-radius: 100px;
+}
+.custom-panel p {
+    max-width: 54ch; margin: 0 auto 26px;
+    color: var(--text-secondary); font-size: .95rem; line-height: 1.65;
+}
+
 /* --- back bar, once you are inside a category ------------------------- */
 .cat-bar {
     display: flex; align-items: center; gap: 16px; flex-wrap: wrap;

@@ -55,6 +55,11 @@ document.addEventListener('DOMContentLoaded', () => {
         remove:     { el: 'Αφαίρεση',                en: 'Remove' },
         oneItem:    { el: 'υπηρεσία',                en: 'service' },
         nItems:     { el: 'υπηρεσίες',               en: 'services' },
+        buildIt:    { el: 'Φτιάξε το βήμα-βήμα',      en: 'Build it step by step' },
+        soon:       { el: 'Σε εξέλιξη',               en: 'In progress' },
+        soonBody:   { el: 'Εδώ θα μπορείς να συνδυάσεις υπηρεσίες από όλες τις κατηγορίες σε ένα πακέτο. Μέχρι τότε, γράψε μας τι χρειάζεσαι και το διαμορφώνουμε μαζί.',
+                      en: 'This is where you will be able to combine services from every category into one package. Until then, write to us and we will put it together with you.' },
+        soonCta:    { el: 'Πες μας τι χρειάζεσαι',    en: 'Tell us what you need' },
         pickCat:    { el: 'Διάλεξε κατηγορία',       en: 'Choose a category' },
         allCats:    { el: 'Όλες οι κατηγορίες',      en: 'All categories' },
         oneService: { el: 'υπηρεσία',                en: 'service' },
@@ -120,10 +125,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${PORTAL_CATEGORIES.map((c, i) => {
                         const n = countIn(c.id);
                         return `
-                        <button class="cat-row" data-cat="${c.id}">
+                        <button class="cat-row${c.custom ? ' is-custom' : ''}" data-cat="${c.id}">
                             <span class="cat-num">${String(i + 1).padStart(2, '0')}</span>
                             <span class="cat-mark">
-                                <img class="cat-icon" src="${c.icon}" alt="" width="36" height="36" loading="lazy">
+                                ${c.custom
+                                    ? `<svg class="cat-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                           <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                       </svg>`
+                                    : `<img class="cat-icon" src="${c.icon}" alt="" width="36" height="36" loading="lazy">`}
                             </span>
                             <span class="cat-text">
                                 <span class="cat-name">${t(c.intent)}</span>
@@ -131,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span class="cat-blurb">${t(c.blurb)}</span>
                             </span>
                             <span class="cat-side">
-                                <span class="cat-count">${n} ${n === 1 ? u('oneService') : u('nServices')}</span>
+                                <span class="cat-count">${c.custom ? u('buildIt') : `${n} ${n === 1 ? u('oneService') : u('nServices')}`}</span>
                                 <span class="cat-go" aria-hidden="true">→</span>
                             </span>
                         </button>`;
@@ -203,6 +212,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderGrid = () => {
         if (!state.activeCat) { grid.innerHTML = ''; return; }
+
+        const cat = PORTAL_CATEGORIES.find(c => c.id === state.activeCat);
+        if (cat && cat.custom) {
+            grid.innerHTML = `
+                <div class="custom-panel">
+                    <span class="custom-tag">${u('soon')}</span>
+                    <p>${u('soonBody')}</p>
+                    <a class="btn btn-primary" href="mailto:info@nelycedesign.com?subject=Custom%20Package">${u('soonCta')}</a>
+                </div>`;
+            return;
+        }
+
         const list = PORTAL_SERVICES.filter(s => s.category === state.activeCat);
 
         grid.innerHTML = list.map(s => {
