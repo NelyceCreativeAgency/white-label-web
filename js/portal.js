@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const INSTALMENT_THRESHOLD = 2500;
 
     const state = {
-        lang: 'el',
         market: 'GR',        // GR = 24% VAT, INT = 0% (reverse charge)
         activeCat: 'brand',
         openService: null,   // service id whose configurator is open
@@ -15,10 +14,44 @@ document.addEventListener('DOMContentLoaded', () => {
         cart: []             // [{ id, total, summary }]
     };
 
-    const t = (obj) => (obj && (obj[state.lang] || obj.el)) || '';
-    const money = (n) => new Intl.NumberFormat('el-GR', {
-        style: 'currency', currency: 'EUR', maximumFractionDigits: 0
-    }).format(Math.round(n));
+    // The header owns language and currency; this page follows them.
+    const lang = () => document.documentElement.getAttribute('data-lang') || 'el';
+    const t = (obj) => (obj && (obj[lang()] || obj.el)) || '';
+
+    const rate = () => (window.CURRENCY ? window.CURRENCY.rate : 1);
+    const money = (n) => window.formatCurrencyAmount
+        ? window.formatCurrencyAmount(n * rate())
+        : Math.round(n) + '\u20ac';
+
+    // UI chrome that is not part of the service data
+    const UI = {
+        from:       { el: 'από',                     en: 'from' },
+        configure:  { el: 'Διαμόρφωση & τιμή',       en: 'Configure & price' },
+        close:      { el: 'Κλείσιμο',                en: 'Close' },
+        perUnit:    { el: '/ μονάδα',                en: '/ unit' },
+        oneOff:     { el: 'εφάπαξ',                  en: 'one-off' },
+        included:   { el: 'περιλαμβάνεται',          en: 'included' },
+        total:      { el: 'Σύνολο',                  en: 'Total' },
+        netNote:    { el: 'προ ΦΠΑ',                 en: 'excl. VAT' },
+        floor:      { el: 'Ελάχιστη χρέωση έργου:',  en: 'Project minimum:' },
+        add:        { el: 'Προσθήκη στην προσφορά',  en: 'Add to quote' },
+        added:      { el: 'Στην προσφορά',           en: 'In your quote' },
+        quote:      { el: 'Η προσφορά σου',          en: 'Your quote' },
+        empty:      { el: 'Διάλεξε υπηρεσίες για να δεις το σύνολο.',
+                      en: 'Pick services to see the total.' },
+        subtotal:   { el: 'Υποσύνολο',               en: 'Subtotal' },
+        vat:        { el: 'ΦΠΑ',                     en: 'VAT' },
+        reverse:    { el: '0% — reverse charge',     en: '0% — reverse charge' },
+        schedule:   { el: 'Πρόγραμμα πληρωμών',      en: 'Payment schedule' },
+        deposit:    { el: 'προκαταβολή',             en: 'deposit' },
+        onDesign:   { el: 'στο design',              en: 'on design' },
+        onDelivery: { el: 'στην παράδοση',           en: 'on delivery' },
+        send:       { el: 'Στείλε μου την προσφορά', en: 'Send me this quote' },
+        disclaimer: { el: 'Εκτίμηση, όχι δεσμευτική προσφορά.',
+                      en: 'An estimate, not a binding quote.' },
+        remove:     { el: 'Αφαίρεση',                en: 'Remove' }
+    };
+    const u = (key) => t(UI[key]);
 
     const svc = (id) => PORTAL_SERVICES.find(s => s.id === id);
 
@@ -86,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (p.type === 'stepper') {
             const delta = p.role === 'multiplier' ? '' :
-                p.pricePerUnit ? `<span class="param-rate">+${money(p.pricePerUnit)} / μονάδα</span>` : '';
+                p.pricePerUnit ? `<span class="param-rate">+${money(p.pricePerUnit)} ${u('perUnit')}</span>` : '';
             return `
                 <div class="param param-stepper">
                     <label class="param-label" for="${id}">${t(p.label)}${delta}</label>
@@ -102,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return `
                 <label class="param param-toggle" for="${id}">
                     <span class="param-label">${t(p.label)}
-                        <span class="param-rate">+${money(p.price)}${p.scope === 'flat' ? ' εφάπαξ' : ''}</span>
+                        <span class="param-rate">+${money(p.price)}${p.scope === 'flat' ? ' ' + u('oneOff') : ''}</span>
                     </span>
                     <input type="checkbox" id="${id}" class="toggle-input" data-param="${p.key}" ${val ? 'checked' : ''}>
                     <span class="toggle-track"><span class="toggle-knob"></span></span>
@@ -120,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <strong>${t(o.label)}</strong>
                                 ${o.note ? `<small>${t(o.note)}</small>` : ''}
                             </span>
-                            <span class="option-price">${o.price ? '+' + money(o.price) : 'incl.'}</span>
+                            <span class="option-price">${o.price ? '+' + money(o.price) : u('included')}</span>
                         </label>`).join('')}
                 </div>
             </div>`;
@@ -142,14 +175,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p>${t(s.desc)}</p>
                     </div>
                     <div class="svc-price">
-                        <span class="svc-from">από</span>
+                        <span class="svc-from">${u('from')}</span>
                         <span class="svc-amount">${money(s.basePrice)}</span>
                         ${s.unit ? `<span class="svc-unit">${t(s.unit)}</span>` : ''}
                     </div>
                 </header>
 
                 <button type="button" class="svc-toggle" data-toggle="${s.id}">
-                    ${open ? 'Κλείσιμο' : 'Διαμόρφωση & τιμή'}
+                    ${open ? u('close') : u('configure')}
                     <span class="chev">${open ? '▲' : '▼'}</span>
                 </button>
 
@@ -159,12 +192,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     <div class="svc-total">
                         <div class="svc-total-row">
-                            <span>Σύνολο <small>(προ ΦΠΑ)</small></span>
+                            <span>${u('total')} <small>(${u('netNote')})</small></span>
                             <strong>${money(total)}</strong>
                         </div>
-                        ${floored ? `<p class="floor-note">Ελάχιστη χρέωση έργου: ${money(s.floorPrice)}</p>` : ''}
+                        ${floored ? `<p class="floor-note">${u('floor')} ${money(s.floorPrice)}</p>` : ''}
                         <button type="button" class="add-btn${inCart ? ' is-added' : ''}" data-add="${s.id}">
-                            ${inCart ? '✓ Στην προσφορά' : 'Προσθήκη στην προσφορά'}
+                            ${inCart ? '\u2713 ' + u('added') : u('add')}
                         </button>
                     </div>
                 </div>` : ''}
@@ -178,8 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderSummary = () => {
         if (!state.cart.length) {
             summaryEl.innerHTML = `
-                <h2>Η προσφορά σου</h2>
-                <p class="empty">Διάλεξε υπηρεσίες για να δεις το σύνολο.</p>`;
+                <h2>${u('quote')}</h2>
+                <p class="empty">${u('empty')}</p>`;
             return;
         }
 
@@ -188,30 +221,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const gross = net + vat;
 
         summaryEl.innerHTML = `
-            <h2>Η προσφορά σου</h2>
+            <h2>${u('quote')}</h2>
             <ul class="quote-lines">
                 ${state.cart.map(c => `
                     <li>
                         <span class="line-name">${t(svc(c.id).name)}</span>
                         <span class="line-price">${money(c.total)}</span>
-                        <button type="button" class="line-remove" data-remove="${c.id}" aria-label="Αφαίρεση">×</button>
+                        <button type="button" class="line-remove" data-remove="${c.id}" aria-label="${u('remove')}">×</button>
                     </li>`).join('')}
             </ul>
 
             <div class="quote-totals">
-                <div class="qt-row"><span>Υποσύνολο</span><span>${money(net)}</span></div>
-                <div class="qt-row"><span>ΦΠΑ ${state.market === 'GR' ? '24%' : '0% — reverse charge'}</span><span>${money(vat)}</span></div>
-                <div class="qt-row qt-total"><span>Σύνολο</span><span>${money(gross)}</span></div>
+                <div class="qt-row"><span>${u('subtotal')}</span><span>${money(net)}</span></div>
+                <div class="qt-row"><span>${u('vat')} ${state.market === 'GR' ? '24%' : u('reverse')}</span><span>${money(vat)}</span></div>
+                <div class="qt-row qt-total"><span>${u('total')}</span><span>${money(gross)}</span></div>
             </div>
 
             ${net >= INSTALMENT_THRESHOLD ? `
                 <div class="instalments">
-                    <strong>Πρόγραμμα πληρωμών</strong>
-                    <p>40% προκαταβολή ${money(gross * 0.4)} · 30% στο design ${money(gross * 0.3)} · 30% στην παράδοση ${money(gross * 0.3)}</p>
+                    <strong>${u('schedule')}</strong>
+                    <p>40% ${u('deposit')} ${money(gross * 0.4)} · 30% ${u('onDesign')} ${money(gross * 0.3)} · 30% ${u('onDelivery')} ${money(gross * 0.3)}</p>
                 </div>` : ''}
 
-            <button type="button" class="cta">Στείλε μου την προσφορά</button>
-            <p class="disclaimer">Εκτίμηση, όχι δεσμευτική προσφορά.</p>`;
+            <button type="button" class="portal-cta">${u('send')}</button>
+            <p class="disclaimer">${u('disclaimer')}</p>`;
     };
 
     // --- events ------------------------------------------------------------
@@ -286,5 +319,14 @@ document.addEventListener('DOMContentLoaded', () => {
         renderGrid(); renderSummary();
     });
 
-    renderCats(); renderGrid(); renderSummary();
+    const renderAll = () => { renderCats(); renderGrid(); renderSummary(); };
+
+    // The header's language switcher rewrites data-lang on <html>; the currency
+    // dropdown fires 'currencychange'. Neither touches nodes rendered here, so
+    // both need an explicit redraw.
+    new MutationObserver(renderAll).observe(document.documentElement,
+        { attributes: true, attributeFilter: ['data-lang'] });
+    window.addEventListener('currencychange', renderAll);
+
+    renderAll();
 });

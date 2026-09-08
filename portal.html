@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="el" data-lang="el">
+<html lang="en" data-lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="Διαμόρφωσε τις υπηρεσίες που χρειάζεσαι και δες κόστος αμέσως.">
-    <title>Client Portal | Nelyce</title>
+    <title>Client Portal | Nelyce Partners</title>
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="shortcut icon" href="/favicon.ico">
@@ -16,38 +16,130 @@
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap">
     <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet" media="print" onload="this.media='all'; this.onload=null;">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet"></noscript>
-<link type="text/css" rel="stylesheet" href="css/style.css"/>
+<link type="text/css" rel="stylesheet" href="css/style.min.css"/>
 <link type="text/css" rel="stylesheet" href="css/portal.css"/>
 </head>
 <body>
 
-<main class="portal-main">
+    <div class="gradient-bg">
+        <div class="gradients-container">
+            <div class="g1"></div>
+            <div class="g2"></div>
+            <div class="g3"></div>
+            <div class="g4"></div>
+            <div class="g5"></div>
+        </div>
+    </div>
+    <div class="mesh-gradient-scrim"></div>
 
-    <section class="portal-hero">
-        <span class="demo-flag">Demo — οι τιμές είναι ενδεικτικές</span>
-        <h1>Φτιάξε την προσφορά σου</h1>
-        <p>Διάλεξε τις υπηρεσίες που χρειάζεσαι, ρύθμισέ τες στα μέτρα σου και δες το κόστος καθώς προχωράς.</p>
+    <div class="night-sky"></div>
 
-        <div class="market-switch">
-            <div id="market-toggle" role="group" aria-label="Αγορά">
-                <button type="button" data-market="GR" class="is-active">Ελλάδα</button>
-                <button type="button" data-market="INT">Εκτός Ελλάδας</button>
+    <header class="main-header">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="https://www.nelycedesign.com/assets/img/logo.svg" alt="Nelyce Design" width="273" height="58" class="logo-img">
+                <span class="logo-badge">PARTNERS</span>
+            </a>
+            <div class="nav-right">
+                <a href="index.html" class="nav-cta nav-cta-header" data-en="Back to Pricing">Πίσω στον Τιμοκατάλογο</a>
+                <a href="faq.html" class="nav-cta nav-cta-header" data-en="FAQ">Συχνές Ερωτήσεις</a>
+                <div class="nav-meta">
+                    <div class="currency-dropdown currency-dropdown-header" id="currency-dropdown-header">
+                        <button class="currency-btn currency-btn-header" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Change currency">
+                            <span class="currency-btn-flag">🇪🇺</span>
+                            <span class="currency-btn-code">EUR</span>
+                            <svg class="currency-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <div class="currency-dropdown-list" role="listbox"></div>
+                    </div>
+                    <div class="lang-switcher">
+                        <button class="lang-btn" data-lang="el">EL</button>
+                        <button class="lang-btn active" data-lang="en">EN</button>
+                    </div>
+                </div>
+                <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="nav-cta nav-cta-header nav-cta-primary">Contact Hub</a>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay"></div>
+    <div class="mobile-sidebar" id="mobile-sidebar">
+        <button class="mobile-sidebar-close" id="mobile-sidebar-close" aria-label="Close menu">&times;</button>
+        <nav class="mobile-sidebar-nav">
+            <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="mobile-sidebar-link">Contact Hub</a>
+            <a href="index.html" class="mobile-sidebar-link" data-en="Back to Pricing">Πίσω στον Τιμοκατάλογο</a>
+            <a href="faq.html" class="mobile-sidebar-link" data-en="FAQ">Συχνές Ερωτήσεις</a>
+        </nav>
+
+        <div class="mobile-sidebar-footer">
+            <div class="currency-dropdown currency-dropdown-mobile" id="currency-dropdown-mobile">
+                <button class="currency-btn currency-btn-sidebar" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Change currency">
+                    <span class="currency-btn-flag">🇪🇺</span>
+                    <span class="currency-btn-code">EUR</span>
+                    <svg class="currency-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <div class="currency-dropdown-list" role="listbox"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <section class="hero-section">
+        <div class="container text-center">
+            <div class="hero-badge animate-fade" data-en="Demo — placeholder prices">Demo — ενδεικτικές τιμές</div>
+            <h1 class="hero-title animate-fade" data-en="Build your quote">Φτιάξε την προσφορά σου</h1>
+            <p class="hero-subtitle animate-fade" data-en="Pick the services you need, set them up the way you want them, and watch the cost as you go.">Διάλεξε τις υπηρεσίες που χρειάζεσαι, ρύθμισέ τες στα μέτρα σου και δες το κόστος καθώς προχωράς.</p>
+
+            <div class="market-switch animate-fade">
+                <div id="market-toggle" role="group" aria-label="Market">
+                    <button type="button" data-market="GR" class="is-active" data-en="Greece">Ελλάδα</button>
+                    <button type="button" data-market="INT" data-en="Outside Greece">Εκτός Ελλάδας</button>
+                </div>
             </div>
         </div>
     </section>
 
-    <div class="portal-body">
-        <div class="portal-catalogue">
-            <nav id="cat-nav" aria-label="Κατηγορίες"></nav>
-            <div id="service-grid"></div>
+    <main class="catalog-section">
+        <div class="container">
+            <div class="portal-body">
+                <div class="portal-catalogue">
+                    <nav id="cat-nav" aria-label="Categories"></nav>
+                    <div id="service-grid"></div>
+                </div>
+                <aside id="quote-summary" aria-live="polite"></aside>
+            </div>
         </div>
+    </main>
+    <section class="final-cta-section scroll-reveal">
+        <div class="container text-center">
+            <h2 class="cta-title" data-en="Need something outside these options?">Χρειάζεσαι κάτι εκτός από αυτά;</h2>
+            <p class="cta-desc" data-en="Tell us the scope and we will put together an offer that matches the actual work.">
+                Πες μας το scope και διαμορφώνουμε προσφορά με βάση το πραγματικό εύρος εργασίας.
+            </p>
+            <div class="cta-button-holder">
+                <a href="mailto:info@nelycedesign.com?subject=Custom%20Project%20Quote" class="btn btn-primary btn-large" data-en="Discuss a Custom Quote">Συζήτηση για custom προσφορά</a>
+            </div>
+        </div>
+    </section>
 
-        <aside id="quote-summary" aria-live="polite"></aside>
-    </div>
-
-</main>
-
+    <footer class="main-footer">
+        <div class="container text-center">
+            <p>&copy; 2026 Nelyce Design. All Rights Reserved. Creative White Label Network.</p>
+        </div>
+    </footer>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.25/dist/lenis.min.js" defer></script>
 <script type="text/javascript" src="js/portal-data.js" defer></script>
 <script type="text/javascript" src="js/portal.js" defer></script>
+<script type="text/javascript" src="js/script.min.js" defer></script>
+<script type="text/javascript" src="js/currency.min.js" defer></script>
 </body>
 </html>
