@@ -176,7 +176,7 @@
 .svc-card.is-open { border-color: var(--accent-orange); }
 
 .svc-head { display: flex; justify-content: space-between; gap: 24px; padding: 20px 22px 14px; }
-.svc-title h3 { margin: 0 0 5px; font-size: 1.05rem; font-weight: 600; }
+.svc-title h3 { margin: 0 0 5px; font-size: 1.05rem; font-weight: 600; color: var(--accent-orange); }
 .svc-title p { margin: 0; color: var(--text-secondary); font-size: .84rem; line-height: 1.5; max-width: 44ch; }
 .svc-price { text-align: right; white-space: nowrap; }
 .svc-from { display: block; color: var(--text-secondary); font-size: .7rem; }
