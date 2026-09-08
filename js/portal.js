@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const state = {
         market: 'GR',        // GR = 24% VAT, INT = 0% (reverse charge)
-        activeCat: 'brand',
+        activeCat: null,   // null = the category screen
         openService: null,   // service id whose configurator is open
         values: {},          // serviceId -> { paramKey: value }
         cart: []             // [{ id, total, summary }]
@@ -49,7 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
         send:       { el: 'Στείλε μου την προσφορά', en: 'Send me this quote' },
         disclaimer: { el: 'Εκτίμηση, όχι δεσμευτική προσφορά.',
                       en: 'An estimate, not a binding quote.' },
-        remove:     { el: 'Αφαίρεση',                en: 'Remove' }
+        remove:     { el: 'Αφαίρεση',                en: 'Remove' },
+        pickCat:    { el: 'Διάλεξε κατηγορία',       en: 'Choose a category' },
+        allCats:    { el: 'Όλες οι κατηγορίες',      en: 'All categories' },
+        oneService: { el: 'υπηρεσία',                en: 'service' },
+        nServices:  { el: 'υπηρεσίες',               en: 'services' }
     };
     const u = (key) => t(UI[key]);
 
@@ -101,15 +105,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const catNav = document.getElementById('cat-nav');
     const grid = document.getElementById('service-grid');
 
+    const countIn = (catId) => PORTAL_SERVICES.filter(s => s.category === catId).length;
+
     const renderCats = () => {
-        catNav.innerHTML = PORTAL_CATEGORIES.map(c => `
-            <button class="cat-tab${c.id === state.activeCat ? ' is-active' : ''}" data-cat="${c.id}">
-                <span class="cat-icon">${c.icon}</span>
-                <span class="cat-text">
+        // Landing view: the four categories and nothing else.
+        if (!state.activeCat) {
+            catNav.innerHTML = `
+                <div class="cat-grid">
+                    ${PORTAL_CATEGORIES.map(c => {
+                        const n = countIn(c.id);
+                        return `
+                        <button class="cat-card" data-cat="${c.id}">
+                            <img class="cat-icon" src="${c.icon}" alt="" width="44" height="44" loading="lazy">
+                            <span class="cat-name">${t(c.label)}</span>
+                            <span class="cat-blurb">${t(c.blurb)}</span>
+                            <span class="cat-count">${n} ${n === 1 ? u('oneService') : u('nServices')}</span>
+                        </button>`;
+                    }).join('')}
+                </div>`;
+            return;
+        }
+
+        // Drilled in: a way back, plus which category you are in.
+        const c = PORTAL_CATEGORIES.find(x => x.id === state.activeCat);
+        catNav.innerHTML = `
+            <div class="cat-bar">
+                <button type="button" class="cat-back" data-cat="">
+                    <span aria-hidden="true">←</span> ${u('allCats')}
+                </button>
+                <span class="cat-current">
+                    <img class="cat-icon" src="${c.icon}" alt="" width="26" height="26">
                     <strong>${t(c.label)}</strong>
-                    <small>${t(c.blurb)}</small>
                 </span>
-            </button>`).join('');
+            </div>`;
     };
 
     const paramControl = (service, p) => {
@@ -160,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderGrid = () => {
+        if (!state.activeCat) { grid.innerHTML = ''; return; }
         const list = PORTAL_SERVICES.filter(s => s.category === state.activeCat);
 
         grid.innerHTML = list.map(s => {
@@ -251,9 +280,10 @@ document.addEventListener('DOMContentLoaded', () => {
     catNav.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-cat]');
         if (!btn) return;
-        state.activeCat = btn.dataset.cat;
+        state.activeCat = btn.dataset.cat || null;
         state.openService = null;
-        renderCats(); renderGrid();
+        renderCats(); renderGrid(); layout();
+        if (!state.activeCat) window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
     grid.addEventListener('click', (e) => {
@@ -280,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const existing = state.cart.findIndex(c => c.id === service.id);
             if (existing > -1) state.cart.splice(existing, 1);
             else state.cart.push({ id: service.id, total: price(service).total });
-            renderGrid(); renderSummary();
+            renderGrid(); renderSummary(); layout();
         }
     });
 
@@ -298,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const rm = e.target.closest('[data-remove]');
         if (!rm) return;
         state.cart = state.cart.filter(c => c.id !== rm.dataset.remove);
-        renderGrid(); renderSummary();
+        renderGrid(); renderSummary(); layout();
     });
 
     const syncCart = (service) => {
@@ -319,7 +349,14 @@ document.addEventListener('DOMContentLoaded', () => {
         renderGrid(); renderSummary();
     });
 
-    const renderAll = () => { renderCats(); renderGrid(); renderSummary(); };
+    // On the category screen with an empty quote there is nothing to put in the
+    // second column, so the catalogue takes the full width.
+    const layout = () => {
+        const body = document.querySelector('.portal-body');
+        if (body) body.classList.toggle('is-browsing', !state.activeCat && !state.cart.length);
+    };
+
+    const renderAll = () => { renderCats(); renderGrid(); renderSummary(); layout(); };
 
     // The header's language switcher rewrites data-lang on <html>; the currency
     // dropdown fires 'currencychange'. Neither touches nodes rendered here, so
