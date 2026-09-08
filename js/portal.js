@@ -111,15 +111,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Landing view: the four categories and nothing else.
         if (!state.activeCat) {
             catNav.innerHTML = `
-                <div class="cat-grid">
-                    ${PORTAL_CATEGORIES.map(c => {
+                <div class="cat-list">
+                    ${PORTAL_CATEGORIES.map((c, i) => {
                         const n = countIn(c.id);
                         return `
-                        <button class="cat-card" data-cat="${c.id}">
-                            <img class="cat-icon" src="${c.icon}" alt="" width="44" height="44" loading="lazy">
-                            <span class="cat-name">${t(c.label)}</span>
-                            <span class="cat-blurb">${t(c.blurb)}</span>
+                        <button class="cat-row" data-cat="${c.id}">
+                            <span class="cat-num">${String(i + 1).padStart(2, '0')}</span>
+                            <img class="cat-icon" src="${c.icon}" alt="" width="30" height="30" loading="lazy">
+                            <span class="cat-text">
+                                <span class="cat-name">${t(c.label)}</span>
+                                <span class="cat-blurb">${t(c.blurb)}</span>
+                            </span>
                             <span class="cat-count">${n} ${n === 1 ? u('oneService') : u('nServices')}</span>
+                            <span class="cat-go" aria-hidden="true">→</span>
                         </button>`;
                     }).join('')}
                 </div>`;
