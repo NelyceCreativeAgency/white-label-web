@@ -1,2 +1,9 @@
+# These pages are unlisted, not secret: anyone with the link can open them,
+# but they must stay out of search results.
+#
+# Crawling is deliberately allowed. Every page carries
+# <meta name="robots" content="noindex, nofollow">, and a crawler has to be
+# able to fetch the page to read that tag. Blocking with "Disallow: /" would
+# hide the tag instead, which lets a linked URL show up in results anyway.
 User-agent: *
-Disallow: /
+Allow: /
