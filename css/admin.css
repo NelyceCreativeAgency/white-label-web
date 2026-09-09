@@ -1,0 +1,214 @@
+/* Pricing admin.
+   Deliberately plainer than the rest of the site: this is a tool for one person
+   editing numbers, so it borrows the palette and the type from style.css and
+   spends its effort on making a long column of figures easy to scan. */
+
+/* The gate and the editor are swapped with the hidden attribute, and both
+   carry a display of their own — which would otherwise win against the browser's
+   own [hidden] rule and leave the two stacked on top of each other. */
+[hidden] { display: none !important; }
+
+.admin-body {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+}
+
+/* --- sign in ----------------------------------------------------------- */
+.admin-gate {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+}
+
+.gate-card {
+    width: 100%; max-width: 380px;
+    display: flex; flex-direction: column;
+    padding: 40px 36px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, .45);
+}
+
+.gate-logo { width: 150px; height: auto; margin-bottom: 28px; }
+.gate-title { font-size: 1.35rem; font-weight: 600; margin: 0 0 6px; }
+.gate-sub { color: var(--text-secondary); font-size: .9rem; margin: 0 0 26px; }
+
+.gate-label {
+    font-size: .75rem; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.gate-input {
+    font: inherit; color: var(--text-primary);
+    padding: 13px 15px;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--border-color);
+    border-radius: 11px;
+    transition: border-color .25s, background .25s;
+}
+.gate-input:focus {
+    outline: none;
+    border-color: var(--accent-orange);
+    background: rgba(255, 255, 255, .06);
+}
+
+.gate-error {
+    color: #ff8a6b; font-size: .85rem; line-height: 1.45;
+    margin: 14px 0 0;
+}
+
+.gate-submit { margin-top: 22px; width: 100%; justify-content: center; }
+
+/* --- editor chrome ----------------------------------------------------- */
+.admin-bar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(10, 10, 14, .88);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-bar-inner {
+    max-width: 900px; margin: 0 auto;
+    padding: 16px 24px;
+    display: flex; align-items: center; gap: 20px;
+    flex-wrap: wrap;
+}
+
+.admin-bar-title { margin-right: auto; }
+.admin-mark {
+    display: block;
+    font-size: .68rem; font-weight: 700; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--accent-orange);
+}
+.admin-bar-title h1 { font-size: 1.05rem; font-weight: 600; margin: 2px 0 0; }
+
+.admin-bar-actions { display: flex; align-items: center; gap: 14px; }
+
+.admin-status { font-size: .82rem; color: var(--text-secondary); }
+.admin-status.is-error { color: #ff8a6b; }
+.admin-status.is-done  { color: #6bd39a; }
+
+.admin-ghost {
+    font: inherit; font-size: .85rem;
+    color: var(--text-secondary);
+    background: none; border: none; cursor: pointer;
+    padding: 6px 2px;
+    transition: color .25s;
+}
+.admin-ghost:hover { color: var(--text-primary); }
+
+.admin-save:disabled { opacity: .4; cursor: default; }
+
+/* --- editor body ------------------------------------------------------- */
+.admin-main { max-width: 900px; margin: 0 auto; padding: 36px 24px 120px; }
+
+.admin-intro {
+    color: var(--text-secondary); font-size: .9rem; line-height: 1.6;
+    margin: 0 0 36px;
+}
+.admin-intro a { color: var(--accent-orange); }
+
+.admin-cat {
+    font-size: .72rem; font-weight: 700; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--text-secondary);
+    margin: 44px 0 16px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+.admin-cat:first-child { margin-top: 0; }
+
+.admin-service {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 14px;
+}
+
+.admin-service-name {
+    font-size: 1rem; font-weight: 600;
+    margin: 0 0 4px;
+}
+.admin-service-id {
+    font-size: .72rem; color: var(--text-secondary);
+    margin: 0 0 18px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* One row per figure: what it is on the left, the euro box on the right. */
+.admin-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 9px 0;
+    border-top: 1px solid rgba(255, 255, 255, .04);
+}
+.admin-row:first-of-type { border-top: none; }
+
+.admin-row-label {
+    flex: 1; min-width: 0;
+    font-size: .89rem; line-height: 1.4;
+}
+.admin-row-note {
+    display: block;
+    font-size: .74rem; color: var(--text-secondary); margin-top: 2px;
+}
+
+.admin-field { display: flex; align-items: center; gap: 8px; }
+
+.admin-euro {
+    display: flex; align-items: center;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0 12px;
+    transition: border-color .25s, background .25s;
+}
+.admin-euro:focus-within {
+    border-color: var(--accent-orange);
+    background: rgba(255, 255, 255, .06);
+}
+.admin-euro::before {
+    content: "\20AC";
+    font-size: .82rem; color: var(--text-secondary); margin-right: 6px;
+}
+
+.admin-euro input {
+    font: inherit; font-size: .92rem; font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    background: none; border: none; outline: none;
+    width: 78px; padding: 10px 0; text-align: right;
+    -moz-appearance: textfield;
+}
+.admin-euro input::-webkit-outer-spin-button,
+.admin-euro input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* A figure that no longer matches the code gets a quiet mark and a way back. */
+.admin-row.is-changed .admin-euro { border-color: rgba(255, 107, 53, .55); }
+.admin-row.is-changed .admin-row-name::after {
+    content: ""; display: inline-block;
+    width: 6px; height: 6px; margin-left: 8px; vertical-align: middle;
+    background: var(--accent-orange); border-radius: 50%;
+}
+
+.admin-reset {
+    font: inherit; font-size: .95rem; line-height: 1;
+    color: var(--text-secondary);
+    background: none; border: none; cursor: pointer;
+    padding: 8px; border-radius: 8px;
+    visibility: hidden;
+    transition: color .25s, background .25s;
+}
+.admin-row.is-changed .admin-reset { visibility: visible; }
+.admin-reset:hover { color: var(--text-primary); background: rgba(255, 255, 255, .06); }
+
+@media (max-width: 620px) {
+    .admin-bar-inner { padding: 14px 18px; gap: 12px; }
+    .admin-bar-title { margin-right: auto; }
+    .admin-main { padding: 28px 18px 100px; }
+    .admin-service { padding: 18px 18px; }
+    .admin-row { flex-wrap: wrap; gap: 8px; }
+    .admin-row-label { flex-basis: 100%; }
+    .admin-euro input { width: 92px; }
+}

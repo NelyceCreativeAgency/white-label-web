@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="el" data-lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Τιμές | Nelyce Admin</title>
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="css/style.min.css"/>
+    <link type="text/css" rel="stylesheet" href="css/admin.css"/>
+</head>
+<body class="admin-body">
+
+    <!-- Sign in ---------------------------------------------------------- -->
+    <main class="admin-gate" id="admin-gate" hidden>
+        <form class="gate-card" id="gate-form" autocomplete="on">
+            <img src="https://www.nelycedesign.com/assets/img/logo.svg" alt="Nelyce Design" width="273" height="58" class="gate-logo">
+            <h1 class="gate-title">Διαχείριση τιμών</h1>
+            <p class="gate-sub">Δώσε τον κωδικό για να συνεχίσεις.</p>
+
+            <label class="gate-label" for="gate-password">Κωδικός</label>
+            <input class="gate-input" id="gate-password" name="password" type="password"
+                   autocomplete="current-password" required autofocus>
+
+            <p class="gate-error" id="gate-error" role="alert" hidden></p>
+            <button class="btn btn-primary gate-submit" id="gate-submit" type="submit">Είσοδος</button>
+        </form>
+    </main>
+
+    <!-- Editor ----------------------------------------------------------- -->
+    <div class="admin-shell" id="admin-shell" hidden>
+
+        <header class="admin-bar">
+            <div class="admin-bar-inner">
+                <div class="admin-bar-title">
+                    <span class="admin-mark">Nelyce</span>
+                    <h1>Τιμές portal</h1>
+                </div>
+
+                <div class="admin-bar-actions">
+                    <span class="admin-status" id="admin-status" aria-live="polite"></span>
+                    <button class="admin-ghost" id="admin-logout" type="button">Αποσύνδεση</button>
+                    <button class="btn btn-primary admin-save" id="admin-save" type="button" disabled>Αποθήκευση</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="admin-main">
+            <p class="admin-intro">
+                Οι αλλαγές εμφανίζονται στο <a href="portal.html" target="_blank" rel="noopener">portal</a>
+                μόλις πατήσεις Αποθήκευση. Ό,τι δεν αγγίξεις κρατάει την τιμή που έχει ο κώδικας.
+            </p>
+            <div id="admin-services"></div>
+        </main>
+    </div>
+
+    <script type="text/javascript" src="js/portal-data.js"></script>
+    <script type="text/javascript" src="js/prices.js"></script>
+    <script type="text/javascript" src="js/admin.js"></script>
+</body>
+</html>

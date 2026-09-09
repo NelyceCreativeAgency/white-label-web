@@ -488,5 +488,20 @@ document.addEventListener('DOMContentLoaded', () => {
         { attributes: true, attributeFilter: ['data-lang'] });
     window.addEventListener('currencychange', renderAll);
 
-    renderAll();
+    // Prices are set from admin.html and kept in the store behind /api/prices.
+    // The figures in js/portal-data.js are the fallback: they are what renders
+    // if that lookup fails, and the timeout keeps a slow store from holding the
+    // whole catalogue off the screen.
+    const start = async () => {
+        if (window.NELYCE_PRICES) {
+            const overrides = await Promise.race([
+                window.NELYCE_PRICES.fetchOverrides(),
+                new Promise(resolve => setTimeout(() => resolve({ services: {} }), 1500))
+            ]);
+            window.NELYCE_PRICES.apply(PORTAL_SERVICES, overrides);
+        }
+        renderAll();
+    };
+
+    start();
 });
