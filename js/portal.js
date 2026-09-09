@@ -493,14 +493,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // if that lookup fails, and the timeout keeps a slow store from holding the
     // whole catalogue off the screen.
     const start = async () => {
-        if (window.NELYCE_PRICES) {
-            const overrides = await Promise.race([
-                window.NELYCE_PRICES.fetchOverrides(),
-                new Promise(resolve => setTimeout(() => resolve({ portal: { services: {} } }), 1500))
-            ]);
-            window.NELYCE_PRICES.applyPortal(PORTAL_SERVICES, overrides.portal);
-        }
+        if (!window.NELYCE_PRICES) { renderAll(); return; }
+
+        const request = window.NELYCE_PRICES.fetchOverrides();
+        const use = (data) => {
+            if (!data) return;
+            window.NELYCE_PRICES.applyPortal(PORTAL_SERVICES, data.portal);
+            renderAll();
+        };
+
+        // Waiting on the store must never hold the catalogue off the screen.
+        const answered = await Promise.race([
+            request,
+            new Promise(resolve => setTimeout(() => resolve(null), 1500))
+        ]);
+
+        if (answered) { use(answered); return; }
+
+        // It was too slow. Draw with the prices in the code, then correct them
+        // the moment the real answer lands — rather than quietly showing the
+        // wrong figures for the rest of the visit.
         renderAll();
+        request.then(use);
     };
 
     start();

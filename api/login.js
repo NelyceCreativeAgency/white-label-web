@@ -10,8 +10,15 @@ const store = require('./_store');
 const MAX_FAILS = 8;
 const LOCKOUT_S = 15 * 60;
 
+// x-forwarded-for is worth exactly what the sender says it is: a client can put
+// a fresh address in it on every request and walk straight past the allowance.
+// x-real-ip and x-vercel-forwarded-for are written by Vercel's own proxy and
+// cannot be talked over, so they come first.
 const clientIp = (req) =>
-    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+    req.headers['x-real-ip'] ||
+    (req.headers['x-vercel-forwarded-for'] || '').split(',')[0].trim() ||
+    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+    'unknown';
 
 module.exports = async (req, res) => {
     if (req.method === 'GET') {

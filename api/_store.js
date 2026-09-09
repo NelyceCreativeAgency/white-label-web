@@ -54,7 +54,6 @@ exports.readPrices = async () => {
 
 exports.writePrices = async (data) => { await command('SET', KEY, JSON.stringify(data)); };
 
-exports.isConfigured = () => Boolean(URL && TOKEN);
 
 // --- login throttling -------------------------------------------------------
 // These three deliberately swallow store errors. A store that is missing or

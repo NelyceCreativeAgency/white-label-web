@@ -86,15 +86,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- what each catalogue exposes as editable figures --------------------
     const row = (label, note, id) => `
-        <div class="admin-row" data-row="${id}">
+        <div class="admin-row" data-row="${esc(id)}">
             <div class="admin-row-label"><span class="admin-row-name">${esc(label)}</span>${
                 note ? `<span class="admin-row-note">${esc(note)}</span>` : ''}</div>
             <div class="admin-field">
                 <label class="admin-euro">
-                    <input type="number" min="0" step="1" inputmode="decimal" data-field="${id}"
+                    <input type="number" min="0" step="any" inputmode="decimal" data-field="${esc(id)}"
                            aria-label="${esc(label)}">
                 </label>
-                <button class="admin-reset" type="button" data-reset="${id}"
+                <button class="admin-reset" type="button" data-reset="${esc(id)}"
                         title="Επαναφορά στην τιμή του κώδικα" aria-label="Επαναφορά">&#8635;</button>
             </div>
         </div>`;
@@ -478,12 +478,26 @@ document.addEventListener('DOMContentLoaded', () => {
         setStatus('Φόρτωση…');
 
         try {
-            const [overrides, catalogue] = await Promise.all([
-                window.NELYCE_PRICES.fetchOverrides(),
-                loadSiteCatalogue()
-            ]);
+            const overrides = await window.NELYCE_PRICES.fetchOverrides();
+
+            // The white-label list is read out of index.html. If that read
+            // fails there is no reason to lose the portal list as well, so it
+            // degrades to the one catalogue it does have.
+            let catalogue = [];
+            let warning = '';
+            try {
+                catalogue = await loadSiteCatalogue();
+            } catch {
+                warning = 'Ο τιμοκατάλογος του site δεν διαβάστηκε — δείχνω μόνο το portal.';
+            }
+
             render(overrides, catalogue);
-            setStatus('');
+            if (warning) {
+                showTab('portal');
+                setStatus(warning, 'error');
+            } else {
+                setStatus('');
+            }
             refresh();
         } catch (err) {
             setStatus(err.message, 'error');

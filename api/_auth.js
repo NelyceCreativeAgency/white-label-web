@@ -18,12 +18,13 @@ const secret = () => {
 const sign = (payload) =>
     crypto.createHmac('sha256', secret()).update(payload).digest('hex');
 
-// Comparing with === leaks the position of the first wrong character through
-// how long the comparison takes. These two always take the same time.
+// Comparing with === leaks the position of the first wrong character through how
+// long the comparison takes. Comparing raw strings with timingSafeEqual still
+// needs a length check first, and returning early on that leaks the length.
+// Hashing both sides makes every comparison the same 32 bytes of work.
 const sameString = (a, b) => {
-    const x = Buffer.from(String(a));
-    const y = Buffer.from(String(b));
-    return x.length === y.length && crypto.timingSafeEqual(x, y);
+    const digest = (value) => crypto.createHash('sha256').update(String(value)).digest();
+    return crypto.timingSafeEqual(digest(a), digest(b));
 };
 
 exports.checkPassword = (given) => {

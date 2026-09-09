@@ -82,27 +82,56 @@ window.NELYCE_PRICES = (function () {
             .find(el => el.closest('[data-service-id]') === container) || null;
 
     // currency.js keeps each element's pristine euro figure in dataset.eurAmount
-    // and re-derives the display from it on every switch. Writing the new price
-    // there is therefore the whole job: the conversion keeps working, and a
-    // visitor who has already switched to GBP sees the new price in GBP.
+    // and re-derives the display from it on every switch, so writing the new
+    // price there is most of the job.
+    //
+    // The rest is translation. Some prices are embedded in a sentence that gets
+    // swapped between languages ("από 360€" / "from 360€"), and currency.js
+    // keeps a pristine copy of each. Those copies have to carry the new figure
+    // too: leave them alone and the old price walks back in the moment anyone
+    // touches the language switcher.
+    const PRICE_IN_TEXT = /[\d.]+€/;
+
     const applySiteBasePrice = (container, amount) => {
         const el = priceElement(container);
         if (!el) return;
 
-        el.dataset.eurAmount = String(Math.round(amount));
-
+        const value = Math.round(amount);
         const unit = el.querySelector('.price-unit, .emb-unit');
+
+        // currency.js has normally cached these by now. If it has not — it
+        // failed, or is still fetching a rate — take the snapshot the same way
+        // it would, because once eurAmount is set below it will skip this
+        // element and never take one.
+        if (el.hasAttribute('data-en') && !el.dataset.origEn) {
+            const bare = el.cloneNode(true);
+            bare.querySelectorAll('.price-unit, .emb-unit').forEach(u => u.remove());
+            el.dataset.origEn = el.getAttribute('data-en');
+            el.dataset.origEl = el.dataset.el || bare.textContent.trim();
+        }
+
+        if (el.dataset.origEn) {
+            el.dataset.origEn = el.dataset.origEn.replace(PRICE_IN_TEXT, value + '€');
+            el.dataset.origEl = el.dataset.origEl.replace(PRICE_IN_TEXT, value + '€');
+            el.setAttribute('data-en', el.dataset.origEn);
+            el.dataset.el = el.dataset.origEl;
+        }
+
+        el.dataset.eurAmount = String(value);
+
+        // What to show right now. applySite redraws through currency.js straight
+        // after, which converts this into the visitor's currency; this stands on
+        // its own only when currency.js is not there at all.
+        const lang = document.documentElement.getAttribute('data-lang') || 'el';
+        const display = el.dataset.origEn
+            ? (lang === 'en' ? el.dataset.origEn : el.dataset.origEl)
+            : value + '€';
+
         Array.from(el.childNodes).forEach(node => {
             if (node.nodeType === Node.TEXT_NODE) el.removeChild(node);
         });
-        el.insertBefore(document.createTextNode(Math.round(amount) + '€'), el.firstChild);
+        el.insertBefore(document.createTextNode(display), el.firstChild);
         if (unit) el.appendChild(unit);
-
-        // The element also feeds the EL/EN translation cache when it carries one.
-        // Dropping the stale snapshot makes currency.js rebuild it from the new
-        // figure rather than reinstating the old one on the next switch.
-        delete el.dataset.origEn;
-        delete el.dataset.origEl;
     };
 
     const applySite = (section, serviceParams) => {
