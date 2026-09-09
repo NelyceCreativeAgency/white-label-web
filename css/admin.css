@@ -64,18 +64,21 @@
 .gate-submit { margin-top: 22px; width: 100%; justify-content: center; }
 
 /* --- editor chrome ----------------------------------------------------- */
+/* One sticky block holds both rows, so there is a single opaque surface
+   between the page and the list scrolling underneath it. */
 .admin-bar {
     position: sticky; top: 0; z-index: 20;
-    background: rgba(10, 10, 14, .88);
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
+    background: rgba(14, 14, 19, .96);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
     border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
 }
 
 .admin-bar-inner {
     max-width: 900px; margin: 0 auto;
-    padding: 16px 24px;
-    display: flex; align-items: center; gap: 20px;
+    padding: 14px 24px 12px;
+    display: flex; align-items: center; gap: 18px;
     flex-wrap: wrap;
 }
 
@@ -86,6 +89,32 @@
     text-transform: uppercase; color: var(--accent-orange);
 }
 .admin-bar-title h1 { font-size: 1.05rem; font-weight: 600; margin: 2px 0 0; }
+
+/* --- the three pages, one click away ----------------------------------- */
+.admin-links { display: flex; align-items: center; gap: 6px; }
+
+.admin-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .82rem; font-weight: 500; text-decoration: none;
+    color: var(--text-secondary);
+    padding: 7px 12px;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: color .25s, background .25s, border-color .25s;
+}
+.admin-link:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .08);
+    border-color: var(--border-hover);
+}
+.admin-link svg {
+    width: 12px; height: 12px; flex: none;
+    fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+    opacity: .65;
+}
 
 .admin-bar-actions { display: flex; align-items: center; gap: 14px; }
 
@@ -104,19 +133,20 @@
 
 .admin-save:disabled { opacity: .4; cursor: default; }
 
-/* --- price-list tabs --------------------------------------------------- */
-.admin-tabs {
-    position: sticky; top: 65px; z-index: 19;
-    display: flex; gap: 4px;
+/* --- second row: which list, and finding your way around it ------------- */
+.admin-bar-second {
     max-width: 900px; margin: 0 auto;
-    padding: 14px 24px 0;
+    padding: 0 24px;
+    display: flex; align-items: flex-end; gap: 20px;
 }
+
+.admin-tabs { display: flex; gap: 4px; margin-right: auto; }
 
 .admin-tab {
     font: inherit; text-align: left;
     color: var(--text-secondary);
     background: none; border: none; cursor: pointer;
-    padding: 10px 16px 12px;
+    padding: 8px 14px 11px;
     border-bottom: 2px solid transparent;
     transition: color .25s, border-color .25s;
 }
@@ -142,6 +172,33 @@
     background: var(--accent-orange); border-radius: 50%;
 }
 
+/* Forty services is more than anyone should have to scroll through to reach
+   one of them. */
+.admin-search {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px; padding: 0 12px;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    transition: border-color .25s, background .25s;
+}
+.admin-search:focus-within {
+    border-color: var(--accent-orange);
+    background: rgba(255, 255, 255, .06);
+}
+.admin-search svg {
+    width: 14px; height: 14px; flex: none;
+    fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; color: var(--text-secondary);
+}
+.admin-search input {
+    font: inherit; font-size: .85rem;
+    color: var(--text-primary);
+    background: none; border: none; outline: none;
+    width: 190px; padding: 9px 0;
+}
+.admin-search input::-webkit-search-cancel-button { filter: invert(.6); }
+
 .admin-list[hidden] { display: none; }
 
 /* --- editor body ------------------------------------------------------- */
@@ -153,6 +210,11 @@
 }
 .admin-intro a { color: var(--accent-orange); }
 
+.admin-empty {
+    color: var(--text-secondary); font-size: .9rem;
+    padding: 40px 0; text-align: center;
+}
+
 .admin-cat {
     font-size: .72rem; font-weight: 700; letter-spacing: .16em;
     text-transform: uppercase; color: var(--text-secondary);
@@ -160,6 +222,7 @@
     border-bottom: 1px solid var(--border-color);
 }
 .admin-cat:first-child { margin-top: 0; }
+.admin-cat, .admin-service { scroll-margin-top: 152px; }
 
 .admin-service {
     background: var(--bg-card);
@@ -243,13 +306,26 @@
 .admin-row.is-changed .admin-reset { visibility: visible; }
 .admin-reset:hover { color: var(--text-primary); background: rgba(255, 255, 255, .06); }
 
+@media (max-width: 760px) {
+    .admin-bar-inner  { padding: 12px 18px 10px; gap: 12px; }
+    .admin-bar-second { padding: 0 18px; flex-wrap: wrap; gap: 10px; }
+
+    /* The links wrap onto their own full-width row rather than squeezing the
+       title, and scroll sideways if even that is not enough. */
+    .admin-links {
+        order: 3; width: 100%;
+        overflow-x: auto; padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+    }
+    .admin-search { width: 100%; margin-bottom: 10px; }
+    .admin-search input { width: 100%; }
+}
+
 @media (max-width: 620px) {
-    .admin-bar-inner { padding: 14px 18px; gap: 12px; }
-    .admin-bar-title { margin-right: auto; }
-    .admin-tabs { top: 61px; padding: 10px 18px 0; }
     .admin-main { padding: 22px 18px 100px; }
     .admin-service { padding: 18px 18px; }
     .admin-row { flex-wrap: wrap; gap: 8px; }
     .admin-row-label { flex-basis: 100%; }
     .admin-euro input { width: 92px; }
+    .admin-cat, .admin-service { scroll-margin-top: 190px; }
 }

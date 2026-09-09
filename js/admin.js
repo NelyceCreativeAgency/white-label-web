@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const shell   = document.getElementById('admin-shell');
     const tabsNav = document.getElementById('admin-tabs');
     const list    = document.getElementById('admin-services');
+    const filter  = document.getElementById('admin-filter');
+    const empty   = document.getElementById('admin-empty');
     const saveBtn = document.getElementById('admin-save');
     const status  = document.getElementById('admin-status');
     const logout  = document.getElementById('admin-logout');
@@ -259,7 +261,62 @@ document.addEventListener('DOMContentLoaded', () => {
         showTab(activeTab);
     };
 
+    // --- searching ----------------------------------------------------------
+    // Forty services on one list is a long scroll to reach one price. Matching
+    // is on everything the card says — its name, its id and its parameter
+    // labels — and a category heading disappears with the last card under it.
+    const applyFilter = () => {
+        const query = filter.value.trim().toLowerCase();
+        let visibleHere = 0;
+
+        list.querySelectorAll('.admin-list').forEach(section => {
+            let heading = null;
+            let headingHasMatch = false;
+            const isActive = section.dataset.list === activeTab;
+
+            const closeHeading = () => { if (heading) heading.hidden = !headingHasMatch; };
+
+            Array.from(section.children).forEach(node => {
+                if (node.classList.contains('admin-cat')) {
+                    closeHeading();
+                    heading = node;
+                    headingHasMatch = false;
+                    return;
+                }
+
+                const match = !query || node.textContent.toLowerCase().includes(query);
+                node.hidden = !match;
+                if (match) {
+                    headingHasMatch = true;
+                    if (isActive) visibleHere += 1;
+                }
+            });
+
+            closeHeading();
+        });
+
+        empty.hidden = visibleHere > 0;
+    };
+
+    filter.addEventListener('input', applyFilter);
+
+    // Escape clears the box rather than making you select and delete.
+    filter.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && filter.value) {
+            filter.value = '';
+            applyFilter();
+        }
+    });
+
     // --- tabs ---------------------------------------------------------------
+    // style.css gives body its own overflow, so which element actually scrolls
+    // depends on the page. Setting all three is harmless and always right.
+    const toTop = () => {
+        window.scrollTo({ top: 0 });
+        if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    };
+
     const showTab = (name) => {
         activeTab = name;
         list.querySelectorAll('.admin-list').forEach(node => {
@@ -268,7 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
         tabsNav.querySelectorAll('.admin-tab').forEach(btn => {
             btn.classList.toggle('is-active', btn.dataset.tab === name);
         });
-        window.scrollTo({ top: 0 });
+        applyFilter();
+        toTop();
     };
 
     tabsNav.addEventListener('click', (e) => {
@@ -364,6 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const save = async () => {
         const bad = fields.find(f => current(f) === null);
         if (bad) {
+            filter.value = '';
             showTab(bad.section);
             setStatus('Συμπλήρωσε έναν έγκυρο αριθμό', 'error');
             bad.input.focus();

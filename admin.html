@@ -42,33 +42,55 @@
                     <h1>Τιμοκατάλογοι</h1>
                 </div>
 
+                <nav class="admin-links" aria-label="Άνοιγμα σελίδων">
+                    <a class="admin-link" href="index.html" target="_blank" rel="noopener">
+                        White label
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+                    </a>
+                    <a class="admin-link" href="portal.html" target="_blank" rel="noopener">
+                        Portal
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+                    </a>
+                    <a class="admin-link" href="social-calculator.html" target="_blank" rel="noopener">
+                        Calculator
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+                    </a>
+                </nav>
+
                 <div class="admin-bar-actions">
                     <span class="admin-status" id="admin-status" aria-live="polite"></span>
                     <button class="admin-ghost" id="admin-logout" type="button">Αποσύνδεση</button>
                     <button class="btn btn-primary admin-save" id="admin-save" type="button" disabled>Αποθήκευση</button>
                 </div>
             </div>
-        </header>
 
-        <nav class="admin-tabs" id="admin-tabs" aria-label="Τιμοκατάλογοι">
-            <button class="admin-tab is-active" type="button" data-tab="site">
-                White label site
-                <span class="admin-tab-note">τιμές συνεργατών — index.html</span>
-            </button>
-            <button class="admin-tab" type="button" data-tab="portal">
-                Clients portal
-                <span class="admin-tab-note">τιμές τελικού πελάτη — portal.html</span>
-            </button>
-        </nav>
+            <div class="admin-bar-second">
+                <nav class="admin-tabs" id="admin-tabs" aria-label="Τιμοκατάλογοι">
+                    <button class="admin-tab is-active" type="button" data-tab="site">
+                        White label site
+                        <span class="admin-tab-note">τιμές συνεργατών</span>
+                    </button>
+                    <button class="admin-tab" type="button" data-tab="portal">
+                        Clients portal
+                        <span class="admin-tab-note">τιμές τελικού πελάτη</span>
+                    </button>
+                </nav>
+
+                <div class="admin-search">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    <input type="search" id="admin-filter" placeholder="Αναζήτηση υπηρεσίας…"
+                           aria-label="Αναζήτηση υπηρεσίας" autocomplete="off">
+                </div>
+            </div>
+        </header>
 
         <main class="admin-main">
             <p class="admin-intro">
-                Δύο ξεχωριστοί τιμοκατάλογοι. Οι αλλαγές εμφανίζονται στο
-                <a href="index.html" target="_blank" rel="noopener">site</a> και στο
-                <a href="portal.html" target="_blank" rel="noopener">portal</a> μόλις πατήσεις
-                Αποθήκευση — και η Αποθήκευση σώζει και τους δύο μαζί. Ό,τι δεν αγγίξεις
-                κρατάει την τιμή που έχει ο κώδικας.
+                Δύο ξεχωριστοί τιμοκατάλογοι. Η Αποθήκευση σώζει και τους δύο μαζί, και οι
+                αλλαγές εμφανίζονται αμέσως στις σελίδες. Ό,τι δεν αγγίξεις κρατάει την τιμή
+                που έχει ο κώδικας.
             </p>
+            <p class="admin-empty" id="admin-empty" hidden>Καμία υπηρεσία δεν ταιριάζει με την αναζήτηση.</p>
             <div id="admin-services"></div>
         </main>
     </div>
