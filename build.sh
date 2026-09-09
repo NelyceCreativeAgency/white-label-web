@@ -24,7 +24,7 @@ report() { printf '  %-28s %6s KB -> %6s KB\n' "$1" "$(size "$1")" "$(size "$2")
 echo "JavaScript"
 for f in js/script.js js/currency.js js/customize.js js/customize-data.js \
          js/social-calculator.js js/social-calculator-data.js js/faq.js \
-         js/portal.js js/portal-data.js js/prices.js js/admin.js; do
+         js/portal.js js/portal-data.js js/prices.js js/site-prices.js js/admin.js; do
     [ -f "$f" ] || continue
     out="${f%.js}.min.js"
     node --check "$f"          # never minify something that does not parse

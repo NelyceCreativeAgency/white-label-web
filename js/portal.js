@@ -496,9 +496,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.NELYCE_PRICES) {
             const overrides = await Promise.race([
                 window.NELYCE_PRICES.fetchOverrides(),
-                new Promise(resolve => setTimeout(() => resolve({ services: {} }), 1500))
+                new Promise(resolve => setTimeout(() => resolve({ portal: { services: {} } }), 1500))
             ]);
-            window.NELYCE_PRICES.apply(PORTAL_SERVICES, overrides);
+            window.NELYCE_PRICES.applyPortal(PORTAL_SERVICES, overrides.portal);
         }
         renderAll();
     };

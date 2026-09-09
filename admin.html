@@ -39,7 +39,7 @@
             <div class="admin-bar-inner">
                 <div class="admin-bar-title">
                     <span class="admin-mark">Nelyce</span>
-                    <h1>Τιμές portal</h1>
+                    <h1>Τιμοκατάλογοι</h1>
                 </div>
 
                 <div class="admin-bar-actions">
@@ -50,16 +50,31 @@
             </div>
         </header>
 
+        <nav class="admin-tabs" id="admin-tabs" aria-label="Τιμοκατάλογοι">
+            <button class="admin-tab is-active" type="button" data-tab="site">
+                White label site
+                <span class="admin-tab-note">τιμές συνεργατών — index.html</span>
+            </button>
+            <button class="admin-tab" type="button" data-tab="portal">
+                Clients portal
+                <span class="admin-tab-note">τιμές τελικού πελάτη — portal.html</span>
+            </button>
+        </nav>
+
         <main class="admin-main">
             <p class="admin-intro">
-                Οι αλλαγές εμφανίζονται στο <a href="portal.html" target="_blank" rel="noopener">portal</a>
-                μόλις πατήσεις Αποθήκευση. Ό,τι δεν αγγίξεις κρατάει την τιμή που έχει ο κώδικας.
+                Δύο ξεχωριστοί τιμοκατάλογοι. Οι αλλαγές εμφανίζονται στο
+                <a href="index.html" target="_blank" rel="noopener">site</a> και στο
+                <a href="portal.html" target="_blank" rel="noopener">portal</a> μόλις πατήσεις
+                Αποθήκευση — και η Αποθήκευση σώζει και τους δύο μαζί. Ό,τι δεν αγγίξεις
+                κρατάει την τιμή που έχει ο κώδικας.
             </p>
             <div id="admin-services"></div>
         </main>
     </div>
 
     <script type="text/javascript" src="js/portal-data.js"></script>
+    <script type="text/javascript" src="js/customize-data.js"></script>
     <script type="text/javascript" src="js/prices.js"></script>
     <script type="text/javascript" src="js/admin.js"></script>
 </body>

@@ -183,6 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // js/prices.js rewrites dataset.eurAmount when an admin price lands, and then
+    // needs the page redrawn in whatever currency the visitor is already on.
+    window.applyCurrencyToPage = applyCurrencyToPage;
+
     const setCurrency = (currency) => {
         window.CURRENCY = currency;
         applyCurrencyToPage(currency);

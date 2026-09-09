@@ -28,14 +28,28 @@ const command = async (...args) => {
 
 // A store that has never been written to reads as null, which is not an error:
 // it simply means no price has been overridden yet and the code defaults stand.
+const EMPTY = () => ({ site: { services: {} }, portal: { services: {} }, updatedAt: null });
+
 exports.readPrices = async () => {
     const raw = await command('GET', KEY);
-    if (!raw) return { services: {}, updatedAt: null };
-    try {
-        return JSON.parse(raw);
-    } catch {
-        return { services: {}, updatedAt: null };
-    }
+    if (!raw) return EMPTY();
+
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { return EMPTY(); }
+
+    const out = EMPTY();
+    out.updatedAt = data.updatedAt || null;
+
+    // Before the white-label site was editable there was one unnamed list, and
+    // it was the portal's. Anything written back then still reads correctly.
+    if (data.services && !data.portal) out.portal.services = data.services;
+
+    ['site', 'portal'].forEach(name => {
+        if (data[name] && data[name].services) out[name].services = data[name].services;
+    });
+
+    return out;
 };
 
 exports.writePrices = async (data) => { await command('SET', KEY, JSON.stringify(data)); };

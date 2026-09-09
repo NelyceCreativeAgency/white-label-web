@@ -64,7 +64,12 @@ const cleanService = (raw) => {
     return Object.keys(out).length ? out : null;
 };
 
-const cleanPayload = (raw) => {
+// Two price lists live here, and they must never bleed into each other: SITE is
+// the white-label site's partner pricing (index.html), PORTAL is what end
+// clients see in the quote builder (portal.html). Same shape, separate keys.
+const SECTIONS = ['site', 'portal'];
+
+const cleanSection = (raw) => {
     const source = (raw && typeof raw === 'object' && raw.services) || {};
     const services = {};
 
@@ -74,7 +79,13 @@ const cleanPayload = (raw) => {
         if (service) services[id] = service;
     });
 
-    return { services, updatedAt: new Date().toISOString() };
+    return { services };
+};
+
+const cleanPayload = (raw) => {
+    const out = { updatedAt: new Date().toISOString() };
+    SECTIONS.forEach(name => { out[name] = cleanSection(raw && raw[name]); });
+    return out;
 };
 
 module.exports = async (req, res) => {
