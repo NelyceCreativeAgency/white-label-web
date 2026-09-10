@@ -1,0 +1,310 @@
+/* --- Home page: featured projects marquee ---
+   Loaded on top of style.css, which already supplies the palette, the ambient
+   gradient background, the header/footer and the hero + CTA blocks. Everything
+   here is scoped to the two auto-scrolling project rows. */
+
+.featured-section {
+    padding: 40px 0 80px;
+    position: relative;
+    z-index: 1;
+}
+
+.featured-title {
+    font-size: clamp(1.9rem, 4vw, 2.9rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+}
+
+.featured-subtitle {
+    max-width: 620px;
+    margin: 0 auto 48px;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+/* --- The rows ---
+   Each row is one overflow-hidden window over a track that holds the same set
+   of cards twice (js/home.js clones the group). Sliding the track by exactly
+   one group + one gap lands the copy where the original started, so the reset
+   at the end of every cycle is invisible. The mask fades both ends into the
+   background instead of cutting the cards off with a hard edge. */
+.marquee {
+    --marquee-gap: 24px;
+    --marquee-height: 300px;
+    --marquee-duration: 70s;
+    overflow: hidden;
+    padding: 12px 0;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+}
+
+.marquee + .marquee {
+    margin-top: 8px;
+}
+
+.marquee-track {
+    display: flex;
+    gap: var(--marquee-gap);
+    width: max-content;
+}
+
+.marquee-group {
+    display: flex;
+    gap: var(--marquee-gap);
+    flex: 0 0 auto;
+}
+
+/* Only animate once the clone exists — a single group would visibly run out. */
+.marquee.is-looping .marquee-track {
+    animation: marquee-slide var(--marquee-duration) linear infinite;
+    will-change: transform;
+}
+
+.marquee[data-direction="right"].is-looping .marquee-track {
+    animation-direction: reverse;
+}
+
+/* Hold still while someone is reading a card. */
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+    animation-play-state: paused;
+}
+
+@keyframes marquee-slide {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(calc(-50% - var(--marquee-gap) / 2), 0, 0); }
+}
+
+/* --- Cards ---
+   Height is fixed per row and the width follows each image's own aspect ratio
+   (passed in as --fp-ar), so the row keeps the uneven, editorial rhythm of the
+   reference instead of a uniform grid. */
+.fp-card {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+    height: var(--marquee-height);
+    aspect-ratio: var(--fp-ar, 16 / 9);
+    border-radius: 20px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text-primary);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    transition: var(--transition-smooth);
+}
+
+.fp-card:hover,
+.fp-card:focus-visible {
+    border-color: rgba(255, 255, 255, 0.16);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.fp-card:focus-visible {
+    outline: 2px solid var(--accent-orange);
+    outline-offset: 3px;
+}
+
+.fp-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s ease;
+}
+
+.fp-card:hover .fp-card-img,
+.fp-card:focus-visible .fp-card-img {
+    transform: scale(1.05);
+    filter: brightness(0.42) saturate(0.9);
+}
+
+/* --- Hover overlay: project name + what the work actually was --- */
+.fp-card-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 14px;
+    padding: 28px;
+    background: linear-gradient(to top, rgba(6, 6, 10, 0.72) 0%, rgba(6, 6, 10, 0.28) 55%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.fp-card:hover .fp-card-overlay,
+.fp-card:focus-visible .fp-card-overlay {
+    opacity: 1;
+}
+
+.fp-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(1.15rem, 1.6vw, 1.55rem);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    transform: translateY(10px);
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1) 0.04s;
+}
+
+.fp-card-arrow {
+    flex: 0 0 auto;
+    opacity: 0.75;
+}
+
+.fp-card-tags {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    transform: translateY(10px);
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1) 0.1s;
+}
+
+.fp-card-tags li {
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.07);
+    -webkit-backdrop-filter: blur(6px);
+            backdrop-filter: blur(6px);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.fp-card:hover .fp-card-title,
+.fp-card:hover .fp-card-tags,
+.fp-card:focus-visible .fp-card-title,
+.fp-card:focus-visible .fp-card-tags {
+    transform: translateY(0);
+}
+
+/* --- Row CTA --- */
+.featured-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 48px;
+    padding: 14px 28px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+.featured-cta:hover {
+    border-color: var(--border-hover);
+    background: rgba(255, 107, 53, 0.12);
+    transform: translateY(-2px);
+}
+
+.featured-cta svg {
+    transition: transform 0.3s ease;
+}
+
+.featured-cta:hover svg {
+    transform: translateX(4px);
+}
+
+/* --- Touch: there is no hover, so show the detail permanently --- */
+@media (hover: none) {
+    .fp-card-overlay {
+        opacity: 1;
+        background: linear-gradient(to top, rgba(6, 6, 10, 0.88) 0%, rgba(6, 6, 10, 0.45) 60%, rgba(6, 6, 10, 0.1) 100%);
+    }
+
+    .fp-card-title,
+    .fp-card-tags {
+        transform: none;
+    }
+
+    .fp-card-img {
+        filter: brightness(0.6);
+    }
+}
+
+@media (max-width: 1024px) {
+    .marquee {
+        --marquee-height: 230px;
+        --marquee-gap: 18px;
+    }
+
+    .fp-card-overlay {
+        padding: 20px;
+        gap: 10px;
+    }
+
+    .fp-card-tags li {
+        font-size: 0.66rem;
+        padding: 6px 11px;
+    }
+}
+
+@media (max-width: 640px) {
+    .featured-section {
+        padding: 24px 0 56px;
+    }
+
+    .featured-subtitle {
+        margin-bottom: 32px;
+    }
+
+    .marquee {
+        --marquee-height: 180px;
+        --marquee-gap: 14px;
+        --marquee-duration: 45s;
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 4%, #000 96%, transparent 100%);
+                mask-image: linear-gradient(to right, transparent 0%, #000 4%, #000 96%, transparent 100%);
+    }
+
+    .fp-card {
+        border-radius: 16px;
+    }
+
+    .fp-card-overlay {
+        padding: 16px;
+        gap: 8px;
+    }
+
+    .fp-card-title {
+        font-size: 0.95rem;
+        letter-spacing: 0.03em;
+    }
+
+    .fp-card-tags li {
+        font-size: 0.6rem;
+        padding: 5px 9px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marquee.is-looping .marquee-track {
+        animation: none;
+    }
+
+    .marquee {
+        overflow-x: auto;
+    }
+
+    .fp-card-img,
+    .fp-card-title,
+    .fp-card-tags,
+    .fp-card-overlay {
+        transition: none;
+    }
+}

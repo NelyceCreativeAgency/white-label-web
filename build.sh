@@ -23,7 +23,7 @@ report() { printf '  %-28s %6s KB -> %6s KB\n' "$1" "$(size "$1")" "$(size "$2")
 
 echo "JavaScript"
 for f in js/script.js js/currency.js js/customize.js js/customize-data.js \
-         js/social-calculator.js js/social-calculator-data.js js/faq.js \
+         js/social-calculator.js js/social-calculator-data.js js/faq.js js/home.js \
          js/portal.js js/portal-data.js js/prices.js js/site-prices.js js/admin.js; do
     [ -f "$f" ] || continue
     out="${f%.js}.min.js"
@@ -33,7 +33,7 @@ for f in js/script.js js/currency.js js/customize.js js/customize-data.js \
 done
 
 echo "CSS"
-for f in css/style.css css/faq.css css/social-calculator.css css/portal.css css/admin.css; do
+for f in css/style.css css/home.css css/faq.css css/social-calculator.css css/portal.css css/admin.css; do
     [ -f "$f" ] || continue
     out="${f%.css}.min.css"
     minify_css "$f" "$out"
