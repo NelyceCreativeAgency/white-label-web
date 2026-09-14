@@ -1730,7 +1730,12 @@ body {
    the button in the middle of this section.
 
    An ellipse rather than a circle: the section is wide and shallow, and a
-   circle sized to its height covered barely a third of it. */
+   circle sized to its height covered barely a third of it.
+
+   The dark half starts at nothing. Beginning it at half strength drew a band
+   across the top edge where the section met the one before it, which read as a
+   shadow cast down the page rather than as ground. It only gathers lower down,
+   where the footer is. */
 .final-cta-section {
     position: relative;
     padding: 120px 0;
@@ -1741,9 +1746,10 @@ body {
             rgba(90, 79, 224, 0.17) 42%,
             transparent 76%),
         linear-gradient(to bottom,
-            rgba(8, 6, 16, 0.5) 0%,
-            rgba(7, 5, 14, 0.92) 45%,
-            rgba(6, 4, 12, 0.98) 100%);
+            rgba(7, 5, 14, 0) 0%,
+            rgba(7, 5, 14, 0.4) 40%,
+            rgba(6, 4, 12, 0.88) 78%,
+            rgba(6, 4, 12, 0.96) 100%);
 }
 
 .cta-title {
