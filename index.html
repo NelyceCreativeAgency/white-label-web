@@ -284,9 +284,12 @@
                  work back to create rather than on to delivery. Hovering a step
                  puts what happens at it in the middle of the ring. -->
             <div class="pm-panel scroll-reveal">
-                <div class="pm-dial">
-                    <div class="pm-dial-ring"></div>
-                    <div class="pm-dial-sweep"></div>
+                <div class="pm-dial" id="pm-dial">
+                    <svg class="pm-dial-track" viewBox="0 0 100 100" aria-hidden="true">
+                        <circle class="pm-track-bg" cx="50" cy="50" r="30"></circle>
+                        <circle class="pm-track-fill" cx="50" cy="50" r="30"></circle>
+                    </svg>
+                    <div class="pm-dial-head" aria-hidden="true"><i></i></div>
 
                     <ol class="pm-dial-steps">
                         <li class="pm-node" style="--a: -90deg"><span>Brief</span></li>
@@ -296,7 +299,6 @@
                     </ol>
 
                     <div class="pm-dial-notes">
-                        <p class="pm-note" data-en="Four steps, from brief to delivery.">Τέσσερα βήματα, από το brief στην παράδοση.</p>
                         <p class="pm-note" data-en="You hand over the scope, the brand and the deadline.">Μας δίνεις το scope, το brand και το deadline.</p>
                         <p class="pm-note" data-en="We work to your guidelines, with updates along the way.">Δουλεύουμε στα δικά σου guidelines, με ενημερώσεις στην πορεία.</p>
                         <p class="pm-note" data-en="You review, comment and ask for changes.">Βλέπεις, σχολιάζεις και ζητάς αλλαγές.</p>

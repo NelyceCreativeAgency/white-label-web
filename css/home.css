@@ -370,7 +370,11 @@
 /* --- The process, as a dial ---
    A loop rather than a list, because review sends work back to create rather
    than on to delivery. The panel takes the price list's own card recipe so the
-   one box in the section is a box the site already makes. */
+   one box in the section is a box the site already makes.
+
+   The ring is a progress track: an arc grows a quarter at a time, a small head
+   marks where it has reached, and the middle says what happens at that step.
+   js/home.js advances it; pointing at a step takes it there instead. */
 .pm-panel {
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 45%), rgba(35, 35, 41, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.09);
@@ -385,35 +389,65 @@
     position: relative;
     width: min(100%, 320px);
     aspect-ratio: 1;
-    /* How far the four steps sit from the centre. Everything else is laid out
-       off the panel, so this is the only number to move. */
-    --radius: 120px;
+    /* How far the four steps sit from the centre. The ring is drawn at 30% of
+       this box by the SVG, so the steps clear it. */
+    --radius: 128px;
 }
 
-.pm-dial-ring {
+.pm-dial-track {
     position: absolute;
-    inset: 24%;
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    border-radius: 50%;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    fill: none;
 }
 
-/* One arc travelling the ring, masked down to the ring's own line. This is the
-   only thing in the section that moves on its own, so it is slow and faint. */
-.pm-dial-sweep {
+.pm-track-bg {
+    stroke: rgba(255, 255, 255, 0.09);
+    stroke-width: 0.5;
+}
+
+/* 2 * pi * 30, the circumference in the viewBox's own units. --p is the share
+   of the loop that has been covered. */
+.pm-track-fill {
+    stroke: var(--accent-orange);
+    stroke-width: 1.1;
+    stroke-linecap: round;
+    stroke-dasharray: 188.5;
+    stroke-dashoffset: calc(188.5 * (1 - var(--p, 0)));
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 1.05s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The head is a full-size layer that rotates, so its mark travels the ring
+   without any per-step positioning. */
+.pm-dial-head {
     position: absolute;
-    inset: 24%;
-    border-radius: 50%;
-    background: conic-gradient(from 0deg,
-        rgba(255, 107, 53, 0) 0deg,
-        rgba(255, 107, 53, 0.7) 55deg,
-        rgba(255, 107, 53, 0) 90deg);
-    -webkit-mask: radial-gradient(circle, transparent 0 calc(50% - 1.5px), #000 calc(50% - 1.5px) 50%, transparent 50%);
-            mask: radial-gradient(circle, transparent 0 calc(50% - 1.5px), #000 calc(50% - 1.5px) 50%, transparent 50%);
-    animation: pm-sweep 11s linear infinite;
+    inset: 0;
+    transform: rotate(-90deg);
+    transition: transform 1.05s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
 }
 
-@keyframes pm-sweep {
-    to { transform: rotate(360deg); }
+/* 20% from the top is the ring's own line: half the box, less the 30% radius. */
+.pm-dial-head i {
+    position: absolute;
+    left: 50%;
+    top: 20%;
+    width: 0;
+    height: 0;
+    transform: translate(-50%, -50%);
+    border-top: 3.5px solid transparent;
+    border-bottom: 3.5px solid transparent;
+    border-left: 5.5px solid var(--accent-orange);
+}
+
+/* Closing the loop: the head is already back at the top, so cutting the
+   transition for one frame empties the arc without winding anything back. */
+.pm-dial.is-resetting .pm-track-fill,
+.pm-dial.is-resetting .pm-dial-head {
+    transition: none;
 }
 
 .pm-dial-steps {
@@ -431,13 +465,14 @@
     font-weight: 400;
     letter-spacing: -0.2px;
     white-space: nowrap;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.62);
     cursor: default;
-    transition: color 0.35s ease;
+    transition: color 0.4s ease, font-weight 0.4s ease;
 }
 
-.pm-node:hover {
+.pm-node.is-on {
     color: var(--accent-orange);
+    font-weight: 500;
 }
 
 .pm-dial-notes {
@@ -456,20 +491,19 @@
     font-size: 12.5px;
     font-weight: 300;
     line-height: 1.55;
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.62);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.45s ease;
 }
 
-/* The first note is what the middle says until a step is pointed at. Without
-   :has() it simply stays, and hovering still marks the step. */
-.pm-note:first-child { opacity: 1; }
+.pm-note.is-on {
+    opacity: 1;
+}
 
-.pm-dial:has(.pm-node:hover) .pm-note:first-child { opacity: 0; }
-.pm-dial:has(.pm-node:nth-child(1):hover) .pm-note:nth-child(2) { opacity: 1; }
-.pm-dial:has(.pm-node:nth-child(2):hover) .pm-note:nth-child(3) { opacity: 1; }
-.pm-dial:has(.pm-node:nth-child(3):hover) .pm-note:nth-child(4) { opacity: 1; }
-.pm-dial:has(.pm-node:nth-child(4):hover) .pm-note:nth-child(5) { opacity: 1; }
+/* Until the script runs, the opening line is what the middle says. */
+.pm-dial:not(.is-running) .pm-note:first-child {
+    opacity: 1;
+}
 
 /* --- Closing line --- */
 .pm-cta {
@@ -549,10 +583,9 @@
         filter: none;
     }
 
-    .pm-dial-sweep {
-        animation: none;
-    }
-
+    /* The dial still advances, it just arrives rather than travels. */
+    .pm-track-fill,
+    .pm-dial-head,
     .pm-node,
     .pm-note,
     .pm-cta-link {

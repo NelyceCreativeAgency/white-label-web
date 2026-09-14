@@ -221,3 +221,105 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', rebuild);
     });
 });
+
+/* The process dial: an arc that walks the four steps on its own.
+ *
+ * One quarter of the ring per step, with a head marking where the arc has
+ * reached and the middle of the ring saying what happens there. The head only
+ * ever turns forwards: closing the loop means a fifth position at 360 degrees,
+ * which is the same place on screen as the first, so the arc can be emptied
+ * with the transition cut for a frame and nothing appears to wind back.
+ *
+ * Pointing at a step takes the dial there and holds it; moving away starts the
+ * walk again from wherever it was left. */
+document.addEventListener('DOMContentLoaded', () => {
+    const dial = document.getElementById('pm-dial');
+    if (!dial) return;
+
+    const head = dial.querySelector('.pm-dial-head');
+    const nodes = Array.from(dial.querySelectorAll('.pm-node'));
+    const notes = Array.from(dial.querySelectorAll('.pm-note'));
+    if (!head || nodes.length !== 4 || notes.length !== 4) return;
+
+    // How long a step is held before the arc moves on.
+    const DWELL = 3200;
+    const TURN = 1.05 * 1000; // must match the CSS transition
+
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    // 0 to 4. Four is the closing position: a full ring, back at the top.
+    let index = 0;
+    // Kept separately so the head can keep turning past 360 instead of
+    // spinning backwards to reach a step it has already passed.
+    let angle = -90;
+    let timer = null;
+
+    const show = () => {
+        dial.style.setProperty('--p', index / 4);
+        head.style.transform = 'rotate(' + angle + 'deg)';
+
+        const lit = index % 4;
+        nodes.forEach((node, i) => node.classList.toggle('is-on', i === lit));
+        notes.forEach((note, i) => note.classList.toggle('is-on', i === lit));
+    };
+
+    const advance = () => {
+        if (index === 4) {
+            // The ring is full and the head is at the top, so emptying the arc
+            // here is invisible as long as neither animates for the frame.
+            dial.classList.add('is-resetting');
+            index = 0;
+            show();
+            void dial.offsetWidth;
+            dial.classList.remove('is-resetting');
+        }
+
+        index += 1;
+        angle += 90;
+        show();
+    };
+
+    const stop = () => {
+        clearInterval(timer);
+        timer = null;
+    };
+
+    const walk = () => {
+        stop();
+        if (still.matches) return;
+        timer = setInterval(advance, DWELL);
+    };
+
+    // Pointing at a step: go to it the short way round, which may mean turning
+    // backwards, and hold there until the pointer leaves.
+    const goTo = (wanted) => {
+        stop();
+
+        const current = index % 4;
+        let steps = (wanted - current + 4) % 4;
+        if (steps > 2) steps -= 4;
+
+        angle += steps * 90;
+        // Going forward over the top lands on the closing position, so the ring
+        // reads as a loop just completed rather than one emptied out.
+        index = (steps > 0 && current + steps > 3) ? 4 : wanted;
+        show();
+    };
+
+    nodes.forEach((node, i) => {
+        node.addEventListener('mouseenter', () => goTo(i));
+    });
+
+    dial.addEventListener('mouseleave', walk);
+
+    dial.classList.add('is-running');
+    show();
+
+    if (still.matches) return;
+
+    // Only walk while the dial is on screen, so a page left open on another
+    // section is not running a timer against nothing.
+    new IntersectionObserver((entries) => {
+        entries.forEach(entry => (entry.isIntersecting ? walk() : stop()));
+    }, { rootMargin: '100px 0px' }).observe(dial);
+});
