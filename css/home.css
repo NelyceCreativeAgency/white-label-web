@@ -310,11 +310,9 @@
 }
 
 /* --- The partnership model ---
-   Editorial rather than centred: the whole page above it is centre-aligned, so
-   a left-aligned two-column opening gives this block its own weight without
-   introducing anything the site does not already use. The cards themselves are
-   .price-card / .item-title / .item-desc / .category-num straight from the
-   catalogue — only spacing is adjusted here. */
+   No rules, no boxes, no italics: the block is carried by type, space and one
+   thin sequence line. Everything that moves here is tied to the section coming
+   into view or to the pointer, and nothing loops. */
 
 .partner-model-section {
     padding: 40px 0 120px;
@@ -322,32 +320,32 @@
     z-index: 1;
 }
 
+/* --- Opening --- */
 .pm-intro {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    gap: 32px 64px;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 32px 80px;
     align-items: end;
-    padding-bottom: 48px;
-    margin-bottom: 56px;
-    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 88px;
 }
 
 .pm-intro .hero-badge {
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 .pm-title {
     font-family: var(--font-serif);
-    font-size: 44px;
+    font-size: clamp(34px, 4.6vw, 54px);
     font-weight: 400;
-    line-height: 1.15;
-    letter-spacing: -1px;
+    line-height: 1.08;
+    letter-spacing: -1.5px;
 }
 
-/* The second line carries the point, so it gets the accent and the emphasis. */
+/* The second line carries the point, so it gets the accent. Upright, not
+   italic — the italic was the one thing here that read as set in metal. */
 .pm-title em {
     display: block;
-    font-style: italic;
+    font-style: normal;
     color: var(--accent-orange);
 }
 
@@ -356,138 +354,99 @@
     line-height: 1.75;
     font-weight: 300;
     color: var(--text-secondary);
-    padding-bottom: 6px;
+    max-width: 44ch;
+    padding-bottom: 8px;
 }
 
 /* --- Brief, create, review, deliver ---
-   Four markers on one hairline. The rail draws itself in from the left as the
-   row is revealed, which reads as a sequence without needing arrows between
-   the steps. */
+   Four words with the connectors drawn between them, left to right, once the
+   row arrives. The words come up out of the background as their line reaches
+   them, which is the whole animation. */
 .pm-flow {
     list-style: none;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0 24px;
-    position: relative;
-    padding-top: 28px;
-    margin-bottom: 56px;
-}
-
-.pm-flow::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(90deg, var(--accent-orange) 0%, rgba(255, 255, 255, 0.14) 45%, rgba(255, 255, 255, 0.06) 100%);
-    transform: scaleX(0);
-    transform-origin: left center;
-    transition: transform 1.1s cubic-bezier(0.25, 1, 0.5, 1) 0.15s;
-}
-
-.pm-flow.revealed::before {
-    transform: scaleX(1);
+    display: flex;
+    align-items: center;
+    margin-bottom: 96px;
 }
 
 .pm-step {
-    position: relative;
-    padding-right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex: 1 1 0;
 }
 
-.pm-step::before {
-    content: '';
-    position: absolute;
-    top: -31.5px;
-    left: 0;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent-orange);
-    opacity: 0;
-    transform: scale(0.4);
-    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.pm-flow.revealed .pm-step::before {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.pm-flow.revealed .pm-step:nth-child(1)::before { transition-delay: 0.25s; }
-.pm-flow.revealed .pm-step:nth-child(2)::before { transition-delay: 0.45s; }
-.pm-flow.revealed .pm-step:nth-child(3)::before { transition-delay: 0.65s; }
-.pm-flow.revealed .pm-step:nth-child(4)::before { transition-delay: 0.85s; }
-
-/* Steps 2-4 read as dimmer until hovered, so the eye starts at Brief. */
-.pm-step:not(:first-child) .pm-step-label {
-    color: rgba(255, 255, 255, 0.55);
-}
-
-.pm-step:hover .pm-step-label {
-    color: var(--text-primary);
+.pm-step:last-child {
+    flex: 0 0 auto;
 }
 
 .pm-step-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    margin-bottom: 10px;
-    transition: color 0.3s ease;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.3);
+    transition: color 0.6s ease;
 }
 
-.pm-step-desc {
-    font-size: 14px;
-    line-height: 1.6;
-    font-weight: 300;
-    color: var(--text-secondary);
-    max-width: 24ch;
+.pm-step:not(:last-child)::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255, 107, 53, 0.5), rgba(255, 255, 255, 0.1));
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.55s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-/* --- The four points ---
-   Rules and type, no boxes. The catalogue is where the site's card language
-   belongs; repeating it here would turn four plain statements into a panel. */
+.pm-flow.revealed .pm-step-label { color: var(--text-primary); }
+.pm-flow.revealed .pm-step::after { transform: scaleX(1); }
+
+.pm-flow.revealed .pm-step:nth-child(1) .pm-step-label { transition-delay: 0.05s; }
+.pm-flow.revealed .pm-step:nth-child(2) .pm-step-label { transition-delay: 0.38s; }
+.pm-flow.revealed .pm-step:nth-child(3) .pm-step-label { transition-delay: 0.66s; }
+.pm-flow.revealed .pm-step:nth-child(4) .pm-step-label { transition-delay: 0.94s; }
+
+.pm-flow.revealed .pm-step:nth-child(1)::after { transition-delay: 0.1s; }
+.pm-flow.revealed .pm-step:nth-child(2)::after { transition-delay: 0.38s; }
+.pm-flow.revealed .pm-step:nth-child(3)::after { transition-delay: 0.66s; }
+
+/* --- The four points --- */
 .pm-points {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 36px;
-    margin-bottom: 56px;
+    gap: 48px 40px;
+    margin-bottom: 96px;
 }
 
-.pm-point {
-    position: relative;
-    padding-top: 24px;
-    border-top: 1px solid var(--border-color);
-}
-
-/* The rule warms to the accent on hover — the gesture the price cards make,
-   without the box around it. */
-.pm-point::after {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: var(--accent-orange);
-    transform: scaleX(0);
-    transform-origin: left center;
-    transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.pm-point:hover::after {
-    transform: scaleX(1);
-}
-
-.pm-point .item-desc {
-    margin-bottom: 0;
-}
+/* Each point arrives on its own rather than the row landing as a block. */
+.pm-point:nth-child(2) { transition-delay: 0.09s; }
+.pm-point:nth-child(3) { transition-delay: 0.18s; }
+.pm-point:nth-child(4) { transition-delay: 0.27s; }
 
 .pm-point-num {
     display: block;
-    margin-bottom: 14px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.28);
+    margin-bottom: 18px;
+    transition: color 0.35s ease;
+}
+
+.pm-point:hover .pm-point-num {
+    color: var(--accent-orange);
+}
+
+.pm-point .item-title {
+    font-size: 17px;
+    margin-bottom: 10px;
+}
+
+.pm-point .item-desc {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 0;
 }
 
 /* --- Closing line --- */
@@ -496,16 +455,15 @@
     flex-wrap: wrap;
     align-items: baseline;
     justify-content: space-between;
-    gap: 12px 32px;
-    padding-top: 40px;
-    border-top: 1px solid var(--border-color);
+    gap: 16px 32px;
 }
 
 .pm-cta-question {
     font-family: var(--font-serif);
-    font-size: 22px;
+    font-size: clamp(19px, 2.2vw, 26px);
     font-weight: 400;
-    line-height: 1.4;
+    line-height: 1.3;
+    letter-spacing: -0.5px;
 }
 
 .pm-cta-link {
@@ -516,21 +474,11 @@
     font-size: 15px;
     font-weight: 500;
     text-decoration: none;
-    padding-bottom: 4px;
-    border-bottom: 1px solid rgba(255, 107, 53, 0.35);
-    transition: var(--transition-smooth);
+    transition: gap 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .pm-cta-link:hover {
-    border-bottom-color: var(--accent-orange);
-}
-
-.pm-cta-link svg {
-    transition: transform 0.3s ease;
-}
-
-.pm-cta-link:hover svg {
-    transform: translateX(4px);
+    gap: 16px;
 }
 
 @media (max-width: 1024px) {
@@ -538,39 +486,21 @@
         grid-template-columns: 1fr;
         align-items: start;
         gap: 24px;
-    }
-
-    .pm-title {
-        font-size: 36px;
+        margin-bottom: 64px;
     }
 
     .pm-flow {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 32px 24px;
-    }
-
-    /* Two rows of two: the single rail no longer describes the order, so each
-       step carries its own short marker line instead. */
-    .pm-flow::before {
-        display: none;
+        margin-bottom: 72px;
     }
 
     .pm-step {
-        padding-top: 18px;
-        border-top: 1px solid var(--border-color);
-    }
-
-    .pm-step::before {
-        top: -4px;
-    }
-
-    .pm-step-desc {
-        max-width: none;
+        gap: 16px;
     }
 
     .pm-points {
         grid-template-columns: repeat(2, 1fr);
-        gap: 32px;
+        gap: 44px 40px;
+        margin-bottom: 72px;
     }
 }
 
@@ -579,62 +509,57 @@
         padding: 24px 0 80px;
     }
 
-    .pm-intro {
-        padding-bottom: 36px;
-        margin-bottom: 40px;
+    /* The connectors stop stretching and the row simply wraps. */
+    .pm-flow {
+        flex-wrap: wrap;
+        gap: 12px 16px;
+        margin-bottom: 56px;
     }
 
-    .pm-title {
-        font-size: 30px;
-        letter-spacing: -0.5px;
+    .pm-step,
+    .pm-step:last-child {
+        flex: 0 0 auto;
+        gap: 16px;
     }
 
-    .pm-intro-copy {
-        font-size: 15px;
+    .pm-step:not(:last-child)::after {
+        flex: 0 0 28px;
     }
 
-    .pm-flow,
+    .pm-step-label {
+        font-size: 14px;
+    }
+
     .pm-points {
-        margin-bottom: 40px;
-    }
-
-    .pm-cta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 18px;
-        padding-top: 32px;
-    }
-
-    .pm-cta-question {
-        font-size: 19px;
+        gap: 36px 32px;
+        margin-bottom: 56px;
     }
 }
 
-@media (max-width: 480px) {
-    .pm-title {
-        font-size: 26px;
-    }
-
-    .pm-flow,
+@media (max-width: 520px) {
     .pm-points {
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 32px;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .pm-point::after {
+    .pm-step-label,
+    .pm-step::after,
+    .pm-point-num,
+    .pm-cta-link {
         transition: none;
     }
 
-    .pm-flow::before,
-    .pm-flow .pm-step::before {
-        transition: none;
-        transform: none;
-        opacity: 1;
+    .pm-step-label {
+        color: var(--text-primary);
     }
 
-    .pm-flow::before {
+    .pm-step::after {
         transform: scaleX(1);
+    }
+
+    .pm-point {
+        transition-delay: 0s;
     }
 }
