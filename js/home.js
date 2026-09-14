@@ -267,13 +267,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const next = (lit + 1) % 4;
 
         angle += 90;
+        // The trail is only there while the head is actually travelling, so it
+        // reads as something the movement leaves behind rather than a shape the
+        // dial happens to wear.
+        dial.classList.add('is-moving');
         head.style.transform = 'rotate(' + angle + 'deg)';
 
         // The step being left stays lit until the head has arrived at the next
         // one, so there is never a moment with the mark between two steps and
         // neither of them on.
         clearTimeout(arrival);
-        arrival = setTimeout(() => light(next), travel());
+        arrival = setTimeout(() => {
+            light(next);
+            dial.classList.remove('is-moving');
+        }, travel());
     };
 
     const stop = () => {

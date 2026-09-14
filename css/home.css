@@ -417,6 +417,32 @@
     pointer-events: none;
 }
 
+/* The trail rides inside the rotating layer, so it is always the stretch of
+   ring just behind the mark. It is drawn as a wedge of colour that fades out
+   backwards, then masked down to the ring's own line. Inset 20% puts its edge
+   on that line: half the box, less the 30% radius. */
+.pm-dial-trail {
+    position: absolute;
+    inset: 20%;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg,
+        rgba(255, 107, 53, 0) 0deg,
+        rgba(255, 107, 53, 0) 275deg,
+        rgba(255, 107, 53, 0.15) 320deg,
+        rgba(255, 107, 53, 0.85) 360deg);
+    -webkit-mask: radial-gradient(circle, transparent 0 calc(50% - 2px), #000 calc(50% - 2px) 50%, transparent 50%);
+            mask: radial-gradient(circle, transparent 0 calc(50% - 2px), #000 calc(50% - 2px) 50%, transparent 50%);
+    opacity: 0;
+    /* Off the mark: it lingers a moment past the arrival and goes out. */
+    transition: opacity 0.55s ease;
+}
+
+/* On the mark: it is there as soon as the head starts moving. */
+.pm-dial.is-moving .pm-dial-trail {
+    opacity: 1;
+    transition: opacity 0.12s ease;
+}
+
 /* 20% from the top is the ring's own line: half the box, less the 30% radius. */
 .pm-dial-head i {
     position: absolute;
@@ -563,7 +589,9 @@
         filter: none;
     }
 
-    /* The dial still advances, it just arrives rather than travels. */
+    /* The dial still advances, it just arrives rather than travels, so there
+       is nothing for a trail to be left by. */
+    .pm-dial-trail,
     .pm-dial-head,
     .pm-node,
     .pm-note,
