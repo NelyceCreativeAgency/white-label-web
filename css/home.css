@@ -429,11 +429,13 @@
    ring just behind the mark. It is drawn as a wedge of colour that fades out
    backwards, then masked down to a narrow band straddling the ring's line.
 
-   The mask says `closest-side`. Without it a circle gradient sizes itself to
-   the farthest corner, so its 50% lands at 0.707 of the way to the box's edge
-   rather than at the edge, and the band came out well inside the ring. The tip
-   runs to amber, the palette's other accent, so the head of the trail reads
-   hotter than its length. */
+   The mask stops are written against the gradient's own radius, which is what
+   a percentage means inside a radial gradient: with `closest-side` that radius
+   already reaches the element's edge, so the band is cut a few pixels back
+   from 100%. Reading those percentages as a share of the box is what kept
+   putting the trail on a smaller circle of its own. The tip runs to amber, the
+   palette's other accent, so the head of the trail reads hotter than its
+   length. */
 .pm-dial-trail {
     position: absolute;
     inset: calc(23% - 3px);
@@ -444,8 +446,8 @@
         rgba(255, 107, 53, 0.18) 315deg,
         rgba(255, 107, 53, 0.9) 352deg,
         rgba(255, 184, 0, 1) 360deg);
-    -webkit-mask: radial-gradient(circle closest-side, transparent 0 calc(50% - 4.2px), #000 calc(50% - 4.2px) calc(50% - 1.8px), transparent calc(50% - 1.8px));
-            mask: radial-gradient(circle closest-side, transparent 0 calc(50% - 4.2px), #000 calc(50% - 4.2px) calc(50% - 1.8px), transparent calc(50% - 1.8px));
+    -webkit-mask: radial-gradient(circle closest-side, transparent 0 calc(100% - 4.2px), #000 calc(100% - 4.2px) calc(100% - 1.8px), transparent calc(100% - 1.8px));
+            mask: radial-gradient(circle closest-side, transparent 0 calc(100% - 4.2px), #000 calc(100% - 4.2px) calc(100% - 1.8px), transparent calc(100% - 1.8px));
     opacity: 0;
     /* Off the mark: it lingers a moment past the arrival and goes out. */
     transition: opacity 0.55s ease;
