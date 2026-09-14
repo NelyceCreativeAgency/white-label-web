@@ -8,7 +8,7 @@ const SERVICE_PARAMS = {
 
     "homepage-design": [
         { key: "revisions", type: "stepper", label: { el: "Επιπλέον Rounds Αναθεώρησης", en: "Extra Revision Rounds" }, min: 0, max: 5, default: 0, pricePerUnit: 48 },
-        { key: "animation", type: "toggle", label: { el: "Micro-animations / Interactions", en: "Micro-animations / Interactions" }, price: 130 }
+        { key: "animation", type: "toggle", label: { el: "Micro-animations / Interactions", en: "Micro-animations / Interactions" }, price: 129 }
     ],
 
     "internal-pages": [
@@ -30,7 +30,7 @@ const SERVICE_PARAMS = {
         { key: "concepts", type: "stepper", label: { el: "Επιπλέον Προτάσεις", en: "Extra Concepts" }, min: 0, max: 5, default: 0, pricePerUnit: 120 },
         { key: "revisions", type: "stepper", label: { el: "Επιπλέον Αναθεωρήσεις", en: "Extra Revisions" }, min: 0, max: 5, default: 0, pricePerUnit: 72 },
         { key: "customgraphics", type: "toggle", label: { el: "Custom Graphics / Patterns", en: "Custom Graphics / Patterns" }, price: 270 },
-        { key: "stationery", type: "toggle", label: { el: "Σχεδιασμός Stationery (κάρτες κ.λπ.)", en: "Stationery Design (cards, etc.)" }, price: 130 }
+        { key: "stationery", type: "toggle", label: { el: "Σχεδιασμός Stationery (κάρτες κ.λπ.)", en: "Stationery Design (cards, etc.)" }, price: 129 }
     ],
 
     "full-brand": [
@@ -96,7 +96,7 @@ const SERVICE_PARAMS = {
 
     "cms-setup": [
         { key: "contenttypes", type: "stepper", label: { el: "Επιπλέον Τύποι Περιεχομένου", en: "Extra Content Types" }, min: 0, max: 10, default: 0, pricePerUnit: 48 },
-        { key: "training", type: "toggle", label: { el: "Εκπαίδευση Χρήσης CMS", en: "CMS Usage Training" }, price: 76 }
+        { key: "training", type: "toggle", label: { el: "Εκπαίδευση Χρήσης CMS", en: "CMS Usage Training" }, price: 75 }
     ],
 
     "static-management": [
@@ -188,7 +188,7 @@ const SERVICE_PARAMS = {
 
     "blog-single": [
         { key: "articles", type: "stepper", role: "multiplier", label: { el: "Αριθμός Άρθρων", en: "Number of Articles" }, min: 1, max: 20, default: 1, pricePerUnit: 0 },
-        { key: "extended", type: "toggle", label: { el: "Εκτενές Άρθρο (1500+ λέξεις)", en: "Extended Article (1500+ words)" }, price: 22 }
+        { key: "extended", type: "toggle", label: { el: "Εκτενές Άρθρο (1500+ λέξεις)", en: "Extended Article (1500+ words)" }, price: 21 }
     ],
 
     "blog-pack": [
