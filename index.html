@@ -254,47 +254,37 @@
 
     <!-- The partnership model. It sits after the work and before the closing CTA:
          by this point a visitor knows what we make, and the question that stops
-         them is whether their own client is safe in the arrangement. One
-         statement and four lines of proof — the explanatory paragraph that used
-         to sit between them said nothing the four lines do not. -->
+         them is whether their own client is safe in the arrangement.
+
+         The paragraph keeps its source and its rendering apart. js/home.js
+         splits the source into one span per word and draws those into
+         .pm-render, because the language switcher rewrites text nodes and would
+         wipe the spans out on every swap. Without JS the source is simply the
+         paragraph, which is why it is hidden in CSS rather than with `hidden`. -->
     <section class="partner-model-section" id="how-we-work">
         <div class="container">
 
-            <div class="pm-head">
-                <h2 class="pm-title">
-                    <span class="pm-line scroll-reveal" data-en="Your client. Your brand.">Ο πελάτης σου. Το brand σου.</span>
-                    <span class="pm-line pm-line-accent scroll-reveal" data-en="Our creative support.">Η δική μας δημιουργική υποστήριξη.</span>
-                </h2>
-                <ol class="pm-flow scroll-reveal">
-                    <li>Brief</li>
-                    <li>Create</li>
-                    <li>Review</li>
-                    <li>Deliver</li>
-                </ol>
-            </div>
+            <p class="pm-copy" id="pm-copy">
+                <span class="pm-src">
+                    <span data-en="We come into a project as an extension of your team.">Μπαίνουμε σε ένα project σαν προέκταση της ομάδας σου.</span>
+                    <mark data-en="Your client stays yours">Ο πελάτης παραμένει δικός σου</mark>
+                    <span data-en="— the communication and the presentation always go through you.">— η επικοινωνία και η παρουσίαση περνάνε πάντα από εσένα.</span>
+                    <mark data-en="Whatever you share stays confidential">Ό,τι μοιράζεσαι μένει εμπιστευτικό</mark>
+                    <span data-en="and nothing is published without your approval.">και τίποτα δεν δημοσιεύεται χωρίς την έγκρισή σου.</span>
+                    <mark data-en="You keep the direction">Εσύ κρατάς το τιμόνι</mark>
+                    <span data-en="— you set the brief, you review, you decide what reaches the client. And">— δίνεις το brief, κάνεις το review, αποφασίζεις τι φτάνει στον πελάτη. Και</span>
+                    <mark data-en="we step in when it spikes">μπαίνουμε όταν πιέζει</mark>
+                    <span data-en=", for one project or a whole stretch.">, για ένα project ή για μια ολόκληρη περίοδο.</span>
+                </span>
+                <span class="pm-render"></span>
+            </p>
 
-            <ul class="pm-points">
-                <li class="pm-point scroll-reveal">
-                    <span class="pm-point-num">01</span>
-                    <h3 class="pm-point-title" data-en="Your client stays yours">Ο πελάτης παραμένει δικός σου</h3>
-                    <p class="pm-point-desc" data-en="The communication and the presentation stay with you.">Η επικοινωνία και η παρουσίαση μένουν σε εσένα.</p>
-                </li>
-                <li class="pm-point scroll-reveal">
-                    <span class="pm-point-num">02</span>
-                    <h3 class="pm-point-title" data-en="Private by default">Εμπιστευτικό εξ ορισμού</h3>
-                    <p class="pm-point-desc" data-en="Briefs, files and client details stay between us.">Briefs, αρχεία και στοιχεία πελατών μένουν ανάμεσά μας.</p>
-                </li>
-                <li class="pm-point scroll-reveal">
-                    <span class="pm-point-num">03</span>
-                    <h3 class="pm-point-title" data-en="You stay in control">Εσύ κρατάς το τιμόνι</h3>
-                    <p class="pm-point-desc" data-en="You set the brief, you review each round, you decide.">Εσύ δίνεις το brief, εσύ κάνεις το review, εσύ αποφασίζεις.</p>
-                </li>
-                <li class="pm-point scroll-reveal">
-                    <span class="pm-point-num">04</span>
-                    <h3 class="pm-point-title" data-en="Capacity when it spikes">Χωρητικότητα όταν πιέζει</h3>
-                    <p class="pm-point-desc" data-en="One project or a busy stretch, without growing the team.">Ένα project ή μια περίοδο πίεσης, χωρίς να μεγαλώσεις την ομάδα.</p>
-                </li>
-            </ul>
+            <ol class="pm-flow scroll-reveal">
+                <li>Brief</li>
+                <li>Create</li>
+                <li>Review</li>
+                <li>Deliver</li>
+            </ol>
 
             <div class="pm-cta scroll-reveal">
                 <p class="pm-cta-question" data-en="Need an extra pair of hands this month?">Χρειάζεσαι ένα επιπλέον ζευγάρι χέρια αυτόν τον μήνα;</p>

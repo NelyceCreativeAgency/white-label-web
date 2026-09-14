@@ -310,10 +310,10 @@
 }
 
 /* --- The partnership model ---
-   One statement and four lines of proof. The block used to be an intro, a step
-   row, a four-column grid and a closing line stacked on top of each other,
-   which came to most of a screen for something a visitor reads in seconds.
-   Everything now sits on one column of hairlines. */
+   One paragraph. The four promises inside it are the four things an agency
+   wants to know, picked out of the sentence rather than lifted into a list.
+   Words start blurred and dim and sharpen as the paragraph is scrolled past;
+   a promise lights up as the last of its words comes clear. */
 
 .partner-model-section {
     padding: 64px 0 100px;
@@ -321,29 +321,46 @@
     z-index: 1;
 }
 
-/* --- Statement --- */
-.pm-head {
-    margin-bottom: 56px;
+.pm-copy {
+    font-size: clamp(19px, 2.5vw, 29px);
+    font-weight: 300;
+    line-height: 1.5;
+    letter-spacing: -0.5px;
+    max-width: 36ch;
 }
 
-.pm-title {
-    font-family: var(--font-serif);
-    font-size: clamp(30px, 4vw, 46px);
+/* The source is the paragraph until home.js has drawn the split version, so a
+   reader without JS still gets the text rather than an empty block. */
+.pm-copy.is-split .pm-src { display: none; }
+.pm-copy:not(.is-split) .pm-render { display: none; }
+
+/* One span per word. --t runs 0 to 1 as the scroll wave passes over it. */
+.pm-w {
+    display: inline-block;
+    opacity: calc(0.13 + 0.87 * var(--t, 0));
+    filter: blur(calc((1 - var(--t, 0)) * 5px));
+}
+
+.pm-w.is-clear {
+    opacity: 1;
+    filter: none;
+}
+
+.pm-mark {
+    background: none;
+    color: inherit;
     font-weight: 400;
-    line-height: 1.12;
-    letter-spacing: -1.2px;
-    margin-bottom: 26px;
+    box-shadow: inset 0 0 0 rgba(255, 107, 53, 0);
+    transition: color 0.45s ease, box-shadow 0.45s ease;
 }
 
-/* Two lines, each revealed on its own, so the statement lands in the order it
-   is read instead of appearing all at once. */
-.pm-line {
-    display: block;
-}
-
-.pm-line-accent {
+.pm-mark.is-lit {
     color: var(--accent-orange);
-    transition-delay: 0.12s;
+    box-shadow: inset 0 -1px 0 rgba(255, 107, 53, 0.4);
+}
+
+.pm-copy:hover .pm-mark.is-lit {
+    box-shadow: inset 0 -2px 0 rgba(255, 107, 53, 0.9);
 }
 
 /* The process, reduced to the four words it is. */
@@ -353,6 +370,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 10px 14px;
+    margin-top: 44px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -373,67 +391,9 @@
     background: rgba(255, 255, 255, 0.18);
 }
 
-/* --- The four points ---
-   One row each: index, claim, and the sentence that backs it. A row is a
-   hairline and three columns of type, nothing else. */
-.pm-points {
-    list-style: none;
-    border-top: 1px solid var(--border-color);
-}
-
-.pm-point {
-    display: grid;
-    grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1.25fr);
-    align-items: baseline;
-    gap: 24px;
-    padding: 22px 0;
-    border-bottom: 1px solid var(--border-color);
-    /* .scroll-reveal supplies the entrance on the same element, so its
-       properties have to be restated here or this shorthand drops them. */
-    transition: opacity 0.8s ease,
-                transform 0.8s cubic-bezier(0.25, 1, 0.5, 1),
-                background-color 0.4s ease,
-                padding-left 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-/* The row answers the pointer as a whole rather than one detail inside it. */
-.pm-point:hover {
-    background-color: rgba(255, 255, 255, 0.02);
-    padding-left: 12px;
-}
-
-.pm-point-num {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    color: rgba(255, 255, 255, 0.28);
-    transition: color 0.35s ease;
-}
-
-.pm-point:hover .pm-point-num {
-    color: var(--accent-orange);
-}
-
-.pm-point-title {
-    font-size: 16px;
-    font-weight: 500;
-    letter-spacing: -0.2px;
-}
-
-.pm-point-desc {
-    font-size: 14px;
-    font-weight: 300;
-    line-height: 1.6;
-    color: rgba(255, 255, 255, 0.45);
-}
-
-.pm-point:nth-child(2) { transition-delay: 0.07s; }
-.pm-point:nth-child(3) { transition-delay: 0.14s; }
-.pm-point:nth-child(4) { transition-delay: 0.21s; }
-
 /* --- Closing line --- */
 .pm-cta {
-    margin-top: 44px;
+    margin-top: 56px;
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
@@ -465,39 +425,28 @@
 
 @media (max-width: 860px) {
     .partner-model-section {
-        padding: 24px 0 72px;
+        padding: 32px 0 72px;
     }
 
-    .pm-head {
-        margin-bottom: 40px;
+    .pm-copy {
+        max-width: none;
     }
 
-    /* The claim and its sentence stack; the index keeps its own column so the
-       rows still line up down the left edge. */
-    .pm-point {
-        grid-template-columns: 36px minmax(0, 1fr);
-        gap: 6px 16px;
-        padding: 18px 0;
-    }
-
-    .pm-point-num {
-        grid-row: span 2;
-    }
-
-    .pm-point:hover {
-        padding-left: 0;
+    .pm-cta {
+        margin-top: 40px;
     }
 }
 
+/* Nothing should blur or crawl for someone who asked for stillness: the
+   paragraph is simply there, with its promises already lit. */
 @media (prefers-reduced-motion: reduce) {
-    .pm-point,
-    .pm-point-num,
-    .pm-cta-link {
-        transition: none;
+    .pm-w {
+        opacity: 1;
+        filter: none;
     }
 
-    .pm-point,
-    .pm-line-accent {
-        transition-delay: 0s;
+    .pm-mark,
+    .pm-cta-link {
+        transition: none;
     }
 }

@@ -52,3 +52,150 @@ document.addEventListener('DOMContentLoaded', () => {
         marquee.classList.add('is-looping');
     });
 });
+
+/* The partnership paragraph: words sharpen as it is scrolled through.
+ *
+ * Each word gets a --t between 0 and 1 that CSS turns into opacity and blur. A
+ * wave a few words wide runs along the paragraph, tied to how far it has
+ * travelled through the viewport, so the effect follows scroll position rather
+ * than a timer — scrubbing back up unreveals exactly what scrolling down
+ * revealed. A highlighted promise lights as the last of its own words clears.
+ *
+ * The words are drawn into .pm-render from a separate .pm-src. The language
+ * switcher rewrites the direct text of every [data-en] element and re-appends
+ * its child elements afterwards, which would leave the word spans stranded
+ * after the freshly inserted sentence. Keeping the source untouched means a
+ * language swap only needs a redraw, which is what the .lang-btn listener at
+ * the bottom does — it runs after the switcher's own, both being click
+ * handlers attached in DOM order. */
+document.addEventListener('DOMContentLoaded', () => {
+    const copy = document.getElementById('pm-copy');
+    const source = copy && copy.querySelector('.pm-src');
+    const out = copy && copy.querySelector('.pm-render');
+    if (!copy || !source || !out) return;
+
+    // How many words the wave is spread over. Lower is a harder edge.
+    const SPREAD = 7;
+    // A promise lights just before the last of its words is fully clear.
+    const LIT_AT = 0.85;
+
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    let words = [];
+    let marks = [];
+
+    // A space belongs between two segments unless the next one opens with
+    // punctuation that has to sit tight against the word before it.
+    const joinsTight = (text) => /^[,.;:!?…)\]»]/.test(text);
+
+    const build = () => {
+        out.textContent = '';
+        words = [];
+        marks = [];
+
+        Array.from(source.children).forEach((segment, index) => {
+            const text = segment.textContent.trim();
+            if (!text) return;
+
+            if (index > 0 && !joinsTight(text)) {
+                out.appendChild(document.createTextNode(' '));
+            }
+
+            const isPromise = segment.tagName === 'MARK';
+            const host = isPromise ? document.createElement('mark') : out;
+            if (isPromise) host.className = 'pm-mark';
+
+            text.split(/\s+/).forEach((word, i) => {
+                if (i > 0) host.appendChild(document.createTextNode(' '));
+                const span = document.createElement('span');
+                span.className = 'pm-w';
+                span.textContent = word;
+                host.appendChild(span);
+                words.push(span);
+            });
+
+            if (isPromise) {
+                out.appendChild(host);
+                // Where this promise ends, so it can light on cue.
+                marks.push({ el: host, lastWord: words.length - 1 });
+            }
+        });
+
+        copy.classList.add('is-split');
+    };
+
+    const setWord = (span, t) => {
+        span.dataset.t = t.toFixed(3);
+        span.style.setProperty('--t', t.toFixed(3));
+        // A cleared word drops the blur filter rather than running it at zero.
+        span.classList.toggle('is-clear', t >= 1);
+    };
+
+    const paint = () => {
+        const rect = copy.getBoundingClientRect();
+        const vh = window.innerHeight;
+
+        // 0 while the paragraph's top still sits low in the viewport, 1 by the
+        // time it has risen past the middle. The span scales with the
+        // paragraph, so a longer one is not read through any faster.
+        const from = vh * 0.85;
+        const to = vh * 0.55 - rect.height;
+        const progress = Math.min(1, Math.max(0, (from - rect.top) / (from - to)));
+        const head = progress * (words.length + SPREAD);
+
+        words.forEach((span, i) => {
+            const t = Math.min(1, Math.max(0, (head - i) / SPREAD));
+            const was = parseFloat(span.dataset.t || '0');
+            // Repainting an unchanged word costs a style recalc for nothing.
+            if (Math.abs(t - was) < 0.004) return;
+            setWord(span, t);
+        });
+
+        marks.forEach(mark => {
+            const t = Math.min(1, Math.max(0, (head - mark.lastWord) / SPREAD));
+            mark.el.classList.toggle('is-lit', t >= LIT_AT);
+        });
+    };
+
+    const settle = () => {
+        words.forEach(span => setWord(span, 1));
+        marks.forEach(mark => mark.el.classList.add('is-lit'));
+    };
+
+    let visible = false;
+    let ticking = false;
+
+    const frame = () => {
+        if (!visible) {
+            ticking = false;
+            return;
+        }
+        paint();
+        requestAnimationFrame(frame);
+    };
+
+    const rebuild = () => {
+        build();
+        if (still.matches) settle();
+        else paint();
+    };
+
+    rebuild();
+
+    if (!still.matches) {
+        // The loop only runs while the paragraph is anywhere near the viewport.
+        new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                visible = entry.isIntersecting;
+                if (visible && !ticking) {
+                    ticking = true;
+                    requestAnimationFrame(frame);
+                }
+            });
+        }, { rootMargin: '150px 0px' }).observe(copy);
+    }
+
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', rebuild);
+    });
+});
