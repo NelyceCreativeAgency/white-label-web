@@ -243,8 +243,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const notes = Array.from(dial.querySelectorAll('.pm-note'));
     if (!head || nodes.length !== 4 || notes.length !== 4) return;
 
-    // How long a step is held before the head moves on.
-    const DWELL = 3200;
+    // How long a step is held before the head moves on, and how long the dial
+    // waits before its first move. The lead-in is short because a dial that
+    // sits still for a full turn's worth of time reads as broken rather than
+    // as waiting.
+    const DWELL = 3000;
+    const LEAD = 900;
 
     let angle = -90;
     let lit = 0;
@@ -284,13 +288,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const stop = () => {
-        clearInterval(timer);
+        clearTimeout(timer);
         timer = null;
     };
 
+    // Chained rather than an interval, so the first wait can be shorter than
+    // the ones after it.
     const walk = () => {
         stop();
-        timer = setInterval(advance, DWELL);
+        const next = (wait) => {
+            timer = setTimeout(() => {
+                advance();
+                next(DWELL);
+            }, wait);
+        };
+        next(LEAD);
     };
 
     // Hovering holds the dial still. An advancing cycle owes the reader a way

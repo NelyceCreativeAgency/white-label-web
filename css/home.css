@@ -389,9 +389,10 @@
     position: relative;
     width: min(100%, 320px);
     aspect-ratio: 1;
-    /* How far the four steps sit from the centre. The ring is drawn at 30% of
-       this box by the SVG, so the steps clear it. */
-    --radius: 128px;
+    /* The ring is drawn at 27% of this box by the SVG. Steps are held this far
+       from the centre by their inner edge, so each one clears the line by the
+       same amount whichever side of it they are on. */
+    --reach: calc(27% + 14px);
 }
 
 .pm-dial-track {
@@ -424,17 +425,16 @@
 
 /* The trail rides inside the rotating layer, so it is always the stretch of
    ring just behind the mark. It is drawn as a wedge of colour that fades out
-   backwards, then masked down to a narrow band.
+   backwards, then masked down to a narrow band straddling the ring's line.
 
-   That band has to land on the ring's line rather than inside it. The line is
-   at 30% of the dial, which is where inset 20% would put this element's edge —
-   so it is grown 3px past that and the band cut from 4px to 1.8px in from its
-   own edge, which straddles the line instead of stopping at it. The tip runs
-   to amber, the palette's other accent, so the head of the trail reads hotter
-   than its length. */
+   The mask says `closest-side`. Without it a circle gradient sizes itself to
+   the farthest corner, so its 50% lands at 0.707 of the way to the box's edge
+   rather than at the edge, and the band came out well inside the ring. The tip
+   runs to amber, the palette's other accent, so the head of the trail reads
+   hotter than its length. */
 .pm-dial-trail {
     position: absolute;
-    inset: calc(20% - 3px);
+    inset: calc(23% - 3px);
     border-radius: 50%;
     background: conic-gradient(from 0deg,
         rgba(255, 107, 53, 0) 0deg,
@@ -442,8 +442,8 @@
         rgba(255, 107, 53, 0.18) 315deg,
         rgba(255, 107, 53, 0.9) 352deg,
         rgba(255, 184, 0, 1) 360deg);
-    -webkit-mask: radial-gradient(circle, transparent 0 calc(50% - 4px), #000 calc(50% - 4px) calc(50% - 1.8px), transparent calc(50% - 1.8px));
-            mask: radial-gradient(circle, transparent 0 calc(50% - 4px), #000 calc(50% - 4px) calc(50% - 1.8px), transparent calc(50% - 1.8px));
+    -webkit-mask: radial-gradient(circle closest-side, transparent 0 calc(50% - 4.2px), #000 calc(50% - 4.2px) calc(50% - 1.8px), transparent calc(50% - 1.8px));
+            mask: radial-gradient(circle closest-side, transparent 0 calc(50% - 4.2px), #000 calc(50% - 4.2px) calc(50% - 1.8px), transparent calc(50% - 1.8px));
     opacity: 0;
     /* Off the mark: it lingers a moment past the arrival and goes out. */
     transition: opacity 0.55s ease;
@@ -455,11 +455,11 @@
     transition: opacity 0.12s ease;
 }
 
-/* 20% from the top is the ring's own line: half the box, less the 30% radius. */
+/* 23% from the top is the ring's own line: half the box, less the 27% radius. */
 .pm-dial-head i {
     position: absolute;
     left: 50%;
-    top: 20%;
+    top: 23%;
     width: 0;
     height: 0;
     transform: translate(-50%, -50%);
@@ -472,13 +472,12 @@
     list-style: none;
 }
 
-/* Placed by angle, then turned back upright so the words stay readable. */
+/* Each step is pinned by the edge that faces the ring, not by its centre.
+   Centring them on one radius left the side labels looking closer to the line
+   than the top and bottom ones, because what sits between a word and the ring
+   is half its width on one axis and half its height on the other. */
 .pm-node {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: rotate(var(--a)) translateY(calc(var(--radius) * -1)) rotate(calc(var(--a) * -1)) translate(-50%, -50%);
-    transform-origin: 0 0;
     font-size: 16px;
     font-weight: 400;
     letter-spacing: -0.2px;
@@ -486,6 +485,30 @@
     color: rgba(255, 255, 255, 0.62);
     cursor: default;
     transition: color 0.4s ease, font-weight 0.4s ease;
+}
+
+.pm-node-top {
+    left: 50%;
+    bottom: var(--reach);
+    transform: translateX(-50%);
+}
+
+.pm-node-bottom {
+    left: 50%;
+    top: var(--reach);
+    transform: translateX(-50%);
+}
+
+.pm-node-left {
+    top: 50%;
+    right: var(--reach);
+    transform: translateY(-50%);
+}
+
+.pm-node-right {
+    top: 50%;
+    left: var(--reach);
+    transform: translateY(-50%);
 }
 
 .pm-node.is-on {
@@ -573,7 +596,7 @@
 
     .pm-dial {
         width: min(100%, 300px);
-        --radius: 112px;
+        --reach: calc(27% + 11px);
     }
 
     .pm-node {
