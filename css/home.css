@@ -422,7 +422,7 @@
        before the mask, so on the trail it would be cut away with everything
        else outside the ring's line. From the parent it spreads past it, and
        catches the mark as well. */
-    filter: drop-shadow(0 0 6px rgba(255, 107, 53, 0.45));
+    filter: drop-shadow(0 0 7px rgba(255, 107, 53, 0.5));
 }
 
 /* The trail rides inside the rotating layer, so it is always the stretch of
@@ -459,17 +459,21 @@
     transition: opacity 0.12s ease;
 }
 
-/* 23% from the top is the ring's own line: half the box, less the 27% radius. */
+/* The mark itself: a small bead sitting on the ring. 23% from the top is that
+   line, half the box less the 27% radius. Its core is amber, which is where
+   the trail's tip ends up too, so the two meet on the same colour. The halo is
+   a box shadow rather than a bigger bead, so what grows is the light and not
+   the mark. */
 .pm-dial-head i {
     position: absolute;
     left: 50%;
     top: 23%;
-    width: 0;
-    height: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
     transform: translate(-50%, -50%);
-    border-top: 3.5px solid transparent;
-    border-bottom: 3.5px solid transparent;
-    border-left: 5.5px solid var(--accent-orange);
+    background: var(--accent-amber);
+    box-shadow: 0 0 9px 2px rgba(255, 107, 53, 0.55);
 }
 
 .pm-dial-steps {
