@@ -131,7 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
         span.classList.toggle('is-clear', t >= 1);
     };
 
-    const paint = () => {
+    // Where the wave is asked to be, from scroll position alone.
+    const target = () => {
         const rect = copy.getBoundingClientRect();
         const vh = window.innerHeight;
 
@@ -141,7 +142,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const from = vh * 0.85;
         const to = vh * 0.55 - rect.height;
         const progress = Math.min(1, Math.max(0, (from - rect.top) / (from - to)));
-        const head = progress * (words.length + SPREAD);
+        return progress * (words.length + SPREAD);
+    };
+
+    // Where it actually is. The wave chases the scroll instead of being pinned
+    // to it, so it trails slightly and keeps catching up for a moment after
+    // scrolling stops — the weight these reveals have on the sites this is
+    // modelled on. TRAIL is the time constant: higher lags further behind.
+    const TRAIL = 0.26;
+    let head = 0;
+    let last = 0;
+
+    const paint = (now) => {
+        const wanted = target();
+
+        if (!last) {
+            head = wanted;
+        } else {
+            // Framerate-independent easing, so a 120Hz screen trails the same
+            // distance as a 60Hz one rather than catching up twice as fast.
+            const dt = Math.min(0.05, (now - last) / 1000);
+            head += (wanted - head) * (1 - Math.exp(-dt / TRAIL));
+        }
+        last = now;
 
         words.forEach((span, i) => {
             const t = Math.min(1, Math.max(0, (head - i) / SPREAD));
@@ -162,22 +185,28 @@ document.addEventListener('DOMContentLoaded', () => {
         marks.forEach(mark => mark.el.classList.add('is-lit'));
     };
 
+    // Drop the trail across a redraw or a spell out of view, so the paragraph
+    // is never caught mid-chase from a stale position.
+    const snap = () => { last = 0; };
+
     let visible = false;
     let ticking = false;
 
-    const frame = () => {
+    const frame = (now) => {
         if (!visible) {
             ticking = false;
+            snap();
             return;
         }
-        paint();
+        paint(now);
         requestAnimationFrame(frame);
     };
 
     const rebuild = () => {
         build();
+        snap();
         if (still.matches) settle();
-        else paint();
+        else paint(performance.now());
     };
 
     rebuild();
