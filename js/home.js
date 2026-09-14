@@ -136,11 +136,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const rect = copy.getBoundingClientRect();
         const vh = window.innerHeight;
 
-        // 0 while the paragraph's top still sits low in the viewport, 1 by the
-        // time it has risen past the middle. The span scales with the
-        // paragraph, so a longer one is not read through any faster.
-        const from = vh * 0.85;
-        const to = vh * 0.55 - rect.height;
+        // 0 as the paragraph enters from the bottom, 1 by the time its middle
+        // has reached the middle of the screen — measured on the centre rather
+        // than the bottom edge, which is what used to leave the last words
+        // still clearing well after the section had settled in view. Finishing
+        // marginally past centre leaves the trail room to catch up exactly
+        // there. The span scales with the paragraph, so a longer one is not
+        // read through any faster.
+        const from = vh * 0.9;
+        const to = vh * 0.6 - rect.height / 2;
         const progress = Math.min(1, Math.max(0, (from - rect.top) / (from - to)));
         return progress * (words.length + SPREAD);
     };
