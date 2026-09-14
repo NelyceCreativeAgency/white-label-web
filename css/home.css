@@ -515,13 +515,6 @@
     opacity: 1;
 }
 
-/* --- Closing line --- */
-.pm-cta {
-    margin-top: 44px;
-    display: flex;
-    justify-content: center;
-}
-
 @media (max-width: 860px) {
     .partner-model-section {
         padding: 32px 0 72px;
@@ -548,9 +541,6 @@
         font-size: 12px;
     }
 
-    .pm-cta {
-        margin-top: 32px;
-    }
 }
 
 /* Nothing should blur or crawl for someone who asked for stillness: the
