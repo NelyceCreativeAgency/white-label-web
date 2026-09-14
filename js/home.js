@@ -222,82 +222,58 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-/* The process dial: an arc that walks the four steps on its own.
+/* The process dial: a head that walks the four steps on its own.
  *
- * One quarter of the ring per step, with a head marking where the arc has
- * reached and the middle of the ring saying what happens there. The head only
- * ever turns forwards: closing the loop is a fifth position at 360 degrees,
- * which is the same place on screen as the first, so the arc can be emptied
- * with the transitions cut and nothing appears to wind back.
+ * A step lights as the head reaches it, not as the head sets off, which is the
+ * whole point of the thing: the mark arriving and the word coming on are one
+ * event. The wait is read from the head's own transition rather than kept as a
+ * number here, so it cannot drift from the stylesheet and is simply zero where
+ * the transition has been dropped.
  *
- * The arc length is written straight onto the element rather than through a
- * custom property the CSS does arithmetic on: a property a browser has not been
- * told the type of does not reliably carry a transition into whatever depends
- * on it, which is what made the arc jump some cycles and glide on others.
+ * There is no arc to fill, which also means no wrapping back to an empty ring:
+ * the head turns forwards for as long as the page is open.
  *
- * Pointing anywhere in the dial holds it where it is. It does not jump to the
- * step under the pointer: the loop runs in one direction, and letting a hover
- * send it backwards was the part that read as broken. */
+ * Pointing anywhere in the dial holds it where it is. */
 document.addEventListener('DOMContentLoaded', () => {
     const dial = document.getElementById('pm-dial');
     if (!dial) return;
 
-    const fill = dial.querySelector('.pm-track-fill');
     const head = dial.querySelector('.pm-dial-head');
     const nodes = Array.from(dial.querySelectorAll('.pm-node'));
     const notes = Array.from(dial.querySelectorAll('.pm-note'));
-    if (!fill || !head || nodes.length !== 4 || notes.length !== 4) return;
+    if (!head || nodes.length !== 4 || notes.length !== 4) return;
 
-    // How long a step is held before the arc moves on.
+    // How long a step is held before the head moves on.
     const DWELL = 3200;
-    // 2 * pi * 30, the ring's circumference in the viewBox's own units.
-    const RING = 188.5;
 
-    // 0 to 4. Four is the closing position: a full ring, back at the top.
-    let index = 0;
-    // Kept separately so the head keeps turning forwards instead of spinning
-    // back to reach a step it has already passed.
     let angle = -90;
+    let lit = 0;
     let timer = null;
+    let arrival = null;
 
-    const show = () => {
-        const covered = index / 4;
-        fill.style.strokeDashoffset = RING * (1 - covered);
-        // An empty arc still leaves a dot under a round cap, so it is hidden
-        // rather than drawn at zero length.
-        fill.style.opacity = covered > 0 ? '1' : '0';
-        head.style.transform = 'rotate(' + angle + 'deg)';
-
-        const lit = index % 4;
-        nodes.forEach((node, i) => node.classList.toggle('is-on', i === lit));
-        notes.forEach((note, i) => note.classList.toggle('is-on', i === lit));
+    const light = (i) => {
+        lit = i;
+        nodes.forEach((node, k) => node.classList.toggle('is-on', k === i));
+        notes.forEach((note, k) => note.classList.toggle('is-on', k === i));
     };
 
-    const step = () => {
-        index += 1;
-        angle += 90;
-        show();
+    // However long the stylesheet says the head takes to get there.
+    const travel = () => {
+        const declared = getComputedStyle(head).transitionDuration;
+        return (parseFloat(declared) || 0) * 1000;
     };
 
     const advance = () => {
-        if (index < 4) {
-            step();
-            return;
-        }
+        const next = (lit + 1) % 4;
 
-        // The ring is full and the head is already at the top, so emptying the
-        // arc here is invisible — as long as the frame it happens on has been
-        // painted before the next quarter starts growing. Two frames is what
-        // guarantees that; forcing a reflow instead left it up to whether the
-        // browser had coalesced the two changes into one recalculation.
-        dial.classList.add('is-resetting');
-        index = 0;
-        show();
+        angle += 90;
+        head.style.transform = 'rotate(' + angle + 'deg)';
 
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-            dial.classList.remove('is-resetting');
-            step();
-        }));
+        // The step being left stays lit until the head has arrived at the next
+        // one, so there is never a moment with the mark between two steps and
+        // neither of them on.
+        clearTimeout(arrival);
+        arrival = setTimeout(() => light(next), travel());
     };
 
     const stop = () => {
@@ -316,12 +292,14 @@ document.addEventListener('DOMContentLoaded', () => {
     dial.addEventListener('mouseleave', walk);
 
     dial.classList.add('is-running');
-    show();
+    head.style.transform = 'rotate(' + angle + 'deg)';
+    light(0);
 
     // Under prefers-reduced-motion the dial still steps through the four
     // stages, since that is a change of content rather than movement: the CSS
-    // drops the transitions, so it arrives at each one instead of travelling
-    // there. Hovering stops it either way.
+    // drops the head's transition, so it arrives at each one instead of
+    // travelling there, and the wait before the word lights becomes zero with
+    // it. Hovering stops it either way.
 
     // Only walk while the dial is on screen, so a page left open on another
     // section is not running a timer against nothing.
