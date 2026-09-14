@@ -329,7 +329,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
     gap: 40px 72px;
-    align-items: stretch;
+    align-items: start;
 }
 
 .pm-copy {
@@ -367,33 +367,109 @@
     font-weight: 500;
 }
 
-/* The process, reduced to the four words it is, set large enough to hold the
-   column. Four equal rows stretched over the paragraph's height, so the two
-   sides of the section end together however long the paragraph runs. */
-.pm-flow {
-    list-style: none;
+/* --- The process, as a dial ---
+   A loop rather than a list, because review sends work back to create rather
+   than on to delivery. The panel takes the price list's own card recipe so the
+   one box in the section is a box the site already makes. */
+.pm-panel {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 45%), rgba(35, 35, 41, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 8px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    padding: 24px;
     display: grid;
-    grid-template-rows: repeat(4, minmax(48px, 1fr));
-    align-content: stretch;
-    height: 100%;
+    place-items: center;
 }
 
-.pm-flow li {
-    display: flex;
-    align-items: center;
-    font-size: clamp(18px, 2vw, 26px);
+.pm-dial {
+    position: relative;
+    width: min(100%, 320px);
+    aspect-ratio: 1;
+    /* How far the four steps sit from the centre. Everything else is laid out
+       off the panel, so this is the only number to move. */
+    --radius: 120px;
+}
+
+.pm-dial-ring {
+    position: absolute;
+    inset: 24%;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 50%;
+}
+
+/* One arc travelling the ring, masked down to the ring's own line. This is the
+   only thing in the section that moves on its own, so it is slow and faint. */
+.pm-dial-sweep {
+    position: absolute;
+    inset: 24%;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg,
+        rgba(255, 107, 53, 0) 0deg,
+        rgba(255, 107, 53, 0.7) 55deg,
+        rgba(255, 107, 53, 0) 90deg);
+    -webkit-mask: radial-gradient(circle, transparent 0 calc(50% - 1.5px), #000 calc(50% - 1.5px) 50%, transparent 50%);
+            mask: radial-gradient(circle, transparent 0 calc(50% - 1.5px), #000 calc(50% - 1.5px) 50%, transparent 50%);
+    animation: pm-sweep 11s linear infinite;
+}
+
+@keyframes pm-sweep {
+    to { transform: rotate(360deg); }
+}
+
+.pm-dial-steps {
+    list-style: none;
+}
+
+/* Placed by angle, then turned back upright so the words stay readable. */
+.pm-node {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: rotate(var(--a)) translateY(calc(var(--radius) * -1)) rotate(calc(var(--a) * -1)) translate(-50%, -50%);
+    transform-origin: 0 0;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: default;
+    transition: color 0.35s ease;
+}
+
+.pm-node:hover {
+    color: var(--accent-orange);
+}
+
+.pm-dial-notes {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: grid;
+    width: 140px;
+    text-align: center;
+}
+
+.pm-note {
+    grid-area: 1 / 1;
+    align-self: center;
+    font-size: 12.5px;
     font-weight: 300;
-    letter-spacing: -0.4px;
-    line-height: 1.2;
-    /* Well back from the paragraph: this is the supporting half of the row, and
-       at this size it would otherwise read as a second statement. */
-    color: rgba(255, 255, 255, 0.32);
-    transition: color 0.4s ease;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.45);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-.pm-flow li:hover {
-    color: rgba(255, 255, 255, 0.7);
-}
+/* The first note is what the middle says until a step is pointed at. Without
+   :has() it simply stays, and hovering still marks the step. */
+.pm-note:first-child { opacity: 1; }
+
+.pm-dial:has(.pm-node:hover) .pm-note:first-child { opacity: 0; }
+.pm-dial:has(.pm-node:nth-child(1):hover) .pm-note:nth-child(2) { opacity: 1; }
+.pm-dial:has(.pm-node:nth-child(2):hover) .pm-note:nth-child(3) { opacity: 1; }
+.pm-dial:has(.pm-node:nth-child(3):hover) .pm-note:nth-child(4) { opacity: 1; }
+.pm-dial:has(.pm-node:nth-child(4):hover) .pm-note:nth-child(5) { opacity: 1; }
 
 /* --- Closing line --- */
 .pm-cta {
@@ -443,28 +519,21 @@
         max-width: none;
     }
 
-    .pm-flow {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 10px 14px;
-        height: auto;
+    .pm-dial {
+        width: min(100%, 300px);
+        --radius: 112px;
     }
 
-    .pm-flow li {
-        gap: 14px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 2.5px;
-        color: rgba(255, 255, 255, 0.4);
+    .pm-node {
+        font-size: 14px;
     }
 
-    .pm-flow li:not(:last-child)::after {
-        content: '';
-        width: 18px;
-        height: 1px;
-        background: rgba(255, 255, 255, 0.18);
+    .pm-dial-notes {
+        width: 128px;
+    }
+
+    .pm-note {
+        font-size: 12px;
     }
 
     .pm-cta {
@@ -480,6 +549,12 @@
         filter: none;
     }
 
+    .pm-dial-sweep {
+        animation: none;
+    }
+
+    .pm-node,
+    .pm-note,
     .pm-cta-link {
         transition: none;
     }

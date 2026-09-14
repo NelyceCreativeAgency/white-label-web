@@ -280,12 +280,30 @@
                 <span class="pm-render"></span>
             </p>
 
-            <ol class="pm-flow scroll-reveal">
-                <li>Brief</li>
-                <li>Create</li>
-                <li>Review</li>
-                <li>Deliver</li>
-            </ol>
+            <!-- The process as a loop rather than a list, because review sends
+                 work back to create rather than on to delivery. Hovering a step
+                 puts what happens at it in the middle of the ring. -->
+            <div class="pm-panel scroll-reveal">
+                <div class="pm-dial">
+                    <div class="pm-dial-ring"></div>
+                    <div class="pm-dial-sweep"></div>
+
+                    <ol class="pm-dial-steps">
+                        <li class="pm-node" style="--a: -90deg"><span>Brief</span></li>
+                        <li class="pm-node" style="--a: 0deg"><span>Create</span></li>
+                        <li class="pm-node" style="--a: 90deg"><span>Review</span></li>
+                        <li class="pm-node" style="--a: 180deg"><span>Deliver</span></li>
+                    </ol>
+
+                    <div class="pm-dial-notes">
+                        <p class="pm-note" data-en="Four steps, from brief to delivery.">Τέσσερα βήματα, από το brief στην παράδοση.</p>
+                        <p class="pm-note" data-en="You hand over the scope, the brand and the deadline.">Μας δίνεις το scope, το brand και το deadline.</p>
+                        <p class="pm-note" data-en="We work to your guidelines, with updates along the way.">Δουλεύουμε στα δικά σου guidelines, με ενημερώσεις στην πορεία.</p>
+                        <p class="pm-note" data-en="You review, comment and ask for changes.">Βλέπεις, σχολιάζεις και ζητάς αλλαγές.</p>
+                        <p class="pm-note" data-en="You get the final files and present them as your own.">Παίρνεις τα τελικά αρχεία και τα παρουσιάζεις ως δικά σου.</p>
+                    </div>
+                </div>
+            </div>
 
             </div>
 
