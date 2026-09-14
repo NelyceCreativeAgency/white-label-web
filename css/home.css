@@ -346,24 +346,14 @@
     filter: none;
 }
 
-/* A promise is marked by colour and a touch of weight against the light body
-   text — no rule under it. */
+/* The four things an agency wants to know are set in a heavier weight against
+   the light body text. No colour and no animation of their own: every attempt
+   at highlighting them landed on top of the reveal and read as a second,
+   competing effect. */
 .pm-mark {
     background: none;
     color: inherit;
-    font-weight: 400;
-}
-
-/* Once the whole paragraph has cleared, the accent pours through each promise
-   a letter at a time. One span per letter, each just changing colour: no
-   gradient clipped to the glyphs, because switching a phrase into and out of
-   that rendering made all four of them flicker at the same instant. */
-.pm-c {
-    transition: color 0.4s ease;
-}
-
-.pm-c.is-lit {
-    color: var(--accent-orange);
+    font-weight: 500;
 }
 
 /* The process, reduced to the four words it is. */
@@ -448,7 +438,6 @@
         filter: none;
     }
 
-    .pm-c,
     .pm-cta-link {
         transition: none;
     }
