@@ -589,9 +589,13 @@
         filter: none;
     }
 
-    /* The dial still advances, it just arrives rather than travels, so there
-       is nothing for a trail to be left by. */
-    .pm-dial-trail,
+    /* Nothing travels, so there is nothing for a trail to be left by, and with
+       its fade removed it would only flash on at each step. */
+    .pm-dial-trail {
+        display: none;
+    }
+
+    /* The dial still advances, it just arrives rather than travels. */
     .pm-dial-head,
     .pm-node,
     .pm-note,
