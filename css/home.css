@@ -375,12 +375,11 @@
    The ring is a progress track: an arc grows a quarter at a time, a small head
    marks where it has reached, and the middle says what happens at that step.
    js/home.js advances it; pointing at a step takes it there instead. */
+/* No frame around it. The glow and the trail read better against the page's own
+   dark than against a panel a shade lighter than it, and the section had gone
+   back to having one box in it. This holds the dial in the column and nothing
+   more. */
 .pm-panel {
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 45%), rgba(35, 35, 41, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    border-radius: 8px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    padding: 24px;
     display: grid;
     place-items: center;
 }
