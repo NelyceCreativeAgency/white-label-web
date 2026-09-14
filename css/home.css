@@ -287,17 +287,34 @@
     z-index: 1;
 }
 
-/* The heading is smaller than the statement under it but brighter and heavier,
-   which is the only way to title a section whose body is set at display size
-   without the two competing. */
+/* The heading and the dial share a row: the dial had a whole column of empty
+   page beside it, and a title centred over it was filling none of that. */
+.pm-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 40px 72px;
+    align-items: center;
+}
+
+/* Smaller than the statement further down the section but brighter and
+   heavier. A section whose body is set at display size cannot be titled by
+   something larger still without the two fighting, so the weight does the work
+   the size usually would. */
 .pm-title {
     font-family: var(--font-serif);
-    font-size: clamp(22px, 2vw, 28px);
+    font-size: clamp(24px, 2.2vw, 32px);
     font-weight: 400;
-    letter-spacing: -0.6px;
-    line-height: 1.2;
-    text-align: center;
-    margin-bottom: 48px;
+    letter-spacing: -0.7px;
+    line-height: 1.18;
+    margin-bottom: 18px;
+}
+
+.pm-sub {
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    max-width: 42ch;
 }
 
 /* The dial opens the section and the statement follows it, full width. Held to
@@ -357,7 +374,7 @@
 
 .pm-dial {
     position: relative;
-    width: min(100%, 520px);
+    width: min(100%, 480px);
     aspect-ratio: 1;
     /* The ring is drawn at 27% of this box by the SVG. Steps are held this far
        from the centre by their inner edge, so each one clears the line by the
@@ -533,8 +550,19 @@
         padding: 32px 0 72px;
     }
 
+    /* Nothing to sit beside, so the heading takes its own row above the dial. */
+    .pm-head {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
     .pm-title {
-        margin-bottom: 32px;
+        margin-bottom: 14px;
+    }
+
+    .pm-sub {
+        font-size: 15px;
+        max-width: none;
     }
 
     .pm-copy {
