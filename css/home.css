@@ -321,6 +321,17 @@
     z-index: 1;
 }
 
+/* The paragraph runs to a reading measure, which left the right of the page
+   empty. The process sits in that space instead of taking a block of its own
+   under the paragraph: it is the smaller piece of information, so it reads as
+   a margin note rather than a second statement. */
+.pm-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 40px 72px;
+    align-items: start;
+}
+
 .pm-copy {
     font-size: clamp(19px, 2.5vw, 29px);
     font-weight: 300;
@@ -356,32 +367,21 @@
     font-weight: 500;
 }
 
-/* The process, reduced to the four words it is. */
+/* The process, reduced to the four words it is. Stacked against a single rule,
+   which is what makes four words read as four steps in order. */
 .pm-flow {
     list-style: none;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px 14px;
-    margin-top: 44px;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 10px;
+    padding-left: 22px;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 2.5px;
     color: rgba(255, 255, 255, 0.4);
-}
-
-.pm-flow li {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.pm-flow li:not(:last-child)::after {
-    content: '';
-    width: 18px;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.18);
 }
 
 /* --- Closing line --- */
@@ -421,8 +421,38 @@
         padding: 32px 0 72px;
     }
 
+    /* No margin left to sit in, so the process goes back to one line under the
+       paragraph. */
+    .pm-body {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
     .pm-copy {
         max-width: none;
+    }
+
+    .pm-flow {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 14px;
+        margin-top: 0;
+        padding-left: 0;
+        border-left: none;
+    }
+
+    .pm-flow li {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .pm-flow li:not(:last-child)::after {
+        content: '';
+        width: 18px;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.18);
     }
 
     .pm-cta {
