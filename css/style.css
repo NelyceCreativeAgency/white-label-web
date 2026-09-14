@@ -1724,45 +1724,26 @@ body {
 /* --- Final conversion CTA Section --- */
 /* The ambient gradient overhead has faded out by the time a page reaches its
    closing section, which left this the flattest band on every page. It sits on
-   its own ground instead, deepening towards the footer, lit by the violet the
-   gradient uses at the top rather than by the accent — the orange belongs to
-   the button in the middle of it, and a glow in the same hue was taking the
-   button's own light away. The drift is slow enough to be felt and not
-   watched. */
+   its own ground instead, deepening towards the footer, under a wide violet
+   wash — the hue the gradient uses at the top of the page, so both ends of a
+   page are lit by the same colour rather than by the accent, which belongs to
+   the button in the middle of this section.
+
+   An ellipse rather than a circle: the section is wide and shallow, and a
+   circle sized to its height covered barely a third of it. */
 .final-cta-section {
     position: relative;
-    isolation: isolate;
-    overflow: hidden;
     padding: 120px 0;
     border-top: 1px solid var(--border-color);
-    background: linear-gradient(to bottom,
-        rgba(8, 6, 16, 0.55) 0%,
-        rgba(7, 5, 14, 0.93) 45%,
-        rgba(6, 4, 12, 0.98) 100%);
-}
-
-.final-cta-section::before {
-    content: '';
-    position: absolute;
-    inset: -25%;
-    z-index: -1;
-    background: radial-gradient(closest-side circle at 50% 55%,
-        rgba(124, 63, 209, 0.32) 0%,
-        rgba(90, 79, 224, 0.13) 45%,
-        transparent 75%);
-    animation: cta-glow 26s ease-in-out infinite;
-    will-change: transform;
-}
-
-@keyframes cta-glow {
-    0%, 100% { transform: translate3d(-4%, 2%, 0) scale(1); }
-    50%      { transform: translate3d(5%, -3%, 0) scale(1.14); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .final-cta-section::before {
-        animation: none;
-    }
+    background:
+        radial-gradient(ellipse 78% 108% at 50% 45%,
+            rgba(124, 63, 209, 0.40) 0%,
+            rgba(90, 79, 224, 0.17) 42%,
+            transparent 76%),
+        linear-gradient(to bottom,
+            rgba(8, 6, 16, 0.5) 0%,
+            rgba(7, 5, 14, 0.92) 45%,
+            rgba(6, 4, 12, 0.98) 100%);
 }
 
 .cta-title {
