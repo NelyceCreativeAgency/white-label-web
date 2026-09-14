@@ -609,7 +609,8 @@
     line-height: 1.2;
     text-decoration: none;
     cursor: pointer;
-    transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    /* Colour and light only: the pill stays put under the pointer. */
+    transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
 /* The one button that leads carries a little more light in the glass. */
@@ -634,7 +635,6 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.3),
         0 10px 30px rgba(255, 107, 53, 0.3),
         0 0 24px rgba(255, 107, 53, 0.45);
-    transform: translateY(-2px);
 }
 
 .btn:focus-visible,
@@ -678,8 +678,8 @@
         transition: none;
     }
 
-    .btn:hover,
-    .featured-cta:hover {
+    .btn:hover svg,
+    .featured-cta:hover svg {
         transform: none;
     }
 }
