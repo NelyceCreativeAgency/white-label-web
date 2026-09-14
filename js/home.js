@@ -76,8 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // How many words the wave is spread over. Lower is a harder edge.
     const SPREAD = 7;
-    // A promise lights just before the last of its words is fully clear.
-    const LIT_AT = 0.85;
+    // Once the paragraph has cleared, the promises fill in turn, this far apart.
+    const FILL_GAP = 190;
 
     const still = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -89,6 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const joinsTight = (text) => /^[,.;:!?…)\]»]/.test(text);
 
     const build = () => {
+        stopFilling();
+        done = false;
+        copy.classList.remove('is-done');
         out.textContent = '';
         words = [];
         marks = [];
@@ -178,14 +181,47 @@ document.addEventListener('DOMContentLoaded', () => {
             setWord(span, t);
         });
 
-        marks.forEach(mark => {
-            const t = Math.min(1, Math.max(0, (head - mark.lastWord) / SPREAD));
-            mark.el.classList.toggle('is-lit', t >= LIT_AT);
+        // The promises wait for the whole paragraph rather than lighting as the
+        // wave passes over each of them: the sentence is read first, then what
+        // matters in it is picked out.
+        const lastWord = Math.min(1, Math.max(0, (head - (words.length - 1)) / SPREAD));
+        setDone(lastWord >= 0.995);
+    };
+
+    let done = false;
+    let fills = [];
+
+    const stopFilling = () => {
+        fills.forEach(clearTimeout);
+        fills = [];
+    };
+
+    const setDone = (value) => {
+        if (value === done) return;
+        done = value;
+        stopFilling();
+
+        if (!value) {
+            copy.classList.remove('is-done');
+            marks.forEach(mark => mark.el.classList.remove('is-lit'));
+            return;
+        }
+
+        copy.classList.add('is-done');
+        // A frame between the fill being set up and being triggered, or the
+        // browser collapses the two into one style change and nothing moves.
+        requestAnimationFrame(() => {
+            marks.forEach((mark, i) => {
+                fills.push(setTimeout(() => mark.el.classList.add('is-lit'), i * FILL_GAP));
+            });
         });
     };
 
     const settle = () => {
         words.forEach(span => setWord(span, 1));
+        stopFilling();
+        done = true;
+        copy.classList.add('is-done');
         marks.forEach(mark => mark.el.classList.add('is-lit'));
     };
 

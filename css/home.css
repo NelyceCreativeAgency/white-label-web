@@ -352,11 +352,44 @@
     background: none;
     color: inherit;
     font-weight: 400;
-    transition: color 0.45s ease;
 }
 
-.pm-mark.is-lit {
-    color: var(--accent-orange);
+/* Once the whole paragraph has cleared, the promises fill one after another.
+   The gradient is twice the width of the text and slides across it, clipped to
+   the glyphs, so the accent pours in from the left — and runs through a promise
+   that wraps onto a second line as one continuous sweep. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .pm-copy.is-done .pm-mark {
+        background-image: linear-gradient(90deg, var(--accent-orange) 0 50%, var(--text-primary) 50% 100%);
+        background-size: 200% 100%;
+        background-position: 100% 0;
+        background-repeat: no-repeat;
+        -webkit-background-clip: text;
+                background-clip: text;
+        transition: background-position 0.75s cubic-bezier(0.3, 1, 0.5, 1);
+    }
+
+    /* The words carry their own colour, so they have to step aside and let the
+       clipped gradient behind them show through. */
+    .pm-copy.is-done .pm-mark .pm-w {
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .pm-copy.is-done .pm-mark.is-lit {
+        background-position: 0 0;
+    }
+}
+
+/* Without the clip there is nothing to pour, so the promise just turns colour. */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+    .pm-mark {
+        transition: color 0.45s ease;
+    }
+
+    .pm-mark.is-lit {
+        color: var(--accent-orange);
+    }
 }
 
 /* The process, reduced to the four words it is. */
@@ -441,6 +474,7 @@
         filter: none;
     }
 
+    .pm-copy.is-done .pm-mark,
     .pm-mark,
     .pm-cta-link {
         transition: none;
