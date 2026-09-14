@@ -413,7 +413,9 @@
 .pm-dial-head {
     position: absolute;
     inset: 0;
-    transform: rotate(-90deg);
+    /* Unrotated: the mark is drawn at the top of this layer, which is where
+       the first step is. */
+    transform: rotate(0deg);
     transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
     /* The glow sits here and not on the trail itself: a filter is applied
@@ -487,27 +489,30 @@
     transition: color 0.4s ease, font-weight 0.4s ease;
 }
 
+/* Each offset is measured from the middle of the dial, which is what the 50%
+   in front of the reach is doing: `bottom: var(--reach)` on its own would put
+   the word that far up from the bottom edge, which is below the centre. */
 .pm-node-top {
     left: 50%;
-    bottom: var(--reach);
+    bottom: calc(50% + var(--reach));
     transform: translateX(-50%);
 }
 
 .pm-node-bottom {
     left: 50%;
-    top: var(--reach);
+    top: calc(50% + var(--reach));
     transform: translateX(-50%);
 }
 
 .pm-node-left {
     top: 50%;
-    right: var(--reach);
+    right: calc(50% + var(--reach));
     transform: translateY(-50%);
 }
 
 .pm-node-right {
     top: 50%;
-    left: var(--reach);
+    left: calc(50% + var(--reach));
     transform: translateY(-50%);
 }
 

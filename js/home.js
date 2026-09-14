@@ -250,7 +250,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const DWELL = 3000;
     const LEAD = 900;
 
-    let angle = -90;
+    // The mark is drawn at the top of its layer and the first step is at the
+    // top of the dial, so the two start aligned with no offset between them.
+    let angle = 0;
     let lit = 0;
     let timer = null;
     let arrival = null;
