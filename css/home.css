@@ -80,9 +80,11 @@
     animation-direction: reverse;
 }
 
-/* Hold still while someone is reading a card. */
+/* Hold still while someone is reading a card, and while the row is nowhere
+   near the screen. */
 .marquee:hover .marquee-track,
-.marquee:focus-within .marquee-track {
+.marquee:focus-within .marquee-track,
+.marquee.is-paused .marquee-track {
     animation-play-state: paused;
 }
 
@@ -354,6 +356,12 @@
 
 .pm-w.is-clear {
     opacity: 1;
+    filter: none;
+}
+
+/* Not reached yet: too faint for the blur to register, so it does not pay for
+   one. See setWord in js/home.js. */
+.pm-w.is-waiting {
     filter: none;
 }
 

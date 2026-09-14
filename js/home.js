@@ -52,6 +52,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const distance = group.getBoundingClientRect().width + gap;
         marquee.style.setProperty('--marquee-duration', (distance / PIXELS_PER_SECOND).toFixed(1) + 's');
         marquee.classList.add('is-looping');
+
+        // A row three sections above the reader is still a wide composited
+        // layer being moved every frame. Held still while it is off screen it
+        // costs nothing, and it is in the same place when they come back.
+        new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                marquee.classList.toggle('is-paused', !entry.isIntersecting);
+            });
+        }, { rootMargin: '200px 0px' }).observe(marquee);
     });
 });
 
@@ -120,8 +129,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const setWord = (span, t) => {
         span.dataset.t = t.toFixed(3);
         span.style.setProperty('--t', t.toFixed(3));
-        // A cleared word drops the blur filter rather than running it at zero.
+        // Only the words the wave is actually crossing carry a blur. A cleared
+        // one would be running the filter at zero, and one still waiting sits
+        // at an eighth of full opacity, where whether it is blurred is not
+        // something anyone can see. That leaves about seven live filters
+        // instead of one per word.
         span.classList.toggle('is-clear', t >= 1);
+        span.classList.toggle('is-waiting', t <= 0);
     };
 
     // Where the wave is asked to be, from scroll position alone.
