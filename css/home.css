@@ -518,6 +518,8 @@
 /* --- Closing line --- */
 .pm-cta {
     margin-top: 44px;
+    display: flex;
+    justify-content: center;
 }
 
 @media (max-width: 860px) {
@@ -613,10 +615,20 @@
     transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-/* The one button that leads carries a little more light in the glass. */
+/* The two buttons that lead somewhere the page is built to send people — the
+   price list at the top, the conversation at the bottom — start on the accent
+   instead of waiting to be found. Everything else stays glass, which is what
+   keeps this meaning anything.
+
+   Near-black on the orange rather than white: white on this hue is around
+   three to one, which is thin for text this size. */
 .btn-primary {
-    border-color: rgba(255, 255, 255, 0.24);
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.1) 42%, rgba(255, 255, 255, 0.05) 100%);
+    border-color: rgba(255, 138, 90, 0.55);
+    background: linear-gradient(160deg, #ff8250 0%, #ff6b35 55%, #f15c27 100%);
+    color: #17110d;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 8px 24px rgba(255, 107, 53, 0.25);
 }
 
 .btn-large {
@@ -635,6 +647,17 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.3),
         0 10px 30px rgba(255, 107, 53, 0.3),
         0 0 24px rgba(255, 107, 53, 0.45);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+    border-color: rgba(255, 170, 125, 0.8);
+    background: linear-gradient(160deg, #ff9668 0%, #ff7d47 55%, #ff6a33 100%);
+    color: #17110d;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        0 10px 32px rgba(255, 107, 53, 0.45),
+        0 0 28px rgba(255, 107, 53, 0.6);
 }
 
 .btn:focus-visible,
