@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const distance = Math.random() * 200 + 120;
             const dx = Math.cos(angle) * distance;
             const dy = Math.sin(angle) * distance;
-            const size = (Math.random() * 2.5 + 2.5).toFixed(1);
+            const size = (Math.random() * 3 + 3).toFixed(1);
 
             sparkle.style.left = `${Math.random() * 100}%`;
             sparkle.style.top = `${Math.random() * 100}%`;
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sparkle.style.setProperty('--dy', `${dy.toFixed(0)}px`);
             sparkle.style.setProperty('--flow-duration', `${(Math.random() * 6 + 8).toFixed(1)}s`);
             sparkle.style.setProperty('--flow-delay', `${(Math.random() * 8).toFixed(1)}s`);
-            sparkle.style.setProperty('--sparkle-opacity', `${(Math.random() * 0.35 + 0.5).toFixed(2)}`);
+            sparkle.style.setProperty('--sparkle-opacity', `${(Math.random() * 0.3 + 0.65).toFixed(2)}`);
             sky.appendChild(sparkle);
         }
     };
