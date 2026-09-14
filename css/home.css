@@ -9,19 +9,33 @@
     z-index: 1;
 }
 
-.featured-title {
+/* One rule for both section headings on this page, so they cannot drift apart
+   again: the partnership one had been set two sizes and a weight below this
+   and read as a different kind of title altogether. Only their margins and
+   alignment are their own. */
+.featured-title,
+.pm-title {
     font-size: clamp(1.9rem, 4vw, 2.9rem);
     font-weight: 600;
     letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.featured-subtitle,
+.pm-sub {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 300;
+    line-height: 1.7;
+}
+
+.featured-title {
     margin-bottom: 12px;
 }
 
 .featured-subtitle {
     max-width: 620px;
     margin: 0 auto 48px;
-    color: var(--text-secondary);
-    font-size: 1rem;
-    line-height: 1.7;
 }
 
 /* --- The rows ---
@@ -296,24 +310,11 @@
     align-items: center;
 }
 
-/* Smaller than the statement further down the section but brighter and
-   heavier. A section whose body is set at display size cannot be titled by
-   something larger still without the two fighting, so the weight does the work
-   the size usually would. */
 .pm-title {
-    font-family: var(--font-serif);
-    font-size: clamp(24px, 2.2vw, 32px);
-    font-weight: 400;
-    letter-spacing: -0.7px;
-    line-height: 1.18;
     margin-bottom: 18px;
 }
 
 .pm-sub {
-    font-size: 16px;
-    font-weight: 300;
-    line-height: 1.7;
-    color: var(--text-secondary);
     max-width: 42ch;
 }
 
