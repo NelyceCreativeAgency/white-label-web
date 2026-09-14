@@ -321,23 +321,15 @@
     z-index: 1;
 }
 
-/* The paragraph runs to a reading measure, which left the right of the page
-   empty. The process sits in that space instead of taking a block of its own
-   under the paragraph: it is the smaller piece of information, so it reads as
-   a margin note rather than a second statement. */
-.pm-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    gap: 40px 72px;
-    align-items: start;
-}
-
+/* The dial opens the section and the statement follows it, full width. Held to
+   a reading measure the statement had to sit beside the dial, and each was
+   making the other smaller than it wanted to be. */
 .pm-copy {
-    font-size: clamp(19px, 2.5vw, 29px);
+    font-size: clamp(19px, 2.4vw, 30px);
     font-weight: 300;
-    line-height: 1.5;
+    line-height: 1.45;
     letter-spacing: -0.5px;
-    max-width: 36ch;
+    margin-top: 64px;
 }
 
 /* The source is the paragraph until home.js has drawn the split version, so a
@@ -386,12 +378,12 @@
 
 .pm-dial {
     position: relative;
-    width: min(100%, 320px);
+    width: min(100%, 520px);
     aspect-ratio: 1;
     /* The ring is drawn at 27% of this box by the SVG. Steps are held this far
        from the centre by their inner edge, so each one clears the line by the
        same amount whichever side of it they are on. */
-    --reach: calc(27% + 14px);
+    --reach: calc(27% + 18px);
 }
 
 .pm-dial-track {
@@ -403,8 +395,9 @@
 }
 
 .pm-track-bg {
-    stroke: rgba(255, 255, 255, 0.09);
-    stroke-width: 0.5;
+    stroke: rgba(255, 255, 255, 0.11);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
 }
 
 /* The head is a full-size layer that rotates, so its mark travels the ring
@@ -467,8 +460,8 @@
     position: absolute;
     left: 50%;
     top: 23%;
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     transform: translate(-50%, -50%);
     background: var(--accent-amber);
@@ -485,7 +478,7 @@
    is half its width on one axis and half its height on the other. */
 .pm-node {
     position: absolute;
-    font-size: 16px;
+    font-size: 19px;
     font-weight: 400;
     letter-spacing: -0.2px;
     white-space: nowrap;
@@ -532,14 +525,14 @@
     top: 50%;
     transform: translate(-50%, -50%);
     display: grid;
-    width: 140px;
+    width: 210px;
     text-align: center;
 }
 
 .pm-note {
     grid-area: 1 / 1;
     align-self: center;
-    font-size: 12.5px;
+    font-size: 14px;
     font-weight: 300;
     line-height: 1.55;
     color: rgba(255, 255, 255, 0.62);
@@ -593,15 +586,8 @@
         padding: 32px 0 72px;
     }
 
-    /* No margin left to sit in, so the process goes back to one line under the
-       paragraph. */
-    .pm-body {
-        grid-template-columns: 1fr;
-        gap: 32px;
-    }
-
     .pm-copy {
-        max-width: none;
+        margin-top: 44px;
     }
 
     .pm-dial {
