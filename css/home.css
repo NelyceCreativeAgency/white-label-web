@@ -415,23 +415,35 @@
     transform: rotate(-90deg);
     transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
+    /* The glow sits here and not on the trail itself: a filter is applied
+       before the mask, so on the trail it would be cut away with everything
+       else outside the ring's line. From the parent it spreads past it, and
+       catches the mark as well. */
+    filter: drop-shadow(0 0 6px rgba(255, 107, 53, 0.45));
 }
 
 /* The trail rides inside the rotating layer, so it is always the stretch of
    ring just behind the mark. It is drawn as a wedge of colour that fades out
-   backwards, then masked down to the ring's own line. Inset 20% puts its edge
-   on that line: half the box, less the 30% radius. */
+   backwards, then masked down to a narrow band.
+
+   That band has to land on the ring's line rather than inside it. The line is
+   at 30% of the dial, which is where inset 20% would put this element's edge —
+   so it is grown 3px past that and the band cut from 4px to 1.8px in from its
+   own edge, which straddles the line instead of stopping at it. The tip runs
+   to amber, the palette's other accent, so the head of the trail reads hotter
+   than its length. */
 .pm-dial-trail {
     position: absolute;
-    inset: 20%;
+    inset: calc(20% - 3px);
     border-radius: 50%;
     background: conic-gradient(from 0deg,
         rgba(255, 107, 53, 0) 0deg,
-        rgba(255, 107, 53, 0) 275deg,
-        rgba(255, 107, 53, 0.15) 320deg,
-        rgba(255, 107, 53, 0.85) 360deg);
-    -webkit-mask: radial-gradient(circle, transparent 0 calc(50% - 2px), #000 calc(50% - 2px) 50%, transparent 50%);
-            mask: radial-gradient(circle, transparent 0 calc(50% - 2px), #000 calc(50% - 2px) 50%, transparent 50%);
+        rgba(255, 107, 53, 0) 272deg,
+        rgba(255, 107, 53, 0.18) 315deg,
+        rgba(255, 107, 53, 0.9) 352deg,
+        rgba(255, 184, 0, 1) 360deg);
+    -webkit-mask: radial-gradient(circle, transparent 0 calc(50% - 4px), #000 calc(50% - 4px) calc(50% - 1.8px), transparent calc(50% - 1.8px));
+            mask: radial-gradient(circle, transparent 0 calc(50% - 4px), #000 calc(50% - 4px) calc(50% - 1.8px), transparent calc(50% - 1.8px));
     opacity: 0;
     /* Off the mark: it lingers a moment past the arrival and goes out. */
     transition: opacity 0.55s ease;
@@ -593,6 +605,10 @@
        its fade removed it would only flash on at each step. */
     .pm-dial-trail {
         display: none;
+    }
+
+    .pm-dial-head {
+        filter: none;
     }
 
     /* The dial still advances, it just arrives rather than travels. */
