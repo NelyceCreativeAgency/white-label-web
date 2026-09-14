@@ -188,6 +188,7 @@
     background: rgba(255, 255, 255, 0.07);
     -webkit-backdrop-filter: blur(6px);
             backdrop-filter: blur(6px);
+    /* The touch block further down drops this blur; see why there. */
     font-size: 0.72rem;
     font-weight: 500;
     letter-spacing: 0.01em;
@@ -206,6 +207,16 @@
     .fp-card-overlay {
         opacity: 1;
         background: linear-gradient(to top, rgba(6, 6, 10, 0.88) 0%, rgba(6, 6, 10, 0.45) 60%, rgba(6, 6, 10, 0.1) 100%);
+    }
+
+    /* With the overlay permanently open, every pill on every card would be
+       blurring what is behind it while the row animates — more than thirty
+       live backdrop filters inside a moving layer. A flat fill reads the same
+       against a scrim this dark and costs nothing. */
+    .fp-card-tags li {
+        background: rgba(255, 255, 255, 0.12);
+        -webkit-backdrop-filter: none;
+                backdrop-filter: none;
     }
 
     .fp-card-title,
@@ -546,6 +557,16 @@
     opacity: 1;
 }
 
+/* The reveal keeps its fade on a phone but loses the blur: that is a filter
+   per word, some fifty of them, recomputed on every frame of the scroll. The
+   wave still reads, and the paragraph stops being the most expensive thing on
+   the page. */
+@media (max-width: 640px) {
+    .pm-w {
+        filter: none;
+    }
+}
+
 @media (max-width: 860px) {
     .partner-model-section {
         padding: 32px 0 72px;
@@ -587,6 +608,28 @@
         font-size: 12px;
     }
 
+}
+
+/* Below this the longest step name reaches past the dial's own edge and into
+   the container's gutter. Only the clearance moves: the 27% is where the SVG
+   draws the ring, and taking that down would put the words inside it. */
+@media (max-width: 420px) {
+    .pm-dial {
+        --reach: calc(27% + 6px);
+    }
+
+    .pm-node {
+        font-size: 13px;
+    }
+
+    .pm-dial-notes {
+        width: 112px;
+    }
+
+    .pm-note {
+        font-size: 11.5px;
+        line-height: 1.5;
+    }
 }
 
 /* Nothing should blur or crawl for someone who asked for stillness: the

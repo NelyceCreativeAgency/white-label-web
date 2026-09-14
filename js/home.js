@@ -15,9 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cards drift at a fixed speed rather than a fixed duration, so a short row
     // and a long one read as the same motion instead of one crawling.
     const PIXELS_PER_SECOND = 45;
-    // Padding for a viewport wider than the one being used avoids having to
-    // rebuild (and restart) the row every time the window is resized.
-    const MIN_GROUP_WIDTH = 2200;
+    // Padded past the current viewport so an ordinary resize does not have to
+    // rebuild (and restart) the row. Measured against the viewport rather than
+    // fixed: a flat 2200 made a phone build twice the cards it could ever show,
+    // which on a row that animates is DOM and compositing for nothing.
+    const MIN_GROUP_WIDTH = Math.max(window.innerWidth * 1.15, 1400);
 
     const hide = (el) => {
         el.setAttribute('aria-hidden', 'true');
