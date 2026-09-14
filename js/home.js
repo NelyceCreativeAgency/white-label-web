@@ -76,25 +76,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // How many words the wave is spread over. Lower is a harder edge.
     const SPREAD = 7;
-    // Once the paragraph has cleared, the promises fill in turn, this far apart.
-    const FILL_GAP = 190;
+    // Once the paragraph has cleared, the promises pour in: one letter every
+    // CHAR_STEP ms, with PHRASE_GAP between one promise finishing and the next
+    // starting.
+    const CHAR_STEP = 15;
+    const PHRASE_GAP = 220;
 
     const still = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     let words = [];
-    let marks = [];
+    let letters = [];
 
     // A space belongs between two segments unless the next one opens with
     // punctuation that has to sit tight against the word before it.
     const joinsTight = (text) => /^[,.;:!?…)\]»]/.test(text);
 
     const build = () => {
-        stopFilling();
         done = false;
-        copy.classList.remove('is-done');
         out.textContent = '';
         words = [];
-        marks = [];
+        letters = [];
+        let at = 0;
 
         Array.from(source.children).forEach((segment, index) => {
             const text = segment.textContent.trim();
@@ -112,15 +114,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (i > 0) host.appendChild(document.createTextNode(' '));
                 const span = document.createElement('span');
                 span.className = 'pm-w';
-                span.textContent = word;
                 host.appendChild(span);
                 words.push(span);
+
+                if (!isPromise) {
+                    span.textContent = word;
+                    return;
+                }
+
+                // A promise is split again, a span per letter, so the accent
+                // can pour through it rather than the whole phrase switching
+                // at once. The word span keeps carrying the blur.
+                Array.from(word).forEach(character => {
+                    const letter = document.createElement('span');
+                    letter.className = 'pm-c';
+                    letter.textContent = character;
+                    span.appendChild(letter);
+                    letters.push({ el: letter, at });
+                    at += CHAR_STEP;
+                });
+                // A space costs a letter's worth of time, so the pour crosses
+                // it at the same pace it crosses the words.
+                at += CHAR_STEP;
             });
 
             if (isPromise) {
                 out.appendChild(host);
-                // Where this promise ends, so it can light on cue.
-                marks.push({ el: host, lastWord: words.length - 1 });
+                at += PHRASE_GAP;
             }
         });
 
@@ -185,44 +205,39 @@ document.addEventListener('DOMContentLoaded', () => {
         // wave passes over each of them: the sentence is read first, then what
         // matters in it is picked out.
         const lastWord = Math.min(1, Math.max(0, (head - (words.length - 1)) / SPREAD));
-        setDone(lastWord >= 0.995);
+        setDone(lastWord >= 0.995, now);
+
+        // The pour runs off this same loop rather than a hundred timers, so it
+        // stops and resumes with everything else.
+        if (done) {
+            const elapsed = now - pouredAt;
+            letters.forEach(letter => {
+                letter.el.classList.toggle('is-lit', elapsed >= letter.at);
+            });
+        }
     };
 
     let done = false;
-    let fills = [];
+    let pouredAt = 0;
 
-    const stopFilling = () => {
-        fills.forEach(clearTimeout);
-        fills = [];
-    };
-
-    const setDone = (value) => {
+    // The promises wait for the whole paragraph rather than lighting as the
+    // wave passes over each of them: the sentence is read first, then what
+    // matters in it is picked out.
+    const setDone = (value, now) => {
         if (value === done) return;
         done = value;
-        stopFilling();
 
-        if (!value) {
-            copy.classList.remove('is-done');
-            marks.forEach(mark => mark.el.classList.remove('is-lit'));
-            return;
+        if (value) {
+            pouredAt = now;
+        } else {
+            letters.forEach(letter => letter.el.classList.remove('is-lit'));
         }
-
-        copy.classList.add('is-done');
-        // A frame between the fill being set up and being triggered, or the
-        // browser collapses the two into one style change and nothing moves.
-        requestAnimationFrame(() => {
-            marks.forEach((mark, i) => {
-                fills.push(setTimeout(() => mark.el.classList.add('is-lit'), i * FILL_GAP));
-            });
-        });
     };
 
     const settle = () => {
         words.forEach(span => setWord(span, 1));
-        stopFilling();
         done = true;
-        copy.classList.add('is-done');
-        marks.forEach(mark => mark.el.classList.add('is-lit'));
+        letters.forEach(letter => letter.el.classList.add('is-lit'));
     };
 
     // Drop the trail across a redraw or a spell out of view, so the paragraph
