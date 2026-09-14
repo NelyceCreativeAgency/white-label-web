@@ -8,35 +8,35 @@ const SERVICE_PARAMS = {
 
     "homepage-design": [
         { key: "revisions", type: "stepper", label: { el: "Επιπλέον Rounds Αναθεώρησης", en: "Extra Revision Rounds" }, min: 0, max: 5, default: 0, pricePerUnit: 48 },
-        { key: "animation", type: "toggle", label: { el: "Micro-animations / Interactions", en: "Micro-animations / Interactions" }, price: 129 }
+        { key: "animation", type: "toggle", label: { el: "Micro-animations / Interactions", en: "Micro-animations / Interactions" }, price: 125 }
     ],
 
     "internal-pages": [
         { key: "pages", type: "stepper", role: "multiplier", label: { el: "Αριθμός Σελίδων", en: "Number of Pages" }, min: 1, max: 20, default: 1, pricePerUnit: 0 },
         { key: "complexity", type: "select", label: { el: "Πολυπλοκότητα ανά Σελίδα", en: "Complexity per Page" }, options: [
             { label: { el: "Απλή", en: "Basic" }, price: 0, note: { el: "Τυπικό layout με στατικό περιεχόμενο", en: "Standard layout with static content" } },
-            { label: { el: "Σύνθετη", en: "Advanced" }, price: 54, note: { el: "Custom sections, interactive στοιχεία", en: "Custom sections, interactive elements" } }
+            { label: { el: "Σύνθετη", en: "Advanced" }, price: 50, note: { el: "Custom sections, interactive στοιχεία", en: "Custom sections, interactive elements" } }
         ]},
-        { key: "illustrations", type: "toggle", label: { el: "Custom Illustrations ανά Σελίδα", en: "Custom Illustrations per Page" }, price: 43 }
+        { key: "illustrations", type: "toggle", label: { el: "Custom Illustrations ανά Σελίδα", en: "Custom Illustrations per Page" }, price: 40 }
     ],
 
     "basic-logo": [
         { key: "concepts", type: "stepper", label: { el: "Επιπλέον Προτάσεις", en: "Extra Concepts" }, min: 0, max: 5, default: 0, pricePerUnit: 120 },
         { key: "revisions", type: "stepper", label: { el: "Επιπλέον Αναθεωρήσεις", en: "Extra Revisions" }, min: 0, max: 5, default: 0, pricePerUnit: 60 },
-        { key: "socialkit", type: "toggle", label: { el: "Social Media Kit", en: "Social Media Kit" }, price: 86 }
+        { key: "socialkit", type: "toggle", label: { el: "Social Media Kit", en: "Social Media Kit" }, price: 85 }
     ],
 
     "plus-brand": [
         { key: "concepts", type: "stepper", label: { el: "Επιπλέον Προτάσεις", en: "Extra Concepts" }, min: 0, max: 5, default: 0, pricePerUnit: 120 },
         { key: "revisions", type: "stepper", label: { el: "Επιπλέον Αναθεωρήσεις", en: "Extra Revisions" }, min: 0, max: 5, default: 0, pricePerUnit: 72 },
         { key: "customgraphics", type: "toggle", label: { el: "Custom Graphics / Patterns", en: "Custom Graphics / Patterns" }, price: 270 },
-        { key: "stationery", type: "toggle", label: { el: "Σχεδιασμός Stationery (κάρτες κ.λπ.)", en: "Stationery Design (cards, etc.)" }, price: 129 }
+        { key: "stationery", type: "toggle", label: { el: "Σχεδιασμός Stationery (κάρτες κ.λπ.)", en: "Stationery Design (cards, etc.)" }, price: 125 }
     ],
 
     "full-brand": [
         { key: "concepts", type: "stepper", label: { el: "Επιπλέον Προτάσεις", en: "Extra Concepts" }, min: 0, max: 5, default: 0, pricePerUnit: 144 },
         { key: "revisions", type: "stepper", label: { el: "Επιπλέον Αναθεωρήσεις", en: "Extra Revisions" }, min: 0, max: 5, default: 0, pricePerUnit: 84 },
-        { key: "customgraphics", type: "toggle", label: { el: "Custom Graphics / Illustrations", en: "Custom Graphics / Illustrations" }, price: 216 }
+        { key: "customgraphics", type: "toggle", label: { el: "Custom Graphics / Illustrations", en: "Custom Graphics / Illustrations" }, price: 215 }
     ],
 
     "full-brand-custom": [
@@ -47,7 +47,7 @@ const SERVICE_PARAMS = {
 
     "extra-concepts": [
         { key: "concepts", type: "stepper", role: "multiplier", label: { el: "Αριθμός Προτάσεων", en: "Number of Concepts" }, min: 1, max: 10, default: 1, pricePerUnit: 0 },
-        { key: "rush", type: "toggle", scope: "flat", label: { el: "Rush Delivery", en: "Rush Delivery" }, price: 54 }
+        { key: "rush", type: "toggle", scope: "flat", label: { el: "Rush Delivery", en: "Rush Delivery" }, price: 50 }
     ],
 
     "responsive-theme": [
@@ -55,7 +55,7 @@ const SERVICE_PARAMS = {
         { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 360 },
         { key: "complexity", type: "select", label: { el: "Επίπεδο Λειτουργιών", en: "Feature Complexity" }, options: [
             { label: { el: "Βασική", en: "Basic" }, price: 0, note: { el: "Στατικές φόρμες, βασική λειτουργικότητα", en: "Static forms, basic functionality" } },
-            { label: { el: "Προχωρημένη", en: "Advanced" }, price: 432, note: { el: "Dynamic filters, integrations, custom λειτουργίες", en: "Dynamic filters, integrations, custom functions" } }
+            { label: { el: "Προχωρημένη", en: "Advanced" }, price: 430, note: { el: "Dynamic filters, integrations, custom λειτουργίες", en: "Dynamic filters, integrations, custom functions" } }
         ]}
     ],
 
@@ -64,7 +64,7 @@ const SERVICE_PARAMS = {
         { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 420 },
         { key: "complexity", type: "select", label: { el: "Πολυπλοκότητα Custom Λειτουργιών", en: "Custom Feature Complexity" }, options: [
             { label: { el: "Βασική", en: "Basic" }, price: 0, note: { el: "Στατικό περιεχόμενο, βασικές φόρμες", en: "Static content, basic forms" } },
-            { label: { el: "Προχωρημένη", en: "Advanced" }, price: 648, note: { el: "Dynamic λειτουργίες, integrations, dashboards", en: "Dynamic functions, integrations, dashboards" } },
+            { label: { el: "Προχωρημένη", en: "Advanced" }, price: 645, note: { el: "Dynamic λειτουργίες, integrations, dashboards", en: "Dynamic functions, integrations, dashboards" } },
             { label: { el: "Enterprise", en: "Enterprise" }, price: 1620, note: { el: "Πολύπλοκα συστήματα, custom APIs, automations", en: "Complex systems, custom APIs, automations" } }
         ]}
     ],
@@ -72,22 +72,22 @@ const SERVICE_PARAMS = {
     "full-package": [
         { key: "pages", type: "stepper", label: { el: "Αριθμός Σελίδων", en: "Number of Pages" }, min: 1, max: 20, default: 5, baseline: 5, pricePerUnit: 240 },
         { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 480 },
-        { key: "customgraphics", type: "toggle", label: { el: "Custom Illustrations / Graphics", en: "Custom Illustrations / Graphics" }, price: 378 }
+        { key: "customgraphics", type: "toggle", label: { el: "Custom Illustrations / Graphics", en: "Custom Illustrations / Graphics" }, price: 375 }
     ],
 
     "ai-responsive-website": [
         { key: "pages", type: "stepper", label: { el: "Αριθμός Σελίδων", en: "Number of Pages" }, min: 1, max: 15, default: 5, baseline: 5, pricePerUnit: 108 },
-        { key: "chatbot", type: "toggle", label: { el: "AI Chatbot Integration", en: "AI Chatbot Integration" }, price: 216 }
+        { key: "chatbot", type: "toggle", label: { el: "AI Chatbot Integration", en: "AI Chatbot Integration" }, price: 215 }
     ],
 
     "ai-static-website": [
         { key: "pages", type: "stepper", label: { el: "Αριθμός Σελίδων", en: "Number of Pages" }, min: 1, max: 10, default: 4, baseline: 4, pricePerUnit: 84 },
-        { key: "seo", type: "toggle", label: { el: "Επιπλέον SEO Optimization", en: "Extra SEO Optimization" }, price: 108 }
+        { key: "seo", type: "toggle", label: { el: "Επιπλέον SEO Optimization", en: "Extra SEO Optimization" }, price: 105 }
     ],
 
     "ai-static-template": [
         { key: "pages", type: "stepper", label: { el: "Αριθμός Σελίδων", en: "Number of Pages" }, min: 1, max: 10, default: 3, baseline: 3, pricePerUnit: 60 },
-        { key: "seo", type: "toggle", label: { el: "Επιπλέον SEO Optimization", en: "Extra SEO Optimization" }, price: 86 }
+        { key: "seo", type: "toggle", label: { el: "Επιπλέον SEO Optimization", en: "Extra SEO Optimization" }, price: 85 }
     ],
 
     "ai-responsive-template": [
@@ -101,32 +101,32 @@ const SERVICE_PARAMS = {
 
     "static-management": [
         { key: "months", type: "stepper", role: "multiplier", label: { el: "Διάρκεια σε Μήνες", en: "Duration in Months" }, min: 1, max: 24, default: 1, pricePerUnit: 0 },
-        { key: "extraupdates", type: "toggle", label: { el: "Extra Ενημερώσεις Περιεχομένου / μήνα", en: "Extra Content Updates / month" }, price: 27 }
+        { key: "extraupdates", type: "toggle", label: { el: "Extra Ενημερώσεις Περιεχομένου / μήνα", en: "Extra Content Updates / month" }, price: 25 }
     ],
 
     "shopify-theme": [
         { key: "productBlocks", type: "stepper", label: { el: "Καταχώρηση Προϊόντων από εμάς (ανά 50)", en: "Product Data Entry by Us (per 50)" }, min: 0, max: 10, default: 0, pricePerUnit: 60 },
         { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 240 },
-        { key: "payment", type: "toggle", label: { el: "Επιπλέον Payment Gateway", en: "Extra Payment Gateway" }, price: 86 }
+        { key: "payment", type: "toggle", label: { el: "Επιπλέον Payment Gateway", en: "Extra Payment Gateway" }, price: 85 }
     ],
 
     "eshop-template": [
         { key: "productBlocks", type: "stepper", label: { el: "Καταχώρηση Προϊόντων από εμάς (ανά 50)", en: "Product Data Entry by Us (per 50)" }, min: 0, max: 10, default: 0, pricePerUnit: 96 },
         { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 300 },
-        { key: "payment", type: "toggle", label: { el: "Επιπλέον Payment Gateway", en: "Extra Payment Gateway" }, price: 86 }
+        { key: "payment", type: "toggle", label: { el: "Επιπλέον Payment Gateway", en: "Extra Payment Gateway" }, price: 85 }
     ],
 
     "custom-eshop": [
         { key: "productBlocks", type: "stepper", label: { el: "Καταχώρηση Προϊόντων από εμάς (ανά 50)", en: "Product Data Entry by Us (per 50)" }, min: 0, max: 10, default: 0, pricePerUnit: 120 },
         { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 420 },
-        { key: "erp", type: "toggle", label: { el: "Σύνδεση ERP / CRM", en: "ERP / CRM Integration" }, price: 648 }
+        { key: "erp", type: "toggle", label: { el: "Σύνδεση ERP / CRM", en: "ERP / CRM Integration" }, price: 645 }
     ],
 
     "full-ecommerce": [
         { key: "productBlocks", type: "stepper", label: { el: "Καταχώρηση Προϊόντων από εμάς (ανά 50)", en: "Product Data Entry by Us (per 50)" }, min: 0, max: 10, default: 0, pricePerUnit: 144 },
         { key: "languages", type: "stepper", label: { el: "Αριθμός Γλωσσών", en: "Number of Languages" }, min: 1, max: 5, default: 1, baseline: 1, pricePerUnit: 480 },
-        { key: "erp", type: "toggle", label: { el: "Σύνδεση ERP / CRM", en: "ERP / CRM Integration" }, price: 756 },
-        { key: "customgraphics", type: "toggle", label: { el: "Custom Illustrations", en: "Custom Illustrations" }, price: 378 }
+        { key: "erp", type: "toggle", label: { el: "Σύνδεση ERP / CRM", en: "ERP / CRM Integration" }, price: 755 },
+        { key: "customgraphics", type: "toggle", label: { el: "Custom Illustrations", en: "Custom Illustrations" }, price: 375 }
     ],
 
     "multilingual": [
@@ -145,16 +145,16 @@ const SERVICE_PARAMS = {
 
     "reel-editing": [
         { key: "seconds", type: "stepper", label: { el: "Επιπλέον Δευτερόλεπτα (x15\")", en: "Extra Seconds (x15\")" }, min: 0, max: 4, default: 0, pricePerUnit: 18 },
-        { key: "multiformat", type: "toggle", label: { el: "Εξαγωγή για Reels + Stories + TikTok", en: "Export for Reels + Stories + TikTok" }, price: 16 }
+        { key: "multiformat", type: "toggle", label: { el: "Εξαγωγή για Reels + Stories + TikTok", en: "Export for Reels + Stories + TikTok" }, price: 15 }
     ],
 
     "logo-anim-basic": [
-        { key: "sound", type: "toggle", label: { el: "Sound Design", en: "Sound Design" }, price: 43 },
+        { key: "sound", type: "toggle", label: { el: "Sound Design", en: "Sound Design" }, price: 40 },
         { key: "variations", type: "stepper", label: { el: "Επιπλέον Εκδοχές", en: "Extra Variations" }, min: 0, max: 3, default: 0, pricePerUnit: 60 }
     ],
 
     "logo-anim-advanced": [
-        { key: "sound", type: "toggle", label: { el: "Sound Design", en: "Sound Design" }, price: 54 },
+        { key: "sound", type: "toggle", label: { el: "Sound Design", en: "Sound Design" }, price: 50 },
         { key: "variations", type: "stepper", label: { el: "Επιπλέον Εκδοχές", en: "Extra Variations" }, min: 0, max: 3, default: 0, pricePerUnit: 96 }
     ],
 
@@ -165,12 +165,12 @@ const SERVICE_PARAMS = {
 
     "meta-ads-setup": [
         { key: "campaigns", type: "stepper", role: "multiplier", label: { el: "Αριθμός Καμπανιών", en: "Number of Campaigns" }, min: 1, max: 10, default: 1, pricePerUnit: 0 },
-        { key: "videoCreative", type: "toggle", label: { el: "Custom Video Creative αντί Static", en: "Custom Video Creative instead of Static" }, price: 108 }
+        { key: "videoCreative", type: "toggle", label: { el: "Custom Video Creative αντί Static", en: "Custom Video Creative instead of Static" }, price: 105 }
     ],
 
     "meta-ads-optimization": [
         { key: "months", type: "stepper", role: "multiplier", label: { el: "Διάρκεια σε Μήνες", en: "Duration in Months" }, min: 1, max: 12, default: 1, pricePerUnit: 0 },
-        { key: "weeklyreport", type: "toggle", label: { el: "Εβδομαδιαία Αναφορά Απόδοσης", en: "Weekly Performance Report" }, price: 32 }
+        { key: "weeklyreport", type: "toggle", label: { el: "Εβδομαδιαία Αναφορά Απόδοσης", en: "Weekly Performance Report" }, price: 30 }
     ],
 
     "static-creative": [
@@ -188,22 +188,22 @@ const SERVICE_PARAMS = {
 
     "blog-single": [
         { key: "articles", type: "stepper", role: "multiplier", label: { el: "Αριθμός Άρθρων", en: "Number of Articles" }, min: 1, max: 20, default: 1, pricePerUnit: 0 },
-        { key: "extended", type: "toggle", label: { el: "Εκτενές Άρθρο (1500+ λέξεις)", en: "Extended Article (1500+ words)" }, price: 21 }
+        { key: "extended", type: "toggle", label: { el: "Εκτενές Άρθρο (1500+ λέξεις)", en: "Extended Article (1500+ words)" }, price: 20 }
     ],
 
     "blog-pack": [
         { key: "months", type: "stepper", role: "multiplier", label: { el: "Διάρκεια σε Μήνες", en: "Duration in Months" }, min: 1, max: 12, default: 1, pricePerUnit: 0 },
-        { key: "extraarticle", type: "toggle", label: { el: "Extra Άρθρο τον Μήνα", en: "Extra Article per Month" }, price: 43 }
+        { key: "extraarticle", type: "toggle", label: { el: "Extra Άρθρο τον Μήνα", en: "Extra Article per Month" }, price: 40 }
     ],
 
     "content-population": [
         { key: "pages", type: "stepper", label: { el: "Επιπλέον Σελίδες", en: "Extra Pages" }, min: 0, max: 20, default: 0, pricePerUnit: 36 },
-        { key: "translation", type: "toggle", label: { el: "Μετάφραση Περιεχομένου", en: "Content Translation" }, price: 162 }
+        { key: "translation", type: "toggle", label: { el: "Μετάφραση Περιεχομένου", en: "Content Translation" }, price: 160 }
     ],
 
     "website-management": [
         { key: "months", type: "stepper", role: "multiplier", label: { el: "Διάρκεια σε Μήνες", en: "Duration in Months" }, min: 1, max: 12, default: 1, pricePerUnit: 0 },
-        { key: "extraarticles", type: "toggle", label: { el: "Επιπλέον Άρθρα / μήνα", en: "Extra Articles / month" }, price: 54 }
+        { key: "extraarticles", type: "toggle", label: { el: "Επιπλέον Άρθρα / μήνα", en: "Extra Articles / month" }, price: 50 }
     ],
 
     "ecommerce-management": [
