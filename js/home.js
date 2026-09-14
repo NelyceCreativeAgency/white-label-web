@@ -243,9 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // How long a step is held before the arc moves on.
     const DWELL = 3200;
-    const TURN = 1.05 * 1000; // must match the CSS transition
-
-    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     // 0 to 4. Four is the closing position: a full ring, back at the top.
     let index = 0;
@@ -286,7 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const walk = () => {
         stop();
-        if (still.matches) return;
         timer = setInterval(advance, DWELL);
     };
 
@@ -315,7 +311,11 @@ document.addEventListener('DOMContentLoaded', () => {
     dial.classList.add('is-running');
     show();
 
-    if (still.matches) return;
+    // Under prefers-reduced-motion the dial still steps through the four
+    // stages, since that is a change of content rather than movement: the CSS
+    // drops the transitions, so it arrives at each one instead of travelling
+    // there. Pointing at a step stops it either way, which is the pause the
+    // cycle needs.
 
     // Only walk while the dial is on screen, so a page left open on another
     // section is not running a timer against nothing.
