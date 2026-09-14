@@ -407,17 +407,18 @@
     stroke-width: 0.5;
 }
 
-/* 2 * pi * 30, the circumference in the viewBox's own units. --p is the share
-   of the loop that has been covered. */
+/* 188.5 is 2 * pi * 30, the ring's circumference in the viewBox's own units.
+   The offset is set by js/home.js, which starts it empty. */
 .pm-track-fill {
     stroke: var(--accent-orange);
     stroke-width: 1.1;
     stroke-linecap: round;
     stroke-dasharray: 188.5;
-    stroke-dashoffset: calc(188.5 * (1 - var(--p, 0)));
+    stroke-dashoffset: 188.5;
+    opacity: 0;
     transform: rotate(-90deg);
     transform-origin: 50% 50%;
-    transition: stroke-dashoffset 1.05s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: stroke-dashoffset 1.05s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
 }
 
 /* The head is a full-size layer that rotates, so its mark travels the ring

@@ -226,33 +226,46 @@ document.addEventListener('DOMContentLoaded', () => {
  *
  * One quarter of the ring per step, with a head marking where the arc has
  * reached and the middle of the ring saying what happens there. The head only
- * ever turns forwards: closing the loop means a fifth position at 360 degrees,
+ * ever turns forwards: closing the loop is a fifth position at 360 degrees,
  * which is the same place on screen as the first, so the arc can be emptied
- * with the transition cut for a frame and nothing appears to wind back.
+ * with the transitions cut and nothing appears to wind back.
  *
- * Pointing at a step takes the dial there and holds it; moving away starts the
- * walk again from wherever it was left. */
+ * The arc length is written straight onto the element rather than through a
+ * custom property the CSS does arithmetic on: a property a browser has not been
+ * told the type of does not reliably carry a transition into whatever depends
+ * on it, which is what made the arc jump some cycles and glide on others.
+ *
+ * Pointing anywhere in the dial holds it where it is. It does not jump to the
+ * step under the pointer: the loop runs in one direction, and letting a hover
+ * send it backwards was the part that read as broken. */
 document.addEventListener('DOMContentLoaded', () => {
     const dial = document.getElementById('pm-dial');
     if (!dial) return;
 
+    const fill = dial.querySelector('.pm-track-fill');
     const head = dial.querySelector('.pm-dial-head');
     const nodes = Array.from(dial.querySelectorAll('.pm-node'));
     const notes = Array.from(dial.querySelectorAll('.pm-note'));
-    if (!head || nodes.length !== 4 || notes.length !== 4) return;
+    if (!fill || !head || nodes.length !== 4 || notes.length !== 4) return;
 
     // How long a step is held before the arc moves on.
     const DWELL = 3200;
+    // 2 * pi * 30, the ring's circumference in the viewBox's own units.
+    const RING = 188.5;
 
     // 0 to 4. Four is the closing position: a full ring, back at the top.
     let index = 0;
-    // Kept separately so the head can keep turning past 360 instead of
-    // spinning backwards to reach a step it has already passed.
+    // Kept separately so the head keeps turning forwards instead of spinning
+    // back to reach a step it has already passed.
     let angle = -90;
     let timer = null;
 
     const show = () => {
-        dial.style.setProperty('--p', index / 4);
+        const covered = index / 4;
+        fill.style.strokeDashoffset = RING * (1 - covered);
+        // An empty arc still leaves a dot under a round cap, so it is hidden
+        // rather than drawn at zero length.
+        fill.style.opacity = covered > 0 ? '1' : '0';
         head.style.transform = 'rotate(' + angle + 'deg)';
 
         const lit = index % 4;
@@ -260,20 +273,31 @@ document.addEventListener('DOMContentLoaded', () => {
         notes.forEach((note, i) => note.classList.toggle('is-on', i === lit));
     };
 
-    const advance = () => {
-        if (index === 4) {
-            // The ring is full and the head is at the top, so emptying the arc
-            // here is invisible as long as neither animates for the frame.
-            dial.classList.add('is-resetting');
-            index = 0;
-            show();
-            void dial.offsetWidth;
-            dial.classList.remove('is-resetting');
-        }
-
+    const step = () => {
         index += 1;
         angle += 90;
         show();
+    };
+
+    const advance = () => {
+        if (index < 4) {
+            step();
+            return;
+        }
+
+        // The ring is full and the head is already at the top, so emptying the
+        // arc here is invisible — as long as the frame it happens on has been
+        // painted before the next quarter starts growing. Two frames is what
+        // guarantees that; forcing a reflow instead left it up to whether the
+        // browser had coalesced the two changes into one recalculation.
+        dial.classList.add('is-resetting');
+        index = 0;
+        show();
+
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            dial.classList.remove('is-resetting');
+            step();
+        }));
     };
 
     const stop = () => {
@@ -286,26 +310,9 @@ document.addEventListener('DOMContentLoaded', () => {
         timer = setInterval(advance, DWELL);
     };
 
-    // Pointing at a step: go to it the short way round, which may mean turning
-    // backwards, and hold there until the pointer leaves.
-    const goTo = (wanted) => {
-        stop();
-
-        const current = index % 4;
-        let steps = (wanted - current + 4) % 4;
-        if (steps > 2) steps -= 4;
-
-        angle += steps * 90;
-        // Going forward over the top lands on the closing position, so the ring
-        // reads as a loop just completed rather than one emptied out.
-        index = (steps > 0 && current + steps > 3) ? 4 : wanted;
-        show();
-    };
-
-    nodes.forEach((node, i) => {
-        node.addEventListener('mouseenter', () => goTo(i));
-    });
-
+    // Hovering holds the dial still. An advancing cycle owes the reader a way
+    // to stop it, and that is all this needs to be.
+    dial.addEventListener('mouseenter', stop);
     dial.addEventListener('mouseleave', walk);
 
     dial.classList.add('is-running');
@@ -314,8 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Under prefers-reduced-motion the dial still steps through the four
     // stages, since that is a change of content rather than movement: the CSS
     // drops the transitions, so it arrives at each one instead of travelling
-    // there. Pointing at a step stops it either way, which is the pause the
-    // cycle needs.
+    // there. Hovering stops it either way.
 
     // Only walk while the dial is on screen, so a page left open on another
     // section is not running a timer against nothing.
