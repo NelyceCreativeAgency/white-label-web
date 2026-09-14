@@ -287,6 +287,19 @@
     z-index: 1;
 }
 
+/* The heading is smaller than the statement under it but brighter and heavier,
+   which is the only way to title a section whose body is set at display size
+   without the two competing. */
+.pm-title {
+    font-family: var(--font-serif);
+    font-size: clamp(22px, 2vw, 28px);
+    font-weight: 400;
+    letter-spacing: -0.6px;
+    line-height: 1.2;
+    text-align: center;
+    margin-bottom: 48px;
+}
+
 /* The dial opens the section and the statement follows it, full width. Held to
    a reading measure the statement had to sit beside the dial, and each was
    making the other smaller than it wanted to be. */
@@ -518,6 +531,10 @@
 @media (max-width: 860px) {
     .partner-model-section {
         padding: 32px 0 72px;
+    }
+
+    .pm-title {
+        margin-bottom: 32px;
     }
 
     .pm-copy {
