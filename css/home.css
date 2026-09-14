@@ -187,40 +187,6 @@
     transform: translateY(0);
 }
 
-/* --- Row CTA --- */
-.featured-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 48px;
-    padding: 14px 28px;
-    border-radius: 999px;
-    border: 1px solid var(--border-color);
-    background: rgba(255, 255, 255, 0.05);
-    -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-    color: var(--text-primary);
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: var(--transition-smooth);
-}
-
-.featured-cta:hover {
-    border-color: var(--border-hover);
-    background: rgba(255, 107, 53, 0.12);
-    transform: translateY(-2px);
-}
-
-.featured-cta svg {
-    transition: transform 0.3s ease;
-}
-
-.featured-cta:hover svg {
-    transform: translateX(4px);
-}
-
 /* --- Touch: there is no hover, so show the detail permanently --- */
 @media (hover: none) {
     .fp-card-overlay {
@@ -551,34 +517,7 @@
 
 /* --- Closing line --- */
 .pm-cta {
-    margin-top: 56px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 14px 32px;
-}
-
-.pm-cta-question {
-    font-family: var(--font-serif);
-    font-size: clamp(18px, 2vw, 22px);
-    font-weight: 400;
-    letter-spacing: -0.4px;
-}
-
-.pm-cta-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--accent-orange);
-    font-size: 15px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: gap 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
-.pm-cta-link:hover {
-    gap: 16px;
+    margin-top: 44px;
 }
 
 @media (max-width: 860px) {
@@ -608,7 +547,7 @@
     }
 
     .pm-cta {
-        margin-top: 40px;
+        margin-top: 32px;
     }
 }
 
@@ -633,8 +572,114 @@
     /* The dial still advances, it just arrives rather than travels. */
     .pm-dial-head,
     .pm-node,
-    .pm-note,
-    .pm-cta-link {
+    .pm-note {
         transition: none;
+    }
+}
+
+/* --- Buttons ---
+   Every button on this page is the same pill: a pane of glass over whatever
+   the ambient gradient is doing behind it, which is why there is a blur rather
+   than a flat fill. Hover warms it to the accent and lights it.
+
+   These override style.css for the home page only, home.css being the only
+   place they are loaded from; the price list, FAQ and calculator keep the
+   square buttons they were built with. */
+.btn,
+.featured-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 30px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.04) 42%, rgba(255, 255, 255, 0.02) 100%);
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+            backdrop-filter: blur(16px) saturate(1.5);
+    /* The top hairline is the glass catching the light; the drop underneath
+       lifts it off the page rather than printing it on. */
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 8px 24px rgba(0, 0, 0, 0.35);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* The one button that leads carries a little more light in the glass. */
+.btn-primary {
+    border-color: rgba(255, 255, 255, 0.24);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.1) 42%, rgba(255, 255, 255, 0.05) 100%);
+}
+
+.btn-large {
+    padding: 19px 40px;
+    font-size: 16px;
+}
+
+.btn:hover,
+.btn:focus-visible,
+.featured-cta:hover,
+.featured-cta:focus-visible {
+    border-color: rgba(255, 107, 53, 0.6);
+    background: linear-gradient(160deg, rgba(255, 107, 53, 0.32) 0%, rgba(255, 107, 53, 0.12) 45%, rgba(255, 107, 53, 0.05) 100%);
+    color: #fff;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        0 10px 30px rgba(255, 107, 53, 0.3),
+        0 0 24px rgba(255, 107, 53, 0.45);
+    transform: translateY(-2px);
+}
+
+.btn:focus-visible,
+.featured-cta:focus-visible {
+    outline: 2px solid var(--accent-orange);
+    outline-offset: 4px;
+}
+
+.btn svg,
+.featured-cta svg {
+    flex: 0 0 auto;
+    transition: transform 0.3s ease;
+}
+
+.btn:hover svg,
+.featured-cta:hover svg {
+    transform: translateX(4px);
+}
+
+.featured-cta {
+    margin-top: 48px;
+}
+
+@media (max-width: 640px) {
+    .btn,
+    .featured-cta {
+        padding: 14px 24px;
+    }
+
+    .btn-large {
+        padding: 17px 30px;
+        font-size: 15px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .featured-cta,
+    .btn svg,
+    .featured-cta svg {
+        transition: none;
+    }
+
+    .btn:hover,
+    .featured-cta:hover {
+        transform: none;
     }
 }
