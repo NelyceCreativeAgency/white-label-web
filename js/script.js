@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const SPARKLE_COLORS = ['#ff6b35', '#ffb800', '#ff9d4d'];
         const isMobile = window.matchMedia('(max-width: 768px)').matches;
-        const SPARKLE_COUNT = isMobile ? 28 : 90;
+        const SPARKLE_COUNT = isMobile ? 28 : 70;
         for (let i = 0; i < SPARKLE_COUNT; i++) {
             const sparkle = document.createElement('span');
             sparkle.className = 'sparkle';
