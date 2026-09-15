@@ -25,6 +25,8 @@ const gridOut = (grid) => ({
     id: grid.id,
     name: grid.name,
     handle: grid.handle || '',
+    avatar: grid.avatar || null,
+    highlights: Array.isArray(grid.highlights) ? grid.highlights : [],
     memberIds: Array.isArray(grid.memberIds) ? grid.memberIds : [],
     createdAt: grid.createdAt || null
 });
@@ -185,7 +187,9 @@ module.exports = async (req, res) => {
                 // half-deleted grid would keep showing up in the sidebar.
                 const posts = await accounts.readPosts(grid.id);
                 const urls = posts.filter(Boolean)
-                    .flatMap(post => (post.images || []).map(img => img.url));
+                    .flatMap(post => (post.images || []).map(img => img.url))
+                    .concat(grid.avatar ? [grid.avatar] : [])
+                    .concat((grid.highlights || []).map(h => h.url));
                 try { await blob.client(req).del(urls); } catch { /* litter, not a failure */ }
 
                 await accounts.dropPosts(grid.id);

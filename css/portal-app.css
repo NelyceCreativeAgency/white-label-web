@@ -233,14 +233,99 @@
 }
 
 .profile-avatar {
+    position: relative;
     display: grid;
     place-items: center;
-    width: 76px; height: 76px;
-    font-size: 1.7rem;
+    width: 84px; height: 84px;
+    padding: 0;
+    overflow: hidden;
+    font: inherit;
+    font-size: 1.8rem;
     font-weight: var(--fw-semibold);
     color: var(--bg-dark);
     background: linear-gradient(135deg, var(--accent-amber), var(--accent-orange));
+    border: none;
     border-radius: 50%;
+    cursor: default;
+}
+
+.profile-avatar.is-editable { cursor: pointer; }
+
+.profile-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
+
+/* The word only appears on the way to being pressed, so the profile reads as
+   a profile and not as a form. */
+.profile-avatar-hint {
+    position: absolute;
+    inset: auto 0 0;
+    padding: 5px 0 7px;
+    font-size: .62rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(10, 10, 14, .72);
+    opacity: 0;
+    transition: opacity .25s;
+}
+
+.profile-avatar.is-editable:hover .profile-avatar-hint,
+.profile-avatar.is-editable:focus-visible .profile-avatar-hint { opacity: 1; }
+
+/* ---- highlights --------------------------------------------------------- */
+/* A row of circles under the profile, scrolling sideways when there are more
+   of them than there is room for. */
+.highlights {
+    display: flex;
+    gap: 20px;
+    max-width: 780px;
+    margin: 0 auto 22px;
+    padding: 2px 2px 6px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.hl {
+    flex: 0 0 auto;
+    display: grid;
+    justify-items: center;
+    gap: 7px;
+    width: 76px;
+    padding: 0;
+    font: inherit;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.hl-ring {
+    display: grid;
+    place-items: center;
+    width: 66px; height: 66px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 50%;
+    transition: border-color .25s;
+}
+
+.hl:hover .hl-ring { border-color: var(--accent-orange); }
+.hl-ring img { width: 100%; height: 100%; object-fit: cover; }
+.hl-new .hl-ring { border-style: dashed; }
+.hl-plus { font-size: 1.5rem; font-weight: var(--fw-light); line-height: 1; }
+
+.hl-label {
+    max-width: 76px;
+    overflow: hidden;
+    font-size: .72rem;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .profile-name { font-size: 1.3rem; font-weight: var(--fw-semibold); }
@@ -282,7 +367,10 @@
 
 .cell {
     position: relative;
-    aspect-ratio: 1 / 1;
+    /* Instagram's grid is no longer square: a tile is four across by five
+       down, and a mockup that is square would flatter every picture that is
+       about to be cropped. */
+    aspect-ratio: 4 / 5;
     overflow: hidden;
     background: rgba(255, 255, 255, .03);
     border: none;
@@ -424,7 +512,11 @@
     .app-view { padding: 20px 16px 72px; }
     .app-top { padding: 14px 16px; }
     .profile-card { grid-template-columns: auto 1fr; gap: 16px; padding: 18px; }
-    .profile-avatar { width: 60px; height: 60px; font-size: 1.35rem; }
+    .profile-avatar { width: 64px; height: 64px; font-size: 1.4rem; }
+    .highlights { gap: 14px; }
+    .hl { width: 64px; }
+    .hl-ring { width: 58px; height: 58px; }
+    .hl-label { max-width: 64px; }
     .cell-dots { opacity: 1; }
 }
 
@@ -648,7 +740,7 @@
 
 .strip-tile {
     position: relative;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 4 / 5;
     overflow: hidden;
     background: rgba(255, 255, 255, .04);
     border: 1px solid rgba(255, 255, 255, .09);
@@ -849,6 +941,117 @@
 
 .row-foot small { font-size: .74rem; color: rgba(184, 186, 194, .65); }
 .row-buttons { display: flex; gap: 8px; }
+
+/* --- the picker ----------------------------------------------------------- */
+/* Floats over whatever asked for it, including the editor, so it sits above
+   every panel on the page. */
+.picker {
+    position: absolute;
+    z-index: 95;
+    width: 268px;
+    padding: 12px;
+    background: rgba(24, 24, 30, .98);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 15px;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, .5);
+}
+
+.picker-file {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: .84rem;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 11px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.picker-file:hover { border-color: var(--border-hover); background: rgba(255, 255, 255, .08); }
+
+.picker-file svg {
+    width: 17px; height: 17px;
+    fill: none; stroke: currentColor; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+.picker-or {
+    margin: 10px 0;
+    font-size: .7rem;
+    text-align: center;
+    color: rgba(184, 186, 194, .6);
+}
+
+.picker-link { display: flex; gap: 7px; }
+
+.picker-url {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 11px;
+    font: inherit;
+    font-size: .8rem;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 10px;
+}
+
+.picker-url:focus { outline: none; border-color: var(--accent-orange); }
+.picker-link .app-ghost { flex: 0 0 auto; padding: 9px 13px; }
+
+/* --- the highlight panel --------------------------------------------------- */
+.modal-hl { width: min(440px, 94vw); padding: 30px 28px 24px; }
+
+.hl-edit { display: flex; align-items: center; gap: 20px; margin-bottom: 4px; }
+
+.hl-cover {
+    position: relative;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 92px; height: 92px;
+    padding: 0;
+    overflow: hidden;
+    font: inherit;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, .04);
+    border: 1px dashed rgba(255, 255, 255, .18);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.hl-cover:hover { color: var(--accent-orange); border-color: rgba(255, 107, 53, .5); }
+.hl-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hl-cover span { font-size: 1.6rem; font-weight: var(--fw-light); line-height: 1; }
+.hl-cover.is-waiting { opacity: .5; pointer-events: none; }
+
+.hl-name-label { flex: 1; min-width: 0; }
+
+.hl-name {
+    width: 100%;
+    margin-top: 7px;
+    padding: 11px 13px;
+    font: inherit;
+    font-size: .9rem;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 11px;
+}
+
+.hl-name:focus { outline: none; border-color: var(--accent-orange); }
+.modal-hl .modal-foot { justify-content: space-between; }
+.modal-hl .modal-foot .app-ghost + .app-ghost { margin-left: auto; }
 
 /* --- toast ---------------------------------------------------------------- */
 .toast {

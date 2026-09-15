@@ -65,7 +65,11 @@
         <!-- The grid ------------------------------------------------------ -->
         <section class="app-view" id="view-grid" hidden>
             <div class="profile-card">
-                <span class="profile-avatar" id="profile-avatar" aria-hidden="true"></span>
+                <button class="profile-avatar" id="profile-avatar" type="button" data-picker>
+                    <span class="profile-initial" id="profile-initial"></span>
+                    <img class="profile-photo" id="profile-photo" alt="" hidden>
+                    <span class="profile-avatar-hint" aria-hidden="true">Αλλαγή</span>
+                </button>
                 <div class="profile-text">
                     <h2 class="profile-name" id="profile-name"></h2>
                     <p class="profile-handle" id="profile-handle"></p>
@@ -73,6 +77,8 @@
                 </div>
                 <p class="profile-hint" id="profile-hint"></p>
             </div>
+
+            <div class="highlights" id="highlights"></div>
 
             <div class="ig-grid" id="ig-grid"></div>
         </section>
@@ -136,12 +142,6 @@
 
             <div class="edit-strip" id="edit-strip"></div>
 
-            <div class="edit-link" id="edit-link" hidden>
-                <input class="edit-link-url" id="edit-link-url" type="url" inputmode="url"
-                       placeholder="Επικόλλησε σύνδεσμο εικόνας ή Google Drive">
-                <button class="app-ghost" type="button" id="edit-link-add">Προσθήκη</button>
-            </div>
-
             <label class="edit-label" for="edit-caption">Λεζάντα</label>
             <textarea class="edit-caption" id="edit-caption" rows="3" maxlength="2200"
                       placeholder="Προαιρετικά."></textarea>
@@ -151,6 +151,48 @@
             <div class="modal-foot">
                 <button class="app-ghost" type="button" data-close>Ακύρωση</button>
                 <button class="btn btn-primary" type="button" id="edit-save">Αποθήκευση</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="picker" id="picker" hidden>
+        <button class="picker-file" type="button" id="picker-file">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            Από τον υπολογιστή
+        </button>
+        <p class="picker-or">ή</p>
+        <div class="picker-link">
+            <input class="picker-url" id="picker-url" type="url" inputmode="url"
+                   placeholder="Σύνδεσμος ή Google Drive">
+            <button class="app-ghost" type="button" id="picker-add">Ok</button>
+        </div>
+    </div>
+
+    <!-- Highlight ---------------------------------------------------------- -->
+    <div class="modal" id="hl-modal" hidden>
+        <div class="modal-scrim" data-close></div>
+        <div class="modal-box modal-hl" role="dialog" aria-modal="true" aria-label="Highlight">
+            <button class="modal-x" type="button" data-close aria-label="Κλείσιμο">&times;</button>
+
+            <h2 class="modal-title" id="hl-title">Νέο highlight</h2>
+            <p class="modal-sub">Ένα εξώφυλλο και ένα όνομα, όπως στο Instagram.</p>
+
+            <div class="hl-edit">
+                <button class="hl-cover" type="button" id="hl-cover" data-picker>
+                    <img id="hl-cover-img" alt="" hidden>
+                    <span id="hl-cover-plus" aria-hidden="true">+</span>
+                </button>
+                <label class="edit-label hl-name-label" for="hl-name">Όνομα
+                    <input class="hl-name" id="hl-name" maxlength="24" placeholder="π.χ. Προϊόντα">
+                </label>
+            </div>
+
+            <p class="edit-error" id="hl-error" role="alert" hidden></p>
+
+            <div class="modal-foot">
+                <button class="app-ghost app-danger" type="button" id="hl-delete" hidden>Διαγραφή</button>
+                <button class="app-ghost" type="button" data-close>Ακύρωση</button>
+                <button class="btn btn-primary" type="button" id="hl-save">Αποθήκευση</button>
             </div>
         </div>
     </div>

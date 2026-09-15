@@ -115,7 +115,8 @@
         grid: null,     // the open grid, as the server described it
         posts: [],      // twenty-four slots, null where empty
         viewing: null,  // { slot, index } while the viewer is open
-        draft: null,    // { slot, images, caption } while the editor is open
+        draft: null,    // { slot, images } while the post editor is open
+        highlight: null,// { id, name, url } while the highlight panel is open
         moving: null,   // the slot waiting to be swapped with another
         dragging: null  // the slot being carried by the mouse
     };
@@ -220,7 +221,14 @@
         const grid = state.grid;
         const open = state.posts.filter(p => p && (p.notes || []).some(n => n.role === 'client' && !n.resolved)).length;
 
-        $('profile-avatar').textContent = initials(grid.name);
+        const photo = $('profile-photo');
+        if (grid.avatar) { photo.src = grid.avatar; photo.hidden = false; }
+        else { photo.hidden = true; photo.removeAttribute('src'); }
+
+        $('profile-initial').textContent = grid.avatar ? '' : initials(grid.name);
+        $('profile-avatar').classList.toggle('is-editable', grid.canEdit);
+        renderHighlights();
+
         $('profile-name').textContent = grid.name;
         $('profile-handle').textContent = grid.handle ? `@${grid.handle}` : '';
 
@@ -473,10 +481,16 @@
         renderViewer();
     };
 
+    // The page stays still while any of the three panels is open.
+    const unlock = () => {
+        const open = ['post-modal', 'edit-modal', 'hl-modal'].some(id => !$(id).hidden);
+        if (!open) document.body.classList.remove('is-locked');
+    };
+
     const closeViewer = () => {
         state.viewing = null;
         $('post-modal').hidden = true;
-        if ($('edit-modal').hidden) document.body.classList.remove('is-locked');
+        unlock();
     };
 
     const renderViewer = () => {
@@ -617,15 +631,15 @@
         sayEdit('');
         $('edit-modal').hidden = false;
         document.body.classList.add('is-locked');
-        $('edit-link').hidden = true;
-        $('edit-link-url').value = '';
+        picker.close();
         renderStrip();
     };
 
     const closeEditor = () => {
         state.draft = null;
+        picker.close();
         $('edit-modal').hidden = true;
-        if ($('post-modal').hidden) document.body.classList.remove('is-locked');
+        unlock();
     };
 
     const renderStrip = () => {
@@ -647,7 +661,7 @@
 
         if (room > 0) {
             tiles.push(`
-                <button class="strip-tile strip-add" type="button" data-do="add">
+                <button class="strip-tile strip-add" type="button" data-do="add" data-picker>
                     <span aria-hidden="true">+</span>
                     <small>${draft.images.length ? 'Κι άλλη' : 'Εικόνα'}</small>
                 </button>`);
@@ -662,7 +676,10 @@
 
         const index = Number(button.dataset.index);
 
-        if (button.dataset.do === 'add') { openSourceMenu(button); return; }
+        if (button.dataset.do === 'add') {
+            picker.open(button, { multiple: true, onFiles: editorFiles, onLink: editorLink });
+            return;
+        }
 
         if (button.dataset.do === 'drop') {
             // Only dropped from the draft. What is actually deleted from the
@@ -680,42 +697,64 @@
         }
     });
 
-    // Two ways in, asked as a question rather than assumed.
-    const sources = document.createElement('div');
-    sources.className = 'cell-menu source-menu';
-    sources.hidden = true;
-    sources.innerHTML = `
-        <button type="button" data-from="file">Από τον υπολογιστή</button>
-        <button type="button" data-from="link">Από σύνδεσμο</button>
-    `;
-    document.body.appendChild(sources);
+    // --- where is the picture coming from -----------------------------------
+    // One answer to that question, shared by the post editor, the profile
+    // picture and the highlights: a file on this machine, or an address
+    // somewhere else. It only chooses. What happens to what it finds is the
+    // caller's business, because each of them shows waiting in its own place.
+    const picker = {
+        onFiles: null,
+        onLink: null,
 
-    const openSourceMenu = (button) => {
-        sources.hidden = false;
-        const box = button.getBoundingClientRect();
-        const left = Math.min(box.left, window.innerWidth - sources.offsetWidth - 12);
-        const top = box.bottom + sources.offsetHeight > window.innerHeight
-            ? box.top - sources.offsetHeight - 6
-            : box.bottom + 6;
-        sources.style.left = `${Math.max(12, left) + window.scrollX}px`;
-        sources.style.top = `${Math.max(12, top) + window.scrollY}px`;
+        open(anchor, { multiple = false, onFiles, onLink }) {
+            picker.onFiles = onFiles || null;
+            picker.onLink = onLink || null;
+
+            const box = $('picker');
+            box.hidden = false;
+            box.dataset.multiple = multiple ? '1' : '';
+            $('picker-url').value = '';
+
+            const at = anchor.getBoundingClientRect();
+            const left = Math.min(at.left, window.innerWidth - box.offsetWidth - 12);
+            const top = at.bottom + box.offsetHeight > window.innerHeight
+                ? at.top - box.offsetHeight - 8
+                : at.bottom + 8;
+
+            box.style.left = `${Math.max(12, left) + window.scrollX}px`;
+            box.style.top = `${Math.max(12, top) + window.scrollY}px`;
+        },
+
+        close() { $('picker').hidden = true; }
     };
 
-    sources.addEventListener('click', (event) => {
-        const button = event.target.closest('button[data-from]');
-        if (!button) return;
-        sources.hidden = true;
+    $('picker-file').addEventListener('click', () => {
+        const many = $('picker').dataset.multiple === '1';
+        const handler = picker.onFiles;
+        picker.close();
+        pickFiles(many, handler);
+    });
 
-        if (button.dataset.from === 'file') { pickFiles(); return; }
+    const takeLink = () => {
+        const url = $('picker-url').value.trim();
+        if (!url) return;
+        const handler = picker.onLink;
+        picker.close();
+        if (handler) handler(url);
+    };
 
-        $('edit-link').hidden = false;
-        $('edit-link-url').focus();
+    $('picker-add').addEventListener('click', takeLink);
+
+    $('picker-url').addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        takeLink();
     });
 
     document.addEventListener('click', (event) => {
-        if (!sources.hidden && !sources.contains(event.target) && !event.target.closest('[data-do="add"]')) {
-            sources.hidden = true;
-        }
+        if ($('picker').hidden) return;
+        if (event.target.closest('#picker') || event.target.closest('[data-picker]')) return;
+        picker.close();
     });
 
     // --- pictures in ------------------------------------------------------
@@ -723,7 +762,8 @@
     // pixels across. The browser redraws the picture at a sane size before any
     // of it goes over the wire, which is what keeps the upload quick and the
     // store small.
-    const MAX_SIDE = 1440;
+    const MAX_SIDE = 1440;      // a grid picture, seen full size in the viewer
+    const SMALL_SIDE = 640;     // a profile picture or a highlight cover
     const TARGET_BYTES = 2.6 * 1024 * 1024;
 
     const loadImage = (file) => new Promise((resolve, reject) => {
@@ -742,10 +782,10 @@
         }
     });
 
-    const draw = (source, quality) => new Promise((resolve, reject) => {
+    const draw = (source, quality, maxSide) => new Promise((resolve, reject) => {
         const width = source.width;
         const height = source.height;
-        const scale = Math.min(1, MAX_SIDE / Math.max(width, height));
+        const scale = Math.min(1, maxSide / Math.max(width, height));
         const w = Math.max(1, Math.round(width * scale));
         const h = Math.max(1, Math.round(height * scale));
 
@@ -762,17 +802,17 @@
         );
     });
 
-    const shrink = async (file) => {
+    const shrink = async (file, maxSide = MAX_SIDE) => {
         const source = await loadImage(file);
         let quality = 0.82;
-        let out = await draw(source, quality);
+        let out = await draw(source, quality, maxSide);
 
         // Very large photographs can still come out above what a request is
         // allowed to carry. Each pass costs quality rather than size, so the
         // picture keeps its dimensions and the grid keeps its sharpness.
         while (out.blob.size > TARGET_BYTES && quality > 0.5) {
             quality -= 0.12;
-            out = await draw(source, quality);
+            out = await draw(source, quality, maxSide);
         }
 
         if (source.close) source.close();
@@ -786,15 +826,84 @@
         reader.readAsDataURL(blob);
     });
 
-    const pickFiles = () => {
+    // The file dialog is one element serving several buttons, so whoever opened
+    // it says what to do with what comes back.
+    let waitingForFiles = null;
+
+    const pickFiles = (multiple, handler) => {
         const input = $('file-input');
+        input.multiple = Boolean(multiple);
         input.value = '';
+        waitingForFiles = handler || null;
         input.click();
     };
 
-    $('file-input').addEventListener('change', async (event) => {
+    $('file-input').addEventListener('change', (event) => {
         const files = Array.from(event.target.files || []);
-        if (!files.length || !state.draft) return;
+        const handler = waitingForFiles;
+        waitingForFiles = null;
+        if (files.length && handler) handler(files);
+    });
+
+    // Shrink it, send it, and hand back where it now lives. Every picture in
+    // the portal comes through here, whichever way it was chosen, so one from a
+    // link is stored exactly like one from the desktop and nothing downstream
+    // has to know the difference.
+    const acquire = async (source, maxSide) => {
+        const { blob, w, h } = await shrink(source, maxSide);
+        const data = await asBase64(blob);
+        const res = await api('/api/upload', {
+            method: 'POST',
+            body: { grid: state.grid.id, type: 'image/jpeg', data }
+        });
+        return { url: res.url, w, h };
+    };
+
+    // What is behind a link is fetched by the server, because a browser cannot
+    // read back what it drew from another site, and because a Drive address is
+    // a page with a viewer on it rather than a file.
+    const download = async (url) => {
+        const res = await fetch('/api/link', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ grid: state.grid.id, url })
+        });
+
+        if (res.status === 401) { location.replace(LOGIN); throw new Error('not-signed-in'); }
+        if (!res.ok) {
+            const said = await res.json().catch(() => ({}));
+            throw new Error(said.error || `HTTP ${res.status}`);
+        }
+        return res.blob();
+    };
+
+    const unreadable = (err, what) => err.message === 'unreadable'
+        ? `${what} δεν διαβάζεται σαν εικόνα. Δοκίμασε JPG ή PNG.`
+        : explain(err);
+
+    // --- pictures into the post being edited --------------------------------
+    const draftTakes = async (getSource, what) => {
+        if (!state.draft) return;
+
+        state.draft.pending++;
+        renderStrip();
+
+        try {
+            const image = await acquire(await getSource());
+            if (state.draft) state.draft.images.push(image);
+        } catch (err) {
+            sayEdit(unreadable(err, what));
+        } finally {
+            if (state.draft) {
+                state.draft.pending = Math.max(0, state.draft.pending - 1);
+                renderStrip();
+            }
+        }
+    };
+
+    const editorFiles = async (files) => {
+        if (!state.draft) return;
 
         const room = MAX_IMAGES - state.draft.images.length - state.draft.pending;
         if (room <= 0) { sayEdit(`Ένα carousel παίρνει μέχρι ${MAX_IMAGES} εικόνες.`); return; }
@@ -803,95 +912,23 @@
         if (files.length > room) sayEdit(`Μπήκαν οι ${room} πρώτες. Ένα carousel παίρνει μέχρι ${MAX_IMAGES}.`);
         else sayEdit('');
 
-        state.draft.pending += taking.length;
-        renderStrip();
-
+        // One after the other rather than all at once: the browser is drawing
+        // each one on a canvas, and a phone doing eight of those together is a
+        // phone that stops answering.
         for (const file of taking) {
-            try {
-                await absorb(file);
-            } catch (err) {
-                sayEdit(err.message === 'unreadable'
-                    ? `Η εικόνα "${file.name}" δεν διαβάζεται. Δοκίμασε JPG ή PNG.`
-                    : explain(err));
-            } finally {
-                if (state.draft) {
-                    state.draft.pending = Math.max(0, state.draft.pending - 1);
-                    renderStrip();
-                }
-            }
+            await draftTakes(() => file, `Η εικόνα "${file.name}"`);
         }
-    });
-
-    // Shrink it, send it, and put it in the draft. Both ways in end here, so a
-    // picture from a link is stored exactly like a picture from the desktop and
-    // nothing downstream has to know the difference.
-    const absorb = async (source) => {
-        const { blob, w, h } = await shrink(source);
-        const data = await asBase64(blob);
-        const res = await api('/api/upload', {
-            method: 'POST',
-            body: { grid: state.grid.id, type: 'image/jpeg', data }
-        });
-
-        if (!state.draft) return;   // the editor was closed while it uploaded
-        state.draft.images.push({ url: res.url, w, h });
     };
 
-    // --- a picture that lives somewhere else --------------------------------
-    // The server fetches it, because a browser cannot read back what it drew
-    // from another site, and because a Drive link is a page rather than a file.
-    const addFromLink = async () => {
-        const field = $('edit-link-url');
-        const url = field.value.trim();
-        if (!url || !state.draft) return;
-
+    const editorLink = async (url) => {
+        if (!state.draft) return;
         if (state.draft.images.length + state.draft.pending >= MAX_IMAGES) {
             sayEdit(`Ένα carousel παίρνει μέχρι ${MAX_IMAGES} εικόνες.`);
             return;
         }
-
         sayEdit('');
-        field.disabled = true;
-        state.draft.pending++;
-        renderStrip();
-
-        try {
-            const res = await fetch('/api/link', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
-                body: JSON.stringify({ grid: state.grid.id, url })
-            });
-
-            if (res.status === 401) { location.replace(LOGIN); return; }
-            if (!res.ok) {
-                const said = await res.json().catch(() => ({}));
-                throw new Error(said.error || `HTTP ${res.status}`);
-            }
-
-            await absorb(await res.blob());
-            field.value = '';
-            $('edit-link').hidden = true;
-        } catch (err) {
-            sayEdit(err.message === 'unreadable'
-                ? 'Το αρχείο στον σύνδεσμο δεν διαβάζεται σαν εικόνα.'
-                : explain(err));
-        } finally {
-            field.disabled = false;
-            if (state.draft) {
-                state.draft.pending = Math.max(0, state.draft.pending - 1);
-                renderStrip();
-            }
-        }
+        await draftTakes(() => download(url), 'Το αρχείο στον σύνδεσμο');
     };
-
-    $('edit-link-add').addEventListener('click', addFromLink);
-
-    $('edit-link-url').addEventListener('keydown', (event) => {
-        if (event.key !== 'Enter') return;
-        event.preventDefault();
-        addFromLink();
-    });
 
     $('edit-save').addEventListener('click', async () => {
         const draft = state.draft;
@@ -924,17 +961,198 @@
         }
     });
 
+    // --- the profile picture ------------------------------------------------
+    // Not one of the twenty-four, so it is not a post: it is a property of the
+    // grid, and it is replaced rather than added to.
+    const MAX_HIGHLIGHTS = 12;
+
+    const setAvatar = async (getSource) => {
+        busy('Ανέβασμα…');
+        try {
+            const image = await acquire(await getSource(), SMALL_SIDE);
+            const data = await api('/api/grid', {
+                method: 'POST',
+                body: { id: state.grid.id, action: 'set-avatar', url: image.url }
+            });
+
+            state.grid.avatar = data.avatar;
+            const listed = state.grids.find(g => g.id === state.grid.id);
+            if (listed) listed.avatar = data.avatar;
+
+            renderGrid();
+            toast('Η φωτογραφία προφίλ άλλαξε.');
+        } catch (err) {
+            toast(unreadable(err, 'Η εικόνα'), 'bad');
+        } finally {
+            busy('');
+        }
+    };
+
+    $('profile-avatar').addEventListener('click', (event) => {
+        if (!canEdit()) return;
+        picker.open(event.currentTarget, {
+            onFiles: (files) => setAvatar(() => files[0]),
+            onLink: (url) => setAvatar(() => download(url))
+        });
+    });
+
+    // --- highlights -----------------------------------------------------------
+    // The circles under the bio. They hold nothing but a cover and a name: this
+    // is a mockup of a profile, not a copy of one, and nothing opens.
+    const renderHighlights = () => {
+        const list = state.grid.highlights || [];
+        const editing = canEdit();
+
+        const circles = list.map(one => `
+            <button class="hl" type="button" data-hl="${esc(one.id)}">
+                <span class="hl-ring"><img src="${esc(one.url)}" alt="" loading="lazy"></span>
+                <span class="hl-label">${esc(one.name)}</span>
+            </button>
+        `);
+
+        if (editing && list.length < MAX_HIGHLIGHTS) {
+            circles.push(`
+                <button class="hl hl-new" type="button" data-hl="new">
+                    <span class="hl-ring"><span class="hl-plus" aria-hidden="true">+</span></span>
+                    <span class="hl-label">Νέο</span>
+                </button>
+            `);
+        }
+
+        $('highlights').innerHTML = circles.join('');
+        $('highlights').hidden = !circles.length;
+    };
+
+    $('highlights').addEventListener('click', (event) => {
+        const circle = event.target.closest('[data-hl]');
+        if (!circle || !canEdit()) return;
+        openHighlight(circle.dataset.hl === 'new' ? null : circle.dataset.hl);
+    });
+
+    const sayHl = (message) => {
+        $('hl-error').textContent = message || '';
+        $('hl-error').hidden = !message;
+    };
+
+    const renderHlCover = () => {
+        const cover = state.highlight && state.highlight.url;
+        $('hl-cover-img').hidden = !cover;
+        $('hl-cover-plus').hidden = Boolean(cover);
+        if (cover) $('hl-cover-img').src = cover;
+        else $('hl-cover-img').removeAttribute('src');
+    };
+
+    const openHighlight = (id) => {
+        const existing = (state.grid.highlights || []).find(one => one.id === id) || null;
+        state.highlight = existing ? { ...existing } : { id: null, name: '', url: null };
+
+        $('hl-title').textContent = existing ? 'Highlight' : 'Νέο highlight';
+        $('hl-name').value = state.highlight.name;
+        $('hl-delete').hidden = !existing;
+        sayHl('');
+        renderHlCover();
+
+        $('hl-modal').hidden = false;
+        document.body.classList.add('is-locked');
+    };
+
+    const closeHighlight = () => {
+        state.highlight = null;
+        $('hl-modal').hidden = true;
+        unlock();
+    };
+
+    $('hl-cover').addEventListener('click', (event) => {
+        const take = async (getSource) => {
+            sayHl('');
+            $('hl-cover').classList.add('is-waiting');
+            try {
+                const image = await acquire(await getSource(), SMALL_SIDE);
+                if (!state.highlight) return;
+                state.highlight.url = image.url;
+                renderHlCover();
+            } catch (err) {
+                sayHl(unreadable(err, 'Η εικόνα'));
+            } finally {
+                $('hl-cover').classList.remove('is-waiting');
+            }
+        };
+
+        picker.open(event.currentTarget, {
+            onFiles: (files) => take(() => files[0]),
+            onLink: (url) => take(() => download(url))
+        });
+    });
+
+    const keepHighlights = (highlights) => {
+        state.grid.highlights = highlights;
+        const listed = state.grids.find(g => g.id === state.grid.id);
+        if (listed) listed.highlights = highlights;
+        renderHighlights();
+    };
+
+    $('hl-save').addEventListener('click', async () => {
+        const draft = state.highlight;
+        if (!draft) return;
+
+        const name = $('hl-name').value.trim();
+        if (!draft.url) { sayHl('Διάλεξε πρώτα εξώφυλλο.'); return; }
+        if (!name) { sayHl('Γράψε ένα όνομα.'); return; }
+
+        busy('Αποθήκευση…');
+        try {
+            const data = await api('/api/grid', {
+                method: 'POST',
+                body: {
+                    id: state.grid.id, action: 'save-highlight',
+                    highlight: draft.id || undefined, name, url: draft.url
+                }
+            });
+            keepHighlights(data.highlights);
+            closeHighlight();
+            toast('Αποθηκεύτηκε.');
+        } catch (err) {
+            sayHl(explain(err));
+        } finally {
+            busy('');
+        }
+    });
+
+    $('hl-delete').addEventListener('click', async () => {
+        const draft = state.highlight;
+        if (!draft || !draft.id) return;
+        if (!confirm('Να διαγραφεί το highlight;')) return;
+
+        busy('Διαγραφή…');
+        try {
+            const data = await api('/api/grid', {
+                method: 'POST',
+                body: { id: state.grid.id, action: 'delete-highlight', highlight: draft.id }
+            });
+            keepHighlights(data.highlights);
+            closeHighlight();
+            toast('Διαγράφηκε.');
+        } catch (err) {
+            sayHl(explain(err));
+        } finally {
+            busy('');
+        }
+    });
+
     // --- closing things ----------------------------------------------------
     document.querySelectorAll('[data-close]').forEach(button => {
         button.addEventListener('click', () => {
             if (button.closest('#edit-modal')) closeEditor();
+            else if (button.closest('#hl-modal')) closeHighlight();
             else closeViewer();
         });
     });
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
-            if (!$('edit-modal').hidden) closeEditor();
+            if (!$('picker').hidden) picker.close();
+            else if (!$('hl-modal').hidden) closeHighlight();
+            else if (!$('edit-modal').hidden) closeEditor();
             else if (!$('post-modal').hidden) closeViewer();
             else if (state.moving !== null) cancelMove();
             closeMenu();

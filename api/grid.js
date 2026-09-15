@@ -15,6 +15,11 @@ const MAX_CAPTION = 2200;   // what a caption holds on Instagram
 const MAX_NOTE = 1000;
 const MAX_NOTES = 100;
 
+// The circles under the bio. Instagram shows no more than a profile can hold
+// before they stop being a summary of anything.
+const MAX_HIGHLIGHTS = 12;
+const MAX_HIGHLIGHT_NAME = 24;
+
 // Only urls this deployment's own image store handed back. Anything else would
 // let a signed-in account point a post at a picture on someone else's server.
 const BLOB_HOST = /^[a-z0-9-]+\.(public\.)?blob\.vercel-storage\.com$/i;
@@ -47,6 +52,14 @@ const cleanImages = (raw) => {
     return images;
 };
 
+// The profile picture and a highlight cover are single pictures rather than a
+// carousel, but they live in the same store and answer to the same rule: only
+// somewhere this deployment put them.
+const oneImage = (url) => {
+    if (!isOurImage(url)) throw new Error('bad-image');
+    return String(url);
+};
+
 const urlsOf = (post) =>
     post && Array.isArray(post.images) ? post.images.map(img => img.url) : [];
 
@@ -68,6 +81,8 @@ const summary = (grid, posts, user) => ({
     id: grid.id,
     name: grid.name,
     handle: grid.handle || '',
+    avatar: grid.avatar || null,
+    highlights: Array.isArray(grid.highlights) ? grid.highlights : [],
     filled: posts.filter(Boolean).length,
     openNotes: accounts.openNoteCount(posts),
     canEdit: accounts.canEdit(user, grid)
@@ -113,7 +128,8 @@ module.exports = async (req, res) => {
         const now = new Date().toISOString();
 
         // --- the editors' actions -------------------------------------------
-        if (['save-post', 'delete-post', 'move-post', 'resolve-note'].includes(action)) {
+        if (['save-post', 'delete-post', 'move-post', 'resolve-note',
+             'set-avatar', 'save-highlight', 'delete-highlight'].includes(action)) {
             if (!mayEdit) return res.status(403).json({ error: 'not-allowed' });
         }
 
@@ -163,6 +179,54 @@ module.exports = async (req, res) => {
             return res.status(200).json({ from, to });
         }
 
+        if (action === 'set-avatar') {
+            const was = grid.avatar || null;
+            grid.avatar = body.url ? oneImage(body.url) : null;
+
+            await accounts.writeAccounts(doc);
+            if (was && was !== grid.avatar) await forget(req, [was]);
+
+            return res.status(200).json({ avatar: grid.avatar });
+        }
+
+        if (action === 'save-highlight') {
+            grid.highlights = Array.isArray(grid.highlights) ? grid.highlights : [];
+
+            const name = text(body.name, MAX_HIGHLIGHT_NAME);
+            if (!name) throw new Error('bad-name');
+            const url = oneImage(body.url);
+
+            const existing = body.highlight
+                ? grid.highlights.find(h => h.id === body.highlight)
+                : null;
+            let was = null;
+
+            if (existing) {
+                was = existing.url;
+                existing.name = name;
+                existing.url = url;
+            } else {
+                if (grid.highlights.length >= MAX_HIGHLIGHTS) throw new Error('too-many-highlights');
+                grid.highlights.push({ id: accounts.newId('hlt'), name, url });
+            }
+
+            await accounts.writeAccounts(doc);
+            if (was && was !== url) await forget(req, [was]);
+
+            return res.status(200).json({ highlights: grid.highlights });
+        }
+
+        if (action === 'delete-highlight') {
+            const all = Array.isArray(grid.highlights) ? grid.highlights : [];
+            const gone = all.find(h => h.id === body.highlight);
+
+            grid.highlights = all.filter(h => h.id !== body.highlight);
+            await accounts.writeAccounts(doc);
+            if (gone) await forget(req, [gone.url]);
+
+            return res.status(200).json({ highlights: grid.highlights });
+        }
+
         if (action === 'add-note') {
             const slot = slotOf(body.slot);
             const post = posts[slot];
@@ -206,7 +270,7 @@ module.exports = async (req, res) => {
 
         return res.status(400).json({ error: 'bad-action' });
     } catch (err) {
-        const known = ['bad-slot', 'no-images', 'bad-image'];
+        const known = ['bad-slot', 'no-images', 'bad-image', 'bad-name', 'too-many-highlights'];
         const status = known.includes(err.message) ? 400 : 500;
         return res.status(status).json({ error: err.message });
     }
