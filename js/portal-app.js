@@ -290,29 +290,31 @@
             // buttons rather than being one: put a picture in it, or take the
             // square itself back off the grid.
             cells.push(editing
-                ? `<div class="cell cell-empty" data-slot="${slot}">
-                       <button class="cell-fill" type="button" data-act="add" title="Βάλε φωτογραφία">
-                           <span class="cell-plus" aria-hidden="true">+</span>
-                           <span class="visually-hidden">Προσθήκη ανάρτησης</span>
-                       </button>
-                       ${slot === planned - 1 ? `
-                           <button class="cell-less" type="button" data-act="less" title="Αφαίρεση του κενού">
-                               &times;<span class="visually-hidden">Ένα κενό κουτάκι λιγότερο</span>
-                           </button>` : ''}
-                   </div>`
+                ? `<button class="cell cell-empty" type="button" data-slot="${slot}" data-act="add"
+                           title="Βάλε φωτογραφία">
+                       <span class="cell-plus" aria-hidden="true">+</span>
+                       <span class="visually-hidden">Προσθήκη ανάρτησης</span>
+                   </button>`
                 : `<div class="cell cell-empty is-quiet" aria-hidden="true"></div>`);
-        }
-
-        if (editing && planned < SLOTS) {
-            cells.push(`
-                <button class="cell cell-more" type="button" data-act="more" title="Άλλο ένα κενό κουτάκι">
-                    <span class="cell-plus" aria-hidden="true">+</span>
-                    <span class="visually-hidden">Προσθήκη κενού κουτιού στο grid</span>
-                </button>`);
         }
 
         $('ig-grid').classList.toggle('is-editable', editing);
         $('ig-grid').innerHTML = cells.join('');
+
+        // Under the grid, where it cannot be mistaken for a square of it: how
+        // long the grid is, which is a thing you do to the grid rather than a
+        // thing you put in it.
+        const plan = $('grid-plan');
+        plan.hidden = !editing;
+        plan.innerHTML = editing ? `
+            <button class="plan-btn" type="button" data-act="more"${planned >= SLOTS ? ' disabled' : ''}>
+                <span aria-hidden="true">+</span> Κενό κουτάκι
+            </button>
+            <button class="plan-btn" type="button" data-act="less"${planned <= filled ? ' disabled' : ''}>
+                <span aria-hidden="true">&minus;</span> Ένα λιγότερο
+            </button>
+            <span class="plan-count">${filled} από ${planned} θέσεις</span>
+        ` : '';
     };
 
     // --- clicking around the grid ------------------------------------------
@@ -334,8 +336,6 @@
         const what = act ? act.dataset.act : null;
 
         if (what === 'menu') { openMenu(act, slot); return; }
-        if (what === 'more') { setSlots(planCount() + 1); return; }
-        if (what === 'less') { setSlots(planCount() - 1); return; }
         if (what === 'add') { openEditor(null, null); return; }
         if (state.posts[slot]) openViewer(slot, 0);
     });
@@ -506,6 +506,12 @@
     document.addEventListener('touchmove', (event) => {
         if (drag.active) event.preventDefault();
     }, { passive: false });
+
+    $('grid-plan').addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-act]');
+        if (!button || button.disabled) return;
+        setSlots(planCount() + (button.dataset.act === 'more' ? 1 : -1));
+    });
 
     // How many squares the grid is currently planned to have.
     const planCount = () => Math.max(

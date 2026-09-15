@@ -428,18 +428,6 @@
 /* A square that is spoken for but still empty. It stays quiet until the
    pointer is over it, so a grid being planned still reads as a grid. */
 .cell-empty { border-style: dashed; }
-
-.cell-fill {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    font: inherit;
-    color: inherit;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
 .cell-empty .cell-plus { opacity: .22; transition: opacity .25s; }
 .cell-empty:hover .cell-plus { opacity: 1; }
 
@@ -452,42 +440,6 @@
 .cell-empty.is-quiet { cursor: default; border-style: solid; }
 .cell-empty.is-quiet:hover { background: rgba(255, 255, 255, .03); border-color: rgba(255, 255, 255, .07); }
 
-/* Takes the last empty square back off the grid. */
-.cell-less {
-    position: absolute;
-    z-index: 1;
-    top: 5px; right: 6px;
-    padding: 0;
-    cursor: pointer;
-    display: grid;
-    place-items: center;
-    width: 22px; height: 22px;
-    font-size: 1rem;
-    line-height: 1;
-    color: var(--text-secondary);
-    background: rgba(10, 10, 14, .7);
-    border: 1px solid rgba(255, 255, 255, .12);
-    border-radius: 7px;
-    opacity: 0;
-    transition: opacity .25s, color .25s;
-}
-
-.cell-empty:hover .cell-less { opacity: 1; }
-.cell-less:hover { color: #ff8b6b; }
-
-/* The control that adds another empty square, which is a thing you do to the
-   grid rather than a square of it, so it does not pretend to be one. */
-.cell-more {
-    display: grid;
-    place-items: center;
-    color: var(--accent-orange);
-    background: rgba(255, 107, 53, .06);
-    border: 1px dashed rgba(255, 107, 53, .38);
-    cursor: pointer;
-    transition: var(--transition-smooth);
-}
-
-.cell-more:hover { background: rgba(255, 107, 53, .12); border-color: rgba(255, 107, 53, .6); }
 
 .cell-plus { font-size: 1.8rem; font-weight: var(--fw-light); line-height: 1; }
 
@@ -581,6 +533,40 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 /* A post on its way to another slot, and the slots it may land in. */
 .cell.is-moving { outline: 2px solid var(--accent-orange); outline-offset: -2px; opacity: .55; }
 .cell.is-target { outline: 1px dashed rgba(255, 107, 53, .55); outline-offset: -2px; cursor: copy; }
+
+/* --- how long the grid is -------------------------------------------------- */
+/* Deliberately not a square. Adding a place for a picture and adding a picture
+   are different acts, and the grid above is only ever the second one. */
+.grid-plan {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    max-width: 780px;
+    margin: 16px auto 0;
+}
+
+.plan-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    font: inherit;
+    font-size: .82rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.plan-btn span { font-size: 1.05rem; line-height: 1; }
+.plan-btn:hover { color: var(--text-primary); border-color: var(--border-hover); }
+.plan-btn[disabled] { opacity: .35; cursor: not-allowed; }
+.plan-btn[disabled]:hover { color: var(--text-secondary); border-color: rgba(255, 255, 255, .1); }
+
+.plan-count { margin-left: auto; font-size: .76rem; color: rgba(184, 186, 194, .7); }
 
 /* --- the three-dot menu -------------------------------------------------- */
 .cell-menu {
