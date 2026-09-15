@@ -700,8 +700,9 @@
 
 .edit-caption { width: 100%; }
 
+.panel-error,
 .edit-error {
-    margin-top: 14px;
+    margin: 0 0 16px;
     padding: 10px 13px;
     font-size: .82rem;
     line-height: 1.5;
@@ -710,6 +711,8 @@
     border: 1px solid rgba(255, 107, 53, .28);
     border-radius: 11px;
 }
+
+.edit-error { margin: 14px 0 0; }
 
 .modal-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 .modal-foot .btn { padding: 11px 22px; font-size: .85rem; }

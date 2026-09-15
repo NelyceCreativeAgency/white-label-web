@@ -852,9 +852,9 @@
             <li class="row" data-user="${esc(user.id)}">
                 <div class="row-fields">
                     <label>Όνομα<input data-f="name" value="${esc(user.name)}" maxlength="60"></label>
-                    <label>Όνομα χρήστη<input data-f="username" value="${esc(user.username)}" maxlength="32" autocapitalize="none" spellcheck="false"></label>
+                    <label>Όνομα χρήστη<input data-f="username" value="${esc(user.username)}" maxlength="32" pattern="[A-Za-z0-9._\-]{3,32}" title="3 ως 32 λατινικοί χαρακτήρες, αριθμοί, τελεία, παύλα ή κάτω παύλα, χωρίς κενά" autocapitalize="none" spellcheck="false"></label>
                     <label>Ρόλος<select data-f="role">${roleOptions(user.role)}</select></label>
-                    <label>Νέος κωδικός<input data-f="password" type="password" placeholder="αμετάβλητος" autocomplete="new-password"></label>
+                    <label>Νέος κωδικός<input data-f="password" type="password" minlength="8" placeholder="αμετάβλητος" autocomplete="new-password"></label>
                 </div>
                 <div class="row-foot">
                     <small>${user.lastLoginAt ? `Τελευταία είσοδος: ${esc(when(user.lastLoginAt))}` : 'Δεν έχει μπει ακόμα'}</small>
@@ -895,17 +895,18 @@
             <section class="panel">
                 <div class="panel-head">
                     <h2>Λογαριασμοί</h2>
-                    <p>Εσύ ανοίγεις και κλείνεις τους λογαριασμούς. Ο κωδικός δίνεται μία φορά και δεν ξαναφαίνεται.</p>
+                    <p>Εσύ ανοίγεις και κλείνεις τους λογαριασμούς. Το όνομα είναι για τα μάτια σου και δέχεται ελληνικά. Το όνομα χρήστη είναι αυτό που πληκτρολογεί στην είσοδο, θέλει λατινικούς χαρακτήρες χωρίς κενά. Ο κωδικός δίνεται μία φορά και δεν ξαναφαίνεται.</p>
                 </div>
 
                 <form class="new-row" id="new-user">
                     <input name="name" placeholder="Όνομα" maxlength="60" required>
-                    <input name="username" placeholder="Όνομα χρήστη" maxlength="32" autocapitalize="none" spellcheck="false" required>
+                    <input name="username" placeholder="Όνομα χρήστη, λατινικά" maxlength="32" pattern="[A-Za-z0-9._\-]{3,32}" title="3 ως 32 λατινικοί χαρακτήρες, αριθμοί, τελεία, παύλα ή κάτω παύλα, χωρίς κενά" autocapitalize="none" spellcheck="false" required>
                     <select name="role">${roleOptions('client')}</select>
-                    <input name="password" type="password" placeholder="Κωδικός" autocomplete="new-password" required>
+                    <input name="password" type="password" placeholder="Κωδικός, 8+ χαρακτήρες" minlength="8" autocomplete="new-password" required>
                     <button class="btn btn-primary" type="submit">Προσθήκη</button>
                 </form>
 
+                <p class="panel-error" id="user-error" role="alert" hidden></p>
                 <ul class="rows">${userRows}</ul>
             </section>
 
@@ -921,9 +922,21 @@
                     <button class="btn btn-primary" type="submit">Νέο grid</button>
                 </form>
 
+                <p class="panel-error" id="grid-error" role="alert" hidden></p>
                 <ul class="rows">${gridRows}</ul>
             </section>
         `;
+    };
+
+    // A toast is gone in three seconds, which is no way to be told that a
+    // username had a character it could not take. Anything that goes wrong in
+    // here is written under the panel it went wrong in, and stays there.
+    const complain = (where, message) => {
+        const box = where && where.closest('.panel') && where.closest('.panel').querySelector('.panel-error');
+        if (!box) { toast(message, 'bad'); return; }
+        box.textContent = message;
+        box.hidden = false;
+        box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     };
 
     const fields = (row) => {
@@ -949,7 +962,7 @@
             form.reset();
             await openAccounts();
         } catch (err) {
-            toast(explain(err), 'bad');
+            complain(form, explain(err));
         }
     });
 
@@ -1004,7 +1017,7 @@
                 await openAccounts();
             }
         } catch (err) {
-            toast(explain(err), 'bad');
+            complain(button, explain(err));
         }
     });
 
