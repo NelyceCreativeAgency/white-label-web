@@ -188,7 +188,7 @@ html[data-lang="el"] .hero-aside {
    was competing with it instead. The ceiling is under where it started. */
 .featured-title,
 .pm-title {
-    font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+    font-size: clamp(2rem, 3.6vw, 2.9rem);
     font-weight: var(--fw-regular);
     letter-spacing: -0.03em;
     line-height: 1.12;
@@ -476,10 +476,11 @@ html[data-lang="el"] .hero-aside {
 }
 
 /* --- The partnership model ---
-   One paragraph. The four promises inside it are the four things an agency
-   wants to know, picked out of the sentence rather than lifted into a list.
-   Words start blurred and dim and sharpen as the paragraph is scrolled past;
-   a promise lights up as the last of its words comes clear. */
+   One paragraph, set evenly. Four phrases in it used to carry a heavier
+   weight, the four things an agency wants to know picked out of the sentence;
+   they read as a second effect running against the reveal and are gone. Words
+   start blurred and dim and sharpen as the paragraph is scrolled past, and
+   that is the only thing happening in it now. */
 
 /* A little more air than it had, the hero being a whole screen now, but only a
    little: at 120 and 140 the section had stopped holding together. */
@@ -530,15 +531,16 @@ html[data-lang="el"] .pm-title {
 /* The dial opens the section and the statement follows it, full width. Held to
    a reading measure the statement had to sit beside the dial, and each was
    making the other smaller than it wanted to be. */
+/* Runs the width of the block rather than holding to a measure inside it: it
+   is a statement being read once, not a column of body copy, and it was
+   sitting in the left half of the section with the right half empty. Larger
+   and more open between the lines to fill what it is given. */
 .pm-copy {
-    font-size: clamp(18px, 2vw, 26px);
+    font-size: clamp(20px, 2.4vw, 32px);
     font-weight: var(--fw-light);
-    line-height: 1.45;
+    line-height: 1.6;
     letter-spacing: -0.5px;
     margin-top: 48px;
-    /* Full bleed would run these lines to the width of the screen. Capped at a
-       measure a sentence can be read across. */
-    max-width: min(100%, 900px);
 }
 
 /* The source is the paragraph until home.js has drawn the split version, so a
@@ -562,16 +564,6 @@ html[data-lang="el"] .pm-title {
    one. See setWord in js/home.js. */
 .pm-w.is-waiting {
     filter: none;
-}
-
-/* The four things an agency wants to know are set in a heavier weight against
-   the light body text. No colour and no animation of their own: every attempt
-   at highlighting them landed on top of the reveal and read as a second,
-   competing effect. */
-.pm-mark {
-    background: none;
-    color: inherit;
-    font-weight: var(--fw-medium);
 }
 
 /* --- The process, as a dial ---

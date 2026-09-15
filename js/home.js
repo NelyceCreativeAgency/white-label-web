@@ -107,20 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 out.appendChild(document.createTextNode(' '));
             }
 
-            const isPromise = segment.tagName === 'MARK';
-            const host = isPromise ? document.createElement('mark') : out;
-            if (isPromise) host.className = 'pm-mark';
-
             text.split(/\s+/).forEach((word, i) => {
-                if (i > 0) host.appendChild(document.createTextNode(' '));
+                if (i > 0) out.appendChild(document.createTextNode(' '));
                 const span = document.createElement('span');
                 span.className = 'pm-w';
                 span.textContent = word;
-                host.appendChild(span);
+                out.appendChild(span);
                 words.push(span);
             });
-
-            if (isPromise) out.appendChild(host);
         });
 
         copy.classList.add('is-split');

@@ -271,7 +271,8 @@
          The paragraph keeps its source and its rendering apart. js/home.js
          splits the source into one span per word and draws those into
          .pm-render, because the language switcher rewrites text nodes and would
-         wipe the spans out on every swap. Without JS the source is simply the
+         wipe the spans out on every swap. The source stays in chunks so each
+         one can carry its own data-en. Without JS the source is simply the
          paragraph, which is why it is hidden in CSS rather than with `hidden`. -->
     <section class="partner-model-section" id="how-we-work">
         <div class="home-bleed">
@@ -323,13 +324,13 @@
             <p class="pm-copy" id="pm-copy">
                 <span class="pm-src">
                     <span data-en="We come into a project as an extension of your team.">Μπαίνουμε σε ένα project σαν προέκταση της ομάδας σου.</span>
-                    <mark data-en="Your client stays yours.">Ο πελάτης παραμένει δικός σου.</mark>
+                    <span data-en="Your client stays yours.">Ο πελάτης παραμένει δικός σου.</span>
                     <span data-en="The communication and the presentation always go through you.">Η επικοινωνία και η παρουσίαση περνάνε πάντα από εσένα.</span>
-                    <mark data-en="Whatever you share stays confidential">Ό,τι μοιράζεσαι μένει εμπιστευτικό</mark>
+                    <span data-en="Whatever you share stays confidential">Ό,τι μοιράζεσαι μένει εμπιστευτικό</span>
                     <span data-en="and nothing is published without your approval.">και τίποτα δεν δημοσιεύεται χωρίς την έγκρισή σου.</span>
-                    <mark data-en="You keep the direction.">Εσύ κρατάς το τιμόνι.</mark>
+                    <span data-en="You keep the direction.">Εσύ κρατάς το τιμόνι.</span>
                     <span data-en="You set the brief, you review, you decide what reaches the client. And when it spikes,">Δίνεις το brief, κάνεις το review, αποφασίζεις τι φτάνει στον πελάτη. Και όταν πιέζει,</span>
-                    <mark data-en="we step in for one project or a whole stretch.">μπαίνουμε για ένα project ή για μια ολόκληρη περίοδο.</mark>
+                    <span data-en="we step in for one project or a whole stretch.">μπαίνουμε για ένα project ή για μια ολόκληρη περίοδο.</span>
                 </span>
                 <span class="pm-render"></span>
             </p>
