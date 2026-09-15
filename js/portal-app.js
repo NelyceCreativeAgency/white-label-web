@@ -245,7 +245,7 @@
         `;
 
         $('profile-hint').textContent = grid.canEdit
-            ? 'Το + στο τέλος προσθέτει κενό κουτάκι, μέχρι τα 24. Πάτα ένα κενό για να βάλεις φωτογραφία, και θα μπει πρώτη πάνω αριστερά όπως στο Instagram. Σύρε ένα κουτάκι για να αλλάξεις θέση, ή κράτησέ το πατημένο αν είσαι σε κινητό.'
+            ? 'Πάτα ένα κενό κουτάκι για να ανεβάσεις: η νέα φωτογραφία μπαίνει πρώτη, πάνω αριστερά, όπως στο Instagram. Σύρε μια φωτογραφία όπου θες για να την πας εκεί, ή κράτησέ την πατημένη αν είσαι σε κινητό. Τα κουμπιά από κάτω αλλάζουν πόσα κουτάκια έχει το grid.'
             : 'Πάτα μια εικόνα για να τη δεις μεγάλη και να αφήσεις σχόλιο.';
 
         const editing = grid.canEdit;
@@ -290,8 +290,8 @@
             // buttons rather than being one: put a picture in it, or take the
             // square itself back off the grid.
             cells.push(editing
-                ? `<button class="cell cell-empty" type="button" data-slot="${slot}" data-act="add"
-                           title="Βάλε φωτογραφία">
+                ? `<button class="cell cell-empty${state.moving !== null ? ' is-target' : ''}"
+                           type="button" data-slot="${slot}" data-act="add" title="Βάλε φωτογραφία">
                        <span class="cell-plus" aria-hidden="true">+</span>
                        <span class="visually-hidden">Προσθήκη ανάρτησης</span>
                    </button>`
@@ -327,7 +327,7 @@
         // A move is in the air: the next cell that is clicked is where the
         // post lands, whether that slot is taken or free.
         if (state.moving !== null) {
-            if (state.moving !== slot && cell.classList.contains('is-filled')) swap(state.moving, slot);
+            if (state.moving !== slot && Number.isInteger(slot)) move(state.moving, slot);
             else cancelMove();
             return;
         }
@@ -367,13 +367,13 @@
         return under ? under.closest('.cell') : null;
     };
 
-    const swappable = (cell) =>
-        cell && cell.classList.contains('is-filled') && Number(cell.dataset.slot) !== drag.slot;
+    const droppable = (cell) =>
+        cell && cell.dataset.slot !== undefined && Number(cell.dataset.slot) !== drag.slot;
 
     const markTarget = () => {
         const cell = cellAt(drag.x, drag.y);
         board.querySelectorAll('.is-over').forEach(one => one.classList.remove('is-over'));
-        if (swappable(cell)) cell.classList.add('is-over');
+        if (droppable(cell)) cell.classList.add('is-over');
     };
 
     const placeGhost = () => {
@@ -438,7 +438,7 @@
         if (!wasActive || !dropped) return;
 
         const cell = cellAt(drag.x, drag.y);
-        if (swappable(cell)) swap(from, Number(cell.dataset.slot));
+        if (droppable(cell)) move(from, Number(cell.dataset.slot));
     };
 
     board.addEventListener('pointerdown', (event) => {
@@ -539,14 +539,17 @@
         }
     };
 
-    const swap = async (from, to) => {
+    const move = async (from, to) => {
         cancelMove();
         busy('Μετακίνηση…');
         try {
-            await api('/api/grid', { method: 'POST', body: { id: state.grid.id, action: 'move-post', from, to } });
-            const moved = state.posts[from];
-            state.posts[from] = state.posts[to];
-            state.posts[to] = moved;
+            // A move shifts everything between the two places, so what comes
+            // back is the whole grid rather than the two squares.
+            const data = await api('/api/grid', {
+                method: 'POST',
+                body: { id: state.grid.id, action: 'move-post', from, to }
+            });
+            state.posts = data.posts;
             renderGrid();
         } catch (err) {
             toast(explain(err), 'bad');

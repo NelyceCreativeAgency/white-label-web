@@ -228,15 +228,24 @@ module.exports = async (req, res) => {
             return res.status(200).json({ slot });
         }
 
+        // A picture goes where it was dropped and the rest close up behind it,
+        // which is what dragging something into a list looks like everywhere
+        // else. Dropped past the end of the pictures, onto one of the empty
+        // squares, it goes as far as it can: last.
         if (action === 'move-post') {
             const from = slotOf(body.from);
             const to = slotOf(body.to);
-            const moved = posts[from];
-            posts[from] = posts[to];
-            posts[to] = moved;
+
+            const moving = posts[from];
+            if (!moving) return res.status(404).json({ error: 'no-such-post' });
+
+            posts.splice(from, 1);
+            const at = Math.min(to, posts.filter(Boolean).length);
+            posts.splice(at, 0, moving);
+            if (posts.length > accounts.SLOTS) posts.length = accounts.SLOTS;
 
             await accounts.writePosts(grid.id, posts);
-            return res.status(200).json({ from, to });
+            return res.status(200).json({ from, to: at, posts });
         }
 
         if (action === 'set-avatar') {
