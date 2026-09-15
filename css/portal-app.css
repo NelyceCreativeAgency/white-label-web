@@ -111,7 +111,14 @@
 }
 
 .app-nav-text { flex: 1; min-width: 0; }
-.app-nav-text strong { display: block; font-size: .9rem; font-weight: var(--fw-medium); }
+.app-nav-text strong {
+    display: block;
+    overflow: hidden;
+    font-size: .9rem;
+    font-weight: var(--fw-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 .app-nav-text small { display: block; font-size: .72rem; color: rgba(184, 186, 194, .65); }
 
 /* The count of posts a client has written on and nobody has answered yet. */
@@ -193,12 +200,16 @@
 
 .app-top-title {
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
     font-size: 1.12rem;
     font-weight: var(--fw-semibold);
     letter-spacing: -.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.app-top-status { font-size: .8rem; color: var(--text-secondary); }
+.app-top-status { flex: 0 0 auto; font-size: .8rem; color: var(--text-secondary); }
 
 .app-burger {
     display: none;
@@ -326,6 +337,24 @@
     text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
+    word-break: normal;
+}
+
+/* A grid item will not shrink below its content unless it is told it may, and
+   a handle or a pasted address has nowhere to break. Between them that is what
+   pushes a narrow screen sideways, so both are answered here rather than by
+   hiding the overflow further up. */
+.profile-text { min-width: 0; }
+
+.profile-name,
+.profile-handle,
+.note-text,
+.note-who strong,
+.post-caption,
+.hl-label,
+.app-nav-text strong {
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .profile-name { font-size: 1.3rem; font-weight: var(--fw-semibold); }
@@ -512,9 +541,6 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     box-shadow: 0 18px 44px rgba(0, 0, 0, .5);
 }
 
-/* This one opens from inside the editor, which is itself over the page. */
-.source-menu { z-index: 90; }
-
 .cell-menu button {
     display: block;
     width: 100%;
@@ -550,24 +576,6 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     .cell-dots { opacity: 1; }
 }
 
-/* A picture that lives somewhere else. Hidden until it is asked for, so the
-   editor opens as simply as it did before. */
-.edit-link { display: flex; gap: 8px; margin: -8px 0 20px; }
-
-.edit-link-url {
-    flex: 1;
-    min-width: 0;
-    padding: 10px 13px;
-    font: inherit;
-    font-size: .85rem;
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, .05);
-    border: 1px solid rgba(255, 255, 255, .1);
-    border-radius: 11px;
-}
-
-.edit-link-url:focus { outline: none; border-color: var(--accent-orange); }
-.edit-link .app-ghost { flex: 0 0 auto; }
 
 /* --- panels that open over the grid -------------------------------------- */
 .modal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; }
@@ -769,6 +777,13 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     background: rgba(255, 107, 53, .1);
     border: 1px solid rgba(255, 107, 53, .26);
     border-radius: 10px;
+}
+
+.note-replying span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .note-replying button {
@@ -1158,15 +1173,78 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 
 @media (max-width: 860px) {
     .modal { padding: 0; }
+
+    /* Full screen, and measured in the height the phone actually leaves after
+       its address bar, which is what dvh means and vh does not. */
     .modal-post {
         grid-template-columns: 1fr;
         grid-template-rows: auto minmax(0, 1fr);
-        width: 100vw; height: 100vh;
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
         border-radius: 0;
         border: none;
     }
-    .post-stage { aspect-ratio: 1 / 1; height: auto; }
+
+    /* The tiles are four by five now, so the picture above the conversation is
+       given that shape rather than a square that would letterbox most of them. */
+    .post-stage { aspect-ratio: 4 / 5; max-height: 56vh; height: auto; }
     .post-side { border-left: none; border-top: 1px solid rgba(255, 255, 255, .08); padding: 18px 16px; }
-    .modal-edit { width: 100vw; max-height: 100vh; height: 100vh; border-radius: 0; border: none; }
+
+    .modal-edit {
+        width: 100%;
+        max-height: 100vh;
+        height: 100vh;
+        height: 100dvh;
+        border-radius: 0;
+        border: none;
+        padding: 26px 18px 20px;
+    }
+
+    .modal-hl { width: 100%; padding: 26px 18px 20px; }
     .toast { left: 16px; right: 16px; bottom: 16px; transform: none; text-align: center; }
+}
+
+/* --- a phone -------------------------------------------------------------- */
+@media (max-width: 560px) {
+    .app-view { padding: 16px 12px 64px; }
+
+    /* Instagram's own gap, which is most of what makes a grid read as a grid. */
+    .ig-grid { gap: 2px; }
+    .cell, .cell-empty { border-radius: 2px; }
+
+    .profile-card { padding: 16px; border-radius: 18px; gap: 14px; }
+    .profile-name { font-size: 1.12rem; }
+    .profile-stats { gap: 12px; font-size: .78rem; }
+    .profile-hint { padding-top: 12px; font-size: .75rem; }
+
+    .panel { padding: 18px 16px; border-radius: 18px; }
+    .new-row input, .new-row select { flex-basis: 100%; }
+    .new-row .btn { width: 100%; }
+
+    /* A menu that opens next to a thumb is a menu half of which is under the
+       thumb. On a phone both of them come up from the bottom of the screen
+       instead, wide enough to be hit and clear of whatever they belong to.
+       The positions are written by script, so they have to be overruled. */
+    .cell-menu,
+    .picker {
+        position: fixed !important;
+        left: 12px !important;
+        right: 12px;
+        top: auto !important;
+        bottom: max(14px, env(safe-area-inset-bottom));
+        width: auto;
+        min-width: 0;
+        padding: 8px;
+    }
+
+    .cell-menu button { padding: 13px 14px; font-size: .9rem; }
+    .picker-file { padding: 13px 14px; font-size: .9rem; }
+    .picker-url { padding: 12px 13px; font-size: .88rem; }
+
+    .hl-edit { gap: 14px; }
+    .hl-cover { width: 76px; height: 76px; }
+
+    .note.is-reply { margin-left: 14px; }
+    .note.is-reply::before { left: -9px; width: 6px; }
 }
