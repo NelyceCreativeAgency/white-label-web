@@ -20,18 +20,36 @@ const TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif
 const readBody = (req) =>
     typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
 
-// The sharing links people actually copy, turned into the addresses that
-// answer with the file itself.
-const direct = (url) => {
-    const drive = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^#]*id=)([-\w]{10,})/);
-    if (drive) return `https://drive.google.com/uc?export=download&id=${drive[1]}`;
+// The sharing links people actually copy, turned into addresses that answer
+// with a picture, best first.
+//
+// Google keeps a resized copy of everything in Drive and will serve it at any
+// width asked for, which is the whole of what this needs: the browser is going
+// to shrink whatever arrives to PREVIEW_WIDTH anyway, so pulling the original
+// twelve-megapixel file across only to throw most of it away is wasted time on
+// both ends. The full download stays last in the list, for the rare file that
+// has no preview.
+const PREVIEW_WIDTH = 1600;
 
-    const photos = url.match(/lh\d\.googleusercontent\.com\/d\/([-\w]{10,})/);
-    if (photos) return `https://lh3.googleusercontent.com/d/${photos[1]}`;
+const candidates = (url) => {
+    const drive = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?[^#]*id=)([-\w]{10,})/)
+        || url.match(/lh\d\.googleusercontent\.com\/d\/([-\w]{10,})/);
 
-    if (/dropbox\.com\//.test(url)) return url.replace(/[?&]dl=\d/, '').concat(url.includes('?') ? '&raw=1' : '?raw=1');
+    if (drive) {
+        const id = drive[1];
+        return [
+            `https://drive.google.com/thumbnail?id=${id}&sz=w${PREVIEW_WIDTH}`,
+            `https://lh3.googleusercontent.com/d/${id}=w${PREVIEW_WIDTH}`,
+            `https://drive.google.com/uc?export=download&id=${id}`
+        ];
+    }
 
-    return url;
+    if (/dropbox\.com\//.test(url)) {
+        const bare = url.replace(/[?&]dl=\d/, '');
+        return [bare + (bare.includes('?') ? '&raw=1' : '?raw=1')];
+    }
+
+    return [url];
 };
 
 // An address on this deployment's own network is not a picture anybody asked
@@ -100,29 +118,38 @@ module.exports = async (req, res) => {
         if (!grid || !accounts.canView(me, grid)) return res.status(404).json({ error: 'no-such-grid' });
         if (!accounts.canEdit(me, grid)) return res.status(403).json({ error: 'not-allowed' });
 
-        let parsed;
-        try { parsed = new URL(direct(String(readBody(req).url || '').trim())); }
-        catch { return res.status(400).json({ error: 'bad-link' }); }
+        const given = String(readBody(req).url || '').trim();
+        let tries;
+        try {
+            tries = candidates(given);
+            tries.forEach(one => new URL(one));       // throws on anything that is not an address
+        } catch { return res.status(400).json({ error: 'bad-link' }); }
 
-        const answer = await follow(parsed.toString());
-        if (!answer.ok) return res.status(400).json({ error: 'link-refused' });
+        // Each address in turn, until one of them is a picture. A preview that
+        // is missing answers with a page or a refusal rather than an error, so
+        // the only way to know is to ask.
+        let refusal = 'not-an-image';
 
-        const type = String(answer.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
-        if (!TYPES.includes(type)) {
-            // Almost always a sharing page rather than a file: the link was
-            // never made public, or it points at a web page.
-            return res.status(400).json({ error: 'not-an-image' });
+        for (const one of tries) {
+            const answer = await follow(one);
+
+            if (!answer.ok) { refusal = 'link-refused'; continue; }
+
+            const type = String(answer.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+            if (!TYPES.includes(type)) { refusal = 'not-an-image'; continue; }
+
+            const declared = Number(answer.headers.get('content-length'));
+            if (Number.isFinite(declared) && declared > MAX_BYTES) { refusal = 'link-too-large'; continue; }
+
+            const bytes = Buffer.from(await answer.arrayBuffer());
+            if (!bytes.length) { refusal = 'not-an-image'; continue; }
+            if (bytes.length > MAX_BYTES) { refusal = 'link-too-large'; continue; }
+
+            res.setHeader('Content-Type', type);
+            return res.status(200).send(bytes);
         }
 
-        const declared = Number(answer.headers.get('content-length'));
-        if (Number.isFinite(declared) && declared > MAX_BYTES) return res.status(413).json({ error: 'link-too-large' });
-
-        const bytes = Buffer.from(await answer.arrayBuffer());
-        if (!bytes.length) return res.status(400).json({ error: 'not-an-image' });
-        if (bytes.length > MAX_BYTES) return res.status(413).json({ error: 'link-too-large' });
-
-        res.setHeader('Content-Type', type);
-        return res.status(200).send(bytes);
+        return res.status(refusal === 'link-too-large' ? 413 : 400).json({ error: refusal });
     } catch (err) {
         const known = ['bad-address', 'too-many-redirects'];
         const status = known.includes(err.message) ? 400 : 500;
