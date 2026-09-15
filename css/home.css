@@ -31,7 +31,17 @@
     padding-inline: 40px;
     max-width: 3000px;
     margin: 0 auto;
-    min-height: min(78vh, 720px);
+    /* Fills what is left of the screen under the header, so the first row of
+       project cards is never half in view while the hero is being read.
+
+       The 48px is taken off for the header, which stands about 66px tall in
+       the flow above this. Under-counting it on purpose: a hero a few pixels
+       taller than the gap only eats into its own bottom padding, where a few
+       pixels short would show the top of the next section, which is the whole
+       point. Small viewport units, so a phone's toolbars cannot uncover it
+       either. */
+    min-height: calc(100vh - 48px);
+    min-height: calc(100svh - 48px);
 }
 
 .hero-home .hero-title {
@@ -121,7 +131,9 @@ html[data-lang="el"] .hero-aside {
     .hero-home-inner {
         grid-template-columns: minmax(0, 1fr);
         row-gap: 32px;
-        min-height: 0;
+        /* Stacked, the pair sits in the middle of the screen rather than
+           pressed to the floor of it. */
+        align-content: center;
         padding-top: clamp(96px, 14vh, 150px);
         padding-bottom: 56px;
     }
