@@ -182,16 +182,16 @@ html[data-lang="el"] .hero-aside {
    and read as a different kind of title altogether. Only their margins and
    alignment are their own.
 
-   Set the way the hero's headline is, a size down: the same light weight and
-   the same tight tracking, so the page reads as one piece of typography. The
-   ceiling stays well under the hero's 5.5rem, which is what keeps the order of
-   the two clear. */
+   Set the way the hero's headline is: the same light weight and the same tight
+   tracking, so the page reads as one piece of typography. Small, though. A
+   section heading borrows the hero's manner, not its size, and at 3.4rem it
+   was competing with it instead. The ceiling is under where it started. */
 .featured-title,
 .pm-title {
-    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    font-size: clamp(1.8rem, 3.2vw, 2.5rem);
     font-weight: var(--fw-regular);
     letter-spacing: -0.03em;
-    line-height: 1.1;
+    line-height: 1.12;
 }
 
 .featured-subtitle,
@@ -481,23 +481,27 @@ html[data-lang="el"] .hero-aside {
    Words start blurred and dim and sharpen as the paragraph is scrolled past;
    a promise lights up as the last of its words comes clear. */
 
-/* More air above and below than it had. The hero takes a whole screen now, and
-   the section that follows one cannot open on the same breath it used to. */
+/* A little more air than it had, the hero being a whole screen now, but only a
+   little: at 120 and 140 the section had stopped holding together. */
 .partner-model-section {
-    padding: 120px 0 140px;
+    padding: 80px 0 100px;
     position: relative;
     z-index: 1;
 }
 
-/* The same shape as the hero: the type down the left on the page's own line,
-   the one object on the right, held off the gutter by the same step as the
-   hero's column of copy. */
+/* The same shape as the hero, the type down the left on the page's own line
+   and the one object to its right, but held to a width rather than run to the
+   screen's edge. Pinned to both gutters it was two small things at opposite
+   ends of a monitor with a third of a metre of nothing between them: the hero
+   can carry that because its headline is 5.5rem and fills the left, and this
+   heading is a third of that. So it starts on the line and stops where the
+   pair of them stop. */
 .pm-head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 480px);
-    gap: 40px 72px;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 380px);
+    gap: 32px 48px;
     align-items: center;
-    padding-right: clamp(24px, 4vw, 80px);
+    max-width: 1040px;
 }
 
 /* Pulled back by the blank its own first letter carries, the same correction
@@ -515,21 +519,21 @@ html[data-lang="el"] .pm-title {
 }
 
 .pm-sub {
-    max-width: 42ch;
+    max-width: 46ch;
 }
 
 /* The dial opens the section and the statement follows it, full width. Held to
    a reading measure the statement had to sit beside the dial, and each was
    making the other smaller than it wanted to be. */
 .pm-copy {
-    font-size: clamp(19px, 2.4vw, 30px);
+    font-size: clamp(18px, 2vw, 26px);
     font-weight: var(--fw-light);
     line-height: 1.45;
     letter-spacing: -0.5px;
-    margin-top: 64px;
+    margin-top: 48px;
     /* Full bleed would run these lines to the width of the screen. Capped at a
        measure a sentence can be read across. */
-    max-width: min(100%, 1100px);
+    max-width: min(100%, 900px);
 }
 
 /* The source is the paragraph until home.js has drawn the split version, so a
@@ -774,7 +778,6 @@ html[data-lang="el"] .pm-title {
     .pm-head {
         grid-template-columns: 1fr;
         gap: 32px;
-        padding-right: 0;
     }
 
     .pm-title {
@@ -787,7 +790,7 @@ html[data-lang="el"] .pm-title {
     }
 
     .pm-copy {
-        margin-top: 44px;
+        margin-top: 36px;
     }
 
     .pm-dial {
