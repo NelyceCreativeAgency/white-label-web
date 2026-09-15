@@ -240,7 +240,7 @@
         `;
 
         $('profile-hint').textContent = grid.canEdit
-            ? 'Πάτα το + για να βάλεις εικόνα, από αρχείο ή από σύνδεσμο. Σύρε ένα κουτάκι με το ποντίκι για να αλλάξεις θέση. Οι τρεις τελείες ανοίγουν επεξεργασία, carousel και διαγραφή.'
+            ? 'Πάτα το + για να βάλεις εικόνα, από αρχείο ή από σύνδεσμο. Σύρε ένα κουτάκι για να αλλάξεις θέση, ή κράτησέ το πατημένο αν είσαι σε κινητό. Στην επεξεργασία προσθέτεις κι άλλες εικόνες για carousel.'
             : 'Πάτα μια εικόνα για να τη δεις μεγάλη και να αφήσεις σχόλιο.';
 
         const editing = grid.canEdit;
@@ -509,9 +509,6 @@
         menu.innerHTML = `
             <button type="button" data-do="view">Προβολή</button>
             <button type="button" data-do="edit">Επεξεργασία</button>
-            <button type="button" data-do="carousel"${post.images.length >= MAX_IMAGES ? ' disabled' : ''}>
-                Προσθήκη για carousel
-            </button>
             <button type="button" data-do="move">Μετακίνηση</button>
             <button type="button" data-do="delete" class="is-danger">Διαγραφή</button>
         `;
@@ -542,7 +539,6 @@
         switch (button.dataset.do) {
             case 'view': openViewer(slot, 0); break;
             case 'edit': openEditor(slot, post); break;
-            case 'carousel': openEditor(slot, post); break;
             case 'move':
                 state.moving = slot;
                 renderGrid();
