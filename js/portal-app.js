@@ -12,9 +12,6 @@
     'use strict';
 
     const SLOTS = 24;
-    // What a profile shows before it is asked for more: four rows of three,
-    // which is what fits on a screen without scrolling past the bio.
-    const SHOWN = 12;
     const MAX_IMAGES = 10;
     const LOGIN = 'login.html';
 
@@ -248,40 +245,22 @@
         `;
 
         $('profile-hint').textContent = grid.canEdit
-            ? 'Πάτα το + για να βάλεις εικόνα, από αρχείο ή από σύνδεσμο. Σύρε ένα κουτάκι για να αλλάξεις θέση, ή κράτησέ το πατημένο αν είσαι σε κινητό. Στην επεξεργασία προσθέτεις κι άλλες εικόνες για carousel.'
+            ? 'Το + στο τέλος βάζει την επόμενη ανάρτηση, από αρχείο ή από σύνδεσμο, μέχρι τις 24. Σύρε ένα κουτάκι για να αλλάξεις θέση, ή κράτησέ το πατημένο αν είσαι σε κινητό. Στην επεξεργασία προσθέτεις κι άλλες εικόνες για carousel.'
             : 'Πάτα μια εικόνα για να τη δεις μεγάλη και να αφήσεις σχόλιο.';
 
         const editing = grid.canEdit;
         const cells = [];
 
-        // The grid is as long as it needs to be and no longer. Twelve slots to
-        // begin with, and a row appears when the posts reach the end of the
-        // last one, up to the twenty-four a profile mockup holds.
-        const last = state.posts.reduce((seen, post, i) => (post ? i : seen), -1);
-        const next = last + 1 < SLOTS ? last + 1 : -1;
-        const visible = Math.min(SLOTS, Math.max(SHOWN, Math.ceil((last + 2) / 3) * 3));
-
-        for (let slot = 0; slot < visible; slot++) {
+        // The grid is the posts and nothing else. No empty squares waiting to
+        // be filled in, because a profile does not show those: what is there is
+        // there, and one plus at the end says where the next one goes.
+        for (let slot = 0; slot < SLOTS; slot++) {
             const post = state.posts[slot];
+            if (!post) break;
+
             const target = state.moving !== null && state.moving !== slot;
-
-            if (!post) {
-                // One slot carries the plus: the one straight after the last
-                // picture, which is where the next one goes. A gap left behind
-                // by moving something is still fillable, it just does not
-                // advertise itself.
-                const here = slot === next ? ' is-next' : '';
-                cells.push(editing
-                    ? `<button class="cell cell-empty${here}${target ? ' is-target' : ''}" type="button" data-slot="${slot}" data-act="add">
-                           <span class="cell-plus" aria-hidden="true">+</span>
-                           <span class="visually-hidden">Προσθήκη εικόνας στη θέση ${slot + 1}</span>
-                       </button>`
-                    : `<div class="cell cell-empty is-quiet" aria-hidden="true"></div>`);
-                continue;
-            }
-
             const cover = (post.images || [])[0];
-            if (!cover) { cells.push('<div class="cell cell-empty is-quiet"></div>'); continue; }
+            if (!cover) continue;
             const notes = (post.notes || []).filter(n => n.role === 'client' && !n.resolved).length;
 
             cells.push(`
@@ -301,6 +280,16 @@
             `);
         }
 
+        // Where the next picture goes, drawn as a square of its own so that the
+        // grid keeps its shape as it grows.
+        if (editing && filled < SLOTS) {
+            cells.push(`
+                <button class="cell cell-empty is-next" type="button" data-slot="${filled}" data-act="add" data-picker>
+                    <span class="cell-plus" aria-hidden="true">+</span>
+                    <span class="visually-hidden">Προσθήκη ανάρτησης</span>
+                </button>`);
+        }
+
         $('ig-grid').classList.toggle('is-editable', editing);
         $('ig-grid').innerHTML = cells.join('');
     };
@@ -315,7 +304,7 @@
         // A move is in the air: the next cell that is clicked is where the
         // post lands, whether that slot is taken or free.
         if (state.moving !== null) {
-            if (state.moving !== slot) swap(state.moving, slot);
+            if (state.moving !== slot && cell.classList.contains('is-filled')) swap(state.moving, slot);
             else cancelMove();
             return;
         }
@@ -355,10 +344,13 @@
         return under ? under.closest('.cell') : null;
     };
 
+    const swappable = (cell) =>
+        cell && cell.classList.contains('is-filled') && Number(cell.dataset.slot) !== drag.slot;
+
     const markTarget = () => {
         const cell = cellAt(drag.x, drag.y);
         board.querySelectorAll('.is-over').forEach(one => one.classList.remove('is-over'));
-        if (cell && Number(cell.dataset.slot) !== drag.slot) cell.classList.add('is-over');
+        if (swappable(cell)) cell.classList.add('is-over');
     };
 
     const placeGhost = () => {
@@ -423,8 +415,7 @@
         if (!wasActive || !dropped) return;
 
         const cell = cellAt(drag.x, drag.y);
-        const to = cell ? Number(cell.dataset.slot) : NaN;
-        if (Number.isInteger(to) && to !== from) swap(from, to);
+        if (swappable(cell)) swap(from, Number(cell.dataset.slot));
     };
 
     board.addEventListener('pointerdown', (event) => {
@@ -580,7 +571,8 @@
         busy('Διαγραφή…');
         try {
             await api('/api/grid', { method: 'POST', body: { id: state.grid.id, action: 'delete-post', slot } });
-            state.posts[slot] = null;
+            state.posts.splice(slot, 1);
+            state.posts.push(null);
             renderGrid();
             refreshBadge();
             toast('Διαγράφηκε.');

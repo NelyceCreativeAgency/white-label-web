@@ -102,14 +102,23 @@ exports.emptyPosts = emptyPosts;
 exports.readPosts = async (gridId) => {
     const doc = await store.readJson(postsKey(gridId));
     const posts = doc && Array.isArray(doc.posts) ? doc.posts : [];
+
+    // The posts come first and the free slots after, always. A document
+    // written while the grid still had empty squares in it may have a gap in
+    // the middle, and a gap is invisible now, so it is closed on the way out.
     const out = emptyPosts();
-    posts.slice(0, SLOTS).forEach((post, i) => { out[i] = post || null; });
+    posts.filter(Boolean).slice(0, SLOTS).forEach((post, i) => { out[i] = post; });
     return out;
 };
 
 exports.writePosts = async (gridId, posts) => {
+    // The same rule going in as coming out: posts first, free slots after. It
+    // is written down rather than assumed, so no action has to remember it.
+    const tidy = emptyPosts();
+    posts.filter(Boolean).slice(0, SLOTS).forEach((post, i) => { tidy[i] = post; });
+
     await store.writeJson(postsKey(gridId), {
-        posts: posts.slice(0, SLOTS),
+        posts: tidy,
         updatedAt: new Date().toISOString()
     });
 };

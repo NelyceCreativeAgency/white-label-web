@@ -160,7 +160,12 @@ module.exports = async (req, res) => {
         if (action === 'delete-post') {
             const slot = slotOf(body.slot);
             const gone = posts[slot];
-            posts[slot] = null;
+
+            // The grid shows the posts and nothing else, so a hole in the
+            // middle would be invisible and would eat a slot for good. What is
+            // after the deleted one moves up, the way a feed behaves.
+            posts.splice(slot, 1);
+            posts.push(null);
 
             await accounts.writePosts(grid.id, posts);
             await forget(req, urlsOf(gone));
