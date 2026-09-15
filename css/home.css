@@ -42,6 +42,20 @@
     line-height: 1.03;
     letter-spacing: -0.035em;
     text-align: left;
+    /* A text box starts where the glyph's own blank margin starts, not where
+       the ink does, so sharing the logo's 40px gutter still left the headline
+       looking a few pixels adrift of it. Pulled back by the side bearing the
+       font puts in front of the first letter, measured off the fonts
+       themselves: 0.052em before Montserrat's C, 0.024em before Geologica's
+       delta. In em, so it holds at every size the clamp above lands on.
+
+       It is the first letter of the headline that fixes these two numbers. If
+       the copy changes, they want measuring again. */
+    margin-left: -0.052em;
+}
+
+html[data-lang="el"] .hero-home .hero-title {
+    margin-left: -0.024em;
 }
 
 /* The last words of the headline, carried in the brand's own accent. The flat
