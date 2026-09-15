@@ -22,10 +22,14 @@
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
     align-items: end;
     column-gap: 48px;
-    /* Matches the header's own gutter (24px + 16px), so the headline starts on
-       the same line as the logo above it. */
-    padding: clamp(110px, 17vh, 190px) clamp(24px, 3vw, 40px) clamp(64px, 10vh, 120px);
-    max-width: 1800px;
+    padding-block: clamp(110px, 17vh, 190px) clamp(64px, 10vh, 120px);
+    /* The header's own gutter, to the pixel: 24px on .main-header plus 16px on
+       .nav-container. A fluid clamp only met it at one width, and a narrower
+       cap than the header's pushed the hero inwards on a wide monitor while
+       the logo stayed put. Both are spelled out so the first letter of the
+       headline sits on the same line as the logo above it at every width. */
+    padding-inline: 40px;
+    max-width: 3000px;
     margin: 0 auto;
     min-height: min(78vh, 720px);
 }
@@ -101,6 +105,16 @@
 
 @media (max-width: 640px) {
     .hero-aside { max-width: none; }
+}
+
+/* The header narrows its own gutter twice on the way down (to 12px + 16px,
+   then 12px + 12px). The hero follows it both times, for the same reason. */
+@media (max-width: 768px) {
+    .hero-home-inner { padding-inline: 28px; }
+}
+
+@media (max-width: 480px) {
+    .hero-home-inner { padding-inline: 24px; }
 }
 
 
