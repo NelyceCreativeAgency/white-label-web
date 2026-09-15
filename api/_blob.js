@@ -100,6 +100,34 @@ exports.client = (req) => {
             return { url: data.url, pathname: data.pathname };
         },
 
+        // Everything in the store, or everything under one folder of it, with
+        // the size of each. The API answers a page at a time and says when
+        // there is another, which is what the cursor is for.
+        async list(prefix) {
+            const out = { files: [], bytes: 0 };
+            let cursor = null;
+            let page = 0;
+
+            do {
+                const params = new URLSearchParams({ limit: '1000' });
+                if (prefix) params.set('prefix', prefix);
+                if (cursor) params.set('cursor', cursor);
+
+                const res = await fetch(`${API}/?${params.toString()}`, { method: 'GET', headers: headers() });
+                if (!res.ok) await fail(res);
+
+                const data = await res.json();
+                (data.blobs || []).forEach(one => {
+                    out.files.push({ pathname: one.pathname, size: Number(one.size) || 0 });
+                    out.bytes += Number(one.size) || 0;
+                });
+
+                cursor = data.hasMore ? data.cursor : null;
+            } while (cursor && ++page < 20);
+
+            return out;
+        },
+
         // Deleting is best-effort by design: a post is gone from the grid the
         // moment its document is written, and a picture left behind in the
         // store is litter, not a bug the visitor should be told about.

@@ -43,6 +43,42 @@ module.exports = async (req, res) => {
     out.images.credentials = images.how();
     out.images.tokenPresent = Boolean(out.images.credentials);
 
+    // How much room the pictures are taking, and which grid is taking it. The
+    // free allowance is a gigabyte, which a few hundred shrunk photographs do
+    // not come close to, but the question is worth being able to answer.
+    const GIGABYTE = 1024 * 1024 * 1024;
+    const readable = (bytes) => bytes >= 1024 * 1024
+        ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
+        : `${Math.round(bytes / 1024)} KB`;
+
+    if (out.images.tokenPresent) {
+        try {
+            const stored = await images.list('grids/');
+            const doc = await accounts.readAccounts();
+
+            const perGrid = {};
+            stored.files.forEach(file => {
+                const id = file.pathname.split('/')[1] || 'unknown';
+                perGrid[id] = perGrid[id] || { files: 0, bytes: 0 };
+                perGrid[id].files++;
+                perGrid[id].bytes += file.size;
+            });
+
+            out.storage = {
+                files: stored.files.length,
+                size: readable(stored.bytes),
+                ofFreeGigabyte: `${(stored.bytes / GIGABYTE * 100).toFixed(2)}%`,
+                averagePicture: stored.files.length ? readable(stored.bytes / stored.files.length) : '0 KB',
+                grids: Object.entries(perGrid).map(([id, use]) => {
+                    const grid = accounts.findGrid(doc, id);
+                    return { name: grid ? grid.name : id, files: use.files, size: readable(use.bytes) };
+                }).sort((a, b) => b.files - a.files)
+            };
+        } catch (err) {
+            out.storage = { error: err.message };
+        }
+    }
+
     if (out.images.tokenPresent) {
         let url = null;
         try {
