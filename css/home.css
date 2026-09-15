@@ -5,6 +5,19 @@
    two auto-scrolling project rows. The other pages keep the plain centred hero
    style.css gives them. */
 
+/* --- The page's own line ---
+   The hero set it and the rest of the page reads from it: the header's gutter
+   to the pixel, 24px on .main-header plus 16px on .nav-container, full bleed
+   up to the header's own 3000px cap. Spelled out rather than fluid, because a
+   clamp only met the header at one width and a narrower cap pushed the content
+   inwards on a wide monitor while the logo stayed put. Anything that should
+   start on the logo's line wears this. */
+.home-bleed {
+    max-width: 3000px;
+    margin-inline: auto;
+    padding-inline: 40px;
+}
+
 /* --- Hero ---
    A full-bleed two-column block: the headline runs down the left, the copy and
    the buttons sit in a narrow column to its right, and both bottom-align the
@@ -23,14 +36,6 @@
     align-items: end;
     column-gap: 48px;
     padding-block: clamp(110px, 17vh, 190px) clamp(64px, 10vh, 120px);
-    /* The header's own gutter, to the pixel: 24px on .main-header plus 16px on
-       .nav-container. A fluid clamp only met it at one width, and a narrower
-       cap than the header's pushed the hero inwards on a wide monitor while
-       the logo stayed put. Both are spelled out so the first letter of the
-       headline sits on the same line as the logo above it at every width. */
-    padding-inline: 40px;
-    max-width: 3000px;
-    margin: 0 auto;
     /* Fills what is left of the screen under the header, so the first row of
        project cards is never half in view while the hero is being read.
 
@@ -68,15 +73,16 @@ html[data-lang="el"] .hero-home .hero-title {
     margin-left: -0.024em;
 }
 
-/* The last words of the headline, carried in the brand's own accent. The flat
-   colour is the fallback; only browsers that can clip a background to the text
-   get the gradient. */
-.hero-accent {
+/* The last words of a heading, carried in the brand's own accent: once in the
+   hero, once over the process. The same gradient the solid buttons are filled
+   with. The flat colour is the fallback; only browsers that can clip a
+   background to the text get the gradient. */
+.accent-text {
     color: var(--accent-orange);
 }
 
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
-    .hero-accent {
+    .accent-text {
         background: linear-gradient(100deg, var(--accent-orange), var(--accent-amber));
         -webkit-background-clip: text;
                 background-clip: text;
@@ -155,13 +161,13 @@ html[data-lang="el"] .hero-aside {
 }
 
 /* The header narrows its own gutter twice on the way down (to 12px + 16px,
-   then 12px + 12px). The hero follows it both times, for the same reason. */
+   then 12px + 12px). The page follows it both times, for the same reason. */
 @media (max-width: 768px) {
-    .hero-home-inner { padding-inline: 28px; }
+    .home-bleed { padding-inline: 28px; }
 }
 
 @media (max-width: 480px) {
-    .hero-home-inner { padding-inline: 24px; }
+    .home-bleed { padding-inline: 24px; }
 }
 
 
@@ -174,13 +180,18 @@ html[data-lang="el"] .hero-aside {
 /* One rule for both section headings on this page, so they cannot drift apart
    again: the partnership one had been set two sizes and a weight below this
    and read as a different kind of title altogether. Only their margins and
-   alignment are their own. */
+   alignment are their own.
+
+   Set the way the hero's headline is, a size down: the same light weight and
+   the same tight tracking, so the page reads as one piece of typography. The
+   ceiling stays well under the hero's 5.5rem, which is what keeps the order of
+   the two clear. */
 .featured-title,
 .pm-title {
-    font-size: clamp(1.9rem, 4vw, 2.9rem);
-    font-weight: var(--fw-semibold);
-    letter-spacing: -0.02em;
-    line-height: 1.15;
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    font-weight: var(--fw-regular);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
 }
 
 .featured-subtitle,
@@ -470,23 +481,37 @@ html[data-lang="el"] .hero-aside {
    Words start blurred and dim and sharpen as the paragraph is scrolled past;
    a promise lights up as the last of its words comes clear. */
 
+/* More air above and below than it had. The hero takes a whole screen now, and
+   the section that follows one cannot open on the same breath it used to. */
 .partner-model-section {
-    padding: 64px 0 100px;
+    padding: 120px 0 140px;
     position: relative;
     z-index: 1;
 }
 
-/* The heading and the dial share a row: the dial had a whole column of empty
-   page beside it, and a title centred over it was filling none of that. */
+/* The same shape as the hero: the type down the left on the page's own line,
+   the one object on the right, held off the gutter by the same step as the
+   hero's column of copy. */
 .pm-head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 480px);
     gap: 40px 72px;
     align-items: center;
+    padding-right: clamp(24px, 4vw, 80px);
 }
 
+/* Pulled back by the blank its own first letter carries, the same correction
+   the hero's headline gets, so both land on the logo's line rather than a few
+   pixels inside it. Measured off the fonts: 0.114em before Montserrat's H,
+   0.094em before Geologica's pi. Tied to the first letter of the heading, so
+   they want measuring again if the wording changes. */
 .pm-title {
     margin-bottom: 18px;
+    margin-left: -0.114em;
+}
+
+html[data-lang="el"] .pm-title {
+    margin-left: -0.094em;
 }
 
 .pm-sub {
@@ -502,6 +527,9 @@ html[data-lang="el"] .hero-aside {
     line-height: 1.45;
     letter-spacing: -0.5px;
     margin-top: 64px;
+    /* Full bleed would run these lines to the width of the screen. Capped at a
+       measure a sentence can be read across. */
+    max-width: min(100%, 1100px);
 }
 
 /* The source is the paragraph until home.js has drawn the split version, so a
@@ -739,13 +767,14 @@ html[data-lang="el"] .hero-aside {
 
 @media (max-width: 860px) {
     .partner-model-section {
-        padding: 32px 0 72px;
+        padding: 72px 0 90px;
     }
 
     /* Nothing to sit beside, so the heading takes its own row above the dial. */
     .pm-head {
         grid-template-columns: 1fr;
         gap: 32px;
+        padding-right: 0;
     }
 
     .pm-title {
