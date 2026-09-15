@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" data-lang="en">
+<html lang="el" data-lang="el">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="description" content="Διαμόρφωσε τις υπηρεσίες που χρειάζεσαι και δες κόστος αμέσως.">
-    <title>Client Portal | Nelyce Partners</title>
+    <title>Portal | Nelyce</title>
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="shortcut icon" href="/favicon.ico">
@@ -13,128 +12,147 @@
     <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet" media="print" onload="this.media='all'; this.onload=null;">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet"></noscript>
-<link type="text/css" rel="stylesheet" href="css/style.min.css"/>
-<link type="text/css" rel="stylesheet" href="css/portal.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="css/style.min.css"/>
+    <link type="text/css" rel="stylesheet" href="css/portal-app.css"/>
 </head>
-<body>
+<body class="app-body">
 
-    <div class="gradient-bg">
-        <div class="gradients-container">
-            <div class="g1"></div>
-            <div class="g2"></div>
-            <div class="g3"></div>
-            <div class="g4"></div>
-            <div class="g5"></div>
-        </div>
-    </div>
-    <div class="mesh-gradient-scrim"></div>
+    <!-- Sidebar ---------------------------------------------------------- -->
+    <aside class="app-side" id="app-side">
+        <a class="app-brand" href="portal.html">
+            <img src="https://www.nelycedesign.com/assets/img/logo.svg" alt="Nelyce Design"
+                 width="273" height="58" class="app-brand-logo">
+        </a>
 
-    <div class="night-sky"></div>
+        <nav class="app-nav" aria-label="Περιήγηση">
+            <p class="app-nav-label">Grids</p>
+            <ul class="app-grids" id="app-grids"></ul>
 
-    <header class="main-header">
-        <div class="nav-container">
-            <a href="portal.html" class="logo">
-                <img src="https://www.nelycedesign.com/assets/img/logo.svg" alt="Nelyce Design" width="273" height="58" class="logo-img">
-                <span class="logo-badge">CLIENTS</span>
-            </a>
-            <div class="nav-right">
-                <div class="nav-meta">
-                    <div class="currency-dropdown currency-dropdown-header" id="currency-dropdown-header">
-                        <button class="currency-btn currency-btn-header" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Change currency">
-                            <span class="currency-btn-flag">🇪🇺</span>
-                            <span class="currency-btn-code">EUR</span>
-                            <svg class="currency-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </button>
-                        <div class="currency-dropdown-list" role="listbox"></div>
-                    </div>
-                    <div class="lang-switcher">
-                        <button class="lang-btn" data-lang="el">EL</button>
-                        <button class="lang-btn active" data-lang="en">EN</button>
-                    </div>
-                </div>
-                <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="nav-cta nav-cta-header nav-cta-primary">Contact Hub</a>
-                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+            <div class="app-admin-nav" id="app-admin-nav" hidden>
+                <p class="app-nav-label">Διαχείριση</p>
+                <button class="app-nav-item" type="button" data-view="accounts">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span>Λογαριασμοί και grids</span>
                 </button>
             </div>
-        </div>
-    </header>
-
-    <div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay"></div>
-    <div class="mobile-sidebar" id="mobile-sidebar">
-        <button class="mobile-sidebar-close" id="mobile-sidebar-close" aria-label="Close menu">&times;</button>
-        <nav class="mobile-sidebar-nav">
-            <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="mobile-sidebar-link">Contact Hub</a>
         </nav>
 
-        <div class="mobile-sidebar-footer">
-            <div class="currency-dropdown currency-dropdown-mobile" id="currency-dropdown-mobile">
-                <button class="currency-btn currency-btn-sidebar" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Change currency">
-                    <span class="currency-btn-flag">🇪🇺</span>
-                    <span class="currency-btn-code">EUR</span>
-                    <svg class="currency-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+        <div class="app-me">
+            <div class="app-me-who">
+                <span class="app-avatar" id="me-avatar" aria-hidden="true"></span>
+                <span class="app-me-text">
+                    <strong id="me-name">…</strong>
+                    <small id="me-role"></small>
+                </span>
+            </div>
+            <button class="app-ghost" id="logout" type="button">Έξοδος</button>
+        </div>
+    </aside>
+
+    <div class="app-scrim" id="app-scrim" hidden></div>
+
+    <!-- Main ------------------------------------------------------------- -->
+    <main class="app-main">
+        <header class="app-top">
+            <button class="app-burger" id="app-burger" type="button" aria-label="Μενού">
+                <span></span><span></span><span></span>
+            </button>
+            <h1 class="app-top-title" id="app-title">Portal</h1>
+            <span class="app-top-status" id="app-status" aria-live="polite"></span>
+        </header>
+
+        <!-- The grid ------------------------------------------------------ -->
+        <section class="app-view" id="view-grid" hidden>
+            <div class="profile-card">
+                <span class="profile-avatar" id="profile-avatar" aria-hidden="true"></span>
+                <div class="profile-text">
+                    <h2 class="profile-name" id="profile-name"></h2>
+                    <p class="profile-handle" id="profile-handle"></p>
+                    <p class="profile-stats" id="profile-stats"></p>
+                </div>
+                <p class="profile-hint" id="profile-hint"></p>
+            </div>
+
+            <div class="ig-grid" id="ig-grid"></div>
+        </section>
+
+        <!-- Accounts, for the admin only ---------------------------------- -->
+        <section class="app-view" id="view-accounts" hidden></section>
+
+        <!-- Nothing to show ----------------------------------------------- -->
+        <section class="app-view app-blank" id="view-blank" hidden>
+            <h2>Δεν υπάρχει ακόμα grid για σένα</h2>
+            <p>Μόλις σου ανοίξουμε ένα, θα το βρεις εδώ αριστερά.</p>
+        </section>
+    </main>
+
+    <!-- Post viewer ------------------------------------------------------- -->
+    <div class="modal" id="post-modal" hidden>
+        <div class="modal-scrim" data-close></div>
+        <div class="modal-box modal-post" role="dialog" aria-modal="true" aria-label="Ανάρτηση">
+            <button class="modal-x" type="button" data-close aria-label="Κλείσιμο">&times;</button>
+
+            <div class="post-stage">
+                <img class="post-image" id="post-image" alt="">
+                <button class="post-arrow post-prev" type="button" id="post-prev" aria-label="Προηγούμενη">
+                    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
                 </button>
-                <div class="currency-dropdown-list" role="listbox"></div>
+                <button class="post-arrow post-next" type="button" id="post-next" aria-label="Επόμενη">
+                    <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+                <div class="post-dots" id="post-dots"></div>
+            </div>
+
+            <div class="post-side">
+                <p class="post-caption" id="post-caption"></p>
+
+                <div class="post-notes">
+                    <h3 class="post-notes-title">Σχόλια</h3>
+                    <ul class="note-list" id="note-list"></ul>
+                    <form class="note-form" id="note-form">
+                        <textarea id="note-text" rows="2" maxlength="1000"
+                                  placeholder="Γράψε τι θέλεις να αλλάξει."></textarea>
+                        <button class="btn btn-primary note-send" type="submit">Αποστολή</button>
+                    </form>
+                </div>
+
+                <div class="post-actions" id="post-actions" hidden>
+                    <button class="app-ghost" type="button" id="post-edit">Επεξεργασία</button>
+                    <button class="app-ghost app-danger" type="button" id="post-delete">Διαγραφή</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Post editor ------------------------------------------------------- -->
+    <div class="modal" id="edit-modal" hidden>
+        <div class="modal-scrim" data-close></div>
+        <div class="modal-box modal-edit" role="dialog" aria-modal="true" aria-label="Επεξεργασία ανάρτησης">
+            <button class="modal-x" type="button" data-close aria-label="Κλείσιμο">&times;</button>
 
-    <section class="hero-section">
-        <div class="container text-center">
-            <h1 class="hero-title animate-fade" data-en="What would you like to create?">Τι θα ήθελες να δημιουργήσουμε;</h1>
-            <p class="hero-subtitle animate-fade" data-en="Start anywhere. Set it up the way you want it and watch the cost as you go.">Ξεκίνα από όπου θες. Ρύθμισέ το στα μέτρα σου και δες το κόστος καθώς προχωράς.</p>
-        </div>
-    </section>
+            <h2 class="modal-title" id="edit-title">Νέα ανάρτηση</h2>
+            <p class="modal-sub">Η πρώτη εικόνα είναι αυτή που φαίνεται στο grid. Μέχρι 10 εικόνες για carousel.</p>
 
-    <main class="catalog-section">
-        <div class="container">
-            <div class="portal-body">
-                <nav id="cat-nav" aria-label="Categories"></nav>
-                <div id="service-grid"></div>
+            <div class="edit-strip" id="edit-strip"></div>
+
+            <label class="edit-label" for="edit-caption">Λεζάντα</label>
+            <textarea class="edit-caption" id="edit-caption" rows="3" maxlength="2200"
+                      placeholder="Προαιρετικά."></textarea>
+
+            <p class="edit-error" id="edit-error" role="alert" hidden></p>
+
+            <div class="modal-foot">
+                <button class="app-ghost" type="button" data-close>Ακύρωση</button>
+                <button class="btn btn-primary" type="button" id="edit-save">Αποθήκευση</button>
             </div>
         </div>
-    </main>
-    <section class="final-cta-section scroll-reveal">
-        <div class="container text-center">
-            <h2 class="cta-title" data-en="Need something outside these options?">Χρειάζεσαι κάτι εκτός από αυτά;</h2>
-            <p class="cta-desc" data-en="Tell us the scope and we will put together an offer that matches the actual work.">
-                Πες μας το scope και διαμορφώνουμε προσφορά με βάση το πραγματικό εύρος εργασίας.
-            </p>
-            <div class="cta-button-holder">
-                <a href="mailto:info@nelycedesign.com?subject=Custom%20Project%20Quote" class="btn btn-primary btn-large" data-en="Discuss a Custom Quote">Συζήτηση για custom προσφορά</a>
-            </div>
-        </div>
-    </section>
+    </div>
 
-    <button type="button" class="quote-fab" id="quote-fab" hidden aria-controls="quote-drawer" aria-expanded="false"></button>
+    <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" multiple hidden>
 
-    <div class="quote-scrim" id="quote-scrim" hidden></div>
+    <div class="toast" id="toast" hidden></div>
 
-    <aside class="quote-drawer" id="quote-drawer" data-lenis-prevent aria-hidden="true" aria-label="My quote">
-        <button type="button" class="quote-close" id="quote-close" aria-label="Close">&times;</button>
-        <div id="quote-summary" aria-live="polite"></div>
-    </aside>
-
-    <footer class="main-footer">
-        <div class="container text-center">
-            <p>&copy; 2026 Nelyce Design. All Rights Reserved.</p>
-        </div>
-    </footer>
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.25/dist/lenis.min.js" defer></script>
-<script type="text/javascript" src="js/portal-data.js" defer></script>
-<script type="text/javascript" src="js/prices.js" defer></script>
-<script type="text/javascript" src="js/portal.js" defer></script>
-<script type="text/javascript" src="js/script.min.js" defer></script>
-<script type="text/javascript" src="js/currency.min.js" defer></script>
+    <script type="text/javascript" src="js/portal-app.js" defer></script>
 </body>
 </html>

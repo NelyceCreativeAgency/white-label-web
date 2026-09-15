@@ -4,10 +4,10 @@
 //
 //   site    the white-label partner pricing on index.html. Base prices are
 //           written into the markup; the extras live in js/customize-data.js.
-//   portal  the end-client quote builder on portal.html. Everything is in
+//   portal  the end-client quote builder on quote.html. Everything is in
 //           js/portal-data.js.
 //
-// index.html, portal.html and admin.html all read the merge from here, which is
+// index.html, quote.html and admin.html all read the merge from here, which is
 // what stops any two of them from disagreeing about a figure.
 window.NELYCE_PRICES = (function () {
 

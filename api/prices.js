@@ -4,7 +4,7 @@
 // Only numbers are stored here. Which services exist, what they are called and
 // which parameters they carry all stay in js/portal-data.js, so this endpoint
 // can never reshape the catalogue — at worst it moves a figure.
-const auth = require('./_auth');
+const accounts = require('./_accounts');
 const store = require('./_store');
 
 const ID = /^[A-Za-z0-9_-]{1,40}$/;
@@ -99,7 +99,8 @@ module.exports = async (req, res) => {
         }
 
         if (req.method === 'PUT') {
-            if (!auth.hasSession(req)) {
+            const me = await accounts.currentUser(req);
+            if (!me || me.role !== 'admin') {
                 return res.status(401).json({ error: 'not-signed-in' });
             }
             const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
