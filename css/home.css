@@ -88,7 +88,7 @@ html[data-lang="el"] .hero-home .hero-title {
 /* Held over to the right, but off the gutter rather than against it.
 
    The width is what a row of the two buttons needs, measured off the fonts:
-   453px of button in English, 534px in Greek, whose labels are half again as
+   445px of button in English, 525px in Greek, whose labels are half again as
    long. Each language is given its own ceiling so neither has to carry the
    other's slack, and so the paragraph above keeps a sane measure. Wrapping is
    left on underneath as the safety valve. */
@@ -116,12 +116,6 @@ html[data-lang="el"] .hero-aside {
     flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 0;
-}
-
-/* Four pixels off each side against the page's own buttons, which is what
-   buys the Greek pair its row without widening the column further. */
-.hero-home .hero-actions .btn {
-    padding: 14px 26px;
 }
 
 /* The split needs room for a headline and a 480px to 560px column side by
@@ -835,10 +829,14 @@ html[data-lang="el"] .hero-aside {
 }
 
 /* --- Buttons ---
-   Every button on this page is the same soft-cornered rectangle: a pane of
-   glass over whatever the ambient gradient is doing behind it, which is why
-   there is a blur rather than a flat fill. Hover warms it to the accent and
-   lights it.
+   A plain frosted pane: one flat wash of white over a blur, a hairline border,
+   and nothing else. No diagonal sheen, no lit top edge, no drop beneath, and
+   no glow on hover. The blur is the only thing here that knows the gradient is
+   moving behind it.
+
+   box-shadow is set to none rather than left out: style.css draws an inner
+   hairline on .btn-secondary and another on hover, and with nothing declared
+   here those would come back through.
 
    These override style.css for the home page only, home.css being the only
    place they are loaded from; the price list, FAQ and calculator keep the
@@ -849,17 +847,13 @@ html[data-lang="el"] .hero-aside {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    padding: 15px 30px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 15px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 10px;
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.04) 42%, rgba(255, 255, 255, 0.02) 100%);
-    -webkit-backdrop-filter: blur(16px) saturate(1.5);
-            backdrop-filter: blur(16px) saturate(1.5);
-    /* The top hairline is the glass catching the light; the drop underneath
-       lifts it off the page rather than printing it on. */
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.22),
-        0 8px 24px rgba(0, 0, 0, 0.35);
+    background: rgba(255, 255, 255, 0.07);
+    -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+    box-shadow: none;
     color: var(--text-primary);
     font-family: var(--font-sans);
     font-size: 15px;
@@ -867,56 +861,57 @@ html[data-lang="el"] .hero-aside {
     line-height: 1.2;
     text-decoration: none;
     cursor: pointer;
-    /* Colour and light only: the pill stays put under the pointer. */
-    transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+    /* Colour only: the button stays put under the pointer. */
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 /* The two buttons that lead somewhere the page is built to send people — the
-   price list at the top, the conversation at the bottom — start on the accent
-   instead of waiting to be found. Everything else stays glass, which is what
-   keeps this meaning anything.
+   price list at the top, the conversation at the bottom — are solid, and they
+   are solid in the same orange-to-amber the headline gives to the last words
+   of itself. The same gradient declaration, so the two cannot drift apart.
 
-   The accent is a tint in the glass rather than a solid fill. Full strength it
-   is too light for white text, around three to one, and dark text on it did
-   not sit right against the rest of the page. Held to roughly two thirds it
-   still reads as an orange button, and white on it clears six to one. */
+   Dark text on it, not white. White clears about three to one against the
+   orange end, which is not enough; the page's near-black clears seven there
+   and eleven at the amber, and it is what the buttons on the other pages
+   already do with their light fill.
+
+   A notch heavier than its neighbour, which is not an inconsistency: dark on
+   light sets lighter to the eye than light on dark, and at the same number the
+   two would not have looked it. */
 .btn-primary {
-    border-color: rgba(255, 140, 95, 0.65);
-    background: linear-gradient(160deg, rgba(255, 107, 53, 0.62) 0%, rgba(255, 107, 53, 0.46) 45%, rgba(255, 107, 53, 0.38) 100%);
-    color: #fff;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        0 8px 24px rgba(255, 107, 53, 0.22),
-        0 0 18px rgba(255, 107, 53, 0.25);
+    border-color: transparent;
+    background: linear-gradient(100deg, var(--accent-orange), var(--accent-amber));
+    -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+    color: var(--bg-dark);
+    font-weight: var(--fw-semibold);
 }
 
 .btn-large {
-    padding: 19px 40px;
+    padding: 19px 32px;
     font-size: 16px;
 }
 
+/* Hover warms the glass towards the accent and leaves it there. A flat tint,
+   the same pane, nothing lit behind it. */
 .btn:hover,
 .btn:focus-visible,
 .featured-cta:hover,
 .featured-cta:focus-visible {
-    border-color: rgba(255, 107, 53, 0.6);
-    background: linear-gradient(160deg, rgba(255, 107, 53, 0.32) 0%, rgba(255, 107, 53, 0.12) 45%, rgba(255, 107, 53, 0.05) 100%);
-    color: #fff;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        0 10px 30px rgba(255, 107, 53, 0.3),
-        0 0 24px rgba(255, 107, 53, 0.45);
+    border-color: rgba(255, 140, 95, 0.55);
+    background: rgba(255, 107, 53, 0.18);
+    box-shadow: none;
+    color: var(--text-primary);
 }
 
+/* The solid one has nowhere to warm to, so it brightens instead: the same two
+   colours a step up each. */
 .btn-primary:hover,
 .btn-primary:focus-visible {
-    border-color: rgba(255, 170, 125, 0.9);
-    background: linear-gradient(160deg, rgba(255, 122, 70, 0.78) 0%, rgba(255, 107, 53, 0.6) 45%, rgba(255, 107, 53, 0.5) 100%);
-    color: #fff;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.45),
-        0 10px 32px rgba(255, 107, 53, 0.45),
-        0 0 30px rgba(255, 107, 53, 0.6);
+    border-color: transparent;
+    background: linear-gradient(100deg, #ff8452, #ffc633);
+    box-shadow: none;
+    color: var(--bg-dark);
 }
 
 .btn:focus-visible,
@@ -943,11 +938,11 @@ html[data-lang="el"] .hero-aside {
 @media (max-width: 640px) {
     .btn,
     .featured-cta {
-        padding: 14px 24px;
+        padding: 14px 20px;
     }
 
     .btn-large {
-        padding: 17px 30px;
+        padding: 17px 26px;
         font-size: 15px;
     }
 }
