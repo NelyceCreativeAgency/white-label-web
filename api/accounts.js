@@ -186,7 +186,7 @@ module.exports = async (req, res) => {
                 const posts = await accounts.readPosts(grid.id);
                 const urls = posts.filter(Boolean)
                     .flatMap(post => (post.images || []).map(img => img.url));
-                try { await blob.del(urls); } catch { /* litter, not a failure */ }
+                try { await blob.client(req).del(urls); } catch { /* litter, not a failure */ }
 
                 await accounts.dropPosts(grid.id);
                 doc.grids = doc.grids.filter(g => g.id !== grid.id);

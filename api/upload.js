@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
         if (!bytes.length) return res.status(400).json({ error: 'empty-image' });
         if (bytes.length > MAX_BYTES) return res.status(413).json({ error: 'too-large' });
 
-        const { url } = await blob.put(`grids/${grid.id}/${Date.now()}.${extension}`, bytes, type);
+        const { url } = await blob.client(req).put(`grids/${grid.id}/${Date.now()}.${extension}`, bytes, type);
         return res.status(200).json({ url });
     } catch (err) {
         return res.status(500).json({ error: err.message });

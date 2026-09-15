@@ -53,9 +53,9 @@ const urlsOf = (post) =>
 // A picture nobody points at any more is deleted from the store, but never at
 // the cost of the write itself: the grid is what the visitor sees, and it has
 // already been saved by the time this runs.
-const forget = async (urls) => {
+const forget = async (req, urls) => {
     if (!urls.length) return;
-    try { await blob.del(urls); } catch { /* litter, not a failure */ }
+    try { await blob.client(req).del(urls); } catch { /* litter, not a failure */ }
 };
 
 const slotOf = (value) => {
@@ -136,7 +136,7 @@ module.exports = async (req, res) => {
             await accounts.writePosts(grid.id, posts);
 
             const kept = images.map(img => img.url);
-            await forget(urlsOf(existing).filter(url => !kept.includes(url)));
+            await forget(req, urlsOf(existing).filter(url => !kept.includes(url)));
 
             return res.status(200).json({ post: posts[slot], slot });
         }
@@ -147,7 +147,7 @@ module.exports = async (req, res) => {
             posts[slot] = null;
 
             await accounts.writePosts(grid.id, posts);
-            await forget(urlsOf(gone));
+            await forget(req, urlsOf(gone));
 
             return res.status(200).json({ slot });
         }

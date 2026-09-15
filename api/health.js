@@ -39,12 +39,14 @@ module.exports = async (req, res) => {
         out.database.error = err.message;
     }
 
-    out.images.tokenPresent = blob.isConfigured();
+    const images = blob.client(req);
+    out.images.credentials = images.how();
+    out.images.tokenPresent = Boolean(out.images.credentials);
 
     if (out.images.tokenPresent) {
         let url = null;
         try {
-            const put = await blob.put(`health/${Date.now()}.txt`, Buffer.from('ok'), 'text/plain');
+            const put = await images.put(`health/${Date.now()}.txt`, Buffer.from('ok'), 'text/plain');
             url = put.url;
             out.images.uploaded = true;
 
@@ -59,7 +61,7 @@ module.exports = async (req, res) => {
         }
 
         if (url) {
-            try { await blob.del([url]); out.images.cleanedUp = true; }
+            try { await images.del([url]); out.images.cleanedUp = true; }
             catch (err) { out.images.cleanedUp = false; out.images.cleanupError = err.message; }
         }
     }
