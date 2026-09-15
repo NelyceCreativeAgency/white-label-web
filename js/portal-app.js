@@ -980,9 +980,28 @@
     // pixels across. The browser redraws the picture at a sane size before any
     // of it goes over the wire, which is what keeps the upload quick and the
     // store small.
-    const MAX_SIDE = 1440;      // a grid picture, seen full size in the viewer
-    const SMALL_SIDE = 640;     // a profile picture or a highlight cover
+    // A thousand and eighty pixels is what Instagram itself serves for a
+    // picture in the feed, so storing anything larger is storing detail that
+    // nobody will ever be shown.
+    const MAX_SIDE = 1080;
+    const SMALL_SIDE = 480;     // a profile picture, shown at eighty
     const TARGET_BYTES = 2.6 * 1024 * 1024;
+
+    // WebP is about a third smaller than JPEG at the same quality. A browser
+    // that cannot write it does not say so: it quietly hands back a PNG, which
+    // would be several times larger than what we started with. So it is asked
+    // once, at the start, and answered by what comes out.
+    const FORMAT = (() => {
+        try {
+            const probe = document.createElement('canvas');
+            probe.width = probe.height = 1;
+            return probe.toDataURL('image/webp').startsWith('data:image/webp')
+                ? 'image/webp'
+                : 'image/jpeg';
+        } catch {
+            return 'image/jpeg';
+        }
+    })();
 
     const loadImage = (file) => new Promise((resolve, reject) => {
         if (window.createImageBitmap) {
@@ -1015,14 +1034,14 @@
 
         canvas.toBlob(
             blob => blob ? resolve({ blob, w, h }) : reject(new Error('unreadable')),
-            'image/jpeg',
+            FORMAT,
             quality
         );
     });
 
     const shrink = async (file, maxSide = MAX_SIDE) => {
         const source = await loadImage(file);
-        let quality = 0.82;
+        let quality = FORMAT === 'image/webp' ? 0.78 : 0.82;
         let out = await draw(source, quality, maxSide);
 
         // Very large photographs can still come out above what a request is
@@ -1072,7 +1091,7 @@
         const data = await asBase64(blob);
         const res = await api('/api/upload', {
             method: 'POST',
-            body: { grid: state.grid.id, type: 'image/jpeg', data }
+            body: { grid: state.grid.id, type: blob.type || FORMAT, data }
         });
         return { url: res.url, w, h };
     };
