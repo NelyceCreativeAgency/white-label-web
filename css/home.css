@@ -1,7 +1,108 @@
-/* --- Home page: featured projects marquee ---
+/* --- Home page: hero + featured projects marquee ---
    Loaded on top of style.css, which already supplies the palette, the ambient
-   gradient background, the header/footer and the hero + CTA blocks. Everything
-   here is scoped to the two auto-scrolling project rows. */
+   gradient background, the header/footer and the shared hero + CTA blocks.
+   Everything here is scoped to this page: the split hero (.hero-home) and the
+   two auto-scrolling project rows. The other pages keep the plain centred hero
+   style.css gives them. */
+
+/* --- Hero ---
+   A full-bleed two-column block: the headline runs down the left, the copy and
+   the buttons sit in a narrow column to its right, and both bottom-align the
+   way the two halves of a poster do. The backdrop stays the page's own ambient
+   gradient, so the hero adds no artwork of its own.
+
+   The buttons are the site's own .btn-primary / .btn-secondary, untouched. */
+.hero-section.hero-home {
+    position: relative;
+    padding: 0;
+}
+
+.hero-home-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: end;
+    column-gap: 48px;
+    /* Matches the header's own gutter (24px + 16px), so the headline starts on
+       the same line as the logo above it. */
+    padding: clamp(110px, 17vh, 190px) clamp(24px, 3vw, 40px) clamp(64px, 10vh, 120px);
+    max-width: 1800px;
+    margin: 0 auto;
+    min-height: min(78vh, 720px);
+}
+
+.hero-home .hero-title {
+    margin: 0;
+    max-width: 15ch;
+    font-size: clamp(2.5rem, 6vw, 5.5rem);
+    font-weight: 400;
+    line-height: 1.03;
+    letter-spacing: -0.035em;
+    text-align: left;
+}
+
+/* The last words of the headline, carried in the brand's own accent. The flat
+   colour is the fallback; only browsers that can clip a background to the text
+   get the gradient. */
+.hero-accent {
+    color: var(--accent-orange);
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .hero-accent {
+        background: linear-gradient(100deg, var(--accent-orange), var(--accent-amber));
+        -webkit-background-clip: text;
+                background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+    }
+}
+
+.hero-aside {
+    justify-self: start;
+    max-width: 360px;
+    padding-bottom: 4px;
+}
+
+.hero-home .hero-subtitle {
+    max-width: none;
+    margin: 0 0 28px;
+    font-size: 1rem;
+    line-height: 1.65;
+    text-align: left;
+}
+
+.hero-home .hero-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 0;
+}
+
+/* Below the split, the two columns stack and the headline is free to run
+   wider than the 15ch it holds to on a wide screen. */
+@media (max-width: 1080px) {
+    .hero-home-inner {
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: 32px;
+        min-height: 0;
+        padding-top: clamp(96px, 14vh, 150px);
+        padding-bottom: 56px;
+    }
+
+    .hero-home .hero-title {
+        max-width: 18ch;
+        font-size: clamp(2.1rem, 7vw, 3.6rem);
+    }
+
+    .hero-aside {
+        max-width: 480px;
+    }
+}
+
+@media (max-width: 640px) {
+    .hero-aside { max-width: none; }
+}
+
 
 .featured-section {
     padding: 40px 0 80px;
