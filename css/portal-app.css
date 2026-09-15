@@ -452,17 +452,47 @@
 .cell-dots:hover { background: rgba(10, 10, 14, .92); }
 .cell-dots svg { width: 16px; height: 16px; fill: currentColor; color: var(--text-primary); }
 
-/* A post being carried by the mouse, and the slot under it. */
-.cell.is-dragging { opacity: .35; }
+/* A post being carried, and the slot under it.
+   pan-y leaves an ordinary swipe to the page: the tile only takes the gesture
+   over once a finger has held still long enough to mean it. */
+.cell {
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.cell.is-dragging { opacity: .3; }
 
 .cell.is-over {
     outline: 2px solid var(--accent-orange);
     outline-offset: -2px;
-    transform: scale(.97);
+    transform: scale(.96);
 }
 
-.cell.is-filled[draggable="true"] { cursor: grab; }
-.cell.is-filled[draggable="true"]:active { cursor: grabbing; }
+/* The tile that follows the pointer. It is a copy: the real one stays faded in
+   place, so the grid never reflows while something is in the air. */
+.drag-ghost {
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 120;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: 6px;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, .55);
+    opacity: .92;
+    will-change: transform;
+}
+
+.drag-ghost img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Pictures are opened by clicking and moved by dragging, and only one of those
+   is worth a cursor. Dragging wins where it is allowed, because clicking is
+   what a picture looks like it does anyway. */
+.ig-grid.is-editable .cell.is-filled img { cursor: grab; }
+
+body.is-dragging-cell { cursor: grabbing; }
+body.is-dragging-cell .cell img { cursor: grabbing; }
 
 /* A post on its way to another slot, and the slots it may land in. */
 .cell.is-moving { outline: 2px solid var(--accent-orange); outline-offset: -2px; opacity: .55; }

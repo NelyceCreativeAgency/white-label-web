@@ -266,7 +266,7 @@
 
             cells.push(`
                 <div class="cell is-filled${state.moving === slot ? ' is-moving' : ''}${target ? ' is-target' : ''}"
-                     data-slot="${slot}"${editing ? ' draggable="true"' : ''}>
+                     data-slot="${slot}">
                     <img src="${esc(cover.url)}" alt="" loading="lazy" decoding="async" data-act="view" draggable="false">
                     ${post.images.length > 1 ? `
                         <span class="cell-mark" title="Carousel με ${post.images.length} εικόνες" aria-hidden="true">
@@ -281,6 +281,7 @@
             `);
         }
 
+        $('ig-grid').classList.toggle('is-editable', editing);
         $('ig-grid').innerHTML = cells.join('');
     };
 
@@ -308,55 +309,169 @@
     });
 
     // Dragging a post onto another swaps the two, and onto an empty slot moves
-    // it there. Nothing else on the grid shifts, so a drag is always one change
-    // and always undone by dragging back.
+    // it there. Nothing else on the grid shifts, so a drag is one change and
+    // dragging back undoes it.
+    //
+    // This is written with pointer events rather than the browser's own drag
+    // and drop, because that one does not exist on a touch screen. A mouse
+    // starts dragging as soon as it moves; a finger has to hold still for a
+    // moment first, the way rearranging icons on a phone works, so that an
+    // ordinary swipe still scrolls the page.
     const board = $('ig-grid');
 
-    const clearDrop = () => {
-        board.querySelectorAll('.is-dragging, .is-over')
-            .forEach(cell => cell.classList.remove('is-dragging', 'is-over'));
+    const HOLD_MS = 380;        // how long a finger waits before the tile lifts
+    const MOUSE_SLOP = 6;       // how far a mouse moves before it counts as a drag
+    const TOUCH_SLOP = 10;      // how far a finger may stray and still be scrolling
+    const EDGE = 90;            // how near the top or bottom starts scrolling
+
+    const drag = {
+        slot: null, pointer: null, touch: false,
+        x: 0, y: 0, startX: 0, startY: 0,
+        hold: null, ghost: null, active: false, moved: false
     };
 
-    board.addEventListener('dragstart', (event) => {
-        const cell = event.target.closest('.cell.is-filled');
-        if (!cell || !canEdit()) { event.preventDefault(); return; }
+    const cellAt = (x, y) => {
+        const under = document.elementFromPoint(x, y);
+        return under ? under.closest('.cell') : null;
+    };
 
-        state.dragging = Number(cell.dataset.slot);
+    const markTarget = () => {
+        const cell = cellAt(drag.x, drag.y);
+        board.querySelectorAll('.is-over').forEach(one => one.classList.remove('is-over'));
+        if (cell && Number(cell.dataset.slot) !== drag.slot) cell.classList.add('is-over');
+    };
+
+    const placeGhost = () => {
+        if (!drag.ghost) return;
+        drag.ghost.style.transform = `translate(${drag.x}px, ${drag.y}px) translate(-50%, -50%) scale(1.06)`;
+    };
+
+    // While a tile is being carried near the top or bottom of the window, the
+    // page keeps moving under it, so the far end of the grid is reachable
+    // without letting go.
+    let scrolling = null;
+    const edgeScroll = () => {
+        if (!drag.active) { scrolling = null; return; }
+
+        const top = drag.y - EDGE;
+        const bottom = drag.y - (window.innerHeight - EDGE);
+        const step = top < 0 ? Math.max(-18, top / 4) : bottom > 0 ? Math.min(18, bottom / 4) : 0;
+
+        if (step) { window.scrollBy(0, step); markTarget(); }
+        scrolling = requestAnimationFrame(edgeScroll);
+    };
+
+    const lift = () => {
+        const cell = board.querySelector(`.cell[data-slot="${drag.slot}"]`);
+        const image = cell && cell.querySelector('img');
+        if (!cell || !image) return;
+
+        drag.active = true;
+        drag.moved = true;
         cell.classList.add('is-dragging');
-        event.dataTransfer.effectAllowed = 'move';
-        // Firefox starts no drag at all unless something is carried.
-        event.dataTransfer.setData('text/plain', String(state.dragging));
-    });
+        document.body.classList.add('is-dragging-cell');
 
-    board.addEventListener('dragover', (event) => {
-        if (state.dragging === null) return;
-        const cell = event.target.closest('.cell');
-        if (!cell || Number(cell.dataset.slot) === state.dragging) return;
+        const box = cell.getBoundingClientRect();
+        drag.ghost = document.createElement('div');
+        drag.ghost.className = 'drag-ghost';
+        drag.ghost.style.width = `${box.width}px`;
+        drag.ghost.style.height = `${box.height}px`;
+        drag.ghost.innerHTML = `<img src="${esc(image.src)}" alt="">`;
+        document.body.appendChild(drag.ghost);
 
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-        if (!cell.classList.contains('is-over')) {
-            board.querySelectorAll('.is-over').forEach(c => c.classList.remove('is-over'));
-            cell.classList.add('is-over');
-        }
-    });
+        placeGhost();
+        markTarget();
+        if (!scrolling) scrolling = requestAnimationFrame(edgeScroll);
+    };
 
-    board.addEventListener('drop', (event) => {
-        event.preventDefault();
-        const cell = event.target.closest('.cell');
-        const from = state.dragging;
+    const letGo = (dropped) => {
+        clearTimeout(drag.hold);
+        if (scrolling) { cancelAnimationFrame(scrolling); scrolling = null; }
+        if (drag.ghost) { drag.ghost.remove(); drag.ghost = null; }
+
+        document.body.classList.remove('is-dragging-cell');
+        board.querySelectorAll('.is-over, .is-dragging')
+            .forEach(one => one.classList.remove('is-over', 'is-dragging'));
+
+        const from = drag.slot;
+        const wasActive = drag.active;
+
+        drag.slot = null;
+        drag.pointer = null;
+        drag.active = false;
+
+        if (!wasActive || !dropped) return;
+
+        const cell = cellAt(drag.x, drag.y);
         const to = cell ? Number(cell.dataset.slot) : NaN;
+        if (Number.isInteger(to) && to !== from) swap(from, to);
+    };
 
-        state.dragging = null;
-        clearDrop();
+    board.addEventListener('pointerdown', (event) => {
+        if (!canEdit() || event.button > 0) return;
 
-        if (from !== null && Number.isInteger(to) && from !== to) swap(from, to);
+        const cell = event.target.closest('.cell.is-filled');
+        // The three dots are a button of their own, and a move already waiting
+        // to be placed is finished with a tap, not with a drag.
+        if (!cell || event.target.closest('.cell-dots') || state.moving !== null) return;
+
+        drag.slot = Number(cell.dataset.slot);
+        drag.pointer = event.pointerId;
+        drag.touch = event.pointerType !== 'mouse';
+        drag.startX = drag.x = event.clientX;
+        drag.startY = drag.y = event.clientY;
+        drag.moved = false;
+        drag.active = false;
+
+        board.setPointerCapture(event.pointerId);
+
+        // A finger has to stay put; a mouse only has to move.
+        if (drag.touch) drag.hold = setTimeout(lift, HOLD_MS);
     });
 
-    board.addEventListener('dragend', () => {
-        state.dragging = null;
-        clearDrop();
+    board.addEventListener('pointermove', (event) => {
+        if (drag.pointer !== event.pointerId) return;
+
+        drag.x = event.clientX;
+        drag.y = event.clientY;
+
+        const strayed = Math.hypot(drag.x - drag.startX, drag.y - drag.startY);
+
+        if (!drag.active) {
+            // Still deciding what this is. A finger that wanders was scrolling
+            // all along, so the tile never lifts.
+            if (drag.touch) { if (strayed > TOUCH_SLOP) clearTimeout(drag.hold); }
+            else if (strayed > MOUSE_SLOP) lift();
+            return;
+        }
+
+        event.preventDefault();
+        placeGhost();
+        markTarget();
     });
+
+    board.addEventListener('pointerup', (event) => {
+        if (drag.pointer === event.pointerId) letGo(true);
+    });
+
+    board.addEventListener('pointercancel', (event) => {
+        if (drag.pointer === event.pointerId) letGo(false);
+    });
+
+    // A tile that was carried should not also count as a tap on the picture,
+    // which would open the viewer the moment it was put down.
+    board.addEventListener('click', (event) => {
+        if (!drag.moved) return;
+        drag.moved = false;
+        event.stopPropagation();
+        event.preventDefault();
+    }, true);
+
+    // Once a finger is carrying something the page must stop scrolling under
+    // it, and only preventDefault on a live touch listener can say so.
+    document.addEventListener('touchmove', (event) => {
+        if (drag.active) event.preventDefault();
+    }, { passive: false });
 
     const swap = async (from, to) => {
         cancelMove();
@@ -1154,6 +1269,7 @@
             else if (!$('hl-modal').hidden) closeHighlight();
             else if (!$('edit-modal').hidden) closeEditor();
             else if (!$('post-modal').hidden) closeViewer();
+            else if (drag.active) letGo(false);
             else if (state.moving !== null) cancelMove();
             closeMenu();
             return;
