@@ -305,7 +305,7 @@
         plan.hidden = !editing;
         plan.innerHTML = editing ? `
             <button class="plan-btn" type="button" data-act="more"${planned >= SLOTS ? ' disabled' : ''}>
-                <span aria-hidden="true">+</span> Κενό κουτάκι
+                <span aria-hidden="true">+</span> Κενό κουτάκι πάνω
             </button>
             <span class="plan-count">${filled} από ${planned} θέσεις</span>
         ` : '';
@@ -510,8 +510,30 @@
 
     $('grid-plan').addEventListener('click', (event) => {
         const button = event.target.closest('button[data-act="more"]');
-        if (button && !button.disabled) setSlots(planCount() + 1);
+        if (button && !button.disabled) addSlot();
     });
+
+    // The new square goes to the front, where the next picture is going to go.
+    const addSlot = async () => {
+        busy('…');
+        try {
+            const data = await api('/api/grid', {
+                method: 'POST',
+                body: { id: state.grid.id, action: 'add-slot' }
+            });
+            state.posts = data.posts;
+            state.grid.slots = data.slots;
+
+            const listed = state.grids.find(g => g.id === state.grid.id);
+            if (listed) listed.slots = data.slots;
+
+            renderGrid();
+        } catch (err) {
+            toast(explain(err), 'bad');
+        } finally {
+            busy('');
+        }
+    };
 
     // Takes one empty square off the grid, and what was after it moves up into
     // the space, which is what removing something from a row looks like.

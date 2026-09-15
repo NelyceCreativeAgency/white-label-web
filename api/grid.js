@@ -147,7 +147,7 @@ module.exports = async (req, res) => {
         const now = new Date().toISOString();
 
         // --- the editors' actions -------------------------------------------
-        if (['save-post', 'add-post', 'set-slots', 'remove-slot', 'delete-post', 'move-post', 'resolve-note',
+        if (['save-post', 'add-post', 'set-slots', 'add-slot', 'remove-slot', 'delete-post', 'move-post', 'resolve-note',
              'set-avatar', 'save-highlight', 'delete-highlight'].includes(action)) {
             if (!mayEdit) return res.status(403).json({ error: 'not-allowed' });
         }
@@ -217,6 +217,24 @@ module.exports = async (req, res) => {
             await accounts.writeAccounts(doc);
 
             return res.status(200).json({ slots });
+        }
+
+        // A new square goes to the front, where the next post will go, and
+        // everything already there moves down one to make room for it.
+        if (action === 'add-slot') {
+            const shown = planOf(grid, posts);
+            if (shown >= accounts.SLOTS || posts[accounts.SLOTS - 1]) {
+                return res.status(400).json({ error: 'grid-full' });
+            }
+
+            posts.unshift(null);
+            posts.length = accounts.SLOTS;
+            await accounts.writePosts(grid.id, posts);
+
+            grid.slots = shown + 1;
+            await accounts.writeAccounts(doc);
+
+            return res.status(200).json({ posts, slots: grid.slots });
         }
 
         // Taking a square off the grid altogether. Only an empty one: a square
