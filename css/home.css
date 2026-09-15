@@ -75,8 +75,11 @@ html[data-lang="el"] .hero-home .hero-title {
     }
 }
 
+/* Pushed to the far side of its column, so its right edge meets the same 40px
+   gutter the header's last button does. Left where it started it sat adrift in
+   the middle with a wide gap of nothing between it and the edge. */
 .hero-aside {
-    justify-self: start;
+    justify-self: end;
     max-width: 360px;
     padding-bottom: 4px;
 }
@@ -112,7 +115,9 @@ html[data-lang="el"] .hero-home .hero-title {
         font-size: clamp(2.1rem, 7vw, 3.6rem);
     }
 
+    /* Stacked, it follows the headline down the left instead. */
     .hero-aside {
+        justify-self: start;
         max-width: 480px;
     }
 }
