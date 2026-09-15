@@ -251,18 +251,25 @@
         const editing = grid.canEdit;
         const cells = [];
 
-        // The posts, then however many empty squares have been put after them
-        // to hold the place of what is still to come, then the control that
-        // adds another one. A grid is never shorter than its posts.
-        const planned = Math.max(Number(grid.slots) || 0, filled);
+        // Every square the grid is planned to have, in order. A square holds a
+        // picture or it holds a place, and either way it can be moved.
+        const planned = planCount();
 
-        for (let slot = 0; slot < filled; slot++) {
+        for (let slot = 0; slot < planned; slot++) {
             const post = state.posts[slot];
-            if (!post) break;
-
             const target = state.moving !== null && state.moving !== slot;
-            const cover = (post.images || [])[0];
-            if (!cover) continue;
+            const cover = post && (post.images || [])[0];
+
+            if (!cover) {
+                cells.push(editing
+                    ? `<button class="cell cell-empty${target ? ' is-target' : ''}"
+                               type="button" data-slot="${slot}" data-act="add" title="Βάλε φωτογραφία">
+                           <span class="cell-plus" aria-hidden="true">+</span>
+                           <span class="visually-hidden">Προσθήκη ανάρτησης</span>
+                       </button>`
+                    : `<div class="cell cell-empty is-quiet" aria-hidden="true"></div>`);
+                continue;
+            }
             const notes = (post.notes || []).filter(n => n.role === 'client' && !n.resolved).length;
 
             cells.push(`
@@ -282,22 +289,6 @@
             `);
         }
 
-        // The squares that are spoken for but still empty. Pressing one adds a
-        // post, which goes to the front like any other, and the tail of empty
-        // squares is one shorter for it.
-        for (let slot = filled; slot < planned; slot++) {
-            // Two things can be done to an empty square, so it holds two
-            // buttons rather than being one: put a picture in it, or take the
-            // square itself back off the grid.
-            cells.push(editing
-                ? `<button class="cell cell-empty${state.moving !== null ? ' is-target' : ''}"
-                           type="button" data-slot="${slot}" data-act="add" title="Βάλε φωτογραφία">
-                       <span class="cell-plus" aria-hidden="true">+</span>
-                       <span class="visually-hidden">Προσθήκη ανάρτησης</span>
-                   </button>`
-                : `<div class="cell cell-empty is-quiet" aria-hidden="true"></div>`);
-        }
-
         $('ig-grid').classList.toggle('is-editable', editing);
         $('ig-grid').innerHTML = cells.join('');
 
@@ -310,7 +301,7 @@
             <button class="plan-btn" type="button" data-act="more"${planned >= SLOTS ? ' disabled' : ''}>
                 <span aria-hidden="true">+</span> Κενό κουτάκι
             </button>
-            <button class="plan-btn" type="button" data-act="less"${planned <= filled ? ' disabled' : ''}>
+            <button class="plan-btn" type="button" data-act="less"${planned <= used() ? ' disabled' : ''}>
                 <span aria-hidden="true">&minus;</span> Ένα λιγότερο
             </button>
             <span class="plan-count">${filled} από ${planned} θέσεις</span>
@@ -398,8 +389,9 @@
 
     const lift = () => {
         const cell = board.querySelector(`.cell[data-slot="${drag.slot}"]`);
-        const image = cell && cell.querySelector('img');
-        if (!cell || !image) return;
+        if (!cell) return;
+
+        const image = cell.querySelector('img');
 
         drag.active = true;
         drag.moved = true;
@@ -408,10 +400,12 @@
 
         const box = cell.getBoundingClientRect();
         drag.ghost = document.createElement('div');
-        drag.ghost.className = 'drag-ghost';
+        drag.ghost.className = `drag-ghost${image ? '' : ' is-empty'}`;
         drag.ghost.style.width = `${box.width}px`;
         drag.ghost.style.height = `${box.height}px`;
-        drag.ghost.innerHTML = `<img src="${esc(image.src)}" alt="">`;
+        drag.ghost.innerHTML = image
+            ? `<img src="${esc(image.src)}" alt="">`
+            : '<span aria-hidden="true">+</span>';
         document.body.appendChild(drag.ghost);
 
         placeGhost();
@@ -445,9 +439,11 @@
     board.addEventListener('pointerdown', (event) => {
         if (!canEdit() || event.button > 0) return;
 
-        const cell = event.target.closest('.cell.is-filled');
-        // The three dots are a button of their own, and a move already waiting
-        // to be placed is finished with a tap, not with a drag.
+        // Any square can be carried, empty ones included: an empty square is a
+        // place being held, and moving it is how the place is moved. The three
+        // dots are a button of their own, and a move already waiting to be
+        // placed is finished with a tap rather than with a drag.
+        const cell = event.target.closest('.cell[data-slot]');
         if (!cell || event.target.closest('.cell-dots') || state.moving !== null) return;
 
         drag.slot = Number(cell.dataset.slot);
@@ -514,11 +510,11 @@
         setSlots(planCount() + (button.dataset.act === 'more' ? 1 : -1));
     });
 
+    // How far down the last picture reaches: the grid can never be shorter.
+    const used = () => state.posts.reduce((far, post, i) => (post ? i + 1 : far), 0);
+
     // How many squares the grid is currently planned to have.
-    const planCount = () => Math.max(
-        Number(state.grid.slots) || 0,
-        state.posts.filter(Boolean).length
-    );
+    const planCount = () => Math.max(Number(state.grid.slots) || 0, used());
 
     const setSlots = async (want) => {
         busy('…');
@@ -541,21 +537,16 @@
     };
 
     const move = async (from, to) => {
-        const moving = state.posts[from];
-        if (!moving) { cancelMove(); return; }
-
+        const moving = state.posts[from] || null;
         const before = state.posts.slice();
         state.moving = null;
 
-        // The picture moves the moment it is let go. Waiting for the server
-        // before showing it means watching it spring back to where it came
-        // from and then jump, which looks exactly like a move that failed.
-        const after = state.posts.filter(Boolean);
-        after.splice(from, 1);
-        after.splice(Math.min(to, after.length), 0, moving);
-        while (after.length < SLOTS) after.push(null);
-
-        state.posts = after;
+        // The two squares trade places the moment the pointer is let go.
+        // Waiting for the server before showing it means watching the picture
+        // spring back to where it came from and then jump, which looks exactly
+        // like a move that failed.
+        state.posts[from] = state.posts[to];
+        state.posts[to] = moving;
         renderGrid();
 
         busy('Μετακίνηση…');
@@ -648,8 +639,7 @@
         busy('Διαγραφή…');
         try {
             await api('/api/grid', { method: 'POST', body: { id: state.grid.id, action: 'delete-post', slot } });
-            state.posts.splice(slot, 1);
-            state.posts.push(null);
+            state.posts[slot] = null;
             renderGrid();
             refreshBadge();
             toast('Διαγράφηκε.');

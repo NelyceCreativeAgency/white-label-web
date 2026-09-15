@@ -25,10 +25,14 @@ const MAX_HIGHLIGHT_NAME = 24;
 // been set to, posts included, and never more than the grid holds.
 const DEFAULT_SLOTS = 12;
 
-const planOf = (grid, filled) => {
+// How far down the last picture reaches. A grid can never be shorter than
+// that, whatever the plan says.
+const used = (posts) => posts.reduce((far, post, i) => (post ? i + 1 : far), 0);
+
+const planOf = (grid, posts) => {
     const set = grid.slots === undefined || grid.slots === null ? DEFAULT_SLOTS : Number(grid.slots);
     const wanted = Number.isFinite(set) ? set : DEFAULT_SLOTS;
-    return Math.max(filled, Math.min(accounts.SLOTS, wanted));
+    return Math.max(used(posts), Math.min(accounts.SLOTS, wanted));
 };
 
 // Only urls this deployment's own image store handed back. Anything else would
@@ -97,7 +101,7 @@ const summary = (grid, posts, user) => ({
     // How many squares the grid is planned to have: the posts, plus however
     // many empty ones have been put after them to hold the place of what is
     // still to come.
-    slots: planOf(grid, posts.filter(Boolean).length),
+    slots: planOf(grid, posts),
     filled: posts.filter(Boolean).length,
     openNotes: accounts.openNoteCount(posts),
     canEdit: accounts.canEdit(user, grid)
@@ -177,8 +181,11 @@ module.exports = async (req, res) => {
         // one stays where it is, which is what save-post above does.
         if (action === 'add-post') {
             const images = cleanImages(body.images);
-            const count = posts.filter(Boolean).length;
-            if (count >= accounts.SLOTS) return res.status(400).json({ error: 'grid-full' });
+
+            // Everything moves down one to make room at the front, so the last
+            // square has to be free or a picture would fall off the end of the
+            // grid to make room for this one.
+            if (posts[accounts.SLOTS - 1]) return res.status(400).json({ error: 'grid-full' });
 
             posts.unshift({
                 id: accounts.newId('pst'),
@@ -193,7 +200,7 @@ module.exports = async (req, res) => {
             await accounts.writePosts(grid.id, posts);
 
             // The plan keeps up with the grid when the grid overtakes it.
-            const slots = planOf(grid, count + 1);
+            const slots = planOf(grid, posts);
             if (slots !== grid.slots) { grid.slots = slots; await accounts.writeAccounts(doc); }
 
             return res.status(200).json({ posts, slots });
@@ -205,7 +212,7 @@ module.exports = async (req, res) => {
             const want = Number(body.slots);
             if (!Number.isInteger(want)) return res.status(400).json({ error: 'bad-slots' });
 
-            const slots = Math.max(posts.filter(Boolean).length, Math.min(accounts.SLOTS, want));
+            const slots = Math.max(used(posts), Math.min(accounts.SLOTS, want));
             grid.slots = slots;
             await accounts.writeAccounts(doc);
 
@@ -216,11 +223,9 @@ module.exports = async (req, res) => {
             const slot = slotOf(body.slot);
             const gone = posts[slot];
 
-            // The grid shows the posts and nothing else, so a hole in the
-            // middle would be invisible and would eat a slot for good. What is
-            // after the deleted one moves up, the way a feed behaves.
-            posts.splice(slot, 1);
-            posts.push(null);
+            // The square stays where it is and goes empty, holding the place
+            // in case something else is meant for it.
+            posts[slot] = null;
 
             await accounts.writePosts(grid.id, posts);
             await forget(req, urlsOf(gone));
@@ -228,24 +233,20 @@ module.exports = async (req, res) => {
             return res.status(200).json({ slot });
         }
 
-        // A picture goes where it was dropped and the rest close up behind it,
-        // which is what dragging something into a list looks like everywhere
-        // else. Dropped past the end of the pictures, onto one of the empty
-        // squares, it goes as far as it can: last.
+        // Two squares trade places, whatever is in them. A picture onto an
+        // empty square lands on that square and the empty one takes its old
+        // place, which is also how an empty square is moved: from the other
+        // end of the same gesture.
         if (action === 'move-post') {
             const from = slotOf(body.from);
             const to = slotOf(body.to);
 
-            const moving = posts[from];
-            if (!moving) return res.status(404).json({ error: 'no-such-post' });
-
-            posts.splice(from, 1);
-            const at = Math.min(to, posts.filter(Boolean).length);
-            posts.splice(at, 0, moving);
-            if (posts.length > accounts.SLOTS) posts.length = accounts.SLOTS;
+            const moved = posts[from];
+            posts[from] = posts[to];
+            posts[to] = moved;
 
             await accounts.writePosts(grid.id, posts);
-            return res.status(200).json({ from, to: at, posts });
+            return res.status(200).json({ from, to, posts });
         }
 
         if (action === 'set-avatar') {
