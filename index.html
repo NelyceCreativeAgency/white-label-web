@@ -271,8 +271,7 @@
          The paragraph keeps its source and its rendering apart. js/home.js
          splits the source into one span per word and draws those into
          .pm-render, because the language switcher rewrites text nodes and would
-         wipe the spans out on every swap. The source stays in chunks so each
-         one can carry its own data-en. Without JS the source is simply the
+         wipe the spans out on every swap. Without JS the source is simply the
          paragraph, which is why it is hidden in CSS rather than with `hidden`. -->
     <section class="partner-model-section" id="how-we-work">
         <div class="home-bleed">
@@ -290,8 +289,9 @@
             </h2>
 
             <!-- The process as a loop rather than a list, because review sends
-                 work back to create rather than on to delivery. Hovering a step
-                 puts what happens at it in the middle of the ring. -->
+                 work back to create rather than on to delivery. The ring holds
+                 nothing but the four names and the mark travelling between
+                 them; pointing anywhere in it holds the mark where it is. -->
             <div class="pm-panel scroll-reveal">
                 <div class="pm-dial" id="pm-dial">
                     <svg class="pm-dial-track" viewBox="0 0 100 100" aria-hidden="true">
@@ -305,13 +305,6 @@
                         <li class="pm-node pm-node-bottom">Review</li>
                         <li class="pm-node pm-node-left">Deliver</li>
                     </ol>
-
-                    <div class="pm-dial-notes">
-                        <p class="pm-note" data-en="You hand over the scope, the brand and the deadline.">Μας δίνεις το scope, το brand και το deadline.</p>
-                        <p class="pm-note" data-en="We work to your guidelines, with updates along the way.">Δουλεύουμε στα δικά σου guidelines, με ενημερώσεις στην πορεία.</p>
-                        <p class="pm-note" data-en="You review, comment and ask for changes.">Βλέπεις, σχολιάζεις και ζητάς αλλαγές.</p>
-                        <p class="pm-note" data-en="You get the final files and present them as your own.">Παίρνεις τα τελικά αρχεία και τα παρουσιάζεις ως δικά σου.</p>
-                    </div>
                 </div>
             </div>
 
@@ -324,13 +317,13 @@
             <p class="pm-copy" id="pm-copy">
                 <span class="pm-src">
                     <span data-en="We come into a project as an extension of your team.">Μπαίνουμε σε ένα project σαν προέκταση της ομάδας σου.</span>
-                    <span data-en="Your client stays yours.">Ο πελάτης παραμένει δικός σου.</span>
+                    <mark data-en="Your client stays yours.">Ο πελάτης παραμένει δικός σου.</mark>
                     <span data-en="The communication and the presentation always go through you.">Η επικοινωνία και η παρουσίαση περνάνε πάντα από εσένα.</span>
-                    <span data-en="Whatever you share stays confidential">Ό,τι μοιράζεσαι μένει εμπιστευτικό</span>
+                    <mark data-en="Whatever you share stays confidential">Ό,τι μοιράζεσαι μένει εμπιστευτικό</mark>
                     <span data-en="and nothing is published without your approval.">και τίποτα δεν δημοσιεύεται χωρίς την έγκρισή σου.</span>
-                    <span data-en="You keep the direction.">Εσύ κρατάς το τιμόνι.</span>
+                    <mark data-en="You keep the direction.">Εσύ κρατάς το τιμόνι.</mark>
                     <span data-en="You set the brief, you review, you decide what reaches the client. And when it spikes,">Δίνεις το brief, κάνεις το review, αποφασίζεις τι φτάνει στον πελάτη. Και όταν πιέζει,</span>
-                    <span data-en="we step in for one project or a whole stretch.">μπαίνουμε για ένα project ή για μια ολόκληρη περίοδο.</span>
+                    <mark data-en="we step in for one project or a whole stretch.">μπαίνουμε για ένα project ή για μια ολόκληρη περίοδο.</mark>
                 </span>
                 <span class="pm-render"></span>
             </p>

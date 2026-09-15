@@ -107,14 +107,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 out.appendChild(document.createTextNode(' '));
             }
 
+            const isPromise = segment.tagName === 'MARK';
+            const host = isPromise ? document.createElement('mark') : out;
+            if (isPromise) host.className = 'pm-mark';
+
             text.split(/\s+/).forEach((word, i) => {
-                if (i > 0) out.appendChild(document.createTextNode(' '));
+                if (i > 0) host.appendChild(document.createTextNode(' '));
                 const span = document.createElement('span');
                 span.className = 'pm-w';
                 span.textContent = word;
-                out.appendChild(span);
+                host.appendChild(span);
                 words.push(span);
             });
+
+            if (isPromise) out.appendChild(host);
         });
 
         copy.classList.add('is-split');
@@ -250,8 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const head = dial.querySelector('.pm-dial-head');
     const nodes = Array.from(dial.querySelectorAll('.pm-node'));
-    const notes = Array.from(dial.querySelectorAll('.pm-note'));
-    if (!head || nodes.length !== 4 || notes.length !== 4) return;
+    if (!head || nodes.length !== 4) return;
 
     // How long a step is held before the head moves on, and how long the dial
     // waits before its first move. The lead-in is short because a dial that
@@ -270,7 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const light = (i) => {
         lit = i;
         nodes.forEach((node, k) => node.classList.toggle('is-on', k === i));
-        notes.forEach((note, k) => note.classList.toggle('is-on', k === i));
     };
 
     // However long the stylesheet says the head takes to get there.
@@ -322,7 +326,6 @@ document.addEventListener('DOMContentLoaded', () => {
     dial.addEventListener('mouseenter', stop);
     dial.addEventListener('mouseleave', walk);
 
-    dial.classList.add('is-running');
     head.style.transform = 'rotate(' + angle + 'deg)';
     light(0);
 
