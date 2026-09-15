@@ -438,7 +438,8 @@
         if (!wasActive || !dropped) return;
 
         const cell = cellAt(drag.x, drag.y);
-        if (droppable(cell)) move(from, Number(cell.dataset.slot));
+        const to = cell && cell.dataset.slot !== undefined ? Number(cell.dataset.slot) : NaN;
+        if (Number.isInteger(to) && to !== from) move(from, to);
     };
 
     board.addEventListener('pointerdown', (event) => {
@@ -540,11 +541,27 @@
     };
 
     const move = async (from, to) => {
-        cancelMove();
+        const moving = state.posts[from];
+        if (!moving) { cancelMove(); return; }
+
+        const before = state.posts.slice();
+        state.moving = null;
+
+        // The picture moves the moment it is let go. Waiting for the server
+        // before showing it means watching it spring back to where it came
+        // from and then jump, which looks exactly like a move that failed.
+        const after = state.posts.filter(Boolean);
+        after.splice(from, 1);
+        after.splice(Math.min(to, after.length), 0, moving);
+        while (after.length < SLOTS) after.push(null);
+
+        state.posts = after;
+        renderGrid();
+
         busy('Μετακίνηση…');
         try {
-            // A move shifts everything between the two places, so what comes
-            // back is the whole grid rather than the two squares.
+            // The server's answer is the one that counts, and a move shifts
+            // everything between the two places, so the whole grid comes back.
             const data = await api('/api/grid', {
                 method: 'POST',
                 body: { id: state.grid.id, action: 'move-post', from, to }
@@ -552,6 +569,8 @@
             state.posts = data.posts;
             renderGrid();
         } catch (err) {
+            state.posts = before;
+            renderGrid();
             toast(explain(err), 'bad');
         } finally {
             busy('');
