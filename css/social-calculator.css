@@ -23,7 +23,7 @@
     padding: 10px 22px;
     font-family: var(--font-sans);
     font-size: 14px;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     border-radius: 7px;
     cursor: pointer;
     transition: var(--transition-smooth);
@@ -85,13 +85,13 @@
 
 .package-card strong {
     font-size: 17px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: var(--text-primary);
 }
 
 .package-card .package-price {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: var(--accent-orange);
 }
 
@@ -132,7 +132,7 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-secondary);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     margin-bottom: 14px;
 }
 
@@ -192,7 +192,7 @@
     gap: 8px;
     width: 100%;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: var(--text-secondary);
     text-decoration: none;
     margin-bottom: 20px;
@@ -215,14 +215,14 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--accent-orange);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     margin-bottom: 12px;
 }
 
 .calc-summary h2 {
     font-family: var(--font-serif);
     font-size: 24px;
-    font-weight: 400;
+    font-weight: var(--fw-regular);
     margin-bottom: 18px;
 }
 
@@ -250,7 +250,7 @@
 
 .calc-summary-price strong {
     font-size: 32px;
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     color: var(--accent-orange);
 }
 

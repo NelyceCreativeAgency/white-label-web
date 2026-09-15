@@ -48,7 +48,7 @@
     margin: 0;
     max-width: 15ch;
     font-size: clamp(2.5rem, 6vw, 5.5rem);
-    font-weight: 400;
+    font-weight: var(--fw-regular);
     line-height: 1.03;
     letter-spacing: -0.035em;
     text-align: left;
@@ -184,7 +184,7 @@ html[data-lang="el"] .hero-aside {
 .featured-title,
 .pm-title {
     font-size: clamp(1.9rem, 4vw, 2.9rem);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     letter-spacing: -0.02em;
     line-height: 1.15;
 }
@@ -193,7 +193,7 @@ html[data-lang="el"] .hero-aside {
 .pm-sub {
     color: var(--text-secondary);
     font-size: 1rem;
-    font-weight: 300;
+    font-weight: var(--fw-light);
     line-height: 1.7;
 }
 
@@ -329,7 +329,7 @@ html[data-lang="el"] .hero-aside {
     align-items: center;
     gap: 10px;
     font-size: clamp(1.15rem, 1.6vw, 1.55rem);
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     letter-spacing: 0.04em;
     text-transform: uppercase;
     line-height: 1.2;
@@ -360,7 +360,7 @@ html[data-lang="el"] .hero-aside {
             backdrop-filter: blur(6px);
     /* The touch block further down drops this blur; see why there. */
     font-size: 0.72rem;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     letter-spacing: 0.01em;
     white-space: nowrap;
 }
@@ -504,7 +504,7 @@ html[data-lang="el"] .hero-aside {
    making the other smaller than it wanted to be. */
 .pm-copy {
     font-size: clamp(19px, 2.4vw, 30px);
-    font-weight: 300;
+    font-weight: var(--fw-light);
     line-height: 1.45;
     letter-spacing: -0.5px;
     margin-top: 64px;
@@ -540,7 +540,7 @@ html[data-lang="el"] .hero-aside {
 .pm-mark {
     background: none;
     color: inherit;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
 }
 
 /* --- The process, as a dial ---
@@ -663,7 +663,7 @@ html[data-lang="el"] .hero-aside {
 .pm-node {
     position: absolute;
     font-size: 19px;
-    font-weight: 400;
+    font-weight: var(--fw-regular);
     letter-spacing: -0.2px;
     white-space: nowrap;
     color: rgba(255, 255, 255, 0.62);
@@ -700,7 +700,7 @@ html[data-lang="el"] .hero-aside {
 
 .pm-node.is-on {
     color: var(--accent-orange);
-    font-weight: 500;
+    font-weight: var(--fw-medium);
 }
 
 .pm-dial-notes {
@@ -717,7 +717,7 @@ html[data-lang="el"] .hero-aside {
     grid-area: 1 / 1;
     align-self: center;
     font-size: 14px;
-    font-weight: 300;
+    font-weight: var(--fw-light);
     line-height: 1.55;
     color: rgba(255, 255, 255, 0.62);
     opacity: 0;
@@ -863,7 +863,7 @@ html[data-lang="el"] .hero-aside {
     color: var(--text-primary);
     font-family: var(--font-sans);
     font-size: 15px;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     line-height: 1.2;
     text-decoration: none;
     cursor: pointer;

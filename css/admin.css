@@ -33,11 +33,11 @@
 }
 
 .gate-logo { width: 150px; height: auto; margin-bottom: 28px; }
-.gate-title { font-size: 1.35rem; font-weight: 600; margin: 0 0 6px; }
+.gate-title { font-size: 1.35rem; font-weight: var(--fw-semibold); margin: 0 0 6px; }
 .gate-sub { color: var(--text-secondary); font-size: .9rem; margin: 0 0 26px; }
 
 .gate-label {
-    font-size: .75rem; font-weight: 600; letter-spacing: .08em;
+    font-size: .75rem; font-weight: var(--fw-semibold); letter-spacing: .08em;
     text-transform: uppercase; color: var(--text-secondary);
     margin-bottom: 8px;
 }
@@ -85,17 +85,17 @@
 .admin-bar-title { margin-right: auto; }
 .admin-mark {
     display: block;
-    font-size: .68rem; font-weight: 700; letter-spacing: .18em;
+    font-size: .68rem; font-weight: var(--fw-bold); letter-spacing: .18em;
     text-transform: uppercase; color: var(--accent-orange);
 }
-.admin-bar-title h1 { font-size: 1.05rem; font-weight: 600; margin: 2px 0 0; }
+.admin-bar-title h1 { font-size: 1.05rem; font-weight: var(--fw-semibold); margin: 2px 0 0; }
 
 /* --- the three pages, one click away ----------------------------------- */
 .admin-links { display: flex; align-items: center; gap: 6px; }
 
 .admin-link {
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: .82rem; font-weight: 500; text-decoration: none;
+    font-size: .82rem; font-weight: var(--fw-medium); text-decoration: none;
     color: var(--text-secondary);
     padding: 7px 12px;
     background: rgba(255, 255, 255, .04);
@@ -160,7 +160,7 @@
 .admin-tab-note {
     display: block;
     font-size: .7rem; color: var(--text-secondary);
-    margin-top: 3px; font-weight: 400;
+    margin-top: 3px; font-weight: var(--fw-regular);
 }
 .admin-tab.is-active .admin-tab-note { color: var(--accent-orange); }
 
@@ -216,7 +216,7 @@
 }
 
 .admin-cat {
-    font-size: .72rem; font-weight: 700; letter-spacing: .16em;
+    font-size: .72rem; font-weight: var(--fw-bold); letter-spacing: .16em;
     text-transform: uppercase; color: var(--text-secondary);
     margin: 44px 0 16px; padding-bottom: 10px;
     border-bottom: 1px solid var(--border-color);
@@ -233,7 +233,7 @@
 }
 
 .admin-service-name {
-    font-size: 1rem; font-weight: 600;
+    font-size: 1rem; font-weight: var(--fw-semibold);
     margin: 0 0 4px;
 }
 .admin-service-id {

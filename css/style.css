@@ -18,11 +18,42 @@
     --font-sans: 'Montserrat', sans-serif;
     --font-serif: 'Montserrat', sans-serif;
     --transition-smooth: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+
+    /* The weights every stylesheet asks for by name rather than by number, so
+       that a family which sets heavier than Montserrat can be stepped down in
+       one place instead of in seventy-four declarations. See the Greek block
+       below for why that is needed. */
+    --fw-light: 300;
+    --fw-regular: 400;
+    --fw-medium: 500;
+    --fw-semibold: 600;
+    --fw-bold: 700;
 }
 
+/* Geologica carries more weight than Montserrat at the same number: its 400
+   reads about as dark as Montserrat's 500, and a page of Greek came out looking
+   heavier than the same page in English even though nothing about the setting
+   had changed. Light-on-dark widens everything a little further still.
+
+   So every weight steps down one notch in Greek. The lightest stays where it
+   is, being the lightest of the five loaded, and nothing asks for a weight the
+   font is not already serving. */
 html[data-lang="el"] {
     --font-sans: 'Geologica', sans-serif;
     --font-serif: 'Geologica', sans-serif;
+
+    --fw-regular: 300;
+    --fw-medium: 400;
+    --fw-semibold: 500;
+    --fw-bold: 600;
+}
+
+/* The elements a browser sets bold on its own, brought onto the same scale so
+   that Greek steps down with everything else. 700 is what they were already
+   rendering, so nothing moves in English. */
+h1, h2, h3, h4, h5, h6,
+strong, b {
+    font-weight: var(--fw-bold);
 }
 
 html {
@@ -285,7 +316,7 @@ body {
 .lang-btn {
     font-family: var(--font-sans);
     font-size: 12px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     letter-spacing: 0.5px;
     color: var(--text-secondary);
     background: transparent;
@@ -309,7 +340,7 @@ body {
     background: transparent;
     color: var(--accent-orange);
     border: 1px solid var(--border-hover);
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     padding: 2px 6px;
     border-radius: 3px;
     letter-spacing: 1px;
@@ -349,7 +380,7 @@ body {
 .nav-cta-primary {
     color: var(--bg-dark);
     background: var(--text-primary);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     padding: 8px 18px;
     border-radius: 999px;
     transition: var(--transition-smooth);
@@ -492,7 +523,7 @@ body {
     justify-content: space-between;
     gap: 12px;
     font-size: 19px;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     color: var(--text-primary);
     text-decoration: none;
     padding: 17px 2px;
@@ -581,7 +612,7 @@ body {
 
 .filter-drawer-header h2 {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 
 .filter-drawer-close {
@@ -617,7 +648,7 @@ body {
     gap: 10px;
     cursor: pointer;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: var(--text-primary);
 }
 
@@ -688,13 +719,13 @@ body {
     letter-spacing: 3px;
     color: var(--accent-orange);
     margin-bottom: 24px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 
 .hero-title {
     font-family: var(--font-serif);
     font-size: 56px;
-    font-weight: 400;
+    font-weight: var(--fw-regular);
     line-height: 1.1;
     margin-bottom: 24px;
     letter-spacing: -1px;
@@ -706,7 +737,7 @@ body {
     max-width: 700px;
     margin: 0 auto 40px auto;
     line-height: 1.6;
-    font-weight: 300;
+    font-weight: var(--fw-light);
 }
 
 .hero-actions {
@@ -724,7 +755,7 @@ body {
     padding: 14px 28px;
     font-family: var(--font-sans);
     font-size: 15px;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     text-decoration: none;
     border-radius: 4px;
     transition: var(--transition-smooth);
@@ -967,7 +998,7 @@ body {
     color: var(--text-secondary);
     font-family: var(--font-sans);
     font-size: 14px;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     padding: 10px 16px;
     cursor: pointer;
     transition: var(--transition-smooth);
@@ -1056,7 +1087,7 @@ body {
     color: var(--text-secondary);
     font-family: var(--font-sans);
     font-size: 13px;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     padding: 9px 16px;
     cursor: pointer;
     transition: var(--transition-smooth);
@@ -1103,7 +1134,7 @@ body {
 .category-title {
     font-family: var(--font-serif);
     font-size: 28px;
-    font-weight: 400;
+    font-weight: var(--fw-regular);
 }
 
 /* --- Pricing Structural Grid --- */
@@ -1157,7 +1188,7 @@ body {
 
 .item-title {
     font-size: 18px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     margin-bottom: 12px;
     letter-spacing: -0.3px;
 }
@@ -1171,7 +1202,7 @@ body {
     font-size: 15px;
     color: var(--text-secondary);
     line-height: 1.6;
-    font-weight: 300;
+    font-weight: var(--fw-light);
     margin-bottom: 32px;
 }
 
@@ -1248,7 +1279,7 @@ body {
     -webkit-backdrop-filter: blur(8px);
     color: #fff;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     text-decoration: none;
     opacity: 1;
     transform: translateY(0);
@@ -1471,13 +1502,13 @@ body {
 .price-amount {
     font-family: var(--font-sans);
     font-size: 24px;
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
 }
 
 .price-unit {
     font-size: 15px;
-    font-weight: 400;
+    font-weight: var(--fw-regular);
     color: var(--text-secondary);
 }
 
@@ -1495,7 +1526,7 @@ body {
     position: absolute;
     top: 16px; right: 16px;
     font-size: 10px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     text-transform: uppercase;
     color: var(--accent-amber);
     letter-spacing: 1px;
@@ -1521,7 +1552,7 @@ body {
     letter-spacing: 1px;
     color: var(--text-secondary);
     margin-bottom: 20px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 
 .sub-pricing-row {
@@ -1549,11 +1580,11 @@ body {
 
 .sub-item h4 {
     font-size: 15px;
-    font-weight: 500;
+    font-weight: var(--fw-medium);
 }
 
 .sub-price {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: var(--accent-orange);
     font-size: 15px;
     margin-left: auto;
@@ -1572,7 +1603,7 @@ body {
     font-family: var(--font-serif);
     font-size: 18px;
     margin-bottom: 20px;
-    font-weight: 400;
+    font-weight: var(--fw-regular);
 }
 
 .addons-grid {
@@ -1598,7 +1629,7 @@ body {
 
 .addon-value {
     font-size: 15px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: var(--text-primary);
 }
 
@@ -1626,7 +1657,7 @@ body {
 .resource-card h4 {
     font-size: 15px;
     margin-bottom: 6px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 
 .resource-card p {
@@ -1667,7 +1698,7 @@ body {
     font-family: var(--font-serif);
     font-size: 22px;
     margin-bottom: 8px;
-    font-weight: 400;
+    font-weight: var(--fw-regular);
 }
 
 .ecommerce-management-box p {
@@ -1696,7 +1727,7 @@ body {
 
 .emb-value {
     font-size: 28px;
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     color: var(--accent-orange);
 }
 
@@ -1707,7 +1738,7 @@ body {
 .emb-unit {
     font-size: 15px;
     color: var(--text-secondary);
-    font-weight: 400;
+    font-weight: var(--fw-regular);
 }
 
 /* --- General Disclaimer Notes --- */
@@ -1755,7 +1786,7 @@ body {
 .cta-title {
     font-family: var(--font-serif);
     font-size: 44px;
-    font-weight: 400;
+    font-weight: var(--fw-regular);
     margin-bottom: 20px;
 }
 
@@ -1970,7 +2001,7 @@ footer.main-footer {
 .customize-btn {
     font-family: var(--font-sans);
     font-size: 12px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: var(--text-primary);
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.25);
@@ -2024,7 +2055,7 @@ body.customize-open {
     gap: 6px;
     font-family: var(--font-sans);
     font-size: 13px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: var(--text-secondary);
     background: transparent;
     border: none;
@@ -2116,7 +2147,7 @@ body.customize-open {
 
 .currency-dropdown-option.active {
     color: var(--accent-orange);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 
 .currency-dropdown-option-name {
@@ -2195,7 +2226,7 @@ body.customize-open {
 
 .customize-title {
     font-size: 20px;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     margin-bottom: 10px;
     padding-right: 24px;
 }
@@ -2204,7 +2235,7 @@ body.customize-open {
     font-size: 15px;
     color: var(--text-secondary);
     line-height: 1.6;
-    font-weight: 300;
+    font-weight: var(--fw-light);
     margin-bottom: 24px;
 }
 
@@ -2367,7 +2398,7 @@ body.customize-open {
 
 .customize-total-value {
     font-size: 30px;
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     color: var(--accent-orange);
 }
 

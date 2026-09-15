@@ -69,7 +69,7 @@
 /* the sentence carries the tile: large, but light rather than bold */
 .cat-name {
     margin-top: auto; padding-top: 30px; padding-right: 76px;
-    font-size: 2.3rem; font-weight: 300; line-height: 1.18; letter-spacing: -.02em;
+    font-size: 2.3rem; font-weight: var(--fw-light); line-height: 1.18; letter-spacing: -.02em;
 }
 
 .cat-go {
@@ -139,7 +139,7 @@
 }
 .custom-tag {
     display: inline-block; margin-bottom: 16px; padding: 6px 14px;
-    font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    font-size: .7rem; font-weight: var(--fw-semibold); letter-spacing: .1em; text-transform: uppercase;
     color: var(--accent-amber); background: rgba(255, 184, 0, .1);
     border: 1px solid rgba(255, 184, 0, .26); border-radius: 100px;
 }
@@ -164,7 +164,7 @@
 .cat-back:hover { color: var(--text-primary); border-color: var(--border-hover); }
 .cat-current { display: inline-flex; align-items: center; gap: 10px; }
 .cat-current .cat-icon { width: 26px; height: 26px; object-fit: contain; }
-.cat-current strong { font-size: 1.02rem; font-weight: 600; }
+.cat-current strong { font-size: 1.02rem; font-weight: var(--fw-semibold); }
 
 /* --- service cards ---------------------------------------------------- */
 #service-grid { display: flex; flex-direction: column; gap: 16px; }
@@ -176,11 +176,11 @@
 .svc-card.is-open { border-color: var(--accent-orange); }
 
 .svc-head { display: flex; justify-content: space-between; gap: 24px; padding: 20px 22px 14px; }
-.svc-title h3 { margin: 0 0 5px; font-size: 1.05rem; font-weight: 600; color: var(--accent-orange); }
+.svc-title h3 { margin: 0 0 5px; font-size: 1.05rem; font-weight: var(--fw-semibold); color: var(--accent-orange); }
 .svc-title p { margin: 0; color: var(--text-secondary); font-size: .84rem; line-height: 1.5; max-width: 44ch; }
 .svc-price { text-align: right; white-space: nowrap; }
 .svc-from { display: block; color: var(--text-secondary); font-size: .7rem; }
-.svc-amount { font-size: 1.4rem; font-weight: 600; color: var(--accent-amber); }
+.svc-amount { font-size: 1.4rem; font-weight: var(--fw-semibold); color: var(--accent-amber); }
 .svc-unit { display: block; color: var(--text-secondary); font-size: .72rem; }
 
 .svc-toggle {
@@ -210,7 +210,7 @@
     background: var(--bg-card-hover); transition: var(--transition-smooth);
 }
 .step-btn:hover { background: var(--accent-orange); color: #fff; }
-.step-value { min-width: 34px; text-align: center; font-weight: 600; font-size: .9rem; }
+.step-value { min-width: 34px; text-align: center; font-weight: var(--fw-semibold); font-size: .9rem; }
 
 .param-toggle { cursor: pointer; }
 .toggle-input { position: absolute; opacity: 0; pointer-events: none; }
@@ -236,7 +236,7 @@
 .option.is-active { border-color: var(--accent-orange); background: rgba(255, 107, 53, .07); }
 .option input { position: absolute; opacity: 0; pointer-events: none; }
 .option-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.option-body strong { font-size: .85rem; font-weight: 500; }
+.option-body strong { font-size: .85rem; font-weight: var(--fw-medium); }
 .option-body small { color: var(--text-secondary); font-size: .75rem; }
 .option-price { color: var(--accent-amber); font-size: .8rem; white-space: nowrap; }
 
@@ -268,8 +268,8 @@
     transition: var(--transition-smooth);
 }
 .quote-fab:hover { filter: brightness(1.08); transform: translateY(-2px); }
-.fab-label { font-size: .9rem; font-weight: 600; text-align: left; }
-.fab-total { grid-row: span 2; font-size: 1.12rem; font-weight: 600; }
+.fab-label { font-size: .9rem; font-weight: var(--fw-semibold); text-align: left; }
+.fab-total { grid-row: span 2; font-size: 1.12rem; font-weight: var(--fw-semibold); }
 .fab-meta { font-size: .72rem; opacity: .78; text-align: left; }
 
 @keyframes fab-in {
@@ -307,7 +307,7 @@ body.quote-open { overflow: hidden; }
 }
 .quote-close:hover { color: var(--text-primary); border-color: var(--border-hover); }
 
-#quote-summary h2 { margin: 0 0 20px; font-size: 1.15rem; font-weight: 600; }
+#quote-summary h2 { margin: 0 0 20px; font-size: 1.15rem; font-weight: var(--fw-semibold); }
 #quote-summary .empty { color: var(--text-secondary); font-size: .86rem; line-height: 1.55; margin: 0; }
 
 .quote-lines { list-style: none; margin: 0 0 20px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
@@ -324,7 +324,7 @@ body.quote-open { overflow: hidden; }
 .qt-row { display: flex; justify-content: space-between; gap: 12px; font-size: .85rem; color: var(--text-secondary); padding: 6px 0; }
 .qt-total {
     margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border-color);
-    font-size: 1.18rem; color: var(--text-primary); font-weight: 600;
+    font-size: 1.18rem; color: var(--text-primary); font-weight: var(--fw-semibold);
 }
 .qt-total span:last-child { color: var(--accent-amber); }
 
