@@ -420,10 +420,23 @@
     display: grid;
     place-items: center;
     color: rgba(245, 245, 247, .35);
-    border: 1px dashed rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .07);
     cursor: pointer;
     transition: var(--transition-smooth);
 }
+
+/* Only one empty slot asks to be used: the one after the last picture. The
+   rest are the shape of the grid, and hold their tongue until the pointer is
+   actually over them. */
+.cell-empty .cell-plus { opacity: 0; transition: opacity .25s; }
+
+.cell-empty.is-next {
+    color: var(--accent-orange);
+    border: 1px dashed rgba(255, 107, 53, .38);
+}
+
+.cell-empty.is-next .cell-plus,
+.cell-empty:hover .cell-plus { opacity: 1; }
 
 .cell-empty:hover {
     color: var(--accent-orange);
@@ -431,8 +444,8 @@
     border-color: rgba(255, 107, 53, .4);
 }
 
-.cell-empty.is-quiet { cursor: default; border-style: solid; border-color: rgba(255, 255, 255, .06); }
-.cell-empty.is-quiet:hover { background: rgba(255, 255, 255, .03); border-color: rgba(255, 255, 255, .06); }
+.cell-empty.is-quiet { cursor: default; }
+.cell-empty.is-quiet:hover { background: rgba(255, 255, 255, .03); border-color: rgba(255, 255, 255, .07); }
 
 .cell-plus { font-size: 1.8rem; font-weight: var(--fw-light); line-height: 1; }
 

@@ -12,6 +12,9 @@
     'use strict';
 
     const SLOTS = 24;
+    // What a profile shows before it is asked for more: four rows of three,
+    // which is what fits on a screen without scrolling past the bio.
+    const SHOWN = 12;
     const MAX_IMAGES = 10;
     const LOGIN = 'login.html';
 
@@ -240,7 +243,7 @@
         const filled = state.posts.filter(Boolean).length;
         $('profile-stats').innerHTML = `
             <span><strong>${filled}</strong> αναρτήσεις</span>
-            <span><strong>${SLOTS - filled}</strong> ελεύθερες θέσεις</span>
+            <span><strong>${SLOTS - filled}</strong> θέσεις ακόμα</span>
             ${open && grid.canEdit ? `<span class="stat-flag"><strong>${open}</strong> θέλουν αλλαγή</span>` : ''}
         `;
 
@@ -251,13 +254,25 @@
         const editing = grid.canEdit;
         const cells = [];
 
-        for (let slot = 0; slot < SLOTS; slot++) {
+        // The grid is as long as it needs to be and no longer. Twelve slots to
+        // begin with, and a row appears when the posts reach the end of the
+        // last one, up to the twenty-four a profile mockup holds.
+        const last = state.posts.reduce((seen, post, i) => (post ? i : seen), -1);
+        const next = last + 1 < SLOTS ? last + 1 : -1;
+        const visible = Math.min(SLOTS, Math.max(SHOWN, Math.ceil((last + 2) / 3) * 3));
+
+        for (let slot = 0; slot < visible; slot++) {
             const post = state.posts[slot];
             const target = state.moving !== null && state.moving !== slot;
 
             if (!post) {
+                // One slot carries the plus: the one straight after the last
+                // picture, which is where the next one goes. A gap left behind
+                // by moving something is still fillable, it just does not
+                // advertise itself.
+                const here = slot === next ? ' is-next' : '';
                 cells.push(editing
-                    ? `<button class="cell cell-empty${target ? ' is-target' : ''}" type="button" data-slot="${slot}" data-act="add">
+                    ? `<button class="cell cell-empty${here}${target ? ' is-target' : ''}" type="button" data-slot="${slot}" data-act="add">
                            <span class="cell-plus" aria-hidden="true">+</span>
                            <span class="visually-hidden">Προσθήκη εικόνας στη θέση ${slot + 1}</span>
                        </button>`
