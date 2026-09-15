@@ -489,19 +489,24 @@ html[data-lang="el"] .hero-aside {
     z-index: 1;
 }
 
-/* The same shape as the hero, the type down the left on the page's own line
-   and the one object to its right, but held to a width rather than run to the
-   screen's edge. Pinned to both gutters it was two small things at opposite
-   ends of a monitor with a third of a metre of nothing between them: the hero
-   can carry that because its headline is 5.5rem and fills the left, and this
-   heading is a third of that. So it starts on the line and stops where the
-   pair of them stop. */
+/* The one place the page's line gives way. The dial holds the middle of the
+   screen, which it can only do if what surrounds it is centred, so this block
+   is centred and capped rather than run from the left gutter like the hero.
+   Everything inside it, the heading and the statement below, starts at its
+   left edge instead. */
+.partner-model-section > .home-bleed {
+    max-width: 1480px;
+}
+
+/* Three across, all three centred on the dial's own middle: the heading to its
+   left, the line that says what it is to its right, each pressed out to its
+   own edge of the block so the two gaps either side of the dial come out much
+   the same. */
 .pm-head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(240px, 380px);
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px) minmax(0, 1fr);
     gap: 32px 48px;
     align-items: center;
-    max-width: 1040px;
 }
 
 /* Pulled back by the blank its own first letter carries, the same correction
@@ -510,7 +515,6 @@ html[data-lang="el"] .hero-aside {
    0.094em before Geologica's pi. Tied to the first letter of the heading, so
    they want measuring again if the wording changes. */
 .pm-title {
-    margin-bottom: 18px;
     margin-left: -0.114em;
 }
 
@@ -519,6 +523,7 @@ html[data-lang="el"] .pm-title {
 }
 
 .pm-sub {
+    justify-self: end;
     max-width: 46ch;
 }
 
@@ -769,19 +774,34 @@ html[data-lang="el"] .pm-title {
     }
 }
 
+/* Three across wants about 1140px: a column each for the heading and the line,
+   and 360 in the middle for the dial. Under that they stack, and the dial goes
+   after the words rather than standing between them. */
+@media (max-width: 1140px) {
+    .pm-head {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+
+    .pm-sub {
+        justify-self: start;
+        max-width: 52ch;
+    }
+
+    .pm-panel {
+        order: 1;
+    }
+
+    /* Held to the size it was across, rather than growing into the width a
+       whole row gives it. */
+    .pm-dial {
+        width: min(100%, 360px);
+    }
+}
+
 @media (max-width: 860px) {
     .partner-model-section {
         padding: 72px 0 90px;
-    }
-
-    /* Nothing to sit beside, so the heading takes its own row above the dial. */
-    .pm-head {
-        grid-template-columns: 1fr;
-        gap: 32px;
-    }
-
-    .pm-title {
-        margin-bottom: 14px;
     }
 
     .pm-sub {
