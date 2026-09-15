@@ -238,6 +238,15 @@ module.exports = async (req, res) => {
             post.notes = Array.isArray(post.notes) ? post.notes : [];
             if (post.notes.length >= MAX_NOTES) return res.status(400).json({ error: 'too-many-notes' });
 
+            // A reply belongs to the note it answers, and an answer to an
+            // answer belongs to the same one: a thread here is one level deep,
+            // because the panel it is read in is the width of a phone.
+            let replyTo = null;
+            if (body.replyTo) {
+                const parent = post.notes.find(n => n.id === body.replyTo);
+                if (parent) replyTo = parent.replyTo || parent.id;
+            }
+
             const note = {
                 id: accounts.newId('nte'),
                 userId: me.id,
@@ -245,12 +254,50 @@ module.exports = async (req, res) => {
                 role: me.role,
                 text: said,
                 at: now,
-                resolved: false
+                resolved: false,
+                replyTo
             };
             post.notes.push(note);
 
             await accounts.writePosts(grid.id, posts);
             return res.status(200).json({ slot, note });
+        }
+
+        // Changing and removing a note are the author's own business, so they
+        // are not on the editors' list above. Nobody rewrites somebody else's
+        // words; an admin may take a note down, being the one who answers for
+        // what the portal holds.
+        if (action === 'edit-note' || action === 'delete-note') {
+            const slot = slotOf(body.slot);
+            const post = posts[slot];
+            if (!post || !Array.isArray(post.notes)) return res.status(404).json({ error: 'no-such-post' });
+
+            const note = post.notes.find(n => n.id === body.noteId);
+            if (!note) return res.status(404).json({ error: 'no-such-note' });
+
+            const mine = note.userId === me.id;
+
+            if (action === 'edit-note') {
+                if (!mine) return res.status(403).json({ error: 'not-yours' });
+
+                const said = text(body.text, MAX_NOTE);
+                if (!said) return res.status(400).json({ error: 'empty-note' });
+
+                note.text = said;
+                note.editedAt = now;
+
+                await accounts.writePosts(grid.id, posts);
+                return res.status(200).json({ slot, note });
+            }
+
+            if (!mine && me.role !== 'admin') return res.status(403).json({ error: 'not-yours' });
+
+            // A note that is answered takes its answers with it, so no reply is
+            // left hanging under something that is no longer there.
+            post.notes = post.notes.filter(n => n.id !== note.id && n.replyTo !== note.id);
+
+            await accounts.writePosts(grid.id, posts);
+            return res.status(200).json({ slot, notes: post.notes });
         }
 
         if (action === 'resolve-note') {

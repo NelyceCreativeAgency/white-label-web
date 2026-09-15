@@ -92,6 +92,9 @@
         'last-admin': 'Πρέπει να μείνει τουλάχιστον ένας διαχειριστής.',
         'not-yourself': 'Τον δικό σου λογαριασμό δεν μπορείς να τον σβήσεις.',
         'bad-name': 'Χρειάζεται όνομα.',
+        'not-yours': 'Μόνο όποιος έγραψε το σχόλιο μπορεί να το αλλάξει.',
+        'no-such-note': 'Το σχόλιο δεν βρέθηκε.',
+        'empty-note': 'Το σχόλιο δεν μπορεί να είναι κενό.',
         'bad-link': 'Ο σύνδεσμος δεν φαίνεται σωστός.',
         'bad-address': 'Αυτή η διεύθυνση δεν επιτρέπεται.',
         'not-an-image': 'Ο σύνδεσμος δεν δίνει εικόνα. Αν είναι Google Drive, άνοιξε τα δικαιώματα του αρχείου σε "όποιος έχει τον σύνδεσμο".',
@@ -117,6 +120,8 @@
         viewing: null,  // { slot, index } while the viewer is open
         draft: null,    // { slot, images } while the post editor is open
         highlight: null,// { id, name, url } while the highlight panel is open
+        replyTo: null,  // the note the next comment answers
+        editingNote: null,
         moving: null,   // the slot waiting to be swapped with another
         dragging: null  // the slot being carried by the mouse
     };
@@ -587,6 +592,9 @@
         if (!post) return;
 
         state.viewing = { slot, index: index || 0 };
+        state.replyTo = null;
+        state.editingNote = null;
+        showReplying();
         $('post-modal').hidden = false;
         document.body.classList.add('is-locked');
         renderViewer();
@@ -626,50 +634,146 @@
         renderNotes(post, slot);
     };
 
+    // --- the conversation about a post --------------------------------------
+    // A note can be answered, changed by whoever wrote it, and taken back. A
+    // thread is one level deep: a reply to a reply joins the same thread rather
+    // than starting a staircase in a panel the width of a phone.
     const renderNotes = (post, slot) => {
         const notes = post.notes || [];
         const list = $('note-list');
 
-        list.innerHTML = notes.length
-            ? notes.map(note => `
-                <li class="note${note.resolved ? ' is-done' : ''}${note.role === 'client' ? ' is-client' : ''}">
+        if (!notes.length) {
+            list.innerHTML = '<li class="note-none">Κανένα σχόλιο ακόμα.</li>';
+            return;
+        }
+
+        const one = (note, isReply) => {
+            const mine = note.userId === state.me.id;
+            const editing = state.editingNote === note.id;
+
+            const body = editing
+                ? `<div class="note-edit">
+                       <textarea maxlength="1000" data-edit="${esc(note.id)}">${esc(note.text)}</textarea>
+                       <span class="note-tools">
+                           <button type="button" data-do="save">Αποθήκευση</button>
+                           <button type="button" data-do="cancel">Ακύρωση</button>
+                       </span>
+                   </div>`
+                : `<p class="note-text">${esc(note.text)}</p>
+                   <span class="note-tools">
+                       <button type="button" data-do="reply">Απάντηση</button>
+                       ${mine ? '<button type="button" data-do="edit">Επεξεργασία</button>' : ''}
+                       ${mine || state.me.role === 'admin' ? '<button type="button" data-do="delete">Διαγραφή</button>' : ''}
+                       ${canEdit() && note.role === 'client' && !isReply
+                           ? `<button type="button" data-do="resolve" data-resolved="${note.resolved ? '1' : '0'}">
+                                  ${note.resolved ? 'Άνοιγμα ξανά' : 'Έγινε'}
+                              </button>` : ''}
+                   </span>`;
+
+            return `
+                <li class="note${note.resolved ? ' is-done' : ''}${note.role === 'client' ? ' is-client' : ''}${isReply ? ' is-reply' : ''}"
+                    data-note="${esc(note.id)}" data-slot="${slot}">
                     <p class="note-who">
                         <strong>${esc(note.name)}</strong>
-                        <small>${esc(ROLE_NAMES[note.role] || '')} · ${esc(when(note.at))}</small>
+                        <small>${esc(ROLE_NAMES[note.role] || '')} · ${esc(when(note.at))}${note.editedAt ? ' · επεξεργάστηκε' : ''}</small>
                     </p>
-                    <p class="note-text">${esc(note.text)}</p>
-                    ${canEdit() && note.role === 'client' ? `
-                        <button class="note-done" type="button" data-note="${esc(note.id)}" data-slot="${slot}"
-                                data-resolved="${note.resolved ? '1' : '0'}">
-                            ${note.resolved ? 'Άνοιγμα ξανά' : 'Έγινε'}
-                        </button>` : ''}
-                </li>`).join('')
-            : '<li class="note-none">Κανένα σχόλιο ακόμα.</li>';
+                    ${body}
+                </li>`;
+        };
+
+        list.innerHTML = notes
+            .filter(note => !note.replyTo)
+            .map(note => one(note, false) + notes.filter(r => r.replyTo === note.id).map(r => one(r, true)).join(''))
+            .join('');
     };
 
+    const keepNotes = (slot, notes) => {
+        state.posts[slot].notes = notes;
+        renderNotes(state.posts[slot], slot);
+        renderGrid();
+        refreshBadge();
+    };
+
+    const noteAction = (slot, body) => api('/api/grid', {
+        method: 'POST',
+        body: { id: state.grid.id, slot, ...body }
+    });
+
     $('note-list').addEventListener('click', async (event) => {
-        const button = event.target.closest('.note-done');
+        const button = event.target.closest('button[data-do]');
         if (!button) return;
 
-        const slot = Number(button.dataset.slot);
+        const item = button.closest('.note');
+        const slot = Number(item.dataset.slot);
+        const noteId = item.dataset.note;
+        const post = state.posts[slot];
+
         try {
-            const data = await api('/api/grid', {
-                method: 'POST',
-                body: {
-                    id: state.grid.id, action: 'resolve-note',
-                    slot, noteId: button.dataset.note,
-                    resolved: button.dataset.resolved !== '1'
+            switch (button.dataset.do) {
+                case 'reply': {
+                    const note = (post.notes || []).find(n => n.id === noteId);
+                    state.replyTo = note ? { id: note.id, name: note.name } : null;
+                    showReplying();
+                    $('note-text').focus();
+                    break;
                 }
-            });
-            const post = state.posts[slot];
-            const note = (post.notes || []).find(n => n.id === data.note.id);
-            if (note) Object.assign(note, data.note);
-            renderNotes(post, slot);
-            renderGrid();
-            refreshBadge();
+
+                case 'edit':
+                    state.editingNote = noteId;
+                    renderNotes(post, slot);
+                    item.querySelector('textarea').focus();
+                    break;
+
+                case 'cancel':
+                    state.editingNote = null;
+                    renderNotes(post, slot);
+                    break;
+
+                case 'save': {
+                    const said = item.querySelector('textarea').value.trim();
+                    if (!said) return;
+
+                    const data = await noteAction(slot, { action: 'edit-note', noteId, text: said });
+                    const note = (post.notes || []).find(n => n.id === noteId);
+                    if (note) Object.assign(note, data.note);
+
+                    state.editingNote = null;
+                    renderNotes(post, slot);
+                    break;
+                }
+
+                case 'delete': {
+                    if (!confirm('Να διαγραφεί το σχόλιο;')) return;
+                    const data = await noteAction(slot, { action: 'delete-note', noteId });
+                    keepNotes(slot, data.notes);
+                    break;
+                }
+
+                case 'resolve': {
+                    const data = await noteAction(slot, {
+                        action: 'resolve-note', noteId,
+                        resolved: button.dataset.resolved !== '1'
+                    });
+                    const note = (post.notes || []).find(n => n.id === data.note.id);
+                    if (note) Object.assign(note, data.note);
+                    keepNotes(slot, post.notes);
+                    break;
+                }
+            }
         } catch (err) {
             toast(explain(err), 'bad');
         }
+    });
+
+    const showReplying = () => {
+        const bar = $('note-replying');
+        bar.hidden = !state.replyTo;
+        if (state.replyTo) $('note-replying-to').textContent = `Απάντηση σε ${state.replyTo.name}`;
+    };
+
+    $('note-replying-cancel').addEventListener('click', () => {
+        state.replyTo = null;
+        showReplying();
     });
 
     $('note-form').addEventListener('submit', async (event) => {
@@ -682,18 +786,21 @@
         field.disabled = true;
 
         try {
-            const data = await api('/api/grid', {
-                method: 'POST',
-                body: { id: state.grid.id, action: 'add-note', slot, text: said }
+            const data = await noteAction(slot, {
+                action: 'add-note',
+                text: said,
+                replyTo: state.replyTo ? state.replyTo.id : undefined
             });
+
             const post = state.posts[slot];
             post.notes = post.notes || [];
             post.notes.push(data.note);
+
             field.value = '';
-            renderNotes(post, slot);
-            renderGrid();
-            refreshBadge();
-            toast(state.me.role === 'client' ? 'Το σχόλιο στάλθηκε.' : 'Το σχόλιο μπήκε.');
+            state.replyTo = null;
+            showReplying();
+            keepNotes(slot, post.notes);
+            toast('Το σχόλιο μπήκε.');
         } catch (err) {
             toast(explain(err), 'bad');
         } finally {
@@ -1364,7 +1471,7 @@
                     <label>Instagram handle<input data-f="handle" value="${esc(grid.handle)}" maxlength="40" placeholder="χωρίς το @"></label>
                 </div>
                 <fieldset class="row-members">
-                    <legend>Ποιοι το βλέπουν</legend>
+                    <legend>Ποιοι δουλεύουν πάνω του</legend>
                     ${members.length ? members.map(user => `
                         <label class="member">
                             <input type="checkbox" data-member="${esc(user.id)}"${grid.memberIds.includes(user.id) ? ' checked' : ''}>
@@ -1373,7 +1480,7 @@
                         : '<p class="row-none">Δεν υπάρχουν ακόμα λογαριασμοί για να μπουν.</p>'}
                 </fieldset>
                 <div class="row-foot">
-                    <small>Οι συνεργάτες αλλάζουν το grid. Οι πελάτες το βλέπουν και σχολιάζουν.</small>
+                    <small>Όποιος μπει πάνω του μπορεί να το αλλάξει. Τα σχόλια των πελατών ξεχωρίζουν και σηκώνουν ένδειξη μέχρι να απαντηθούν.</small>
                     <span class="row-buttons">
                         <button class="app-ghost" type="button" data-do="save-grid">Αποθήκευση</button>
                         <button class="app-ghost app-danger" type="button" data-do="delete-grid">Διαγραφή</button>
@@ -1404,7 +1511,7 @@
             <section class="panel">
                 <div class="panel-head">
                     <h2>Grids</h2>
-                    <p>Ένα grid ανά σελίδα Instagram. Βάλε πάνω του όποιον πρέπει να το βλέπει.</p>
+                    <p>Ένα grid ανά σελίδα Instagram. Βάλε πάνω του όποιον δουλεύει σε αυτήν.</p>
                 </div>
 
                 <form class="new-row" id="new-grid">

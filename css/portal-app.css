@@ -712,19 +712,77 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .note-who small { font-size: .68rem; color: rgba(184, 186, 194, .7); }
 .note-text { font-size: .85rem; line-height: 1.55; color: var(--text-secondary); white-space: pre-wrap; }
 
-.note-done {
-    margin-top: 8px;
-    padding: 5px 11px;
+/* An answer sits under the note it answers, indented once and no further. */
+.note.is-reply {
+    margin-left: 22px;
+    background: rgba(255, 255, 255, .025);
+}
+
+.note.is-reply::before {
+    content: "";
+    position: absolute;
+    left: -13px; top: 18px;
+    width: 9px; height: 1px;
+    background: rgba(255, 255, 255, .18);
+}
+
+.note-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+
+.note-tools button {
+    padding: 5px 10px;
     font: inherit;
-    font-size: .72rem;
+    font-size: .71rem;
     color: var(--text-secondary);
     background: rgba(255, 255, 255, .06);
     border: 1px solid rgba(255, 255, 255, .1);
     border-radius: 8px;
     cursor: pointer;
+    transition: var(--transition-smooth);
 }
 
-.note-done:hover { color: var(--text-primary); border-color: var(--border-hover); }
+.note-tools button:hover { color: var(--text-primary); border-color: var(--border-hover); }
+
+.note-edit textarea {
+    width: 100%;
+    padding: 9px 11px;
+    font: inherit;
+    font-size: .85rem;
+    line-height: 1.55;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 107, 53, .4);
+    border-radius: 10px;
+    resize: vertical;
+}
+
+.note-edit textarea:focus { outline: none; border-color: var(--accent-orange); }
+
+/* What the next comment is answering, said above the box it is typed in. */
+.note-replying {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 10px 7px 12px;
+    font-size: .74rem;
+    color: var(--text-secondary);
+    background: rgba(255, 107, 53, .1);
+    border: 1px solid rgba(255, 107, 53, .26);
+    border-radius: 10px;
+}
+
+.note-replying button {
+    padding: 0 4px;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.note-replying button:hover { color: var(--text-primary); }
 .note-none { font-size: .82rem; color: rgba(184, 186, 194, .6); }
 
 .note-form { display: grid; gap: 8px; }

@@ -12,8 +12,8 @@ const ACCOUNTS_KEY = 'portal:accounts';
 const postsKey = (gridId) => `portal:grid:${gridId}`;
 
 // Three roles, and only the first of them can change who the other two are.
-// A partner works on the grids they have been put on; a client watches their
-// own grid and writes on it, and can change nothing.
+// The other two both work on the grids they are put on; what a client says
+// about a post is marked as a client's, and that is the whole difference.
 const ROLES = ['admin', 'partner', 'client'];
 exports.ROLES = ROLES;
 
@@ -69,10 +69,11 @@ const isMember = (user, grid) =>
 
 const canView = (user, grid) => user.role === 'admin' || isMember(user, grid);
 
-// Clients comment, they do not edit. That is the whole point of the two roles:
-// the grid a client opens is the one being proposed to them.
+// Anybody put on a grid works on it, client or partner. What the two roles
+// still separate is whose voice a note is written in: a note from a client is
+// the one that raises a flag on the slot until somebody answers it.
 const canEdit = (user, grid) =>
-    user.role === 'admin' || (user.role === 'partner' && isMember(user, grid));
+    user.role === 'admin' || isMember(user, grid);
 
 exports.isMember = isMember;
 exports.canView = canView;

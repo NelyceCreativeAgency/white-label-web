@@ -117,6 +117,10 @@
                     <h3 class="post-notes-title">Σχόλια</h3>
                     <ul class="note-list" id="note-list"></ul>
                     <form class="note-form" id="note-form">
+                        <p class="note-replying" id="note-replying" hidden>
+                            <span id="note-replying-to"></span>
+                            <button type="button" id="note-replying-cancel" aria-label="Ακύρωση απάντησης">&times;</button>
+                        </p>
                         <textarea id="note-text" rows="2" maxlength="1000"
                                   placeholder="Γράψε τι θέλεις να αλλάξει."></textarea>
                         <button class="btn btn-primary note-send" type="submit">Αποστολή</button>
