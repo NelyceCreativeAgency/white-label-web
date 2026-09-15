@@ -147,7 +147,7 @@ module.exports = async (req, res) => {
         const now = new Date().toISOString();
 
         // --- the editors' actions -------------------------------------------
-        if (['save-post', 'add-post', 'set-slots', 'delete-post', 'move-post', 'resolve-note',
+        if (['save-post', 'add-post', 'set-slots', 'remove-slot', 'delete-post', 'move-post', 'resolve-note',
              'set-avatar', 'save-highlight', 'delete-highlight'].includes(action)) {
             if (!mayEdit) return res.status(403).json({ error: 'not-allowed' });
         }
@@ -217,6 +217,25 @@ module.exports = async (req, res) => {
             await accounts.writeAccounts(doc);
 
             return res.status(200).json({ slots });
+        }
+
+        // Taking a square off the grid altogether. Only an empty one: a square
+        // with a picture in it is deleted by deleting the picture, which says
+        // what is actually being thrown away.
+        if (action === 'remove-slot') {
+            const slot = slotOf(body.slot);
+            if (posts[slot]) return res.status(400).json({ error: 'not-empty' });
+
+            const shown = planOf(grid, posts);
+
+            posts.splice(slot, 1);
+            posts.push(null);
+            await accounts.writePosts(grid.id, posts);
+
+            grid.slots = Math.max(used(posts), shown - 1);
+            await accounts.writeAccounts(doc);
+
+            return res.status(200).json({ posts, slots: grid.slots });
         }
 
         if (action === 'delete-post') {

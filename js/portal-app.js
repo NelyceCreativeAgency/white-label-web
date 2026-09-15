@@ -92,6 +92,8 @@
         'last-admin': 'Πρέπει να μείνει τουλάχιστον ένας διαχειριστής.',
         'not-yourself': 'Τον δικό σου λογαριασμό δεν μπορείς να τον σβήσεις.',
         'bad-name': 'Χρειάζεται όνομα.',
+        'not-empty': 'Το κουτάκι έχει φωτογραφία. Διάγραψε πρώτα την ανάρτηση.',
+        'grid-full': 'Το grid είναι γεμάτο, 24 αναρτήσεις.',
         'not-yours': 'Μόνο όποιος έγραψε το σχόλιο μπορεί να το αλλάξει.',
         'no-such-note': 'Το σχόλιο δεν βρέθηκε.',
         'empty-note': 'Το σχόλιο δεν μπορεί να είναι κενό.',
@@ -262,11 +264,15 @@
 
             if (!cover) {
                 cells.push(editing
-                    ? `<button class="cell cell-empty${target ? ' is-target' : ''}"
-                               type="button" data-slot="${slot}" data-act="add" title="Βάλε φωτογραφία">
-                           <span class="cell-plus" aria-hidden="true">+</span>
-                           <span class="visually-hidden">Προσθήκη ανάρτησης</span>
-                       </button>`
+                    ? `<div class="cell cell-empty${target ? ' is-target' : ''}" data-slot="${slot}">
+                           <button class="cell-fill" type="button" data-act="add" title="Βάλε φωτογραφία">
+                               <span class="cell-plus" aria-hidden="true">+</span>
+                               <span class="visually-hidden">Προσθήκη ανάρτησης</span>
+                           </button>
+                           <button class="cell-x" type="button" data-act="drop-slot" title="Αφαίρεση κουτακιού">
+                               &times;<span class="visually-hidden">Αφαίρεση αυτού του κουτακιού</span>
+                           </button>
+                       </div>`
                     : `<div class="cell cell-empty is-quiet" aria-hidden="true"></div>`);
                 continue;
             }
@@ -301,9 +307,6 @@
             <button class="plan-btn" type="button" data-act="more"${planned >= SLOTS ? ' disabled' : ''}>
                 <span aria-hidden="true">+</span> Κενό κουτάκι
             </button>
-            <button class="plan-btn" type="button" data-act="less"${planned <= used() ? ' disabled' : ''}>
-                <span aria-hidden="true">&minus;</span> Ένα λιγότερο
-            </button>
             <span class="plan-count">${filled} από ${planned} θέσεις</span>
         ` : '';
     };
@@ -327,6 +330,7 @@
         const what = act ? act.dataset.act : null;
 
         if (what === 'menu') { openMenu(act, slot); return; }
+        if (what === 'drop-slot') { removeSlot(slot); return; }
         if (what === 'add') { openEditor(null, null); return; }
         if (state.posts[slot]) openViewer(slot, 0);
     });
@@ -444,7 +448,7 @@
         // dots are a button of their own, and a move already waiting to be
         // placed is finished with a tap rather than with a drag.
         const cell = event.target.closest('.cell[data-slot]');
-        if (!cell || event.target.closest('.cell-dots') || state.moving !== null) return;
+        if (!cell || event.target.closest('.cell-dots, .cell-x') || state.moving !== null) return;
 
         drag.slot = Number(cell.dataset.slot);
         drag.pointer = event.pointerId;
@@ -505,10 +509,32 @@
     }, { passive: false });
 
     $('grid-plan').addEventListener('click', (event) => {
-        const button = event.target.closest('button[data-act]');
-        if (!button || button.disabled) return;
-        setSlots(planCount() + (button.dataset.act === 'more' ? 1 : -1));
+        const button = event.target.closest('button[data-act="more"]');
+        if (button && !button.disabled) setSlots(planCount() + 1);
     });
+
+    // Takes one empty square off the grid, and what was after it moves up into
+    // the space, which is what removing something from a row looks like.
+    const removeSlot = async (slot) => {
+        busy('…');
+        try {
+            const data = await api('/api/grid', {
+                method: 'POST',
+                body: { id: state.grid.id, action: 'remove-slot', slot }
+            });
+            state.posts = data.posts;
+            state.grid.slots = data.slots;
+
+            const listed = state.grids.find(g => g.id === state.grid.id);
+            if (listed) listed.slots = data.slots;
+
+            renderGrid();
+        } catch (err) {
+            toast(explain(err), 'bad');
+        } finally {
+            busy('');
+        }
+    };
 
     // How far down the last picture reaches: the grid can never be shorter.
     const used = () => state.posts.reduce((far, post, i) => (post ? i + 1 : far), 0);

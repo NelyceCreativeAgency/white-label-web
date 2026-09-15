@@ -428,6 +428,45 @@
 /* A square that is spoken for but still empty. It stays quiet until the
    pointer is over it, so a grid being planned still reads as a grid. */
 .cell-empty { border-style: dashed; }
+
+.cell-fill {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* Takes this square off the grid. Only empty squares carry it: a square with a
+   picture in it is emptied by deleting the picture, which is a different thing
+   and says so. */
+.cell-x {
+    position: absolute;
+    z-index: 1;
+    top: 5px; right: 6px;
+    display: grid;
+    place-items: center;
+    width: 22px; height: 22px;
+    padding: 0;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--text-secondary);
+    background: rgba(10, 10, 14, .7);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 7px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .25s, color .25s;
+}
+
+.cell-empty:hover .cell-x,
+.cell-x:focus-visible { opacity: 1; }
+.cell-x:hover { color: #ff8b6b; border-color: rgba(255, 107, 53, .45); }
 .cell-empty .cell-plus { opacity: .22; transition: opacity .25s; }
 .cell-empty:hover .cell-plus { opacity: 1; }
 
@@ -626,7 +665,7 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     .hl { width: 64px; }
     .hl-ring { width: 58px; height: 58px; }
     .hl-label { max-width: 64px; }
-    .cell-dots { opacity: 1; }
+    .cell-dots, .cell-x { opacity: 1; }
 }
 
 
