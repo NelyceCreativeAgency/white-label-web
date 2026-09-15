@@ -425,17 +425,22 @@
     transition: var(--transition-smooth);
 }
 
-/* Only one empty slot asks to be used: the one after the last picture. The
-   rest are the shape of the grid, and hold their tongue until the pointer is
-   actually over them. */
-.cell-empty .cell-plus { opacity: 0; transition: opacity .25s; }
+/* A square that is spoken for but still empty. It stays quiet until the
+   pointer is over it, so a grid being planned still reads as a grid. */
+.cell-empty { border-style: dashed; }
 
-.cell-empty.is-next {
-    color: var(--accent-orange);
-    border: 1px dashed rgba(255, 107, 53, .38);
+.cell-fill {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    cursor: pointer;
 }
-
-.cell-empty.is-next .cell-plus,
+.cell-empty .cell-plus { opacity: .22; transition: opacity .25s; }
 .cell-empty:hover .cell-plus { opacity: 1; }
 
 .cell-empty:hover {
@@ -444,8 +449,45 @@
     border-color: rgba(255, 107, 53, .4);
 }
 
-.cell-empty.is-quiet { cursor: default; }
+.cell-empty.is-quiet { cursor: default; border-style: solid; }
 .cell-empty.is-quiet:hover { background: rgba(255, 255, 255, .03); border-color: rgba(255, 255, 255, .07); }
+
+/* Takes the last empty square back off the grid. */
+.cell-less {
+    position: absolute;
+    z-index: 1;
+    top: 5px; right: 6px;
+    padding: 0;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    width: 22px; height: 22px;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--text-secondary);
+    background: rgba(10, 10, 14, .7);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 7px;
+    opacity: 0;
+    transition: opacity .25s, color .25s;
+}
+
+.cell-empty:hover .cell-less { opacity: 1; }
+.cell-less:hover { color: #ff8b6b; }
+
+/* The control that adds another empty square, which is a thing you do to the
+   grid rather than a square of it, so it does not pretend to be one. */
+.cell-more {
+    display: grid;
+    place-items: center;
+    color: var(--accent-orange);
+    background: rgba(255, 107, 53, .06);
+    border: 1px dashed rgba(255, 107, 53, .38);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.cell-more:hover { background: rgba(255, 107, 53, .12); border-color: rgba(255, 107, 53, .6); }
 
 .cell-plus { font-size: 1.8rem; font-weight: var(--fw-light); line-height: 1; }
 

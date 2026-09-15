@@ -27,6 +27,7 @@ const gridOut = (grid) => ({
     handle: grid.handle || '',
     avatar: grid.avatar || null,
     highlights: Array.isArray(grid.highlights) ? grid.highlights : [],
+    slots: Number(grid.slots) || 0,
     memberIds: Array.isArray(grid.memberIds) ? grid.memberIds : [],
     createdAt: grid.createdAt || null
 });

@@ -20,6 +20,17 @@ const MAX_NOTES = 100;
 const MAX_HIGHLIGHTS = 12;
 const MAX_HIGHLIGHT_NAME = 24;
 
+// A grid nobody has planned yet shows four rows, which is what a profile shows
+// under the bio before anyone scrolls. From there the plan is whatever it has
+// been set to, posts included, and never more than the grid holds.
+const DEFAULT_SLOTS = 12;
+
+const planOf = (grid, filled) => {
+    const set = grid.slots === undefined || grid.slots === null ? DEFAULT_SLOTS : Number(grid.slots);
+    const wanted = Number.isFinite(set) ? set : DEFAULT_SLOTS;
+    return Math.max(filled, Math.min(accounts.SLOTS, wanted));
+};
+
 // Only urls this deployment's own image store handed back. Anything else would
 // let a signed-in account point a post at a picture on someone else's server.
 const BLOB_HOST = /^[a-z0-9-]+\.(public\.)?blob\.vercel-storage\.com$/i;
@@ -83,6 +94,10 @@ const summary = (grid, posts, user) => ({
     handle: grid.handle || '',
     avatar: grid.avatar || null,
     highlights: Array.isArray(grid.highlights) ? grid.highlights : [],
+    // How many squares the grid is planned to have: the posts, plus however
+    // many empty ones have been put after them to hold the place of what is
+    // still to come.
+    slots: planOf(grid, posts.filter(Boolean).length),
     filled: posts.filter(Boolean).length,
     openNotes: accounts.openNoteCount(posts),
     canEdit: accounts.canEdit(user, grid)
@@ -128,7 +143,7 @@ module.exports = async (req, res) => {
         const now = new Date().toISOString();
 
         // --- the editors' actions -------------------------------------------
-        if (['save-post', 'delete-post', 'move-post', 'resolve-note',
+        if (['save-post', 'add-post', 'set-slots', 'delete-post', 'move-post', 'resolve-note',
              'set-avatar', 'save-highlight', 'delete-highlight'].includes(action)) {
             if (!mayEdit) return res.status(403).json({ error: 'not-allowed' });
         }
@@ -155,6 +170,46 @@ module.exports = async (req, res) => {
             await forget(req, urlsOf(existing).filter(url => !kept.includes(url)));
 
             return res.status(200).json({ post: posts[slot], slot });
+        }
+
+        // A new post is the newest post, so it goes to the front and everything
+        // else moves down one, the way a profile fills up. Editing an existing
+        // one stays where it is, which is what save-post above does.
+        if (action === 'add-post') {
+            const images = cleanImages(body.images);
+            const count = posts.filter(Boolean).length;
+            if (count >= accounts.SLOTS) return res.status(400).json({ error: 'grid-full' });
+
+            posts.unshift({
+                id: accounts.newId('pst'),
+                images,
+                caption: text(body.caption, MAX_CAPTION),
+                createdAt: now,
+                updatedAt: now,
+                notes: []
+            });
+            if (posts.length > accounts.SLOTS) posts.length = accounts.SLOTS;
+
+            await accounts.writePosts(grid.id, posts);
+
+            // The plan keeps up with the grid when the grid overtakes it.
+            const slots = planOf(grid, count + 1);
+            if (slots !== grid.slots) { grid.slots = slots; await accounts.writeAccounts(doc); }
+
+            return res.status(200).json({ posts, slots });
+        }
+
+        // How many squares to show. Fewer than there are posts is not a number
+        // the grid can be, and more than it holds is not either.
+        if (action === 'set-slots') {
+            const want = Number(body.slots);
+            if (!Number.isInteger(want)) return res.status(400).json({ error: 'bad-slots' });
+
+            const slots = Math.max(posts.filter(Boolean).length, Math.min(accounts.SLOTS, want));
+            grid.slots = slots;
+            await accounts.writeAccounts(doc);
+
+            return res.status(200).json({ slots });
         }
 
         if (action === 'delete-post') {

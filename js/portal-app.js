@@ -245,16 +245,18 @@
         `;
 
         $('profile-hint').textContent = grid.canEdit
-            ? 'Το + στο τέλος βάζει την επόμενη ανάρτηση, από αρχείο ή από σύνδεσμο, μέχρι τις 24. Σύρε ένα κουτάκι για να αλλάξεις θέση, ή κράτησέ το πατημένο αν είσαι σε κινητό. Στην επεξεργασία προσθέτεις κι άλλες εικόνες για carousel.'
+            ? 'Το + στο τέλος προσθέτει κενό κουτάκι, μέχρι τα 24. Πάτα ένα κενό για να βάλεις φωτογραφία, και θα μπει πρώτη πάνω αριστερά όπως στο Instagram. Σύρε ένα κουτάκι για να αλλάξεις θέση, ή κράτησέ το πατημένο αν είσαι σε κινητό.'
             : 'Πάτα μια εικόνα για να τη δεις μεγάλη και να αφήσεις σχόλιο.';
 
         const editing = grid.canEdit;
         const cells = [];
 
-        // The grid is the posts and nothing else. No empty squares waiting to
-        // be filled in, because a profile does not show those: what is there is
-        // there, and one plus at the end says where the next one goes.
-        for (let slot = 0; slot < SLOTS; slot++) {
+        // The posts, then however many empty squares have been put after them
+        // to hold the place of what is still to come, then the control that
+        // adds another one. A grid is never shorter than its posts.
+        const planned = Math.max(Number(grid.slots) || 0, filled);
+
+        for (let slot = 0; slot < filled; slot++) {
             const post = state.posts[slot];
             if (!post) break;
 
@@ -280,13 +282,32 @@
             `);
         }
 
-        // Where the next picture goes, drawn as a square of its own so that the
-        // grid keeps its shape as it grows.
-        if (editing && filled < SLOTS) {
+        // The squares that are spoken for but still empty. Pressing one adds a
+        // post, which goes to the front like any other, and the tail of empty
+        // squares is one shorter for it.
+        for (let slot = filled; slot < planned; slot++) {
+            // Two things can be done to an empty square, so it holds two
+            // buttons rather than being one: put a picture in it, or take the
+            // square itself back off the grid.
+            cells.push(editing
+                ? `<div class="cell cell-empty" data-slot="${slot}">
+                       <button class="cell-fill" type="button" data-act="add" title="Βάλε φωτογραφία">
+                           <span class="cell-plus" aria-hidden="true">+</span>
+                           <span class="visually-hidden">Προσθήκη ανάρτησης</span>
+                       </button>
+                       ${slot === planned - 1 ? `
+                           <button class="cell-less" type="button" data-act="less" title="Αφαίρεση του κενού">
+                               &times;<span class="visually-hidden">Ένα κενό κουτάκι λιγότερο</span>
+                           </button>` : ''}
+                   </div>`
+                : `<div class="cell cell-empty is-quiet" aria-hidden="true"></div>`);
+        }
+
+        if (editing && planned < SLOTS) {
             cells.push(`
-                <button class="cell cell-empty is-next" type="button" data-slot="${filled}" data-act="add" data-picker>
+                <button class="cell cell-more" type="button" data-act="more" title="Άλλο ένα κενό κουτάκι">
                     <span class="cell-plus" aria-hidden="true">+</span>
-                    <span class="visually-hidden">Προσθήκη ανάρτησης</span>
+                    <span class="visually-hidden">Προσθήκη κενού κουτιού στο grid</span>
                 </button>`);
         }
 
@@ -313,7 +334,9 @@
         const what = act ? act.dataset.act : null;
 
         if (what === 'menu') { openMenu(act, slot); return; }
-        if (what === 'add') { openEditor(slot, null); return; }
+        if (what === 'more') { setSlots(planCount() + 1); return; }
+        if (what === 'less') { setSlots(planCount() - 1); return; }
+        if (what === 'add') { openEditor(null, null); return; }
         if (state.posts[slot]) openViewer(slot, 0);
     });
 
@@ -483,6 +506,32 @@
     document.addEventListener('touchmove', (event) => {
         if (drag.active) event.preventDefault();
     }, { passive: false });
+
+    // How many squares the grid is currently planned to have.
+    const planCount = () => Math.max(
+        Number(state.grid.slots) || 0,
+        state.posts.filter(Boolean).length
+    );
+
+    const setSlots = async (want) => {
+        busy('…');
+        try {
+            const data = await api('/api/grid', {
+                method: 'POST',
+                body: { id: state.grid.id, action: 'set-slots', slots: want }
+            });
+            state.grid.slots = data.slots;
+
+            const listed = state.grids.find(g => g.id === state.grid.id);
+            if (listed) listed.slots = data.slots;
+
+            renderGrid();
+        } catch (err) {
+            toast(explain(err), 'bad');
+        } finally {
+            busy('');
+        }
+    };
 
     const swap = async (from, to) => {
         cancelMove();
@@ -847,11 +896,14 @@
 
     const openEditor = (slot, post) => {
         state.draft = {
-            slot,
+            slot,                       // null while making a new post
             images: post ? post.images.slice() : [],
             pending: 0
         };
         $('edit-title').textContent = post ? 'Επεξεργασία ανάρτησης' : 'Νέα ανάρτηση';
+        $('edit-sub').textContent = post
+            ? 'Η πρώτη εικόνα είναι αυτή που φαίνεται στο grid. Μέχρι 10 εικόνες για carousel.'
+            : 'Μπαίνει πρώτη, πάνω αριστερά, όπως στο Instagram. Μέχρι 10 εικόνες για carousel.';
         $('edit-caption').value = post ? (post.caption || '') : '';
         sayEdit('');
         $('edit-modal').hidden = false;
@@ -1183,17 +1235,28 @@
 
         busy('Αποθήκευση…');
         try {
+            const making = draft.slot === null;
+
             const data = await api('/api/grid', {
                 method: 'POST',
                 body: {
                     id: state.grid.id,
-                    action: 'save-post',
-                    slot: draft.slot,
+                    action: making ? 'add-post' : 'save-post',
+                    slot: making ? undefined : draft.slot,
                     images: draft.images,
                     caption: $('edit-caption').value
                 }
             });
-            state.posts[draft.slot] = data.post;
+
+            // A new post arrives at the front, so the whole grid comes back
+            // rather than one square of it.
+            if (making) {
+                state.posts = data.posts;
+                state.grid.slots = data.slots;
+            } else {
+                state.posts[draft.slot] = data.post;
+            }
+
             closeEditor();
             renderGrid();
             refreshBadge();
