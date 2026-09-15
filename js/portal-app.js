@@ -91,7 +91,14 @@
         'short-password': 'Ο κωδικός θέλει τουλάχιστον 8 χαρακτήρες.',
         'last-admin': 'Πρέπει να μείνει τουλάχιστον ένας διαχειριστής.',
         'not-yourself': 'Τον δικό σου λογαριασμό δεν μπορείς να τον σβήσεις.',
-        'bad-name': 'Χρειάζεται όνομα.'
+        'bad-name': 'Χρειάζεται όνομα.',
+        'bad-link': 'Ο σύνδεσμος δεν φαίνεται σωστός.',
+        'bad-address': 'Αυτή η διεύθυνση δεν επιτρέπεται.',
+        'not-an-image': 'Ο σύνδεσμος δεν δίνει εικόνα. Αν είναι Google Drive, άνοιξε τα δικαιώματα του αρχείου σε "όποιος έχει τον σύνδεσμο".',
+        'link-too-large': 'Η εικόνα ξεπερνάει τα 4 MB. Κατέβασέ την και ανέβασέ την ως αρχείο.',
+        'link-refused': 'Η σελίδα αρνήθηκε να δώσει την εικόνα.',
+        'link-unreachable': 'Δεν άνοιξε ο σύνδεσμος.',
+        'too-many-redirects': 'Ο σύνδεσμος γυρίζει σε πολλές ανακατευθύνσεις.'
     };
 
     // Known faults get their own sentence. Anything else that arrived as a
@@ -109,7 +116,8 @@
         posts: [],      // twenty-four slots, null where empty
         viewing: null,  // { slot, index } while the viewer is open
         draft: null,    // { slot, images, caption } while the editor is open
-        moving: null    // the slot waiting to be swapped with another
+        moving: null,   // the slot waiting to be swapped with another
+        dragging: null  // the slot being carried by the mouse
     };
 
     const canEdit = () => Boolean(state.grid && state.grid.canEdit);
@@ -224,7 +232,7 @@
         `;
 
         $('profile-hint').textContent = grid.canEdit
-            ? 'Πάτα το + για να βάλεις εικόνα. Οι τρεις τελείες ανοίγουν επεξεργασία, carousel και διαγραφή.'
+            ? 'Πάτα το + για να βάλεις εικόνα, από αρχείο ή από σύνδεσμο. Σύρε ένα κουτάκι με το ποντίκι για να αλλάξεις θέση. Οι τρεις τελείες ανοίγουν επεξεργασία, carousel και διαγραφή.'
             : 'Πάτα μια εικόνα για να τη δεις μεγάλη και να αφήσεις σχόλιο.';
 
         const editing = grid.canEdit;
@@ -250,8 +258,8 @@
 
             cells.push(`
                 <div class="cell is-filled${state.moving === slot ? ' is-moving' : ''}${target ? ' is-target' : ''}"
-                     data-slot="${slot}">
-                    <img src="${esc(cover.url)}" alt="" loading="lazy" decoding="async" data-act="view">
+                     data-slot="${slot}"${editing ? ' draggable="true"' : ''}>
+                    <img src="${esc(cover.url)}" alt="" loading="lazy" decoding="async" data-act="view" draggable="false">
                     ${post.images.length > 1 ? `
                         <span class="cell-mark" title="Carousel με ${post.images.length} εικόνες" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><rect x="8" y="3" width="13" height="13" rx="2.5"/><path d="M16 19.5A2.5 2.5 0 0 1 13.5 22H5.5A2.5 2.5 0 0 1 3 19.5v-8A2.5 2.5 0 0 1 5.5 9"/></svg>
@@ -287,8 +295,59 @@
         const what = act ? act.dataset.act : null;
 
         if (what === 'menu') { openMenu(act, slot); return; }
-        if (what === 'add') { openEditor(slot, null, true); return; }
+        if (what === 'add') { openEditor(slot, null); return; }
         if (state.posts[slot]) openViewer(slot, 0);
+    });
+
+    // Dragging a post onto another swaps the two, and onto an empty slot moves
+    // it there. Nothing else on the grid shifts, so a drag is always one change
+    // and always undone by dragging back.
+    const board = $('ig-grid');
+
+    const clearDrop = () => {
+        board.querySelectorAll('.is-dragging, .is-over')
+            .forEach(cell => cell.classList.remove('is-dragging', 'is-over'));
+    };
+
+    board.addEventListener('dragstart', (event) => {
+        const cell = event.target.closest('.cell.is-filled');
+        if (!cell || !canEdit()) { event.preventDefault(); return; }
+
+        state.dragging = Number(cell.dataset.slot);
+        cell.classList.add('is-dragging');
+        event.dataTransfer.effectAllowed = 'move';
+        // Firefox starts no drag at all unless something is carried.
+        event.dataTransfer.setData('text/plain', String(state.dragging));
+    });
+
+    board.addEventListener('dragover', (event) => {
+        if (state.dragging === null) return;
+        const cell = event.target.closest('.cell');
+        if (!cell || Number(cell.dataset.slot) === state.dragging) return;
+
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        if (!cell.classList.contains('is-over')) {
+            board.querySelectorAll('.is-over').forEach(c => c.classList.remove('is-over'));
+            cell.classList.add('is-over');
+        }
+    });
+
+    board.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const cell = event.target.closest('.cell');
+        const from = state.dragging;
+        const to = cell ? Number(cell.dataset.slot) : NaN;
+
+        state.dragging = null;
+        clearDrop();
+
+        if (from !== null && Number.isInteger(to) && from !== to) swap(from, to);
+    });
+
+    board.addEventListener('dragend', () => {
+        state.dragging = null;
+        clearDrop();
     });
 
     const swap = async (from, to) => {
@@ -359,8 +418,8 @@
 
         switch (button.dataset.do) {
             case 'view': openViewer(slot, 0); break;
-            case 'edit': openEditor(slot, post, false); break;
-            case 'carousel': openEditor(slot, post, true); break;
+            case 'edit': openEditor(slot, post); break;
+            case 'carousel': openEditor(slot, post); break;
             case 'move':
                 state.moving = slot;
                 renderGrid();
@@ -532,7 +591,7 @@
     $('post-edit').addEventListener('click', () => {
         const slot = state.viewing.slot;
         closeViewer();
-        openEditor(slot, state.posts[slot], false);
+        openEditor(slot, state.posts[slot]);
     });
 
     $('post-delete').addEventListener('click', () => {
@@ -547,7 +606,7 @@
         $('edit-error').hidden = !message;
     };
 
-    const openEditor = (slot, post, pickNow) => {
+    const openEditor = (slot, post) => {
         state.draft = {
             slot,
             images: post ? post.images.slice() : [],
@@ -558,8 +617,9 @@
         sayEdit('');
         $('edit-modal').hidden = false;
         document.body.classList.add('is-locked');
+        $('edit-link').hidden = true;
+        $('edit-link-url').value = '';
         renderStrip();
-        if (pickNow) pickFiles();
     };
 
     const closeEditor = () => {
@@ -602,7 +662,7 @@
 
         const index = Number(button.dataset.index);
 
-        if (button.dataset.do === 'add') { pickFiles(); return; }
+        if (button.dataset.do === 'add') { openSourceMenu(button); return; }
 
         if (button.dataset.do === 'drop') {
             // Only dropped from the draft. What is actually deleted from the
@@ -617,6 +677,44 @@
             const [image] = state.draft.images.splice(index, 1);
             state.draft.images.unshift(image);
             renderStrip();
+        }
+    });
+
+    // Two ways in, asked as a question rather than assumed.
+    const sources = document.createElement('div');
+    sources.className = 'cell-menu source-menu';
+    sources.hidden = true;
+    sources.innerHTML = `
+        <button type="button" data-from="file">Από τον υπολογιστή</button>
+        <button type="button" data-from="link">Από σύνδεσμο</button>
+    `;
+    document.body.appendChild(sources);
+
+    const openSourceMenu = (button) => {
+        sources.hidden = false;
+        const box = button.getBoundingClientRect();
+        const left = Math.min(box.left, window.innerWidth - sources.offsetWidth - 12);
+        const top = box.bottom + sources.offsetHeight > window.innerHeight
+            ? box.top - sources.offsetHeight - 6
+            : box.bottom + 6;
+        sources.style.left = `${Math.max(12, left) + window.scrollX}px`;
+        sources.style.top = `${Math.max(12, top) + window.scrollY}px`;
+    };
+
+    sources.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-from]');
+        if (!button) return;
+        sources.hidden = true;
+
+        if (button.dataset.from === 'file') { pickFiles(); return; }
+
+        $('edit-link').hidden = false;
+        $('edit-link-url').focus();
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!sources.hidden && !sources.contains(event.target) && !event.target.closest('[data-do="add"]')) {
+            sources.hidden = true;
         }
     });
 
@@ -710,15 +808,7 @@
 
         for (const file of taking) {
             try {
-                const { blob, w, h } = await shrink(file);
-                const data = await asBase64(blob);
-                const res = await api('/api/upload', {
-                    method: 'POST',
-                    body: { grid: state.grid.id, type: 'image/jpeg', data }
-                });
-
-                if (!state.draft) return;   // the editor was closed while it uploaded
-                state.draft.images.push({ url: res.url, w, h });
+                await absorb(file);
             } catch (err) {
                 sayEdit(err.message === 'unreadable'
                     ? `Η εικόνα "${file.name}" δεν διαβάζεται. Δοκίμασε JPG ή PNG.`
@@ -730,6 +820,77 @@
                 }
             }
         }
+    });
+
+    // Shrink it, send it, and put it in the draft. Both ways in end here, so a
+    // picture from a link is stored exactly like a picture from the desktop and
+    // nothing downstream has to know the difference.
+    const absorb = async (source) => {
+        const { blob, w, h } = await shrink(source);
+        const data = await asBase64(blob);
+        const res = await api('/api/upload', {
+            method: 'POST',
+            body: { grid: state.grid.id, type: 'image/jpeg', data }
+        });
+
+        if (!state.draft) return;   // the editor was closed while it uploaded
+        state.draft.images.push({ url: res.url, w, h });
+    };
+
+    // --- a picture that lives somewhere else --------------------------------
+    // The server fetches it, because a browser cannot read back what it drew
+    // from another site, and because a Drive link is a page rather than a file.
+    const addFromLink = async () => {
+        const field = $('edit-link-url');
+        const url = field.value.trim();
+        if (!url || !state.draft) return;
+
+        if (state.draft.images.length + state.draft.pending >= MAX_IMAGES) {
+            sayEdit(`Ένα carousel παίρνει μέχρι ${MAX_IMAGES} εικόνες.`);
+            return;
+        }
+
+        sayEdit('');
+        field.disabled = true;
+        state.draft.pending++;
+        renderStrip();
+
+        try {
+            const res = await fetch('/api/link', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ grid: state.grid.id, url })
+            });
+
+            if (res.status === 401) { location.replace(LOGIN); return; }
+            if (!res.ok) {
+                const said = await res.json().catch(() => ({}));
+                throw new Error(said.error || `HTTP ${res.status}`);
+            }
+
+            await absorb(await res.blob());
+            field.value = '';
+            $('edit-link').hidden = true;
+        } catch (err) {
+            sayEdit(err.message === 'unreadable'
+                ? 'Το αρχείο στον σύνδεσμο δεν διαβάζεται σαν εικόνα.'
+                : explain(err));
+        } finally {
+            field.disabled = false;
+            if (state.draft) {
+                state.draft.pending = Math.max(0, state.draft.pending - 1);
+                renderStrip();
+            }
+        }
+    };
+
+    $('edit-link-add').addEventListener('click', addFromLink);
+
+    $('edit-link-url').addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        addFromLink();
     });
 
     $('edit-save').addEventListener('click', async () => {

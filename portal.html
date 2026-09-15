@@ -132,9 +132,15 @@
             <button class="modal-x" type="button" data-close aria-label="Κλείσιμο">&times;</button>
 
             <h2 class="modal-title" id="edit-title">Νέα ανάρτηση</h2>
-            <p class="modal-sub">Η πρώτη εικόνα είναι αυτή που φαίνεται στο grid. Μέχρι 10 εικόνες για carousel.</p>
+            <p class="modal-sub">Η πρώτη εικόνα είναι αυτή που φαίνεται στο grid. Μέχρι 10 εικόνες για carousel, από τον υπολογιστή σου ή από σύνδεσμο.</p>
 
             <div class="edit-strip" id="edit-strip"></div>
+
+            <div class="edit-link" id="edit-link" hidden>
+                <input class="edit-link-url" id="edit-link-url" type="url" inputmode="url"
+                       placeholder="Επικόλλησε σύνδεσμο εικόνας ή Google Drive">
+                <button class="app-ghost" type="button" id="edit-link-add">Προσθήκη</button>
+            </div>
 
             <label class="edit-label" for="edit-caption">Λεζάντα</label>
             <textarea class="edit-caption" id="edit-caption" rows="3" maxlength="2200"

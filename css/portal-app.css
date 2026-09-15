@@ -364,6 +364,18 @@
 .cell-dots:hover { background: rgba(10, 10, 14, .92); }
 .cell-dots svg { width: 16px; height: 16px; fill: currentColor; color: var(--text-primary); }
 
+/* A post being carried by the mouse, and the slot under it. */
+.cell.is-dragging { opacity: .35; }
+
+.cell.is-over {
+    outline: 2px solid var(--accent-orange);
+    outline-offset: -2px;
+    transform: scale(.97);
+}
+
+.cell.is-filled[draggable="true"] { cursor: grab; }
+.cell.is-filled[draggable="true"]:active { cursor: grabbing; }
+
 /* A post on its way to another slot, and the slots it may land in. */
 .cell.is-moving { outline: 2px solid var(--accent-orange); outline-offset: -2px; opacity: .55; }
 .cell.is-target { outline: 1px dashed rgba(255, 107, 53, .55); outline-offset: -2px; cursor: copy; }
@@ -381,6 +393,9 @@
     border-radius: 14px;
     box-shadow: 0 18px 44px rgba(0, 0, 0, .5);
 }
+
+/* This one opens from inside the editor, which is itself over the page. */
+.source-menu { z-index: 90; }
 
 .cell-menu button {
     display: block;
@@ -412,6 +427,25 @@
     .profile-avatar { width: 60px; height: 60px; font-size: 1.35rem; }
     .cell-dots { opacity: 1; }
 }
+
+/* A picture that lives somewhere else. Hidden until it is asked for, so the
+   editor opens as simply as it did before. */
+.edit-link { display: flex; gap: 8px; margin: -8px 0 20px; }
+
+.edit-link-url {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 13px;
+    font: inherit;
+    font-size: .85rem;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 11px;
+}
+
+.edit-link-url:focus { outline: none; border-color: var(--accent-orange); }
+.edit-link .app-ghost { flex: 0 0 auto; }
 
 /* --- panels that open over the grid -------------------------------------- */
 .modal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; }
