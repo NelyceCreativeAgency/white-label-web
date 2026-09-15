@@ -19,7 +19,7 @@
 
 .hero-home-inner {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
     column-gap: 48px;
     padding-block: clamp(110px, 17vh, 190px) clamp(64px, 10vh, 120px);
@@ -75,13 +75,22 @@ html[data-lang="el"] .hero-home .hero-title {
     }
 }
 
-/* Pushed to the far side of its column, so its right edge meets the same 40px
-   gutter the header's last button does. Left where it started it sat adrift in
-   the middle with a wide gap of nothing between it and the edge. */
+/* Held over to the right, but off the gutter rather than against it.
+
+   The width is what a row of the two buttons needs, measured off the fonts:
+   453px of button in English, 534px in Greek, whose labels are half again as
+   long. Each language is given its own ceiling so neither has to carry the
+   other's slack, and so the paragraph above keeps a sane measure. Wrapping is
+   left on underneath as the safety valve. */
 .hero-aside {
     justify-self: end;
-    max-width: 360px;
+    max-width: 480px;
+    margin-right: clamp(24px, 4vw, 80px);
     padding-bottom: 4px;
+}
+
+html[data-lang="el"] .hero-aside {
+    max-width: 560px;
 }
 
 .hero-home .hero-subtitle {
@@ -99,9 +108,16 @@ html[data-lang="el"] .hero-home .hero-title {
     margin-bottom: 0;
 }
 
-/* Below the split, the two columns stack and the headline is free to run
-   wider than the 15ch it holds to on a wide screen. */
-@media (max-width: 1080px) {
+/* Four pixels off each side against the page's own buttons, which is what
+   buys the Greek pair its row without widening the column further. */
+.hero-home .hero-actions .btn {
+    padding: 14px 26px;
+}
+
+/* The split needs room for a headline and a 480px to 560px column side by
+   side. Below that the two stack, and the headline is free to run wider than
+   the 15ch it holds to above. */
+@media (max-width: 1280px) {
     .hero-home-inner {
         grid-template-columns: minmax(0, 1fr);
         row-gap: 32px;
@@ -115,15 +131,21 @@ html[data-lang="el"] .hero-home .hero-title {
         font-size: clamp(2.1rem, 7vw, 3.6rem);
     }
 
-    /* Stacked, it follows the headline down the left instead. */
+    /* Stacked, it follows the headline down the left instead, keeping the
+       width its buttons need. */
     .hero-aside {
         justify-self: start;
-        max-width: 480px;
+        margin-right: 0;
     }
 }
 
+/* Narrow enough that the column is the screen; the Greek ceiling has to be
+   lifted by name, having been set with more weight than a bare class. */
 @media (max-width: 640px) {
-    .hero-aside { max-width: none; }
+    .hero-aside,
+    html[data-lang="el"] .hero-aside {
+        max-width: none;
+    }
 }
 
 /* The header narrows its own gutter twice on the way down (to 12px + 16px,
@@ -801,9 +823,10 @@ html[data-lang="el"] .hero-home .hero-title {
 }
 
 /* --- Buttons ---
-   Every button on this page is the same pill: a pane of glass over whatever
-   the ambient gradient is doing behind it, which is why there is a blur rather
-   than a flat fill. Hover warms it to the accent and lights it.
+   Every button on this page is the same soft-cornered rectangle: a pane of
+   glass over whatever the ambient gradient is doing behind it, which is why
+   there is a blur rather than a flat fill. Hover warms it to the accent and
+   lights it.
 
    These override style.css for the home page only, home.css being the only
    place they are loaded from; the price list, FAQ and calculator keep the
@@ -816,7 +839,7 @@ html[data-lang="el"] .hero-home .hero-title {
     gap: 10px;
     padding: 15px 30px;
     border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 999px;
+    border-radius: 10px;
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.04) 42%, rgba(255, 255, 255, 0.02) 100%);
     -webkit-backdrop-filter: blur(16px) saturate(1.5);
             backdrop-filter: blur(16px) saturate(1.5);
