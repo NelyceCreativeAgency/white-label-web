@@ -243,19 +243,15 @@
     gap: 10px;
     width: 100%;
     min-width: 0;
-    margin: -4px;
-    padding: 4px;
+    margin: 0;
+    padding: 0;
     font: inherit;
     text-align: left;
     color: inherit;
     background: none;
-    border: 1px solid transparent;
-    border-radius: 12px;
+    border: none;
     cursor: pointer;
-    transition: var(--transition-smooth);
 }
-
-.app-me-who:hover { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .1); }
 
 .app-avatar {
     position: relative;
@@ -268,7 +264,7 @@
     border-radius: 50%;
 }
 
-.app-me-text { min-width: 0; }
+.app-me-text { flex: 1; min-width: 0; }
 .app-me-text strong { display: block; font-size: .85rem; font-weight: var(--fw-medium); }
 .app-me-text small { display: block; font-size: .7rem; color: rgba(184, 186, 194, .65); }
 
