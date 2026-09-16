@@ -695,10 +695,10 @@
 .link-list li[data-link] {
     position: relative;
     display: grid;
-    grid-template-columns: 34px minmax(0, 1fr) auto;
+    grid-template-columns: 16px 34px minmax(0, 1fr) auto;
     align-items: center;
     gap: 12px;
-    padding: 11px 12px;
+    padding: 11px 12px 11px 8px;
     background: rgba(255, 255, 255, .03);
     border: 1px solid rgba(255, 255, 255, .07);
     border-radius: 13px;
@@ -707,6 +707,24 @@
     user-select: none;
     -webkit-user-select: none;
     cursor: grab;
+}
+
+/* Faint until the row is pointed at, because it is a cue rather than a
+   control: the whole row is what you actually pick up. */
+.link-grip {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    color: rgba(184, 186, 194, .35);
+    transition: color .2s;
+}
+
+.link-list li[data-link]:hover .link-grip { color: rgba(184, 186, 194, .8); }
+
+.link-grip svg {
+    width: 15px; height: 15px;
+    fill: none; stroke: currentColor; stroke-width: 1.8;
+    stroke-linecap: round;
 }
 
 /* --- carrying a link ------------------------------------------------------- */
@@ -737,7 +755,7 @@ body.is-dragging-link .link-list li[data-link] { cursor: grabbing; }
     top: 0; left: 0;
     z-index: 120;
     display: grid;
-    grid-template-columns: 34px minmax(0, 1fr);
+    grid-template-columns: 16px 34px minmax(0, 1fr);
     align-items: center;
     gap: 12px;
     padding: 11px 12px;

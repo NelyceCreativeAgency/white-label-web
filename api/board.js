@@ -22,6 +22,11 @@ const MAX_NOTE = 1200;
 const MAX_TAGS = 5;
 const MAX_TAG = 24;
 
+// What has just been thrown away, in case it was thrown away by mistake. The
+// whole record is kept, so undoing a deletion puts back the thing that was
+// deleted rather than a copy of it signed by whoever pressed undo.
+const MAX_BIN = 20;
+
 // Five highlighter tones, and the note keeps the name rather than the colour:
 // what amber looks like is the stylesheet's business, and it can be restyled
 // later without rewriting what everybody has already written.
@@ -36,8 +41,17 @@ const readBoard = async (gridId) => {
     const doc = await store.readJson(KEY(gridId));
     return {
         links: doc && Array.isArray(doc.links) ? doc.links : [],
-        notes: doc && Array.isArray(doc.notes) ? doc.notes : []
+        notes: doc && Array.isArray(doc.notes) ? doc.notes : [],
+        bin: doc && Array.isArray(doc.bin) ? doc.bin : []
     };
+};
+
+// Only what it was, where it was and who took it out. Nothing here is ever
+// taken from the request, so undo cannot be used to invent a link that some-
+// body else appears to have added.
+const bin = (board, kind, item, index, by) => {
+    board.bin.unshift({ kind, item, index, by, at: new Date().toISOString() });
+    if (board.bin.length > MAX_BIN) board.bin.length = MAX_BIN;
 };
 
 const writeBoard = async (gridId, board) => {
@@ -108,7 +122,9 @@ module.exports = async (req, res) => {
         const board = await readBoard(grid.id);
 
         if (req.method === 'GET') {
-            return res.status(200).json({ colours: COLOURS, ...board });
+            // The bin is the server's own bookkeeping, not something the page
+            // has any use for.
+            return res.status(200).json({ colours: COLOURS, links: board.links, notes: board.notes });
         }
 
         if (req.method !== 'POST') {
@@ -172,6 +188,7 @@ module.exports = async (req, res) => {
             if (!link) return res.status(404).json({ error: 'no-such-link' });
             if (!mine(link)) return res.status(403).json({ error: 'not-yours' });
 
+            bin(board, 'link', link, board.links.indexOf(link), me.id);
             board.links = board.links.filter(one => one.id !== link.id);
             await writeBoard(grid.id, board);
             return res.status(200).json({ links: board.links });
@@ -228,15 +245,34 @@ module.exports = async (req, res) => {
             if (!note) return res.status(404).json({ error: 'no-such-note' });
             if (!mine(note)) return res.status(403).json({ error: 'not-yours' });
 
+            bin(board, 'note', note, board.notes.indexOf(note), me.id);
             board.notes = board.notes.filter(one => one.id !== note.id);
             await writeBoard(grid.id, board);
             return res.status(200).json({ notes: board.notes });
         }
 
+        // Putting back what was just taken out, exactly as it was and where it
+        // was. Only by whoever took it out, or by an admin: undo is for your
+        // own slip of the hand, not for overruling somebody else's decision.
+        if (body.action === 'undo-delete') {
+            const gone = board.bin.find(one => one.item && one.item.id === body.id);
+            if (!gone) return res.status(404).json({ error: 'nothing-to-undo' });
+            if (gone.by !== me.id && me.role !== 'admin') return res.status(403).json({ error: 'not-yours' });
+
+            const into = gone.kind === 'link' ? board.links : board.notes;
+            if (into.some(one => one.id === gone.item.id)) return res.status(400).json({ error: 'nothing-to-undo' });
+
+            into.splice(Math.max(0, Math.min(into.length, gone.index)), 0, gone.item);
+            board.bin = board.bin.filter(one => one !== gone);
+
+            await writeBoard(grid.id, board);
+            return res.status(200).json({ links: board.links, notes: board.notes });
+        }
+
         return res.status(400).json({ error: 'bad-action' });
     } catch (err) {
         const known = ['bad-link', 'empty-note', 'board-full', 'not-yours',
-                       'no-such-link', 'no-such-note', 'bad-action'];
+                       'no-such-link', 'no-such-note', 'bad-action', 'nothing-to-undo'];
         const status = known.includes(err.message) ? 400 : 500;
         return res.status(status).json({ error: err.message });
     }

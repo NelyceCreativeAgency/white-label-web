@@ -156,7 +156,8 @@
         'not-on-project': 'Αυτός δεν δουλεύει σε αυτό το project.',
         'no-such-link': 'Ο σύνδεσμος δεν βρέθηκε.',
         'board-full': 'Ο πίνακας είναι γεμάτος. Σβήσε κάτι πρώτα.',
-        'bad-action': 'Αυτή η ενέργεια δεν αναγνωρίστηκε.'
+        'bad-action': 'Αυτή η ενέργεια δεν αναγνωρίστηκε.',
+        'nothing-to-undo': 'Αυτό δεν γίνεται να επανέλθει πια.'
     };
 
     // Known faults get their own sentence. Anything else that arrived as a
@@ -189,6 +190,45 @@
     };
 
     const canEdit = () => Boolean(state.grid && state.grid.canEdit);
+
+    // --- taking it back -----------------------------------------------------
+    // What this account has done in this sitting that can be undone, newest
+    // last. It lives in memory and goes when the tab does, which is right: undo
+    // is for the hand that slipped a moment ago, not a history of the project.
+    //
+    // Only what can be put back exactly goes on here. A deleted post is not on
+    // it, because its pictures are deleted from the store with it and no undo
+    // can fetch them back; saying otherwise with a shortcut that half worked
+    // would be worse than not offering it.
+    const undoable = [];
+    const MAX_UNDO = 30;
+
+    // While a step is being undone, whatever it does must not become a step of
+    // its own, or undo and redo would chase each other up the stack.
+    let undoing = false;
+
+    const keepUndo = (step) => {
+        if (undoing) return;
+        undoable.push(step);
+        if (undoable.length > MAX_UNDO) undoable.shift();
+    };
+
+    const undo = async () => {
+        const step = undoable.pop();
+        if (!step) { toast('Δεν υπάρχει κάτι να αναιρεθεί.'); return; }
+
+        // A step that was done on a grid has to be undone on that grid, which
+        // may not be the one being looked at any more.
+        if (step.gridId && (!state.grid || state.grid.id !== step.gridId)) {
+            await openGrid(step.gridId);
+            if (!state.grid || state.grid.id !== step.gridId) return;
+        }
+
+        undoing = true;
+        try { await step.run(); toast(step.what); }
+        catch (err) { toast(explain(err), 'bad'); }
+        finally { undoing = false; }
+    };
 
     // --- boot --------------------------------------------------------------
     const boot = async () => {
@@ -678,6 +718,14 @@
             });
             state.posts = data.posts;
             renderGrid();
+
+            // Two squares trading places is its own undo: doing it again puts
+            // both of them back.
+            keepUndo({
+                what: 'Η μετακίνηση αναιρέθηκε.',
+                gridId: state.grid.id,
+                run: () => move(to, from)
+            });
         } catch (err) {
             state.posts = before;
             renderGrid();
@@ -1671,7 +1719,26 @@
         });
     });
 
+    // Whether a keystroke belongs to a box somebody is typing in. Undo inside
+    // one of those is the browser's own, undoing the typing, and taking it
+    // would be maddening.
+    const typing = () => {
+        const on = document.activeElement;
+        return Boolean(on) && (on.isContentEditable
+            || ['INPUT', 'TEXTAREA', 'SELECT'].includes(on.tagName));
+    };
+
     document.addEventListener('keydown', (event) => {
+        // event.code rather than event.key, because on a Greek layout the same
+        // key says ζ and the shortcut is the key, not the letter on it.
+        if ((event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey
+            && (event.code === 'KeyZ' || String(event.key).toLowerCase() === 'z')) {
+            if (typing()) return;
+            event.preventDefault();
+            undo();
+            return;
+        }
+
         if (event.key === 'Escape') {
             if (!$('bell-panel').hidden) closeBell();
             else if (!$('picker').hidden) picker.close();
@@ -2235,6 +2302,10 @@
     // are things the whole team keeps rather than things two people say.
     const COLOURS = ['amber', 'rose', 'mint', 'sky', 'lilac'];
 
+    // Three lines, the mark every list in every app uses for "this one moves".
+    const GRIP = '<span class="link-grip" aria-hidden="true">'
+        + '<svg viewBox="0 0 24 24"><path d="M4 8h16M4 12h16M4 16h16"/></svg></span>';
+
     const LINK_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true">'
         + '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>'
         + '<path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>';
@@ -2273,6 +2344,7 @@
         $('link-list').innerHTML = wall.links.length
             ? wall.links.map(link => `
                 <li data-link="${esc(link.id)}">
+                    ${GRIP}
                     <span class="link-face" aria-hidden="true">${LINK_ICON}</span>
                     <span class="link-text">
                         <a href="${esc(link.url)}" target="_blank" rel="noopener noreferrer"
@@ -2377,6 +2449,38 @@
         body: { grid: state.chat.gridId, ...body }
     });
 
+    // Both of these name the grid they were done on rather than reading the one
+    // that happens to be open, so an undo still lands in the right place after
+    // somebody has moved on to another project.
+    const showBoard = (gridId, data) => {
+        if (state.chat.gridId !== gridId) return;
+        if (data.links) wall.links = data.links;
+        if (data.notes) wall.notes = data.notes;
+        if (wall.tag && !allTags().includes(wall.tag)) wall.tag = null;
+        renderLinks();
+        renderIdeas();
+    };
+
+    const moveLink = async (gridId, id, to) => {
+        const data = await api('/api/board', {
+            method: 'POST',
+            body: { grid: gridId, action: 'move-link', id, to }
+        });
+        showBoard(gridId, data);
+        return data;
+    };
+
+    // Putting back what was just deleted. The server kept the whole record, so
+    // what comes back is the thing itself, in its old place and still signed by
+    // whoever wrote it.
+    const undelete = async (gridId, id) => {
+        const data = await api('/api/board', {
+            method: 'POST',
+            body: { grid: gridId, action: 'undo-delete', id }
+        });
+        showBoard(gridId, data);
+    };
+
     $('link-new').addEventListener('submit', async (event) => {
         event.preventDefault();
         const form = event.target;
@@ -2397,13 +2501,14 @@
         if (!button) return;
         if (!confirm('Να αφαιρεθεί ο σύνδεσμος;')) return;
 
+        const gridId = state.chat.gridId;
+        const id = button.closest('[data-link]').dataset.link;
+
         try {
-            const data = await boardAction({
-                action: 'delete-link',
-                id: button.closest('[data-link]').dataset.link
-            });
+            const data = await boardAction({ action: 'delete-link', id });
             wall.links = data.links || [];
             renderLinks();
+            keepUndo({ what: 'Ο σύνδεσμος επανήλθε.', run: () => undelete(gridId, id) });
         } catch (err) {
             toast(explain(err), 'bad');
         }
@@ -2488,7 +2593,8 @@
         haul.ghost = document.createElement('div');
         haul.ghost.className = 'link-ghost';
         haul.ghost.style.width = `${box.width}px`;
-        haul.ghost.innerHTML = `<span class="link-face" aria-hidden="true">${LINK_ICON}</span>
+        haul.ghost.innerHTML = `${GRIP}
+                                <span class="link-face" aria-hidden="true">${LINK_ICON}</span>
                                 <span class="link-text">${row.querySelector('.link-text').innerHTML}</span>`;
         document.body.appendChild(haul.ghost);
 
@@ -2529,17 +2635,18 @@
 
         // The list is redrawn in its new order before the server has answered,
         // because a row that snaps back for a moment reads as a failed drag.
+        const gridId = state.chat.gridId;
         const [moved] = wall.links.splice(from, 1);
         wall.links.splice(to, 0, moved);
         renderLinks();
 
         try {
-            const data = await boardAction({ action: 'move-link', id, to });
-            wall.links = data.links || wall.links;
+            await moveLink(gridId, id, to);
+            keepUndo({ what: 'Η μετακίνηση αναιρέθηκε.', run: () => moveLink(gridId, id, from) });
         } catch (err) {
             toast(explain(err), 'bad');
+            renderLinks();
         }
-        renderLinks();
     };
 
     linkList.addEventListener('pointerdown', (event) => {
@@ -2665,8 +2772,10 @@
 
             if (what === 'drop-idea') {
                 if (!confirm('Να διαγραφεί το σημείωμα;')) return;
+                const gridId = state.chat.gridId;
                 const data = await boardAction({ action: 'delete-note', id });
                 wall.notes = data.notes || [];
+                keepUndo({ what: 'Το σημείωμα επανήλθε.', run: () => undelete(gridId, id) });
             }
 
             if (wall.tag && !allTags().includes(wall.tag)) wall.tag = null;
