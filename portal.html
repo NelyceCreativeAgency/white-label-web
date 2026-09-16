@@ -165,13 +165,60 @@
 
                 <p class="chat-banner" id="chat-banner"></p>
 
-                <ul class="chat-log" id="chat-log"></ul>
+                <!-- Only the project thread has these. A private conversation
+                     is a conversation and nothing else. -->
+                <div class="room-tabs" id="room-tabs" hidden role="tablist">
+                    <button type="button" data-tab="talk" role="tab">Συζήτηση</button>
+                    <button type="button" data-tab="links" role="tab">Χρήσιμα λινκς</button>
+                    <button type="button" data-tab="ideas" role="tab">Brainstorming</button>
+                </div>
 
-                <form class="chat-form" id="chat-form">
-                    <textarea id="chat-text" rows="1" maxlength="2000"
-                              placeholder="Γράψε μήνυμα"></textarea>
-                    <button class="btn btn-primary" type="submit" id="chat-send">Αποστολή</button>
-                </form>
+                <div class="room-pane" id="pane-talk">
+                    <ul class="chat-log" id="chat-log"></ul>
+
+                    <form class="chat-form" id="chat-form">
+                        <textarea id="chat-text" rows="1" maxlength="2000"
+                                  placeholder="Γράψε μήνυμα"></textarea>
+                        <button class="btn btn-primary" type="submit" id="chat-send">Αποστολή</button>
+                    </form>
+                </div>
+
+                <!-- Useful links -->
+                <div class="room-pane" id="pane-links" hidden>
+                    <form class="link-new" id="link-new">
+                        <input name="url" type="text" inputmode="url" maxlength="2000"
+                               placeholder="Διεύθυνση, π.χ. drive.google.com/…" required
+                               autocapitalize="none" spellcheck="false">
+                        <input name="title" maxlength="120" placeholder="Πώς να λέγεται (προαιρετικό)">
+                        <button class="btn btn-primary" type="submit">Προσθήκη</button>
+                    </form>
+
+                    <div class="room-scroll">
+                        <ul class="link-list" id="link-list"></ul>
+                    </div>
+                </div>
+
+                <!-- Brainstorming -->
+                <div class="room-pane" id="pane-ideas" hidden>
+                    <form class="idea-new" id="idea-new">
+                        <textarea name="text" id="idea-text" rows="2" maxlength="1200"
+                                  placeholder="Γράψε την ιδέα"></textarea>
+
+                        <div class="idea-bits">
+                            <span class="idea-colours" id="idea-colours" role="radiogroup"
+                                  aria-label="Χρώμα σημειώματος"></span>
+                            <input name="tags" id="idea-tags" maxlength="140"
+                                   placeholder="Ετικέτες, χωρισμένες με κόμμα">
+                            <button class="btn btn-primary" type="submit">Προσθήκη</button>
+                        </div>
+                    </form>
+
+                    <div class="idea-filter" id="idea-filter" hidden></div>
+
+                    <div class="room-scroll">
+                        <div class="idea-wall" id="idea-wall"></div>
+                    </div>
+                </div>
             </div>
         </section>
 

@@ -150,7 +150,13 @@
         'link-too-large': 'Η εικόνα ξεπερνάει τα 4 MB. Κατέβασέ την και ανέβασέ την ως αρχείο.',
         'link-refused': 'Η σελίδα αρνήθηκε να δώσει την εικόνα.',
         'link-unreachable': 'Δεν άνοιξε ο σύνδεσμος.',
-        'too-many-redirects': 'Ο σύνδεσμος γυρίζει σε πολλές ανακατευθύνσεις.'
+        'too-many-redirects': 'Ο σύνδεσμος γυρίζει σε πολλές ανακατευθύνσεις.',
+        'empty-message': 'Το μήνυμα δεν μπορεί να είναι κενό.',
+        'no-such-message': 'Το μήνυμα δεν βρέθηκε.',
+        'not-on-project': 'Αυτός δεν δουλεύει σε αυτό το project.',
+        'no-such-link': 'Ο σύνδεσμος δεν βρέθηκε.',
+        'board-full': 'Ο πίνακας είναι γεμάτος. Σβήσε κάτι πρώτα.',
+        'bad-action': 'Αυτή η ενέργεια δεν αναγνωρίστηκε.'
     };
 
     // Known faults get their own sentence. Anything else that arrived as a
@@ -1700,7 +1706,9 @@
         reply:  'απάντησε σε ένα σχόλιο',
         like:   'έκανε λάικ σε μια φωτογραφία',
         chat:   'έγραψε στη συζήτηση του project',
-        dm:     'σου έστειλε προσωπικό μήνυμα'
+        dm:     'σου έστειλε προσωπικό μήνυμα',
+        link:   'πρόσθεσε έναν χρήσιμο σύνδεσμο',
+        idea:   'πρόσθεσε μια ιδέα στο brainstorming'
     };
 
     // A deleted post has no picture left to show, so its line gets the same
@@ -1709,10 +1717,22 @@
         + '<rect x="3" y="3" width="18" height="18" rx="3"/>'
         + '<path d="M3 15l5-5 4 4 3-3 6 6"/></svg>';
 
-    // Neither has a picture: a message is a message.
+    // What has no picture to show gets the shape of the thing it was instead.
     const SAID_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true">'
         + '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.8-.9L3 20.5l1.5-4.6A8.4 8.4 0 0 1 3.6 12a8.4 '
         + '8.4 0 0 1 8.4-8.5h.5a8.4 8.4 0 0 1 8.5 8z"/></svg>';
+
+    const IDEA_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+        + '<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>';
+
+    const BELL_ICONS = {
+        chat: SAID_ICON,
+        dm: SAID_ICON,
+        idea: IDEA_ICON,
+        link: '<svg viewBox="0 0 24 24" aria-hidden="true">'
+            + '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>'
+            + '<path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>'
+    };
 
     const renderBell = () => {
         $('bell-dot').hidden = !state.unread;
@@ -1731,7 +1751,7 @@
                         data-event="${esc(event.id)}">
                     <span class="bell-thumb">${event.image
                         ? `<img src="${esc(event.image)}" alt="" loading="lazy" onerror="this.hidden = true">`
-                        : (event.kind === 'chat' || event.kind === 'dm' ? SAID_ICON : NO_THUMB)}</span>
+                        : BELL_ICONS[event.kind] || NO_THUMB}</span>
                     <span class="bell-said">
                         <span class="bell-what"><strong>${esc(event.actorName)}</strong> ${
                             esc(EVENT_WORDS[event.kind] || 'άλλαξε κάτι')}${
@@ -1789,9 +1809,11 @@
 
         // A message opens the conversation it was written in, on the side of it
         // that the reader belongs to.
-        if (event.kind === 'chat' || event.kind === 'dm') {
+        if (['chat', 'dm', 'link', 'idea'].includes(event.kind)) {
             if (!state.grid || state.grid.id !== event.gridId) await openGrid(event.gridId);
-            openChat(event.kind === 'dm' ? event.actorId : null);
+            await openChat(event.kind === 'dm' ? event.actorId : null);
+            if (event.kind === 'link') showTab('links');
+            if (event.kind === 'idea') showTab('ideas');
             return;
         }
 
@@ -1939,6 +1961,15 @@
             ? 'Γράψε σε όλη την ομάδα'
             : `Γράψε στον/στην ${name}`;
 
+        // Links and ideas are the project's. A private conversation has none of
+        // them, so opening one puts the talk back in front rather than leaving
+        // somebody looking at a wall of notes with a padlock over it.
+        $('room-tabs').hidden = !team;
+        if (!team && tab !== 'talk') {
+            tab = 'talk';
+            ['talk', 'links', 'ideas'].forEach(one => { $(`pane-${one}`).hidden = one !== 'talk'; });
+        }
+
         const log = $('chat-log');
 
         // Somebody who has scrolled up to read yesterday stays there. Somebody
@@ -2085,6 +2116,9 @@
         if (!gridId) { toast('Δεν υπάρχει project για συζήτηση.'); return; }
 
         state.chat.gridId = gridId;
+        // Another project's links are not this one's, so arriving at messages
+        // always arrives at the talk.
+        tab = 'talk';
         $('app-title').textContent = 'Μηνύματα';
         showView('chat');
         document.querySelectorAll('.app-nav-item').forEach(item => {
@@ -2195,6 +2229,260 @@
         openThread(state.chat.picked, { quiet: true });
         if (state.chat.picked && ticks % 3 === 0) loadChats();
     }, 15000);
+
+    // --- the project's links and its loose ideas ----------------------------
+    // Both hang off the project thread as tabs beside the talk, because both
+    // are things the whole team keeps rather than things two people say.
+    const COLOURS = ['amber', 'rose', 'mint', 'sky', 'lilac'];
+
+    const LINK_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+        + '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>'
+        + '<path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>';
+
+    const wall = { links: [], notes: [], tag: null, editing: null, colour: COLOURS[0] };
+
+    // Which of the three is showing. Only the project thread has them at all.
+    let tab = 'talk';
+
+    const showTab = (which) => {
+        tab = which;
+        ['talk', 'links', 'ideas'].forEach(one => {
+            $(`pane-${one}`).hidden = one !== which;
+        });
+        document.querySelectorAll('#room-tabs button').forEach(button => {
+            const on = button.dataset.tab === which;
+            button.classList.toggle('is-on', on);
+            button.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+
+        if (which === 'talk') renderRoom();
+        else loadBoard();
+    };
+
+    $('room-tabs').addEventListener('click', (clicked) => {
+        const button = clicked.target.closest('button[data-tab]');
+        if (button) showTab(button.dataset.tab);
+    });
+
+    const host = (url) => {
+        try { return new URL(url).hostname.replace(/^www\./, ''); }
+        catch { return url; }
+    };
+
+    const renderLinks = () => {
+        $('link-list').innerHTML = wall.links.length
+            ? wall.links.map(link => `
+                <li data-link="${esc(link.id)}">
+                    <span class="link-face" aria-hidden="true">${LINK_ICON}</span>
+                    <span class="link-text">
+                        <a href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">${esc(link.title)}</a>
+                        <small>${esc(host(link.url))} · ${esc(link.name)} · ${esc(ago(link.at))}</small>
+                    </span>
+                    ${link.userId === state.me.id || state.me.role === 'admin'
+                        ? '<button class="link-drop" type="button" data-do="drop-link">Αφαίρεση</button>'
+                        : '<span></span>'}
+                </li>`).join('')
+            : '<li class="room-none">Κανένας σύνδεσμος ακόμα. Βάλε εδώ ό,τι ψάχνει συνέχεια η ομάδα: φάκελο στο Drive, brief, ημερολόγιο.</li>';
+    };
+
+    // Every tag that anybody has written on a note, so the row of them is what
+    // the project turned out to need rather than what somebody guessed first.
+    const allTags = () => {
+        const seen = new Map();
+        wall.notes.forEach(note => (note.tags || []).forEach(tag => {
+            if (!seen.has(tag.toLowerCase())) seen.set(tag.toLowerCase(), tag);
+        }));
+        return Array.from(seen.values());
+    };
+
+    const renderIdeas = () => {
+        const tags = allTags();
+
+        $('idea-filter').hidden = !tags.length;
+        $('idea-filter').innerHTML = tags.map(tag => `
+            <button class="idea-chip${wall.tag === tag ? ' is-on' : ''}" type="button"
+                    data-tag="${esc(tag)}">${esc(tag)}</button>`).join('');
+
+        const shown = wall.tag
+            ? wall.notes.filter(note => (note.tags || []).some(tag => tag === wall.tag))
+            : wall.notes;
+
+        if (!shown.length) {
+            $('idea-wall').innerHTML = `<p class="room-none">${wall.tag
+                ? 'Καμία ιδέα με αυτή την ετικέτα.'
+                : 'Άδειος τοίχος. Γράψε την πρώτη ιδέα, διάλεξε χρώμα, και βάλε όποιες ετικέτες σου κάνουν.'}</p>`;
+            return;
+        }
+
+        $('idea-wall').innerHTML = shown.map(note => {
+            const mine = note.userId === state.me.id;
+            const editing = wall.editing === note.id;
+
+            const body = editing
+                ? `<div class="idea-edit">
+                       <textarea maxlength="1200" data-edit>${esc(note.text)}</textarea>
+                       <input maxlength="140" data-tags value="${esc((note.tags || []).join(', '))}"
+                              placeholder="Ετικέτες, χωρισμένες με κόμμα">
+                       <p class="idea-foot">
+                           <button type="button" data-do="save-idea">Αποθήκευση</button>
+                           <button type="button" data-do="cancel-idea">Ακύρωση</button>
+                       </p>
+                   </div>`
+                : `<p class="idea-said">${esc(note.text)}</p>
+                   ${(note.tags || []).length ? `<p class="idea-tags">${
+                       note.tags.map(tag => `<span class="idea-tag">${esc(tag)}</span>`).join('')}</p>` : ''}
+                   <p class="idea-foot">
+                       <span>${esc(note.name)} · ${esc(ago(note.at))}${note.editedAt ? ' · αλλαγμένο' : ''}</span>
+                       ${mine ? '<button class="idea-spacer" type="button" data-do="edit-idea">Αλλαγή</button>' : ''}
+                       ${mine || state.me.role === 'admin'
+                           ? `<button class="is-danger${mine ? '' : ' idea-spacer'}" type="button" data-do="drop-idea">Διαγραφή</button>`
+                           : ''}
+                   </p>`;
+
+            return `<article class="idea" data-idea="${esc(note.id)}"
+                             style="--tone: var(--note-${esc(COLOURS.includes(note.colour) ? note.colour : COLOURS[0])})">
+                        ${body}
+                    </article>`;
+        }).join('');
+    };
+
+    const renderSwatches = () => {
+        $('idea-colours').innerHTML = COLOURS.map(name => `
+            <button class="idea-swatch" type="button" role="radio" data-colour="${name}"
+                    aria-checked="${name === wall.colour ? 'true' : 'false'}"
+                    aria-label="Χρώμα ${name}" style="--tone: var(--note-${name})"></button>`).join('');
+    };
+
+    const loadBoard = async () => {
+        try {
+            const data = await api(`/api/board?grid=${encodeURIComponent(state.chat.gridId)}`);
+            wall.links = data.links || [];
+            wall.notes = data.notes || [];
+        } catch (err) {
+            toast(explain(err), 'bad');
+            return;
+        }
+
+        // A tag that was being filtered on and has since left the wall would
+        // otherwise hide everything behind a chip that is no longer there.
+        if (wall.tag && !allTags().includes(wall.tag)) wall.tag = null;
+
+        renderLinks();
+        renderIdeas();
+    };
+
+    const boardAction = (body) => api('/api/board', {
+        method: 'POST',
+        body: { grid: state.chat.gridId, ...body }
+    });
+
+    $('link-new').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const { url, title } = Object.fromEntries(new FormData(form).entries());
+
+        try {
+            const data = await boardAction({ action: 'add-link', url, title });
+            wall.links = data.links || [];
+            form.reset();
+            renderLinks();
+        } catch (err) {
+            toast(explain(err), 'bad');
+        }
+    });
+
+    $('link-list').addEventListener('click', async (clicked) => {
+        const button = clicked.target.closest('button[data-do="drop-link"]');
+        if (!button) return;
+        if (!confirm('Να αφαιρεθεί ο σύνδεσμος;')) return;
+
+        try {
+            const data = await boardAction({
+                action: 'delete-link',
+                id: button.closest('[data-link]').dataset.link
+            });
+            wall.links = data.links || [];
+            renderLinks();
+        } catch (err) {
+            toast(explain(err), 'bad');
+        }
+    });
+
+    $('idea-colours').addEventListener('click', (clicked) => {
+        const swatch = clicked.target.closest('[data-colour]');
+        if (!swatch) return;
+        wall.colour = swatch.dataset.colour;
+        renderSwatches();
+    });
+
+    $('idea-new').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const text = $('idea-text').value.trim();
+        if (!text) return;
+
+        try {
+            const data = await boardAction({
+                action: 'add-note',
+                text,
+                colour: wall.colour,
+                tags: $('idea-tags').value
+            });
+            wall.notes = data.notes || [];
+            $('idea-text').value = '';
+            $('idea-tags').value = '';
+            renderIdeas();
+        } catch (err) {
+            toast(explain(err), 'bad');
+        }
+    });
+
+    $('idea-filter').addEventListener('click', (clicked) => {
+        const chip = clicked.target.closest('[data-tag]');
+        if (!chip) return;
+        // Pressing the one that is already on takes the filter off.
+        wall.tag = wall.tag === chip.dataset.tag ? null : chip.dataset.tag;
+        renderIdeas();
+    });
+
+    $('idea-wall').addEventListener('click', async (clicked) => {
+        const button = clicked.target.closest('button[data-do]');
+        if (!button) return;
+
+        const card = button.closest('[data-idea]');
+        const id = card.dataset.idea;
+        const what = button.dataset.do;
+
+        if (what === 'edit-idea') { wall.editing = id; renderIdeas(); return; }
+        if (what === 'cancel-idea') { wall.editing = null; renderIdeas(); return; }
+
+        try {
+            if (what === 'save-idea') {
+                const note = wall.notes.find(one => one.id === id);
+                const data = await boardAction({
+                    action: 'edit-note',
+                    id,
+                    text: card.querySelector('[data-edit]').value,
+                    colour: note ? note.colour : wall.colour,
+                    tags: card.querySelector('[data-tags]').value
+                });
+                wall.notes = data.notes || [];
+                wall.editing = null;
+            }
+
+            if (what === 'drop-idea') {
+                if (!confirm('Να διαγραφεί το σημείωμα;')) return;
+                const data = await boardAction({ action: 'delete-note', id });
+                wall.notes = data.notes || [];
+            }
+
+            if (wall.tag && !allTags().includes(wall.tag)) wall.tag = null;
+            renderIdeas();
+        } catch (err) {
+            toast(explain(err), 'bad');
+        }
+    });
+
+    renderSwatches();
 
     // --- sidebar plumbing --------------------------------------------------
     const closeSidebar = () => {
