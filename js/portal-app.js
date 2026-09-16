@@ -1197,9 +1197,13 @@
     // back is the same sheet, smaller.
     // Every picture in a row is drawn to the same height and to its own width,
     // so each one comes out at its own shape with nothing padded around it. A
-    // row of five four-by-fives is what it was before; a square among them is
-    // a square rather than a square with grey above and below it.
-    const ROW_H = 700;
+    // square among four-by-fives is a square, not a square with grey above and
+    // below it.
+    //
+    // The height is the height these pictures are actually stored at, so a
+    // portrait one is drawn at its own pixels: bigger than this would be an
+    // enlargement, which costs a heavier file and shows no more than was there.
+    const ROW_H = 1080;
     const CELL_GAP = 22;
     const SHEET_PAD = 56;
     const SHEET_HEAD = 168;     // the name, the line under it, and air
@@ -1210,8 +1214,9 @@
     const PER_ROW = 5;
 
     // A canvas has a size past which a phone quietly refuses to hand back what
-    // was drawn on it.
-    const SHEET_AREA = 12 * 1000 * 1000;
+    // was drawn on it. Safari stops at about sixteen and a half million pixels,
+    // and this leaves room under that rather than creeping up on it.
+    const SHEET_AREA = 14 * 1000 * 1000;
 
     const INK = '#15151b';
     const FADED = '#6f7078';
@@ -1463,7 +1468,7 @@
             // comes from this deployment's own store, which allows it, so this
             // is the belt on the braces.
             const sheet = await new Promise((resolve, reject) => {
-                try { canvas.toBlob(one => one ? resolve(one) : reject(new Error('sheet-failed')), 'image/jpeg', 0.92); }
+                try { canvas.toBlob(one => one ? resolve(one) : reject(new Error('sheet-failed')), 'image/jpeg', 0.95); }
                 catch { reject(new Error('sheet-blocked')); }
             });
 
