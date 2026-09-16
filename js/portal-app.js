@@ -1845,7 +1845,7 @@
     });
 
     const setMyFace = async (url) => {
-        const data = await api('/api/me', { method: 'POST', body: { avatar: url } });
+        const data = await api('/api/session', { method: 'PATCH', body: { avatar: url } });
         state.me = data.user;
         renderMe();
 
@@ -2027,13 +2027,15 @@
     // --- still here ---------------------------------------------------------
     // Being online means having the portal open, not having it in front of you,
     // so this one goes on whether the tab is being looked at or not. It is the
-    // only thing on the page that does, which is why it asks for nothing back.
+    // only thing on the page that does.
     //
     // A browser throttles the timers of a tab that is behind another one to
     // roughly one a minute, so the window the server counts as being here is
     // wide enough to forgive a beat that ran late.
+    // A GET here says who is signed in, and saying so is what being at your
+    // screen means, so the answer is thrown away and only the asking counts.
     const stillHere = () => {
-        api('/api/presence', { method: 'POST' }).catch(() => { /* the next beat */ });
+        api('/api/session').catch(() => { /* the next beat */ });
     };
 
     // The first beat is the sign-in check itself, which stamps it on the way

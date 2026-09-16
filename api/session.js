@@ -1,12 +1,18 @@
 // POST   { username, password, role } -> signs in and sets the session cookie
 // GET                                 -> { user } so a page knows who is here
+// PATCH  { avatar: <url> | null }     -> the one thing you may change yourself
 // DELETE                              -> signs out
+//
+// Everything about the account you are signed in as lives here, which is also
+// why the portal's heartbeat is a GET to this address: it says who is here,
+// and saying so is what being here means.
 //
 // The role on the way in is only what the visitor picked on the first screen.
 // What they are actually allowed to do comes from their account, and the reply
 // says which environment to open — the choice never grants anything.
 const auth = require('./_auth');
 const accounts = require('./_accounts');
+const blob = require('./_blob');
 const presence = require('./_presence');
 const store = require('./_store');
 
@@ -58,13 +64,43 @@ module.exports = async (req, res) => {
             return res.status(200).json({ user: user ? accounts.publicUser(user) : null });
         }
 
+        // The picture on your own account, and nothing else about it. A name,
+        // a username and a role are how everybody else knows who you are, and
+        // the admin decides those in api/accounts.js. A face is yours.
+        if (req.method === 'PATCH') {
+            const doc = await accounts.readAccounts();
+            const me = await accounts.currentUser(req, doc);
+            if (!me) return res.status(401).json({ error: 'not-signed-in' });
+
+            await presence.touch(me.id);
+
+            const body = readBody(req);
+            if (!('avatar' in body)) return res.status(400).json({ error: 'bad-action' });
+            if (body.avatar && !blob.isOurImage(body.avatar)) {
+                return res.status(400).json({ error: 'bad-image' });
+            }
+
+            const was = me.avatar || null;
+            me.avatar = body.avatar ? String(body.avatar) : null;
+            await accounts.writeAccounts(doc);
+
+            // The one it replaced is nobody's picture now. If the store cannot
+            // be reached the account still has its new face: a stranded file
+            // costs storage, a failed save costs what was asked for.
+            if (was && was !== me.avatar) {
+                try { await blob.client(req).del([was]); } catch { /* litter */ }
+            }
+
+            return res.status(200).json({ user: accounts.publicUser(me) });
+        }
+
         if (req.method === 'DELETE') {
             res.setHeader('Set-Cookie', auth.clearCookie());
             return res.status(200).json({ user: null });
         }
 
         if (req.method !== 'POST') {
-            res.setHeader('Allow', 'GET, POST, DELETE');
+            res.setHeader('Allow', 'GET, POST, PATCH, DELETE');
             return res.status(405).json({ error: 'Method not allowed.' });
         }
 
