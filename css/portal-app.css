@@ -1823,6 +1823,14 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     white-space: nowrap;
 }
 
+#post-export { display: inline-flex; align-items: center; gap: 7px; }
+
+#post-export svg {
+    width: 15px; height: 15px;
+    fill: none; stroke: currentColor; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
 .post-caption {
     margin-bottom: 18px;
     padding-bottom: 18px;
@@ -1975,6 +1983,7 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .post-actions {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 8px;
     margin-top: 16px;
     padding-top: 16px;

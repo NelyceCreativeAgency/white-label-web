@@ -196,7 +196,10 @@
         'no-such-link': 'Ο σύνδεσμος δεν βρέθηκε.',
         'board-full': 'Ο πίνακας είναι γεμάτος. Σβήσε κάτι πρώτα.',
         'bad-action': 'Αυτή η ενέργεια δεν αναγνωρίστηκε.',
-        'nothing-to-undo': 'Αυτό δεν γίνεται να επανέλθει πια.'
+        'nothing-to-undo': 'Αυτό δεν γίνεται να επανέλθει πια.',
+        'sheet-unreadable': 'Μια από τις εικόνες δεν φορτώθηκε. Δοκίμασε ξανά.',
+        'sheet-blocked': 'Ο browser δεν επέτρεψε την αποθήκευση της εικόνας.',
+        'sheet-failed': 'Η εικόνα δεν φτιάχτηκε. Δοκίμασε με λιγότερες εικόνες.'
     };
 
     // Known faults get their own sentence. Anything else that arrived as a
@@ -912,7 +915,10 @@
         $('post-caption').hidden = !post.caption;
 
         renderLike(post, image);
-        $('post-actions').hidden = !canEdit();
+        // Exporting is for showing somebody the post, which anybody looking at
+        // it may want to do. Changing it is not.
+        $('post-edit').hidden = !canEdit();
+        $('post-delete').hidden = !canEdit();
         renderNotes(post, slot);
     };
 
@@ -1161,6 +1167,227 @@
         const post = state.posts[state.viewing.slot];
         state.viewing.index = (state.viewing.index + 1) % post.images.length;
         renderViewer();
+    });
+
+    // --- the post as one picture ---------------------------------------------
+    // A sheet to send somebody who has no account here: every picture of the
+    // carousel down one page, in order, with the caption under them, saved as
+    // a single JPEG.
+    //
+    // It is drawn in the browser on a canvas. Nothing is asked of the server,
+    // because the browser already has every one of these pictures on screen,
+    // and a sheet that is assembled here is a sheet that costs nothing to make
+    // and needs no endpoint of its own.
+    const SHEET_W = 1080;
+
+    // A canvas has a size past which a phone quietly refuses to hand back what
+    // was drawn on it. Ten tall pictures would go past it, so a long post is
+    // drawn narrower rather than not at all.
+    const SHEET_AREA = 12 * 1000 * 1000;
+
+    const INK = '#15151b';
+    const FADED = '#6f7078';
+    const PAPER = '#f6f5f3';
+
+    // A picture from the store, loaded in a way that lets the canvas be read
+    // back afterwards. Without the crossOrigin the drawing works and the saving
+    // does not, which is the sort of failure worth ruling out at the start.
+    const fetchImage = (url) => new Promise((resolve, reject) => {
+        const image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('sheet-unreadable'));
+        image.src = url;
+    });
+
+    const roundRect = (ctx, x, y, w, h, r) => {
+        ctx.beginPath();
+        if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    };
+
+    // Break a paragraph into lines that fit, keeping the line breaks that were
+    // typed into it: a caption is written in lines on purpose.
+    const wrap = (ctx, said, width) => {
+        const lines = [];
+
+        String(said).split('\n').forEach(paragraph => {
+            const words = paragraph.split(/\s+/).filter(Boolean);
+            if (!words.length) { lines.push(''); return; }
+
+            let line = '';
+            words.forEach(word => {
+                const tried = line ? `${line} ${word}` : word;
+                if (line && ctx.measureText(tried).width > width) { lines.push(line); line = word; }
+                else line = tried;
+            });
+            lines.push(line);
+        });
+
+        return lines;
+    };
+
+    const exportPost = async (slot) => {
+        const post = state.posts[slot];
+        if (!post) return;
+
+        busy('Ετοιμάζεται…');
+        try {
+            // A canvas writes in whatever the page has already loaded, and a
+            // sheet set in the fallback typeface is not the sheet anybody
+            // meant to send.
+            if (document.fonts && document.fonts.ready) await document.fonts.ready;
+
+            const pictures = await Promise.all(post.images.map(one => fetchImage(one.url)));
+
+            // Measure everything first, because the canvas has to be the right
+            // height before a single thing is drawn on it.
+            let width = SHEET_W;
+            const measure = () => {
+                const pad = Math.round(width * .055);
+                const inner = width - pad * 2;
+                const gap = Math.round(width * .022);
+
+                const heights = pictures.map(one => Math.round(inner * (one.naturalHeight / one.naturalWidth)));
+
+                // Room for the name, the line under it and the rule below
+                // that, before the first picture starts.
+                const head = Math.round(width * .175);
+                const body = heights.reduce((sum, h) => sum + h + gap, 0);
+
+                return { pad, inner, gap, heights, head, body };
+            };
+
+            let plan = measure();
+            const caption = (post.caption || '').trim();
+
+            // A rough guess at the caption's height is enough to decide the
+            // width; it is measured properly once the canvas exists.
+            const guess = caption ? Math.round(width * .08) + caption.length * Math.round(width * .012) : 0;
+            const rough = plan.head + plan.body + guess + plan.pad;
+
+            if (width * rough > SHEET_AREA) {
+                width = Math.max(560, Math.floor(SHEET_AREA / rough));
+                plan = measure();
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const font = (size, weight = 400) => `${weight} ${size}px Geologica, system-ui, sans-serif`;
+
+            // The caption, measured for real now that there is a context to
+            // measure it with.
+            const captionSize = Math.round(width * .028);
+            const captionStep = Math.round(captionSize * 1.55);
+            ctx.font = font(captionSize);
+            const lines = caption ? wrap(ctx, caption, plan.inner) : [];
+            const captionBox = lines.length ? Math.round(width * .03) + lines.length * captionStep : 0;
+
+            canvas.width = width;
+            canvas.height = plan.head + plan.body + captionBox + plan.pad;
+
+            ctx.fillStyle = PAPER;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // --- the head ---------------------------------------------------
+            const nameSize = Math.round(width * .042);
+            ctx.fillStyle = INK;
+            ctx.font = font(nameSize, 600);
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillText(state.grid.name, plan.pad, plan.pad + nameSize);
+
+            ctx.fillStyle = FADED;
+            ctx.font = font(Math.round(width * .026));
+            const under = [
+                state.grid.handle ? `@${state.grid.handle}` : '',
+                post.images.length > 1 ? `Carousel, ${post.images.length} εικόνες` : 'Ανάρτηση'
+            ].filter(Boolean).join('  ·  ');
+            ctx.fillText(under, plan.pad, plan.pad + nameSize + Math.round(width * .036));
+
+            ctx.fillStyle = '#ff6b35';
+            ctx.fillRect(plan.pad, plan.head - Math.round(width * .026), Math.round(width * .07), 3);
+
+            // --- the pictures -------------------------------------------------
+            let y = plan.head;
+            pictures.forEach((picture, i) => {
+                const h = plan.heights[i];
+
+                ctx.save();
+                roundRect(ctx, plan.pad, y, plan.inner, h, Math.round(width * .018));
+                ctx.clip();
+                ctx.drawImage(picture, plan.pad, y, plan.inner, h);
+                ctx.restore();
+
+                // Which one of how many, so that the order survives being sent
+                // on as a single picture.
+                if (pictures.length > 1) {
+                    const label = `${i + 1}/${pictures.length}`;
+                    const size = Math.round(width * .024);
+                    ctx.font = font(size, 500);
+
+                    const w = ctx.measureText(label).width + size * 1.4;
+                    const h2 = size * 1.9;
+                    const x = plan.pad + plan.inner - w - Math.round(width * .02);
+                    const top = y + Math.round(width * .02);
+
+                    ctx.fillStyle = 'rgba(10, 10, 14, .62)';
+                    roundRect(ctx, x, top, w, h2, h2 / 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#fff';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(label, x + size * .7, top + h2 / 2 + 1);
+                    ctx.textBaseline = 'alphabetic';
+                }
+
+                y += h + plan.gap;
+            });
+
+            // --- the caption ---------------------------------------------------
+            if (lines.length) {
+                ctx.fillStyle = INK;
+                ctx.font = font(captionSize);
+                let line = y + Math.round(width * .03) + captionSize;
+                lines.forEach(said => { ctx.fillText(said, plan.pad, line); line += captionStep; });
+            }
+
+            // toBlob refuses on a canvas that has a picture on it the page was
+            // not allowed to read. Everything here comes from this deployment's
+            // own store, which allows it, so this is the belt on the braces.
+            const sheet = await new Promise((resolve, reject) => {
+                try { canvas.toBlob(one => one ? resolve(one) : reject(new Error('sheet-failed')), 'image/jpeg', 0.92); }
+                catch { reject(new Error('sheet-blocked')); }
+            });
+
+            const name = `${state.grid.name} ${slot + 1}`
+                .normalize('NFD').replace(/[̀-ͯ]/g, '')
+                .replace(/[^a-zA-Z0-9Ͱ-Ͽ]+/g, '-')
+                .replace(/^-|-$/g, '') || 'post';
+
+            const href = URL.createObjectURL(sheet);
+            const link = document.createElement('a');
+            link.href = href;
+            link.download = `${name}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(href), 4000);
+
+            toast('Η εικόνα κατέβηκε.');
+        } catch (err) {
+            toast(explain(err), 'bad');
+        } finally {
+            busy('');
+        }
+    };
+
+    $('post-export').addEventListener('click', () => {
+        if (state.viewing) exportPost(state.viewing.slot);
     });
 
     $('post-edit').addEventListener('click', () => {
