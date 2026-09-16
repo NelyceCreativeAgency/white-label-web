@@ -88,18 +88,14 @@
     const PICK_UP = 8;
     const PUT_DOWN = 16;
 
+    // Android, and whatever else answers. An iPhone does not: a web page there
+    // has no vibration to ask for and no way round it either, and a hidden
+    // switch flipped in the hope of tapping the Taptic engine was tried here
+    // and felt by nobody. It is a knock where a knock is possible and silence
+    // where it is not, which is all a page can honestly do.
     const knock = (ms) => {
-        // Android, and the desktop browsers that answer at all.
-        if (navigator.vibrate) {
-            try { navigator.vibrate(ms); } catch { /* refused, and never mind */ }
-            return;
-        }
-
-        // An iPhone has no vibration to ask for. What it has, since 17.4, is a
-        // switch that taps when it flips, so one nobody can see is flipped and
-        // the tap is the whole of what comes of it.
-        const tap = $('haptic');
-        if (tap) { try { tap.click(); } catch { /* nothing lost */ } }
+        if (!navigator.vibrate) return;
+        try { navigator.vibrate(ms); } catch { /* refused, and never mind */ }
     };
 
     // --- faces ---------------------------------------------------------------

@@ -425,12 +425,6 @@
         </div>
     </div>
 
-    <!-- A switch nobody can see. iOS has no vibration API, but since 17.4 a
-         switch taps the Taptic engine when it flips, so flipping one out of
-         sight is the only way a web page can knock on an iPhone. It has to be
-         rendered rather than hidden, or the tap never happens. -->
-    <input type="checkbox" switch class="haptic" id="haptic" aria-hidden="true" tabindex="-1">
-
     <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" multiple hidden>
 
     <div class="toast" id="toast" hidden></div>
