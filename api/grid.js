@@ -2,13 +2,15 @@
 //
 // GET                 -> every grid this account may open, with its badge counts
 // GET  ?id=<gridId>   -> that grid and its twenty-four slots
-// POST { id, action } -> save-post | delete-post | move-post | add-note | resolve-note
+// POST { id, action } -> save-post | delete-post | move-post | add-note | resolve-note | like
 //
 // Editors are the admin and the partners put on the grid. A client sees the
 // same grid and writes on it, and that is the whole of what a client can do:
 // the note they leave is the request for a change, not the change itself.
+// Liking a picture is the one thing everybody on a grid does alike.
 const accounts = require('./_accounts');
 const blob = require('./_blob');
+const feed = require('./_feed');
 
 const MAX_IMAGES = 10;      // what a carousel holds on Instagram
 const MAX_CAPTION = 2200;   // what a caption holds on Instagram
@@ -77,6 +79,20 @@ const oneImage = (url) => {
 
 const urlsOf = (post) =>
     post && Array.isArray(post.images) ? post.images.map(img => img.url) : [];
+
+// A like is on one picture, not on the post, so a carousel carries one list per
+// picture and they are kept under the url rather than the position: reordering
+// a carousel should not hand a picture somebody else's hearts.
+const likesOf = (post) => (post && post.likes && typeof post.likes === 'object') ? post.likes : {};
+
+// What survives a post being saved again: the hearts on the pictures that are
+// still in it. A picture that has been replaced takes its hearts with it.
+const keptLikes = (post, images) => {
+    const was = likesOf(post);
+    const out = {};
+    images.forEach(img => { if (Array.isArray(was[img.url])) out[img.url] = was[img.url]; });
+    return out;
+};
 
 // A picture nobody points at any more is deleted from the store, but never at
 // the cost of the write itself: the grid is what the visitor sees, and it has
@@ -165,13 +181,21 @@ module.exports = async (req, res) => {
                 updatedAt: now,
                 // Notes belong to the conversation about the post, not to the
                 // pictures, so replacing an image never wipes what was said.
-                notes: existing && Array.isArray(existing.notes) ? existing.notes : []
+                notes: existing && Array.isArray(existing.notes) ? existing.notes : [],
+                likes: keptLikes(existing, images)
             };
 
             await accounts.writePosts(grid.id, posts);
 
             const kept = images.map(img => img.url);
             await forget(req, urlsOf(existing).filter(url => !kept.includes(url)));
+
+            await feed.push({
+                gridId: grid.id, gridName: grid.name,
+                actorId: me.id, actorName: me.name || me.username, actorRole: me.role,
+                kind: existing ? 'edit' : 'post',
+                slot, postId: posts[slot].id, image: images[0].url
+            });
 
             return res.status(200).json({ post: posts[slot], slot });
         }
@@ -193,11 +217,18 @@ module.exports = async (req, res) => {
                 caption: text(body.caption, MAX_CAPTION),
                 createdAt: now,
                 updatedAt: now,
-                notes: []
+                notes: [],
+                likes: {}
             });
             if (posts.length > accounts.SLOTS) posts.length = accounts.SLOTS;
 
             await accounts.writePosts(grid.id, posts);
+
+            await feed.push({
+                gridId: grid.id, gridName: grid.name,
+                actorId: me.id, actorName: me.name || me.username, actorRole: me.role,
+                kind: 'post', slot: 0, postId: posts[0].id, image: images[0].url
+            });
 
             // The plan keeps up with the grid when the grid overtakes it.
             const slots = planOf(grid, posts);
@@ -266,6 +297,14 @@ module.exports = async (req, res) => {
 
             await accounts.writePosts(grid.id, posts);
             await forget(req, urlsOf(gone));
+
+            // No thumbnail on this one: the picture it would show is the one
+            // being deleted from the store on the line above.
+            await feed.push({
+                gridId: grid.id, gridName: grid.name,
+                actorId: me.id, actorName: me.name || me.username, actorRole: me.role,
+                kind: 'delete', slot, postId: gone ? gone.id : null
+            });
 
             return res.status(200).json({ slot });
         }
@@ -367,6 +406,16 @@ module.exports = async (req, res) => {
             post.notes.push(note);
 
             await accounts.writePosts(grid.id, posts);
+
+            await feed.push({
+                gridId: grid.id, gridName: grid.name,
+                actorId: me.id, actorName: me.name || me.username, actorRole: me.role,
+                kind: replyTo ? 'reply' : 'note',
+                slot, postId: post.id,
+                image: (post.images[0] || {}).url || null,
+                text: feed.excerpt(said)
+            });
+
             return res.status(200).json({ slot, note });
         }
 
@@ -420,6 +469,44 @@ module.exports = async (req, res) => {
 
             await accounts.writePosts(grid.id, posts);
             return res.status(200).json({ slot, note });
+        }
+
+        // --- a heart on one picture ------------------------------------------
+        // Not on the editors' list: everybody on a grid likes the same way, and
+        // a client saying which of three pictures they like is half the reason
+        // the portal exists.
+        if (action === 'like') {
+            const slot = slotOf(body.slot);
+            const post = posts[slot];
+            if (!post) return res.status(404).json({ error: 'no-such-post' });
+
+            const index = Number(body.index);
+            const image = Number.isInteger(index) ? post.images[index] : null;
+            if (!image) return res.status(400).json({ error: 'bad-image' });
+
+            post.likes = { ...likesOf(post) };
+            const on = Array.isArray(post.likes[image.url]) ? post.likes[image.url] : [];
+            const already = on.some(like => like.userId === me.id);
+
+            // The name is written down beside the id so that the viewer can say
+            // who liked a picture without asking for the account list, which is
+            // a thing only an admin is allowed to read.
+            post.likes[image.url] = already
+                ? on.filter(like => like.userId !== me.id)
+                : on.concat({ userId: me.id, name: me.name || me.username, at: now });
+
+            await accounts.writePosts(grid.id, posts);
+
+            // Taking a heart back is not news.
+            if (!already) {
+                await feed.push({
+                    gridId: grid.id, gridName: grid.name,
+                    actorId: me.id, actorName: me.name || me.username, actorRole: me.role,
+                    kind: 'like', slot, postId: post.id, image: image.url
+                });
+            }
+
+            return res.status(200).json({ slot, likes: post.likes });
         }
 
         return res.status(400).json({ error: 'bad-action' });

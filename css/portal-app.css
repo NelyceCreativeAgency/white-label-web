@@ -211,6 +211,148 @@
 
 .app-top-status { flex: 0 0 auto; font-size: .8rem; color: var(--text-secondary); }
 
+/* --- the bell ------------------------------------------------------------ */
+/* What everybody else did on the grids you are on. Your own doing is not in
+   here: a bell that lights up at your own comment is noise. */
+.bell-wrap { position: relative; flex: 0 0 auto; }
+
+.bell {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 38px; height: 38px;
+    color: var(--text-secondary);
+    background: none;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.bell:hover,
+.bell[aria-expanded="true"] {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .06);
+    border-color: var(--border-hover);
+}
+
+.bell svg {
+    width: 18px; height: 18px;
+    fill: none; stroke: currentColor; stroke-width: 1.7;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* The light. It is the whole point of the icon, so it takes the accent colour
+   and sits proud of the corner rather than inside it. */
+.bell-dot {
+    position: absolute; top: -5px; right: -5px;
+    min-width: 18px;
+    padding: 1px 5px;
+    font-size: .68rem;
+    font-weight: var(--fw-semibold);
+    line-height: 1.45;
+    text-align: center;
+    color: var(--bg-dark);
+    background: var(--accent-orange);
+    border: 2px solid #0e0e13;
+    border-radius: 999px;
+    animation: bell-wake .45s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes bell-wake {
+    from { transform: scale(.3); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+.bell-panel {
+    position: absolute; top: calc(100% + 10px); right: 0;
+    z-index: 60;
+    width: min(360px, calc(100vw - 32px));
+    max-height: min(460px, 70vh);
+    overflow-y: auto;
+    background: rgba(20, 20, 26, .98);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 16px;
+    box-shadow: 0 26px 60px rgba(0, 0, 0, .55);
+}
+
+.bell-head {
+    position: sticky; top: 0;
+    margin: 0;
+    padding: 14px 16px 10px;
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: rgba(184, 186, 194, .65);
+    background: rgba(20, 20, 26, .98);
+}
+
+.bell-list { list-style: none; margin: 0; padding: 0 8px 8px; display: grid; gap: 2px; }
+
+.bell-item {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 10px;
+    font: inherit;
+    text-align: left;
+    color: var(--text-primary);
+    background: none;
+    border: none;
+    border-radius: 11px;
+    cursor: pointer;
+}
+
+.bell-item:hover { background: rgba(255, 255, 255, .06); }
+
+/* Unread ones carry the colour of the light that announced them. */
+.bell-item.is-new { background: rgba(255, 107, 53, .07); }
+.bell-item.is-new:hover { background: rgba(255, 107, 53, .12); }
+
+/* The picture the event is about. A like says which one of a carousel it was,
+   which is the whole reason this is a thumbnail and not a plain sentence. */
+.bell-thumb {
+    width: 38px; height: 38px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, .05);
+    border-radius: 9px;
+}
+
+.bell-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.bell-thumb svg {
+    width: 100%; height: 100%;
+    padding: 10px;
+    color: rgba(184, 186, 194, .55);
+    fill: none; stroke: currentColor; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+.bell-said { min-width: 0; }
+
+.bell-what {
+    display: block;
+    font-size: .83rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+
+.bell-what strong { font-weight: var(--fw-medium); color: var(--text-primary); }
+
+.bell-when {
+    display: block;
+    margin-top: 3px;
+    overflow: hidden;
+    font-size: .71rem;
+    color: rgba(184, 186, 194, .6);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bell-none { padding: 4px 10px 14px; font-size: .82rem; color: rgba(184, 186, 194, .6); }
+
 .app-burger {
     display: none;
     flex-direction: column;
@@ -789,6 +931,60 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     min-height: 0;
     padding: 26px 24px 20px;
     border-left: 1px solid rgba(255, 255, 255, .08);
+}
+
+/* --- the heart ------------------------------------------------------------ */
+/* One picture at a time: in a carousel each picture keeps its own, so the
+   count changes as you page through. */
+.post-like {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 16px;
+}
+
+.like-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 13px 7px 11px;
+    font: inherit;
+    font-size: .82rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.like-btn:hover { color: var(--text-primary); border-color: var(--border-hover); }
+
+.like-btn svg {
+    width: 17px; height: 17px;
+    fill: none; stroke: currentColor; stroke-width: 1.7;
+    stroke-linecap: round; stroke-linejoin: round;
+    transition: transform .3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Yours is filled in, the way a heart says so everywhere else. */
+.like-btn[aria-pressed="true"] {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, .12);
+    border-color: rgba(255, 107, 107, .35);
+}
+
+.like-btn[aria-pressed="true"] svg { fill: currentColor; transform: scale(1.08); }
+
+.like-who {
+    margin: 0;
+    overflow: hidden;
+    font-size: .76rem;
+    line-height: 1.45;
+    color: rgba(184, 186, 194, .7);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .post-caption {
@@ -1414,6 +1610,13 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
         border-radius: 0;
         border: none;
         padding: 26px 18px 20px;
+    }
+
+    .bell-panel {
+        position: fixed;
+        top: 64px; right: 12px; left: 12px;
+        width: auto;
+        max-height: calc(100dvh - 88px);
     }
 
     .modal-hl { width: 100%; padding: 26px 18px 20px; }

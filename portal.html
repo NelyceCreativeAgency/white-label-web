@@ -79,6 +79,23 @@
             </button>
             <h1 class="app-top-title" id="app-title">Portal</h1>
             <span class="app-top-status" id="app-status" aria-live="polite"></span>
+
+            <!-- What everybody else has been doing on the grids you are on -->
+            <div class="bell-wrap">
+                <button class="bell" id="bell" type="button" aria-label="Ειδοποιήσεις"
+                        aria-expanded="false" aria-controls="bell-panel">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <span class="bell-dot" id="bell-dot" hidden></span>
+                </button>
+
+                <div class="bell-panel" id="bell-panel" hidden>
+                    <p class="bell-head">Ειδοποιήσεις</p>
+                    <ul class="bell-list" id="bell-list"></ul>
+                </div>
+            </div>
         </header>
 
         <!-- The grid ------------------------------------------------------ -->
@@ -132,6 +149,16 @@
             </div>
 
             <div class="post-side">
+                <div class="post-like">
+                    <button class="like-btn" id="like-btn" type="button" aria-pressed="false">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.2l7.7-7.7 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/>
+                        </svg>
+                        <span id="like-count"></span>
+                    </button>
+                    <p class="like-who" id="like-who"></p>
+                </div>
+
                 <p class="post-caption" id="post-caption"></p>
 
                 <div class="post-notes">

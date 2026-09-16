@@ -125,7 +125,9 @@
         replyTo: null,  // the note the next comment answers
         editingNote: null,
         moving: null,   // the slot waiting to be swapped with another
-        dragging: null  // the slot being carried by the mouse
+        dragging: null, // the slot being carried by the mouse
+        feed: [],       // what everybody else has been doing
+        unread: 0       // how much of it arrived since the bell was last opened
     };
 
     const canEdit = () => Boolean(state.grid && state.grid.canEdit);
@@ -145,6 +147,7 @@
         $('app-admin-nav').hidden = state.me.role !== 'admin';
 
         await loadGrids();
+        loadFeed();
 
         // The grid that was open last time, if it is still there.
         const remembered = remember.read();
@@ -752,9 +755,71 @@
         $('post-caption').textContent = post.caption || '';
         $('post-caption').hidden = !post.caption;
 
+        renderLike(post, image);
         $('post-actions').hidden = !canEdit();
         renderNotes(post, slot);
     };
+
+    // --- the heart ----------------------------------------------------------
+    // On the picture, not on the post: paging through a carousel changes what
+    // the button is about, which is what the client is being asked anyway,
+    // namely which of these three.
+    const likesOn = (post, image) => {
+        const all = (post && post.likes) || {};
+        return Array.isArray(all[image.url]) ? all[image.url] : [];
+    };
+
+    const renderLike = (post, image) => {
+        const likes = likesOn(post, image);
+        const mine = likes.some(like => like.userId === state.me.id);
+
+        $('like-btn').setAttribute('aria-pressed', mine ? 'true' : 'false');
+        $('like-btn').setAttribute('aria-label', mine ? 'Αφαίρεση λάικ' : 'Μου αρέσει');
+        $('like-count').textContent = likes.length || '';
+
+        // Yourself first, and as "εσένα" rather than by name.
+        const names = likes
+            .slice()
+            .sort((a, b) => (a.userId === state.me.id ? -1 : b.userId === state.me.id ? 1 : 0))
+            .map(like => (like.userId === state.me.id ? 'εσένα' : like.name));
+
+        const rest = names.length - 2;
+        $('like-who').textContent =
+            !names.length ? ''
+            : mine && names.length === 1 ? 'Σου αρέσει'
+            : `Αρέσει σε ${names.slice(0, 2).join(' και ')}${rest > 0 ? ` και ${rest} ακόμα` : ''}`;
+    };
+
+    $('like-btn').addEventListener('click', async () => {
+        if (!state.viewing) return;
+        const { slot, index } = state.viewing;
+        const post = state.posts[slot];
+        const image = post && (post.images[index] || post.images[0]);
+        if (!image) return;
+
+        // The heart fills before the server has answered. It is one bit about
+        // one picture, and waiting a round trip to see it move feels broken.
+        const likes = likesOn(post, image);
+        const mine = likes.some(like => like.userId === state.me.id);
+        post.likes = { ...(post.likes || {}) };
+        post.likes[image.url] = mine
+            ? likes.filter(like => like.userId !== state.me.id)
+            : likes.concat({ userId: state.me.id, name: state.me.name, at: new Date().toISOString() });
+        renderLike(post, image);
+
+        try {
+            const data = await api('/api/grid', {
+                method: 'POST',
+                body: { id: state.grid.id, action: 'like', slot, index }
+            });
+            post.likes = data.likes || {};
+        } catch (err) {
+            toast(explain(err), 'bad');
+        }
+
+        // Whatever the server said is the truth, including when it refused.
+        if (state.viewing && state.viewing.slot === slot) renderLike(post, image);
+    });
 
     // --- the conversation about a post --------------------------------------
     // A note can be answered, changed by whoever wrote it, and taken back. A
@@ -1540,7 +1605,8 @@
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
-            if (!$('picker').hidden) picker.close();
+            if (!$('bell-panel').hidden) closeBell();
+            else if (!$('picker').hidden) picker.close();
             else if (!$('acct-modal').hidden) closeDrawer();
             else if (!$('hl-modal').hidden) closeHighlight();
             else if (!$('edit-modal').hidden) closeEditor();
@@ -1559,6 +1625,133 @@
             }
         }
     });
+
+    // --- the bell ----------------------------------------------------------
+    // What everybody else did on the grids this account is on. The server
+    // decides which events those are and leaves out this account's own, so
+    // there is nothing to filter here.
+    const EVENT_WORDS = {
+        post:   'πρόσθεσε μια ανάρτηση',
+        edit:   'άλλαξε μια ανάρτηση',
+        delete: 'διέγραψε μια ανάρτηση',
+        note:   'σχολίασε',
+        reply:  'απάντησε σε ένα σχόλιο',
+        like:   'έκανε λάικ σε μια φωτογραφία'
+    };
+
+    // A deleted post has no picture left to show, so its line gets the same
+    // outline the empty squares on the grid use.
+    const NO_THUMB = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+        + '<rect x="3" y="3" width="18" height="18" rx="3"/>'
+        + '<path d="M3 15l5-5 4 4 3-3 6 6"/></svg>';
+
+    // How long ago, in the words somebody would use out loud. Anything past a
+    // day is better said as the date, which is what when() gives.
+    const ago = (iso) => {
+        const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+        if (!Number.isFinite(seconds)) return '';
+        if (seconds < 90) return 'μόλις τώρα';
+        if (seconds < 3600) return `πριν ${Math.round(seconds / 60)}′`;
+        if (seconds < 86400) return `πριν ${Math.round(seconds / 3600)} ώρες`;
+        return when(iso);
+    };
+
+    const renderBell = () => {
+        $('bell-dot').hidden = !state.unread;
+        $('bell-dot').textContent = state.unread > 9 ? '9+' : String(state.unread || '');
+
+        const list = $('bell-list');
+
+        if (!state.feed.length) {
+            list.innerHTML = '<li class="bell-none">Τίποτα καινούριο ακόμα.</li>';
+            return;
+        }
+
+        list.innerHTML = state.feed.map((event, i) => `
+            <li>
+                <button class="bell-item${i < state.unread ? ' is-new' : ''}" type="button"
+                        data-event="${esc(event.id)}">
+                    <span class="bell-thumb">${event.image
+                        ? `<img src="${esc(event.image)}" alt="" loading="lazy" onerror="this.hidden = true">`
+                        : NO_THUMB}</span>
+                    <span class="bell-said">
+                        <span class="bell-what"><strong>${esc(event.actorName)}</strong> ${
+                            esc(EVENT_WORDS[event.kind] || 'άλλαξε κάτι')}${
+                            event.text ? `: «${esc(event.text)}»` : '.'}</span>
+                        <small class="bell-when">${esc(event.gridName)} · ${esc(ago(event.at))}</small>
+                    </span>
+                </button>
+            </li>
+        `).join('');
+    };
+
+    const loadFeed = async () => {
+        try {
+            const data = await api('/api/feed');
+            state.feed = data.events || [];
+            state.unread = data.unread || 0;
+        } catch {
+            // A bell that cannot be filled is not worth a message over the top
+            // of whatever the page is actually doing.
+            return;
+        }
+        renderBell();
+    };
+
+    const closeBell = () => {
+        $('bell-panel').hidden = true;
+        $('bell').setAttribute('aria-expanded', 'false');
+    };
+
+    $('bell').addEventListener('click', async () => {
+        if (!$('bell-panel').hidden) { closeBell(); return; }
+
+        $('bell-panel').hidden = false;
+        $('bell').setAttribute('aria-expanded', 'true');
+        renderBell();
+
+        // Opening the bell is reading it. The lines that were new keep their
+        // tint until it is closed, so what arrived is still obvious.
+        if (!state.unread) return;
+        try { await api('/api/feed', { method: 'POST', body: { action: 'seen' } }); }
+        catch { /* it will be marked read on the next opening */ }
+        state.unread = 0;
+        $('bell-dot').hidden = true;
+    });
+
+    // Clicking a line goes to the thing it is about: the right grid, the right
+    // post, and in a carousel the very picture that was liked.
+    $('bell-list').addEventListener('click', async (clicked) => {
+        const item = clicked.target.closest('.bell-item');
+        if (!item) return;
+
+        const event = state.feed.find(one => one.id === item.dataset.event);
+        if (!event) return;
+        closeBell();
+
+        if (!state.grid || state.grid.id !== event.gridId) await openGrid(event.gridId);
+        if (!state.grid || state.grid.id !== event.gridId) return;
+
+        // A post moves around the grid, so it is found by its own id first and
+        // by the square it was in only as a fallback.
+        let slot = state.posts.findIndex(post => post && post.id === event.postId);
+        if (slot < 0 && typeof event.slot === 'number' && state.posts[event.slot]) slot = event.slot;
+        if (slot < 0) { toast('Η ανάρτηση δεν υπάρχει πια.'); return; }
+
+        const images = state.posts[slot].images || [];
+        const at = event.image ? images.findIndex(img => img.url === event.image) : -1;
+        openViewer(slot, at < 0 ? 0 : at);
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!$('bell-panel').hidden && !event.target.closest('.bell-wrap')) closeBell();
+    });
+
+    // Nothing pushes from the server, so the bell asks. Once a minute while the
+    // tab is in front, and once on coming back to it, which is when somebody
+    // actually looks.
+    setInterval(() => { if (!document.hidden) loadFeed(); }, 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) loadFeed(); });
 
     // --- sidebar plumbing --------------------------------------------------
     const closeSidebar = () => {
