@@ -915,10 +915,18 @@
         $('post-caption').hidden = !post.caption;
 
         renderLike(post, image);
-        // Exporting is for showing somebody the post, which anybody looking at
-        // it may want to do. Changing it is not.
+        // The sheet is something the studio sends out, so it is the studio's:
+        // the admin and the partners working on the grid. A client reads the
+        // post and says what they think of it, and that is the whole of what
+        // this screen is for them.
+        const sends = state.me.role === 'admin' || state.me.role === 'partner';
+
+        $('post-export').hidden = !sends;
         $('post-edit').hidden = !canEdit();
         $('post-delete').hidden = !canEdit();
+
+        // With nothing left in it the row is a rule and a gap under a caption.
+        $('post-actions').hidden = !sends && !canEdit();
         renderNotes(post, slot);
     };
 
