@@ -7,6 +7,7 @@
 // says which environment to open — the choice never grants anything.
 const auth = require('./_auth');
 const accounts = require('./_accounts');
+const presence = require('./_presence');
 const store = require('./_store');
 
 // A password field on the open internet gets guessed at. Failures are counted
@@ -52,6 +53,8 @@ module.exports = async (req, res) => {
     try {
         if (req.method === 'GET') {
             const user = await accounts.currentUser(req);
+            // Loading the portal at all is arriving at it.
+            if (user) await presence.touch(user.id);
             return res.status(200).json({ user: user ? accounts.publicUser(user) : null });
         }
 

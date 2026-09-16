@@ -11,6 +11,7 @@
 const accounts = require('./_accounts');
 const blob = require('./_blob');
 const feed = require('./_feed');
+const presence = require('./_presence');
 
 const MAX_IMAGES = 10;      // what a carousel holds on Instagram
 const MAX_CAPTION = 2200;   // what a caption holds on Instagram
@@ -130,6 +131,10 @@ module.exports = async (req, res) => {
         const doc = await accounts.readAccounts();
         const me = await accounts.currentUser(req, doc);
         if (!me) return res.status(401).json({ error: 'not-signed-in' });
+
+        // Working on a grid is being at your screen. This is most of what
+        // anybody does here, so it is most of what presence is made of.
+        await presence.touch(me.id);
 
         const id = (req.query && req.query.id) || (req.method === 'POST' ? readBody(req).id : null);
 

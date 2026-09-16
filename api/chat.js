@@ -52,21 +52,21 @@ module.exports = async (req, res) => {
             // A named thread is asked for on its own. The list that goes beside
             // it is only worth building when no thread was named.
             if (other) {
-                const here = await presence.online([other.id]);
+                const here = await presence.of([other.id]);
                 return res.status(200).json({
                     kind: 'private',
                     withUser: {
                         id: other.id,
                         name: other.name || other.username,
                         role: other.role,
-                        online: here.has(other.id)
+                        ...here[other.id]
                     },
                     messages
                 });
             }
 
             const others = chat.peopleOn(doc, grid, me);
-            const here = await presence.online(others.map(user => user.id));
+            const here = await presence.of(others.map(user => user.id));
 
             const people = [];
             for (const user of others) {
@@ -75,7 +75,7 @@ module.exports = async (req, res) => {
                     id: user.id,
                     name: user.name || user.username,
                     role: user.role,
-                    online: here.has(user.id),
+                    ...here[user.id],
                     unread: chat.unreadIn(theirs, me, seen[chat.privateMark(me.id, user.id)]),
                     last: chat.tail(theirs)
                 });
@@ -90,7 +90,7 @@ module.exports = async (req, res) => {
                 people,
                 // Everybody else on the project who is at their screen. You are
                 // not counted: you can see that you are here.
-                onlineCount: here.size
+                onlineCount: others.filter(user => here[user.id].online).length
             });
         }
 

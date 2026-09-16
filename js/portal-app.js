@@ -33,6 +33,17 @@
         } catch { return ''; }
     };
 
+    // How long ago, in the words somebody would use out loud. Anything past a
+    // day is better said as the date, which is what when() gives.
+    const ago = (iso) => {
+        const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+        if (!Number.isFinite(seconds)) return '';
+        if (seconds < 90) return 'μόλις τώρα';
+        if (seconds < 3600) return `πριν ${Math.round(seconds / 60)}′`;
+        if (seconds < 86400) return `πριν ${Math.round(seconds / 3600)} ώρες`;
+        return when(iso);
+    };
+
     // Which day a run of messages belongs to, said the way somebody would say
     // it rather than as a date nobody reads.
     const dayOf = (iso) => {
@@ -73,9 +84,14 @@
     // A dot in the corner of somebody's face: green at their screen, grey
     // away. Nothing at all where there is no person to be either, which is
     // what a grid's own square is.
-    const dot = (online) => typeof online !== 'boolean' ? ''
-        : `<span class="chat-live${online ? '' : ' is-away'}"
-                 title="${online ? 'Σε σύνδεση' : 'Εκτός σύνδεσης'}"></span>`;
+    const away = (person) =>
+        person.seenAt ? `Ήταν εδώ ${ago(person.seenAt)}` : 'Δεν έχει μπει ποτέ';
+
+    const here = (person) => (person.online ? 'Σε σύνδεση' : away(person));
+
+    const dot = (person) => !person || typeof person.online !== 'boolean' ? ''
+        : `<span class="chat-live${person.online ? '' : ' is-away'}"
+                 title="${esc(here(person))}"></span>`;
 
     // --- talking to the server ------------------------------------------
     const api = async (url, { method = 'GET', body } = {}) => {
@@ -1698,17 +1714,6 @@
         + '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.8-.9L3 20.5l1.5-4.6A8.4 8.4 0 0 1 3.6 12a8.4 '
         + '8.4 0 0 1 8.4-8.5h.5a8.4 8.4 0 0 1 8.5 8z"/></svg>';
 
-    // How long ago, in the words somebody would use out loud. Anything past a
-    // day is better said as the date, which is what when() gives.
-    const ago = (iso) => {
-        const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
-        if (!Number.isFinite(seconds)) return '';
-        if (seconds < 90) return 'μόλις τώρα';
-        if (seconds < 3600) return `πριν ${Math.round(seconds / 60)}′`;
-        if (seconds < 86400) return `πριν ${Math.round(seconds / 3600)} ώρες`;
-        return when(iso);
-    };
-
     const renderBell = () => {
         $('bell-dot').hidden = !state.unread;
         $('bell-dot').textContent = state.unread > 9 ? '9+' : String(state.unread || '');
@@ -1814,6 +1819,27 @@
     setInterval(() => { if (!document.hidden) loadFeed(); }, 60000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) loadFeed(); });
 
+    // --- still here ---------------------------------------------------------
+    // Being online means having the portal open, not having it in front of you,
+    // so this one goes on whether the tab is being looked at or not. It is the
+    // only thing on the page that does, which is why it asks for nothing back.
+    //
+    // A browser throttles the timers of a tab that is behind another one to
+    // roughly one a minute, so the window the server counts as being here is
+    // wide enough to forgive a beat that ran late.
+    const stillHere = () => {
+        api('/api/presence', { method: 'POST' }).catch(() => { /* the next beat */ });
+    };
+
+    // The first beat is the sign-in check itself, which stamps it on the way
+    // past, so this one starts a beat later.
+    setInterval(stillHere, 45000);
+
+    // Coming back to the tab says it at once rather than waiting for the beat,
+    // which matters on a phone, where a tab that was put away has had its
+    // timers stopped rather than slowed.
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) stillHere(); });
+
     // --- messages ----------------------------------------------------------
     // Two conversations that must never be mistaken for one another: the
     // project thread, which everybody on the grid reads, and a private one
@@ -1866,7 +1892,7 @@
                 <button class="chat-pick${c.picked === one.id ? ' is-on' : ''}${one.unread ? ' has-new' : ''}"
                         type="button" data-thread="${esc(one.id)}">
                     <span class="chat-face">
-                        ${esc(initials(one.name))}${dot(Boolean(one.online))}
+                        ${esc(initials(one.name))}${dot(one)}
                     </span>
                     <span class="chat-pick-text">
                         <strong>${esc(one.name)}</strong>
@@ -1890,7 +1916,7 @@
         $('chat-head-face').className = `chat-head-face${team ? ' is-team' : ''}`;
         $('chat-head-face').innerHTML = team
             ? TEAM_ICON
-            : `${esc(initials(name))}${dot(live)}`;
+            : `${esc(initials(name))}${dot(person)}`;
 
         $('chat-head-name').textContent = team ? 'Όλη η ομάδα' : name;
 
@@ -1899,7 +1925,7 @@
         $('chat-head-who').className = live ? 'is-live' : '';
         $('chat-head-who').textContent = team
             ? `Συζήτηση του project ${c.gridName}${c.onlineCount ? ` · ${c.onlineCount} σε σύνδεση` : ''}`
-            : live ? 'Σε σύνδεση τώρα' : `Προσωπικό μήνυμα · ${ROLE_NAMES[person ? person.role : ''] || ''}`;
+            : person ? here(person) : 'Προσωπικό μήνυμα';
 
         // The sentence that says who is reading. It stays on screen for as long
         // as the conversation does, because forgetting which of the two you are
@@ -2249,9 +2275,9 @@
 
     const people = (count) => (count === 1 ? '1 άτομο' : `${count} άτομα`);
 
-    const line = (id, what, name, under, online) => `
+    const line = (id, what, name, under, person) => `
         <li>
-            <span class="lister-face">${esc(initials(name))}${dot(online)}</span>
+            <span class="lister-face">${esc(initials(name))}${dot(person)}</span>
             <span class="lister-who">
                 <span class="lister-name">${esc(name)}</span>
                 <span class="lister-sub">${under}</span>
@@ -2263,7 +2289,7 @@
     const renderAccounts = () => {
         const userLines = admin.users
             .map(user => line(user.id, 'user', user.name,
-                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}`, Boolean(user.online)))
+                `@${esc(user.username)} · ${ROLE_NAMES[user.role]} · ${esc(here(user))}`, user))
             .join('');
 
         const gridLines = admin.grids
