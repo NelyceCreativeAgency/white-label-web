@@ -802,7 +802,7 @@
             <button type="button" data-do="view">Προβολή</button>
             <button type="button" data-do="edit">Επεξεργασία</button>
             <button type="button" data-do="move">Μετακίνηση</button>
-            ${sends ? '<button type="button" data-do="export">Εξαγωγή</button>' : ''}
+            ${sends ? '<button type="button" data-do="export">Εξαγωγή PDF</button>' : ''}
             <button type="button" data-do="delete" class="is-danger">Διαγραφή</button>
         `;
         menu.dataset.slot = String(slot);
@@ -1267,6 +1267,85 @@
         return { x: x + (w - pw) / 2, y: y + (h - ph) / 2, w: pw, h: ph };
     };
 
+    // A PDF around a JPEG, written out by hand. A PDF is a text format with
+    // streams in it, and a JPEG is a thing a PDF can carry exactly as it stands
+    // under the name DCTDecode, so the file is the picture plus about a
+    // kilobyte of bookkeeping. No library, nothing re-encoded, nothing larger
+    // than the picture already was.
+    const PDF_LONG = 842;   // the long side of an A4 page, in points
+
+    const asPdf = async (jpeg, w, h) => {
+        const bytes = new Uint8Array(await jpeg.arrayBuffer());
+
+        // The page is the shape of the sheet, sized so it opens at something
+        // like a page rather than at something like a wall.
+        const k = PDF_LONG / Math.max(w, h);
+        const pw = Math.round(w * k);
+        const ph = Math.round(h * k);
+
+        const ascii = (said) => {
+            const out = new Uint8Array(said.length);
+            for (let i = 0; i < said.length; i += 1) out[i] = said.charCodeAt(i) & 0xff;
+            return out;
+        };
+
+        const chunks = [];
+        let length = 0;
+
+        const put = (piece) => {
+            const part = typeof piece === 'string' ? ascii(piece) : piece;
+            chunks.push(part);
+            length += part.length;
+        };
+
+        // Where each object starts, in bytes from the beginning, which is the
+        // whole of what the table at the end has to say.
+        const offsets = [];
+
+        const object = (n, head, stream) => {
+            offsets[n] = length;
+            put(`${n} 0 obj\n${head}\n`);
+            if (stream) { put('stream\n'); put(stream); put('\nendstream\n'); }
+            put('endobj\n');
+        };
+
+        // Four bytes above the ASCII range, so that anything moving this file
+        // around treats it as binary and does not helpfully rewrite its line
+        // endings.
+        put('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+
+        const draw = `q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q\n`;
+
+        object(1, '<< /Type /Catalog /Pages 2 0 R >>');
+        object(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+        object(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] `
+            + `/Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+        object(4, `<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} `
+            + `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode `
+            + `/Length ${bytes.length} >>`, bytes);
+        object(5, `<< /Length ${draw.length} >>`, draw);
+
+        const table = length;
+        let xref = 'xref\n0 6\n0000000000 65535 f \n';
+        for (let n = 1; n <= 5; n += 1) xref += `${String(offsets[n]).padStart(10, '0')} 00000 n \n`;
+
+        put(xref);
+        put(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${table}\n%%EOF\n`);
+
+        return new Blob(chunks, { type: 'application/pdf' });
+    };
+
+    const save = (file, name) => {
+        const href = URL.createObjectURL(file);
+        const link = document.createElement('a');
+        link.href = href;
+        link.download = name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(href), 4000);
+    };
+
     const exportPost = async (slot) => {
         const post = state.posts[slot];
         if (!post) return;
@@ -1371,9 +1450,10 @@
                 lines.forEach(said => { ctx.fillText(said, SHEET_PAD, line); line += captionStep; });
             }
 
-            // toBlob refuses on a canvas that has a picture on it the page was
-            // not allowed to read. Everything here comes from this deployment's
-            // own store, which allows it, so this is the belt on the braces.
+            // The page's one picture. toBlob refuses on a canvas that has
+            // something on it the page was not allowed to read; everything here
+            // comes from this deployment's own store, which allows it, so this
+            // is the belt on the braces.
             const sheet = await new Promise((resolve, reject) => {
                 try { canvas.toBlob(one => one ? resolve(one) : reject(new Error('sheet-failed')), 'image/jpeg', 0.92); }
                 catch { reject(new Error('sheet-blocked')); }
@@ -1384,16 +1464,8 @@
                 .replace(/[^a-zA-Z0-9Ͱ-Ͽ]+/g, '-')
                 .replace(/^-|-$/g, '') || 'post';
 
-            const href = URL.createObjectURL(sheet);
-            const link = document.createElement('a');
-            link.href = href;
-            link.download = `${name}.jpg`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            setTimeout(() => URL.revokeObjectURL(href), 4000);
-
-            toast('Η εικόνα κατέβηκε.');
+            save(await asPdf(sheet, canvas.width, canvas.height), `${name}.pdf`);
+            toast('Το PDF κατέβηκε.');
         } catch (err) {
             toast(explain(err), 'bad');
         } finally {
