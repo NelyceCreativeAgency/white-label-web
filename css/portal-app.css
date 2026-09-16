@@ -499,8 +499,7 @@
 }
 
 /* At their screen, or not. A dot in the corner of the face, where every
-   messenger has put one for twenty years. Nothing is drawn for somebody who is
-   away: an absence reads as away without a grey dot to explain it. */
+   messenger has put one for twenty years: green for here, grey for away. */
 .chat-live {
     position: absolute; right: -1px; bottom: -1px;
     width: 11px; height: 11px;
@@ -508,6 +507,9 @@
     border: 2px solid #15151b;
     border-radius: 50%;
 }
+
+/* Away is a fact, not a warning, so it sits back rather than forward. */
+.chat-live.is-away { background: #5c5e6a; }
 
 .chat-head-face { position: relative; }
 .chat-head-face .chat-live { border-color: #0e0e13; }

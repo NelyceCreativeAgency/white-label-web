@@ -70,10 +70,12 @@
 
     const initials = (name) => String(name || '?').trim().slice(0, 1).toUpperCase();
 
-    // Somebody at their screen, said with a dot in the corner of their face.
-    // Nothing at all is drawn for somebody who is away: an absence reads as
-    // away on its own, without a grey dot to spell it out.
-    const LIVE = '<span class="chat-live" title="Σε σύνδεση"></span>';
+    // A dot in the corner of somebody's face: green at their screen, grey
+    // away. Nothing at all where there is no person to be either, which is
+    // what a grid's own square is.
+    const dot = (online) => typeof online !== 'boolean' ? ''
+        : `<span class="chat-live${online ? '' : ' is-away'}"
+                 title="${online ? 'Σε σύνδεση' : 'Εκτός σύνδεσης'}"></span>`;
 
     // --- talking to the server ------------------------------------------
     const api = async (url, { method = 'GET', body } = {}) => {
@@ -1864,7 +1866,7 @@
                 <button class="chat-pick${c.picked === one.id ? ' is-on' : ''}${one.unread ? ' has-new' : ''}"
                         type="button" data-thread="${esc(one.id)}">
                     <span class="chat-face">
-                        ${esc(initials(one.name))}${one.online ? LIVE : ''}
+                        ${esc(initials(one.name))}${dot(Boolean(one.online))}
                     </span>
                     <span class="chat-pick-text">
                         <strong>${esc(one.name)}</strong>
@@ -1888,7 +1890,7 @@
         $('chat-head-face').className = `chat-head-face${team ? ' is-team' : ''}`;
         $('chat-head-face').innerHTML = team
             ? TEAM_ICON
-            : `${esc(initials(name))}${live ? LIVE : ''}`;
+            : `${esc(initials(name))}${dot(live)}`;
 
         $('chat-head-name').textContent = team ? 'Όλη η ομάδα' : name;
 
@@ -2249,7 +2251,7 @@
 
     const line = (id, what, name, under, online) => `
         <li>
-            <span class="lister-face">${esc(initials(name))}${online ? LIVE : ''}</span>
+            <span class="lister-face">${esc(initials(name))}${dot(online)}</span>
             <span class="lister-who">
                 <span class="lister-name">${esc(name)}</span>
                 <span class="lister-sub">${under}</span>
@@ -2261,7 +2263,7 @@
     const renderAccounts = () => {
         const userLines = admin.users
             .map(user => line(user.id, 'user', user.name,
-                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}`, user.online))
+                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}`, Boolean(user.online)))
             .join('');
 
         const gridLines = admin.grids
