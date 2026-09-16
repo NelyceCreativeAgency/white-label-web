@@ -150,6 +150,23 @@ module.exports = async (req, res) => {
             return res.status(200).json({ links: board.links });
         }
 
+        // Where a link sits in the list is a decision somebody made about which
+        // ones matter, so it is kept rather than sorted, and anybody on the
+        // project may make it: it is one list they all read.
+        if (body.action === 'move-link') {
+            const from = board.links.findIndex(one => one.id === body.id);
+            if (from < 0) return res.status(404).json({ error: 'no-such-link' });
+
+            const want = Number(body.to);
+            if (!Number.isInteger(want)) return res.status(400).json({ error: 'bad-action' });
+
+            const [link] = board.links.splice(from, 1);
+            board.links.splice(Math.max(0, Math.min(board.links.length, want)), 0, link);
+
+            await writeBoard(grid.id, board);
+            return res.status(200).json({ links: board.links });
+        }
+
         if (body.action === 'delete-link') {
             const link = board.links.find(one => one.id === body.id);
             if (!link) return res.status(404).json({ error: 'no-such-link' });

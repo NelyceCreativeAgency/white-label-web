@@ -2275,7 +2275,8 @@
                 <li data-link="${esc(link.id)}">
                     <span class="link-face" aria-hidden="true">${LINK_ICON}</span>
                     <span class="link-text">
-                        <a href="${esc(link.url)}" target="_blank" rel="noopener noreferrer">${esc(link.title)}</a>
+                        <a href="${esc(link.url)}" target="_blank" rel="noopener noreferrer"
+                           draggable="false">${esc(link.title)}</a>
                         <small>${esc(host(link.url))} · ${esc(link.name)} · ${esc(ago(link.at))}</small>
                     </span>
                     ${link.userId === state.me.id || state.me.role === 'admin'
@@ -2407,6 +2408,199 @@
             toast(explain(err), 'bad');
         }
     });
+
+    // --- carrying a link to another place in the list -----------------------
+    // The same gesture as a square on the grid, and for the same reason: the
+    // browser's own drag and drop does not exist on a touch screen. A mouse
+    // only has to move; a finger has to hold still for a moment first, so an
+    // ordinary swipe still scrolls the list.
+    //
+    // A list has an order rather than places, so a row is put between two
+    // others rather than trading with one, and the line between them says
+    // where it is going before it is let go.
+    const linkList = $('link-list');
+    const scroller = () => linkList.closest('.room-scroll');
+
+    const haul = {
+        id: null, pointer: null, touch: false,
+        x: 0, y: 0, startX: 0, startY: 0,
+        hold: null, ghost: null, active: false, moved: false
+    };
+
+    const rowAt = (x, y) => {
+        const under = document.elementFromPoint(x, y);
+        const row = under ? under.closest('.link-list li[data-link]') : null;
+        return row && row.dataset.link !== haul.id ? row : null;
+    };
+
+    const clearMarks = () => {
+        linkList.querySelectorAll('.is-before, .is-after')
+            .forEach(one => one.classList.remove('is-before', 'is-after'));
+    };
+
+    // Which gap the row is heading for: above the row under the pointer, or
+    // below it, whichever half of it the pointer is in.
+    const gap = () => {
+        const row = rowAt(haul.x, haul.y);
+        if (!row) return null;
+        const box = row.getBoundingClientRect();
+        return { row, after: haul.y > box.top + box.height / 2 };
+    };
+
+    const markGap = () => {
+        clearMarks();
+        const spot = gap();
+        if (spot) spot.row.classList.add(spot.after ? 'is-after' : 'is-before');
+    };
+
+    const placeHaul = () => {
+        if (haul.ghost) haul.ghost.style.transform = `translate(${haul.x}px, ${haul.y}px) translate(-14px, -50%)`;
+    };
+
+    // The list scrolls inside its own box rather than with the page, so this is
+    // the box that has to keep moving while a row is held near its edge.
+    let creeping = null;
+    const edgeCreep = () => {
+        if (!haul.active) { creeping = null; return; }
+
+        const box = scroller();
+        if (box) {
+            const bounds = box.getBoundingClientRect();
+            const above = haul.y - (bounds.top + 60);
+            const below = haul.y - (bounds.bottom - 60);
+            const step = above < 0 ? Math.max(-16, above / 4) : below > 0 ? Math.min(16, below / 4) : 0;
+            if (step) { box.scrollBy(0, step); markGap(); }
+        }
+
+        creeping = requestAnimationFrame(edgeCreep);
+    };
+
+    const heave = () => {
+        const row = linkList.querySelector(`li[data-link="${haul.id}"]`);
+        if (!row) return;
+
+        haul.active = true;
+        haul.moved = true;
+        row.classList.add('is-lifting');
+        document.body.classList.add('is-dragging-link');
+
+        const box = row.getBoundingClientRect();
+        haul.ghost = document.createElement('div');
+        haul.ghost.className = 'link-ghost';
+        haul.ghost.style.width = `${box.width}px`;
+        haul.ghost.innerHTML = `<span class="link-face" aria-hidden="true">${LINK_ICON}</span>
+                                <span class="link-text">${row.querySelector('.link-text').innerHTML}</span>`;
+        document.body.appendChild(haul.ghost);
+
+        placeHaul();
+        markGap();
+        if (!creeping) creeping = requestAnimationFrame(edgeCreep);
+    };
+
+    const drop = async (dropped) => {
+        clearTimeout(haul.hold);
+        if (creeping) { cancelAnimationFrame(creeping); creeping = null; }
+        if (haul.ghost) { haul.ghost.remove(); haul.ghost = null; }
+
+        document.body.classList.remove('is-dragging-link');
+        linkList.querySelectorAll('.is-lifting').forEach(one => one.classList.remove('is-lifting'));
+
+        const spot = haul.active && dropped ? gap() : null;
+        clearMarks();
+
+        const id = haul.id;
+        const wasActive = haul.active;
+
+        haul.id = null;
+        haul.pointer = null;
+        haul.active = false;
+
+        if (!wasActive || !spot) return;
+
+        const from = wall.links.findIndex(one => one.id === id);
+        const onto = wall.links.findIndex(one => one.id === spot.row.dataset.link);
+        if (from < 0 || onto < 0) return;
+
+        // Where it lands once it is no longer where it was: everything below a
+        // row that has been lifted out has already moved up one.
+        let to = spot.after ? onto + 1 : onto;
+        if (from < to) to -= 1;
+        if (to === from) return;
+
+        // The list is redrawn in its new order before the server has answered,
+        // because a row that snaps back for a moment reads as a failed drag.
+        const [moved] = wall.links.splice(from, 1);
+        wall.links.splice(to, 0, moved);
+        renderLinks();
+
+        try {
+            const data = await boardAction({ action: 'move-link', id, to });
+            wall.links = data.links || wall.links;
+        } catch (err) {
+            toast(explain(err), 'bad');
+        }
+        renderLinks();
+    };
+
+    linkList.addEventListener('pointerdown', (event) => {
+        if (event.button > 0) return;
+
+        const row = event.target.closest('li[data-link]');
+        if (!row || event.target.closest('.link-drop')) return;
+
+        haul.id = row.dataset.link;
+        haul.pointer = event.pointerId;
+        haul.touch = event.pointerType !== 'mouse';
+        haul.startX = haul.x = event.clientX;
+        haul.startY = haul.y = event.clientY;
+        haul.moved = false;
+        haul.active = false;
+
+        linkList.setPointerCapture(event.pointerId);
+        if (haul.touch) haul.hold = setTimeout(heave, HOLD_MS);
+    });
+
+    linkList.addEventListener('pointermove', (event) => {
+        if (haul.pointer !== event.pointerId) return;
+
+        haul.x = event.clientX;
+        haul.y = event.clientY;
+
+        const strayed = Math.hypot(haul.x - haul.startX, haul.y - haul.startY);
+
+        if (!haul.active) {
+            if (haul.touch) { if (strayed > TOUCH_SLOP) clearTimeout(haul.hold); }
+            else if (strayed > MOUSE_SLOP) heave();
+            return;
+        }
+
+        event.preventDefault();
+        placeHaul();
+        markGap();
+    });
+
+    linkList.addEventListener('pointerup', (event) => {
+        if (haul.pointer === event.pointerId) drop(true);
+    });
+
+    linkList.addEventListener('pointercancel', (event) => {
+        if (haul.pointer === event.pointerId) drop(false);
+    });
+
+    // A row that was carried should not also count as a click on the link it
+    // holds, which would open the site the moment it was put down.
+    linkList.addEventListener('click', (event) => {
+        if (!haul.moved) return;
+        haul.moved = false;
+        event.stopPropagation();
+        event.preventDefault();
+    }, true);
+
+    // While a finger is carrying a row, the list underneath must stop scrolling
+    // with it, and only a live touch listener may say so.
+    document.addEventListener('touchmove', (event) => {
+        if (haul.active) event.preventDefault();
+    }, { passive: false });
 
     $('idea-colours').addEventListener('click', (clicked) => {
         const swatch = clicked.target.closest('[data-colour]');

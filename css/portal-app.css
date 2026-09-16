@@ -693,6 +693,7 @@
 .link-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 
 .link-list li[data-link] {
+    position: relative;
     display: grid;
     grid-template-columns: 34px minmax(0, 1fr) auto;
     align-items: center;
@@ -701,7 +702,55 @@
     background: rgba(255, 255, 255, .03);
     border: 1px solid rgba(255, 255, 255, .07);
     border-radius: 13px;
+    /* A row is carried, not read word by word, so a drag across it should
+       never start selecting its text. */
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
 }
+
+/* --- carrying a link ------------------------------------------------------- */
+/* The same gesture as a square on the grid: a mouse only has to move, a finger
+   has to hold still first so that an ordinary swipe still scrolls. A list has
+   an order rather than places, though, so a row is put between two others
+   instead of trading with one. */
+.link-list li.is-lifting { opacity: .3; }
+
+.link-list li.is-before::before,
+.link-list li.is-after::after {
+    content: "";
+    position: absolute;
+    left: 10px; right: 10px;
+    height: 2px;
+    background: var(--accent-orange);
+    border-radius: 2px;
+}
+
+.link-list li.is-before::before { top: -5px; }
+.link-list li.is-after::after { bottom: -5px; }
+
+body.is-dragging-link,
+body.is-dragging-link .link-list li[data-link] { cursor: grabbing; }
+
+.link-ghost {
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 120;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 11px 12px;
+    pointer-events: none;
+    background: rgba(28, 28, 35, .97);
+    border: 1px solid rgba(255, 107, 53, .4);
+    border-radius: 13px;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, .55);
+    opacity: .94;
+    will-change: transform;
+}
+
+.link-ghost .link-text a { pointer-events: none; }
 
 .link-list li[data-link]:hover { border-color: rgba(255, 255, 255, .14); }
 
@@ -731,6 +780,7 @@
 }
 
 .link-text a {
+    -webkit-user-drag: none;
     font-size: .88rem;
     font-weight: var(--fw-medium);
     color: var(--text-primary);
