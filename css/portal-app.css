@@ -1825,6 +1825,9 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     position: relative;
     background: #000;
     overflow: hidden;
+    /* Up and down is the page's, side to side is the carousel's. Saying so
+       here is what lets a finger do both without the two fighting. */
+    touch-action: pan-y;
 }
 
 /* The element is the stage, edge to edge, and the picture is centred inside
@@ -1838,7 +1841,12 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     height: 100%;
     object-fit: contain;
     display: block;
+    transition: transform .28s cubic-bezier(0.25, 1, 0.5, 1);
 }
+
+/* While a finger is on it the picture goes exactly where the finger goes, and
+   the easing only comes back for the snap at the end. */
+.post-stage.is-swiping .post-image { transition: none; }
 
 .post-arrow {
     position: absolute; top: 50%;
@@ -2618,7 +2626,20 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
         max-height: 66vh;
         max-height: 66dvh;
     }
-    .post-side { border-left: none; border-top: 1px solid rgba(255, 255, 255, .08); padding: 18px 16px; }
+    /* One column that scrolls, rather than a caption of its natural height
+       above a list with its own scrollbar. A long caption was squeezing that
+       list down to nothing, and a list of nothing scrolls nowhere: from the
+       outside the panel simply refused to move. */
+    .post-side {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, .08);
+        padding: 18px 16px;
+    }
+
+    .post-notes { flex: none; }
+    .note-list { flex: none; overflow: visible; }
 
     .modal-edit,
     .modal-acct {

@@ -1171,6 +1171,81 @@
         }
     });
 
+    // --- swiping a carousel --------------------------------------------------
+    // The picture follows the finger and the next one arrives when it is let
+    // go far enough, the way a carousel works everywhere else on a phone. The
+    // stylesheet has already said that up and down belongs to the page, so a
+    // finger that means to scroll never moves the picture and the other way
+    // round.
+    const stage = $('post-stage');
+
+    const swipe = { id: null, x: 0, y: 0, dx: 0, sideways: null };
+
+    // Far enough to mean it: a fifth of the way across, and never less than a
+    // flick, so the gesture is the same on a small screen and a large one.
+    const FAR_ENOUGH = (wide) => Math.max(48, wide * 0.2);
+
+    stage.addEventListener('pointerdown', (event) => {
+        if (event.pointerType === 'mouse') return;
+
+        const post = state.viewing && state.posts[state.viewing.slot];
+        if (!post || post.images.length < 2) return;
+
+        swipe.id = event.pointerId;
+        swipe.x = event.clientX;
+        swipe.y = event.clientY;
+        swipe.dx = 0;
+        swipe.sideways = null;
+    });
+
+    stage.addEventListener('pointermove', (event) => {
+        if (swipe.id !== event.pointerId) return;
+
+        const dx = event.clientX - swipe.x;
+        const dy = event.clientY - swipe.y;
+
+        // Which way this is going is decided once, on the first few pixels,
+        // and not revisited: a swipe that wanders should not turn into a scroll
+        // halfway through.
+        if (swipe.sideways === null) {
+            if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+            swipe.sideways = Math.abs(dx) > Math.abs(dy);
+            if (swipe.sideways) stage.classList.add('is-swiping');
+        }
+
+        if (!swipe.sideways) return;
+
+        swipe.dx = dx;
+        $('post-image').style.transform = `translateX(${dx}px)`;
+    });
+
+    const letGoOfSwipe = (dropped) => {
+        if (swipe.id === null) return;
+
+        const { dx, sideways } = swipe;
+        swipe.id = null;
+        swipe.sideways = null;
+        swipe.dx = 0;
+
+        stage.classList.remove('is-swiping');
+        $('post-image').style.transform = '';
+
+        if (!sideways || !dropped) return;
+        if (Math.abs(dx) < FAR_ENOUGH(stage.getBoundingClientRect().width)) return;
+
+        // The arrows already know how to wrap round the ends of a carousel.
+        if (dx < 0) $('post-next').click();
+        else $('post-prev').click();
+    };
+
+    stage.addEventListener('pointerup', (event) => {
+        if (swipe.id === event.pointerId) letGoOfSwipe(true);
+    });
+
+    stage.addEventListener('pointercancel', (event) => {
+        if (swipe.id === event.pointerId) letGoOfSwipe(false);
+    });
+
     $('post-prev').addEventListener('click', () => {
         const post = state.posts[state.viewing.slot];
         state.viewing.index = (state.viewing.index - 1 + post.images.length) % post.images.length;
