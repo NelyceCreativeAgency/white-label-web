@@ -97,8 +97,6 @@
     width: 32px; height: 32px;
     font-size: .82rem;
     font-weight: var(--fw-semibold);
-    color: var(--bg-dark);
-    background: linear-gradient(135deg, var(--accent-amber), var(--accent-orange));
     border-radius: 11px;
 }
 
@@ -165,16 +163,56 @@
     border-top: 1px solid rgba(255, 255, 255, .07);
 }
 
-.app-me-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* --- faces ---------------------------------------------------------------- */
+/* A picture of somebody, or the initial that stands in for one. The colour
+   behind an initial comes from the account's own id, so the same person is the
+   same colour on every screen and a list of five reads as five people rather
+   than five oranges. A picture takes the corners of whatever it sits in
+   without clipping it, so the dot that says whether they are online still
+   shows outside the edge. */
+.app-avatar,
+.chat-face,
+.chat-head-face,
+.lister-face,
+.app-nav-dot {
+    color: rgb(var(--face, 255, 255, 255));
+    background: rgba(var(--face, 255, 255, 255), .16);
+}
+
+.has-photo img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: inherit;
+}
+
+.app-me-who {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    margin: -4px;
+    padding: 4px;
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.app-me-who:hover { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .1); }
 
 .app-avatar {
+    position: relative;
     display: grid;
     place-items: center;
+    flex: 0 0 auto;
     width: 34px; height: 34px;
     font-size: .85rem;
     font-weight: var(--fw-semibold);
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, .08);
     border-radius: 50%;
 }
 
@@ -479,8 +517,6 @@
     width: 38px; height: 38px;
     font-size: .85rem;
     font-weight: var(--fw-medium);
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, .08);
     border-radius: 50%;
 }
 
@@ -489,6 +525,27 @@
     background: linear-gradient(135deg, var(--accent-amber), var(--accent-orange));
     border-radius: 13px;
 }
+
+/* --- setting a face ------------------------------------------------------- */
+.face-edit { display: flex; align-items: center; gap: 18px; margin: 6px 0 4px; }
+
+.face-big {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 84px; height: 84px;
+    font-size: 1.9rem;
+    font-weight: var(--fw-semibold);
+    color: rgb(var(--face, 255, 255, 255));
+    background: rgba(var(--face, 255, 255, 255), .16);
+    border-radius: 50%;
+}
+
+.face-acts { display: flex; flex-direction: column; align-items: flex-start; gap: 9px; }
+.face-acts .btn { padding: 10px 18px; font-size: .84rem; }
+
+.modal-me { width: min(480px, 94vw); padding: 30px 28px 24px; }
 
 .chat-face { position: relative; }
 
@@ -580,8 +637,6 @@
     width: 36px; height: 36px;
     font-size: .85rem;
     font-weight: var(--fw-medium);
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, .08);
     border-radius: 50%;
 }
 
@@ -2115,8 +2170,6 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     width: 34px; height: 34px;
     font-size: .85rem;
     font-weight: var(--fw-medium);
-    color: var(--accent-orange);
-    background: rgba(255, 107, 53, .12);
     border-radius: 50%;
 }
 

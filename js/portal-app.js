@@ -81,6 +81,45 @@
 
     const initials = (name) => String(name || '?').trim().slice(0, 1).toUpperCase();
 
+    // --- faces ---------------------------------------------------------------
+    // Eight tones, and which one somebody gets is worked out from their own id,
+    // so it never changes and it is never stored. A list of five accounts is
+    // five colours, which is the whole point: a column of identical orange
+    // circles tells you nothing about who is who.
+    const TONES = [
+        '232, 137, 74', '224, 100, 138', '91, 185, 140', '91, 159, 224',
+        '160, 122, 224', '217, 164, 65', '79, 182, 182', '196, 116, 96'
+    ];
+
+    // FNV-1a and a round of mixing after it. A plainer hash would do for ids
+    // that are random, which these are, but it puts ids that look alike on the
+    // same colour, and two accounts made a second apart should not come out
+    // matching.
+    const toneOf = (id) => {
+        const said = String(id || '');
+        let n = 0x811c9dc5;
+
+        for (let i = 0; i < said.length; i += 1) {
+            n ^= said.charCodeAt(i);
+            n = Math.imul(n, 0x01000193) >>> 0;
+        }
+
+        n ^= n >>> 16;
+        n = Math.imul(n, 0x7feb352d) >>> 0;
+        n ^= n >>> 15;
+
+        return TONES[(n >>> 0) % TONES.length];
+    };
+
+    // Everything that draws somebody, or a project, draws it through here: the
+    // picture if there is one, the coloured initial if there is not.
+    const faceOf = (who, klass, inside = '') => {
+        const picture = who && (who.avatar || who.icon);
+        return `<span class="${klass}${picture ? ' has-photo' : ''}" style="--face: ${toneOf(who && who.id)}">`
+            + (picture ? `<img src="${esc(picture)}" alt="">` : esc(initials(who && who.name)))
+            + `${inside}</span>`;
+    };
+
     // A dot in the corner of somebody's face: green at their screen, grey
     // away. Nothing at all where there is no person to be either, which is
     // what a grid's own square is.
@@ -241,7 +280,7 @@
         state.me = session.user;
         $('me-name').textContent = state.me.name;
         $('me-role').textContent = ROLE_NAMES[state.me.role] || '';
-        $('me-avatar').textContent = initials(state.me.name);
+        renderMe();
         $('app-admin-nav').hidden = state.me.role !== 'admin';
 
         await loadGrids();
@@ -282,7 +321,7 @@
             <li>
                 <button class="app-nav-item${state.grid && state.grid.id === grid.id ? ' is-on' : ''}"
                         type="button" data-grid="${esc(grid.id)}">
-                    <span class="app-nav-dot" aria-hidden="true">${esc(initials(grid.name))}</span>
+                    ${faceOf(grid, 'app-nav-dot')}
                     <span class="app-nav-text">
                         <strong>${esc(grid.name)}</strong>
                         <small>${grid.filled}/${SLOTS} θέσεις</small>
@@ -843,7 +882,8 @@
 
     // The page stays still while any of the three panels is open.
     const unlock = () => {
-        const open = ['post-modal', 'edit-modal', 'hl-modal', 'acct-modal'].some(id => !$(id).hidden);
+        const open = ['post-modal', 'edit-modal', 'hl-modal', 'acct-modal', 'me-modal']
+            .some(id => !$(id).hidden);
         if (!open) document.body.classList.remove('is-locked');
     };
 
@@ -1392,12 +1432,19 @@
     // the portal comes through here, whichever way it was chosen, so one from a
     // link is stored exactly like one from the desktop and nothing downstream
     // has to know the difference.
-    const acquire = async (source, maxSide) => {
+    const acquire = async (source, maxSide, where) => {
         const { blob, w, h } = await shrink(source, maxSide);
         const data = await asBase64(blob);
+
+        // A picture of a person hangs off no grid; everything else does, and
+        // says which one, because an admin may be looking at any of them.
+        const belongs = where === 'me'
+            ? { kind: 'me' }
+            : { grid: where || (state.grid && state.grid.id) };
+
         const res = await api('/api/upload', {
             method: 'POST',
-            body: { grid: state.grid.id, type: blob.type || FORMAT, data }
+            body: { ...belongs, type: blob.type || FORMAT, data }
         });
         return { url: res.url, w, h };
     };
@@ -1715,6 +1762,7 @@
             if (button.closest('#edit-modal')) closeEditor();
             else if (button.closest('#hl-modal')) closeHighlight();
             else if (button.closest('#acct-modal')) closeDrawer();
+            else if (button.closest('#me-modal')) closeMe();
             else closeViewer();
         });
     });
@@ -1741,6 +1789,7 @@
 
         if (event.key === 'Escape') {
             if (!$('bell-panel').hidden) closeBell();
+            else if (!$('me-modal').hidden) closeMe();
             else if (!$('picker').hidden) picker.close();
             else if (!$('acct-modal').hidden) closeDrawer();
             else if (!$('hl-modal').hidden) closeHighlight();
@@ -1759,6 +1808,73 @@
                 if (event.key === 'ArrowRight') $('post-next').click();
             }
         }
+    });
+
+    // --- your own face ------------------------------------------------------
+    // The account block at the foot of the sidebar is where somebody already
+    // looks to see themselves, so it is where they change how they look. It is
+    // reachable from every screen and needs no navigating to, which is more
+    // than a settings page anywhere else would manage.
+    const paintFace = (node, who, klass) => {
+        const picture = who && (who.avatar || who.icon);
+        node.className = `${klass}${picture ? ' has-photo' : ''}`;
+        node.style.setProperty('--face', toneOf(who && who.id));
+        node.innerHTML = picture
+            ? `<img src="${esc(picture)}" alt="">`
+            : esc(initials(who && who.name));
+    };
+
+    const sayMe = (message) => {
+        $('me-error').textContent = message || '';
+        $('me-error').hidden = !message;
+    };
+
+    const renderMe = () => {
+        paintFace($('me-avatar'), state.me, 'app-avatar');
+        paintFace($('me-face'), state.me, 'face-big');
+        $('me-clear').hidden = !state.me.avatar;
+    };
+
+    const closeMe = () => { $('me-modal').hidden = true; unlock(); };
+
+    $('me-open').addEventListener('click', () => {
+        sayMe('');
+        renderMe();
+        $('me-modal').hidden = false;
+        document.body.classList.add('is-locked');
+    });
+
+    const setMyFace = async (url) => {
+        const data = await api('/api/me', { method: 'POST', body: { avatar: url } });
+        state.me = data.user;
+        renderMe();
+
+        // Wherever else this account is drawn on the screen it is standing on.
+        if (!$('view-accounts').hidden) openAccounts();
+    };
+
+    $('me-pick').addEventListener('click', () => {
+        pickFiles(false, async (files) => {
+            sayMe('');
+            busy('Ανέβασμα…');
+            try {
+                const { url } = await acquire(files[0], SMALL_SIDE, 'me');
+                await setMyFace(url);
+                toast('Η φωτογραφία σου μπήκε.');
+            } catch (err) {
+                sayMe(explain(err));
+            } finally {
+                busy('');
+            }
+        });
+    });
+
+    $('me-clear').addEventListener('click', async () => {
+        sayMe('');
+        busy('…');
+        try { await setMyFace(null); }
+        catch (err) { sayMe(explain(err)); }
+        finally { busy(''); }
     });
 
     // --- the bell ----------------------------------------------------------
@@ -1980,9 +2096,7 @@
             ? c.people.map(one => `
                 <button class="chat-pick${c.picked === one.id ? ' is-on' : ''}${one.unread ? ' has-new' : ''}"
                         type="button" data-thread="${esc(one.id)}">
-                    <span class="chat-face">
-                        ${esc(initials(one.name))}${dot(one)}
-                    </span>
+                    ${faceOf(one, 'chat-face', dot(one))}
                     <span class="chat-pick-text">
                         <strong>${esc(one.name)}</strong>
                         <small>${one.last ? esc(lastLine(one.last)) : `Μόνο εσύ και ${esc(one.name)}`}</small>
@@ -2002,10 +2116,14 @@
 
         const live = Boolean(person && person.online);
 
-        $('chat-head-face').className = `chat-head-face${team ? ' is-team' : ''}`;
+        $('chat-head-face').className = `chat-head-face${team ? ' is-team' : ''}${
+            !team && person && person.avatar ? ' has-photo' : ''}`;
+        $('chat-head-face').style.setProperty('--face', toneOf(person ? person.id : ''));
         $('chat-head-face').innerHTML = team
             ? TEAM_ICON
-            : `${esc(initials(name))}${dot(person)}`;
+            : (person && person.avatar
+                ? `<img src="${esc(person.avatar)}" alt="">${dot(person)}`
+                : `${esc(initials(name))}${dot(person)}`);
 
         $('chat-head-name').textContent = team ? 'Όλη η ομάδα' : name;
 
@@ -2868,7 +2986,7 @@
 
     const line = (id, what, name, under, person) => `
         <li>
-            <span class="lister-face">${esc(initials(name))}${dot(person)}</span>
+            ${faceOf(person || { id, name }, 'lister-face', dot(person))}
             <span class="lister-who">
                 <span class="lister-name">${esc(name)}</span>
                 <span class="lister-sub">${under}</span>
@@ -2885,7 +3003,8 @@
 
         const gridLines = admin.grids
             .map(grid => line(grid.id, 'grid', grid.name,
-                `${grid.handle ? `@${esc(grid.handle)} · ` : ''}${people((grid.memberIds || []).length)}`))
+                `${grid.handle ? `@${esc(grid.handle)} · ` : ''}${people((grid.memberIds || []).length)}`,
+                grid))
             .join('');
 
         $('view-accounts').innerHTML = `
@@ -2969,7 +3088,7 @@
     // --- one account, or one grid, behind its gear -------------------------
     // The list says who exists. This says everything else about one of them,
     // and is the only place any of it can be changed.
-    const drawer = { kind: null, id: null, password: '' };
+    const drawer = { kind: null, id: null, password: '', icon: null };
 
     const sayAcct = (message) => {
         $('acct-error').textContent = message || '';
@@ -3029,6 +3148,7 @@
             if (!grid) return;
             const members = admin.users.filter(u => u.role !== 'admin');
 
+            drawer.icon = grid.icon || null;
             $('acct-title').textContent = grid.name;
             $('acct-sub').textContent = 'Όποιος μπει πάνω του μπορεί να το αλλάξει. Τα σχόλια των πελατών ξεχωρίζουν και σηκώνουν ένδειξη μέχρι να απαντηθούν.';
 
@@ -3037,6 +3157,16 @@
                     <label>Όνομα<input data-f="name" value="${esc(grid.name)}" maxlength="60"></label>
                     <label>Instagram handle<input data-f="handle" value="${esc(grid.handle)}" maxlength="40" placeholder="χωρίς το @"></label>
                 </div>
+
+                <label class="edit-label pw-head">Εικονίδιο στη λίστα</label>
+                <div class="face-edit">
+                    <span class="face-big" id="grid-face"></span>
+                    <span class="face-acts">
+                        <button class="app-ghost" type="button" data-do="pick-icon">Διάλεξε εικόνα</button>
+                        <button class="app-ghost app-danger" type="button" data-do="clear-icon">Αφαίρεση</button>
+                    </span>
+                </div>
+                <p class="pw-note">Μόνο εσύ το ορίζεις, και φαίνεται στο τετραγωνάκι δίπλα στο όνομα του project στη λίστα αριστερά. Δεν είναι η φωτογραφία προφίλ του ίδιου του grid.</p>
 
                 <fieldset class="row-members">
                     <legend>Ποιοι δουλεύουν πάνω του</legend>
@@ -3048,6 +3178,9 @@
                         : '<p class="row-none">Δεν υπάρχουν ακόμα λογαριασμοί για να μπουν.</p>'}
                 </fieldset>
             `;
+
+            paintFace($('grid-face'), { id: grid.id, name: grid.name, icon: drawer.icon }, 'face-big');
+            $('acct-body').querySelector('[data-do="clear-icon"]').hidden = !drawer.icon;
 
             $('acct-delete').hidden = false;
         }
@@ -3061,6 +3194,39 @@
     $('view-accounts').addEventListener('click', (event) => {
         const gear = event.target.closest('[data-open]');
         if (gear) openDrawer(gear.dataset.open, gear.dataset.id);
+    });
+
+    // The picture is chosen now and saved with the rest of the panel, so that
+    // backing out of the panel backs out of the picture too.
+    $('acct-body').addEventListener('click', async (clicked) => {
+        const button = clicked.target.closest('button[data-do]');
+        if (!button || drawer.kind !== 'grid') return;
+
+        if (button.dataset.do === 'clear-icon') {
+            drawer.icon = null;
+            paintFace($('grid-face'), { id: drawer.id, name: $('acct-title').textContent }, 'face-big');
+            button.hidden = true;
+            return;
+        }
+
+        if (button.dataset.do !== 'pick-icon') return;
+
+        pickFiles(false, async (files) => {
+            sayAcct('');
+            busy('Ανέβασμα…');
+            try {
+                const { url } = await acquire(files[0], SMALL_SIDE, drawer.id);
+                drawer.icon = url;
+                paintFace($('grid-face'),
+                          { id: drawer.id, name: $('acct-title').textContent, icon: url },
+                          'face-big');
+                $('acct-body').querySelector('[data-do="clear-icon"]').hidden = false;
+            } catch (err) {
+                sayAcct(explain(err));
+            } finally {
+                busy('');
+            }
+        });
     });
 
     $('acct-save').addEventListener('click', async () => {
@@ -3083,7 +3249,7 @@
                     .map(box => box.dataset.member);
                 await api('/api/accounts', {
                     method: 'PATCH',
-                    body: { kind: 'grid', id: drawer.id, ...fields(body), memberIds }
+                    body: { kind: 'grid', id: drawer.id, ...fields(body), memberIds, icon: drawer.icon }
                 });
                 await loadGrids();
             }

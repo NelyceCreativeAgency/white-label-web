@@ -27,6 +27,10 @@ const gridOut = (grid) => ({
     name: grid.name,
     handle: grid.handle || '',
     avatar: grid.avatar || null,
+    // The square beside the name in the sidebar. The admin's to set, and not
+    // the same thing as the profile picture of the mockup, which belongs to
+    // whoever is designing the grid.
+    icon: grid.icon || null,
     highlights: Array.isArray(grid.highlights) ? grid.highlights : [],
     slots: Number(grid.slots) || 0,
     memberIds: Array.isArray(grid.memberIds) ? grid.memberIds : [],
@@ -133,6 +137,11 @@ const patchGrid = (doc, body) => {
         grid.name = name;
     }
     if (body.handle !== undefined) grid.handle = text(body.handle, 40).replace(/^@/, '');
+
+    if (body.icon !== undefined) {
+        if (body.icon && !blob.isOurImage(body.icon)) throw new Error('bad-image');
+        grid.icon = body.icon || null;
+    }
     if (body.memberIds !== undefined) grid.memberIds = cleanMembers(doc, body.memberIds);
 
     return grid;
@@ -219,7 +228,7 @@ module.exports = async (req, res) => {
     } catch (err) {
         const known = ['bad-username', 'username-taken', 'short-password', 'no-such-user',
                        'no-such-grid', 'bad-name', 'last-admin', 'too-many-users',
-                       'too-many-grids', 'not-yourself', 'bad-kind'];
+                       'too-many-grids', 'not-yourself', 'bad-kind', 'bad-image'];
         const status = known.includes(err.message) ? 400 : 500;
         return res.status(status).json({ error: err.message });
     }

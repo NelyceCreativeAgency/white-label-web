@@ -59,6 +59,7 @@ module.exports = async (req, res) => {
                         id: other.id,
                         name: other.name || other.username,
                         role: other.role,
+                        avatar: other.avatar || null,
                         ...here[other.id]
                     },
                     messages
@@ -75,6 +76,7 @@ module.exports = async (req, res) => {
                     id: user.id,
                     name: user.name || user.username,
                     role: user.role,
+                    avatar: user.avatar || null,
                     ...here[user.id],
                     unread: chat.unreadIn(theirs, me, seen[chat.privateMark(me.id, user.id)]),
                     last: chat.tail(theirs)

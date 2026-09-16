@@ -38,16 +38,9 @@ const planOf = (grid, posts) => {
     return Math.max(used(posts), Math.min(accounts.SLOTS, wanted));
 };
 
-// Only urls this deployment's own image store handed back. Anything else would
-// let a signed-in account point a post at a picture on someone else's server.
-const BLOB_HOST = /^[a-z0-9-]+\.(public\.)?blob\.vercel-storage\.com$/i;
-
-const isOurImage = (url) => {
-    let parsed;
-    try { parsed = new URL(String(url)); }
-    catch { return false; }
-    return parsed.protocol === 'https:' && BLOB_HOST.test(parsed.hostname);
-};
+// Only urls this deployment's own image store handed back, which is the one
+// rule every picture in the portal answers to. See api/_blob.js.
+const isOurImage = blob.isOurImage;
 
 const text = (value, max) => String(value == null ? '' : value).trim().slice(0, max);
 
@@ -119,6 +112,9 @@ const summary = (grid, posts, user) => ({
     // many empty ones have been put after them to hold the place of what is
     // still to come.
     slots: planOf(grid, posts),
+    // The little square beside the name in the sidebar. Set by the admin, and
+    // nothing to do with the profile picture of the mockup itself.
+    icon: grid.icon || null,
     filled: posts.filter(Boolean).length,
     openNotes: accounts.openNoteCount(posts),
     canEdit: accounts.canEdit(user, grid)

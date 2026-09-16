@@ -50,6 +50,18 @@ const credentials = (req) => {
 
 // Everything below is bound to one request, so that the OIDC token travelling
 // with it is the one used.
+// Only urls this deployment's own store handed back. Anything else would let a
+// signed-in account point a post, a profile or a grid at a picture on somebody
+// else's server, and have the portal serve it as its own.
+const BLOB_HOST = /^[a-z0-9-]+\.(public\.)?blob\.vercel-storage\.com$/i;
+
+exports.isOurImage = (url) => {
+    let parsed;
+    try { parsed = new URL(String(url)); }
+    catch { return false; }
+    return parsed.protocol === 'https:' && BLOB_HOST.test(parsed.hostname);
+};
+
 exports.client = (req) => {
     const headers = () => {
         const { token, storeId } = credentials(req);

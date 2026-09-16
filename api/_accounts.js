@@ -59,6 +59,7 @@ exports.publicUser = (user) => ({
     username: user.username,
     name: user.name || user.username,
     role: user.role,
+    avatar: user.avatar || null,
     createdAt: user.createdAt || null,
     lastLoginAt: user.lastLoginAt || null
 });
