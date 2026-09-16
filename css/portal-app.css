@@ -705,22 +705,39 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .modal-x:hover { background: rgba(10, 10, 14, .9); }
 
 /* --- the post, full size -------------------------------------------------- */
+/* The picture is shown in Instagram's portrait frame, four across by five
+   down, which is the shape the tiles in the grid already have. The panel is
+   built around that frame rather than the other way round: the height is
+   whatever the screen can spare, and the width of the stage follows from it,
+   so the shape holds at every window size. */
 .modal-post {
+    --stage-h: min(760px, 86vh);
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 360px;
-    width: min(1060px, 94vw);
-    height: min(760px, 86vh);
+    grid-template-columns: calc(var(--stage-h) * 4 / 5) minmax(0, 360px);
+    width: min(calc(var(--stage-h) * 4 / 5 + 360px), 94vw);
+    height: var(--stage-h);
 }
 
+/* Nothing in here is in normal flow: the picture, the arrows and the dots are
+   all laid on the stage by its own edges. */
 .post-stage {
     position: relative;
-    display: grid;
-    place-items: center;
     background: #000;
     overflow: hidden;
 }
 
-.post-image { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+/* The element is the stage, edge to edge, and the picture is centred inside
+   the element by object-fit. A box that is only as wide as its picture has to
+   be placed somewhere, and whatever was placing it left it against the left
+   edge with all the slack on the right. This has no placement to get wrong. */
+.post-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
 
 .post-arrow {
     position: absolute; top: 50%;
@@ -765,6 +782,10 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .post-side {
     display: flex;
     flex-direction: column;
+    /* A grid item is as wide as its widest word unless it is told otherwise,
+       and one long word here would widen the whole panel and slide the picture
+       out of the middle. */
+    min-width: 0;
     min-height: 0;
     padding: 26px 24px 20px;
     border-left: 1px solid rgba(255, 255, 255, .08);
@@ -777,6 +798,7 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     line-height: 1.65;
     color: var(--text-secondary);
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
     border-bottom: 1px solid rgba(255, 255, 255, .07);
 }
 
@@ -810,7 +832,13 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .note-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin-bottom: 5px; }
 .note-who strong { font-size: .82rem; font-weight: var(--fw-medium); }
 .note-who small { font-size: .68rem; color: rgba(184, 186, 194, .7); }
-.note-text { font-size: .85rem; line-height: 1.55; color: var(--text-secondary); white-space: pre-wrap; }
+.note-text {
+    font-size: .85rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
 
 /* An answer sits under the note it answers, indented once and no further. */
 .note.is-reply {
@@ -914,6 +942,7 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 
 .post-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-top: 16px;
     padding-top: 16px;
@@ -1063,7 +1092,8 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .new-row input,
 .new-row select,
 .row-fields input,
-.row-fields select {
+.row-fields select,
+.pw-field input {
     flex: 1 1 150px;
     min-width: 0;
     padding: 10px 13px;
@@ -1078,17 +1108,74 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .new-row input:focus,
 .new-row select:focus,
 .row-fields input:focus,
-.row-fields select:focus { outline: none; border-color: var(--accent-orange); }
+.row-fields select:focus,
+.pw-field input:focus { outline: none; border-color: var(--accent-orange); }
 
 .new-row .btn { flex: 0 0 auto; padding: 10px 22px; font-size: .85rem; }
 
-.rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+/* An account is one line: who it is, and a gear. A studio with forty clients
+   should be able to read down the list, which a column of open forms makes
+   impossible. */
+.lister { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 
-.row {
-    padding: 16px 18px;
+.lister li {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 8px 8px 12px;
     background: rgba(255, 255, 255, .03);
-    border: 1px solid rgba(255, 255, 255, .08);
-    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 13px;
+}
+
+.lister li:hover { border-color: rgba(255, 255, 255, .14); }
+
+.lister-face {
+    display: grid;
+    place-items: center;
+    width: 34px; height: 34px;
+    font-size: .85rem;
+    font-weight: var(--fw-medium);
+    color: var(--accent-orange);
+    background: rgba(255, 107, 53, .12);
+    border-radius: 50%;
+}
+
+.lister-who { display: grid; gap: 2px; min-width: 0; }
+
+.lister-name,
+.lister-sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lister-name { font-size: .9rem; font-weight: var(--fw-medium); }
+.lister-sub { font-size: .74rem; color: rgba(184, 186, 194, .7); }
+
+.lister-gear {
+    display: grid;
+    place-items: center;
+    width: 34px; height: 34px;
+    color: var(--text-secondary);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.lister-gear:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .06);
+    border-color: rgba(255, 255, 255, .12);
+}
+
+.lister-gear svg {
+    width: 17px; height: 17px;
+    fill: none; stroke: currentColor; stroke-width: 1.7;
+    stroke-linecap: round; stroke-linejoin: round;
 }
 
 .row-fields { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -1123,19 +1210,49 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .member small { color: rgba(184, 186, 194, .65); font-size: .72rem; }
 .row-none { font-size: .8rem; color: rgba(184, 186, 194, .6); }
 
-.row-foot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 14px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(255, 255, 255, .06);
+/* --- a password, and the eye that reads it back --------------------------- */
+.pw-field { position: relative; display: flex; align-items: center; min-width: 0; }
+.new-row .pw-field { flex: 1 1 190px; }
+.pw-field input { width: 100%; padding-right: 42px; }
+.pw-head { margin-top: 18px; }
+
+.pw-eye {
+    position: absolute;
+    right: 5px;
+    display: grid;
+    place-items: center;
+    width: 30px; height: 30px;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
 }
 
-.row-foot small { font-size: .74rem; color: rgba(184, 186, 194, .65); }
-.row-buttons { display: flex; gap: 8px; }
+.pw-eye:hover { color: var(--text-primary); background: rgba(255, 255, 255, .07); }
+
+.pw-eye svg {
+    width: 17px; height: 17px;
+    fill: none; stroke: currentColor; stroke-width: 1.7;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+.pw-eye .pw-shut { display: none; }
+.pw-eye[aria-pressed="true"] .pw-open { display: none; }
+.pw-eye[aria-pressed="true"] .pw-shut { display: block; }
+.pw-eye[aria-pressed="true"] { color: var(--accent-orange); }
+
+.pw-note {
+    margin: 9px 0 0;
+    font-size: .74rem;
+    line-height: 1.55;
+    color: rgba(184, 186, 194, .65);
+}
+
+/* --- the panel behind a gear ---------------------------------------------- */
+.modal-acct { width: min(560px, 94vw); max-height: 90vh; overflow-y: auto; padding: 30px 28px 24px; }
+.modal-acct .row-fields { margin-top: 4px; }
+.modal-acct .modal-foot .app-danger { margin-right: auto; }
 
 /* --- the picker ----------------------------------------------------------- */
 /* Floats over whatever asked for it, including the editor, so it sits above
@@ -1269,7 +1386,7 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     /* Full screen, and measured in the height the phone actually leaves after
        its address bar, which is what dvh means and vh does not. */
     .modal-post {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         grid-template-rows: auto minmax(0, 1fr);
         width: 100%;
         height: 100vh;
@@ -1278,12 +1395,18 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
         border: none;
     }
 
-    /* The tiles are four by five now, so the picture above the conversation is
-       given that shape rather than a square that would letterbox most of them. */
-    .post-stage { aspect-ratio: 4 / 5; max-height: 56vh; height: auto; }
+    /* The same four by five frame as on a desktop. The cap is there only for
+       short screens, where a taller frame would leave no room to write. */
+    .post-stage {
+        aspect-ratio: 4 / 5;
+        height: auto;
+        max-height: 66vh;
+        max-height: 66dvh;
+    }
     .post-side { border-left: none; border-top: 1px solid rgba(255, 255, 255, .08); padding: 18px 16px; }
 
-    .modal-edit {
+    .modal-edit,
+    .modal-acct {
         width: 100%;
         max-height: 100vh;
         height: 100vh;

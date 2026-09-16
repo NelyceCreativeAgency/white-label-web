@@ -724,7 +724,7 @@
 
     // The page stays still while any of the three panels is open.
     const unlock = () => {
-        const open = ['post-modal', 'edit-modal', 'hl-modal'].some(id => !$(id).hidden);
+        const open = ['post-modal', 'edit-modal', 'hl-modal', 'acct-modal'].some(id => !$(id).hidden);
         if (!open) document.body.classList.remove('is-locked');
     };
 
@@ -1512,11 +1512,28 @@
         }
     });
 
+    // --- the eye on a password box ------------------------------------------
+    // A password typed here is going to be read out to somebody, so being able
+    // to check it before it is saved is worth more than the shoulder it could
+    // be read over. It shows what is being typed now, never what was set
+    // before: the server keeps a hash of that and cannot hand it back.
+    document.addEventListener('click', (event) => {
+        const eye = event.target.closest('.pw-eye');
+        if (!eye) return;
+
+        const field = eye.closest('.pw-field').querySelector('input');
+        const show = field.type === 'password';
+        field.type = show ? 'text' : 'password';
+        eye.setAttribute('aria-pressed', show ? 'true' : 'false');
+        eye.setAttribute('aria-label', show ? 'Απόκρυψη κωδικού' : 'Εμφάνιση κωδικού');
+    });
+
     // --- closing things ----------------------------------------------------
     document.querySelectorAll('[data-close]').forEach(button => {
         button.addEventListener('click', () => {
             if (button.closest('#edit-modal')) closeEditor();
             else if (button.closest('#hl-modal')) closeHighlight();
+            else if (button.closest('#acct-modal')) closeDrawer();
             else closeViewer();
         });
     });
@@ -1524,6 +1541,7 @@
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             if (!$('picker').hidden) picker.close();
+            else if (!$('acct-modal').hidden) closeDrawer();
             else if (!$('hl-modal').hidden) closeHighlight();
             else if (!$('edit-modal').hidden) closeEditor();
             else if (!$('post-modal').hidden) closeViewer();
@@ -1598,69 +1616,70 @@
         .map(role => `<option value="${role}"${role === selected ? ' selected' : ''}>${ROLE_NAMES[role]}</option>`)
         .join('');
 
+    // The panels are lists, one line per account and one per grid, so a long
+    // client list stays a list. Everything that can be changed about one of
+    // them is behind its gear, in a panel of its own.
+    const GEAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/>'
+        + '<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 '
+        + '1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 '
+        + '0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 '
+        + '0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 '
+        + '1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 '
+        + '2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 '
+        + '0-1.51 1z"/></svg>';
+
+    const EYE = '<button class="pw-eye" type="button" aria-pressed="false" aria-label="Εμφάνιση κωδικού">'
+        + '<svg class="pw-open" viewBox="0 0 24 24" aria-hidden="true">'
+        + '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+        + '<svg class="pw-shut" viewBox="0 0 24 24" aria-hidden="true">'
+        + '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 '
+        + '9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>'
+        + '<path d="M1 1l22 22"/></svg></button>';
+
+    const people = (count) => (count === 1 ? '1 άτομο' : `${count} άτομα`);
+
+    const line = (id, what, name, under) => `
+        <li>
+            <span class="lister-face" aria-hidden="true">${esc(initials(name))}</span>
+            <span class="lister-who">
+                <span class="lister-name">${esc(name)}</span>
+                <span class="lister-sub">${under}</span>
+            </span>
+            <button class="lister-gear" type="button" data-open="${what}" data-id="${esc(id)}"
+                    aria-label="Ρυθμίσεις: ${esc(name)}">${GEAR}</button>
+        </li>`;
+
     const renderAccounts = () => {
-        const members = admin.users.filter(u => u.role !== 'admin');
+        const userLines = admin.users
+            .map(user => line(user.id, 'user', user.name,
+                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}`))
+            .join('');
 
-        const userRows = admin.users.map(user => `
-            <li class="row" data-user="${esc(user.id)}">
-                <div class="row-fields">
-                    <label>Όνομα<input data-f="name" value="${esc(user.name)}" maxlength="60"></label>
-                    <label>Όνομα χρήστη<input data-f="username" value="${esc(user.username)}" maxlength="32" pattern="[A-Za-z0-9._\-]{3,32}" title="3 ως 32 λατινικοί χαρακτήρες, αριθμοί, τελεία, παύλα ή κάτω παύλα, χωρίς κενά" autocapitalize="none" spellcheck="false"></label>
-                    <label>Ρόλος<select data-f="role">${roleOptions(user.role)}</select></label>
-                    <label>Νέος κωδικός<input data-f="password" type="password" minlength="8" placeholder="αμετάβλητος" autocomplete="new-password"></label>
-                </div>
-                <div class="row-foot">
-                    <small>${user.lastLoginAt ? `Τελευταία είσοδος: ${esc(when(user.lastLoginAt))}` : 'Δεν έχει μπει ακόμα'}</small>
-                    <span class="row-buttons">
-                        <button class="app-ghost" type="button" data-do="save-user">Αποθήκευση</button>
-                        ${user.id === state.me.id ? '' : '<button class="app-ghost app-danger" type="button" data-do="delete-user">Διαγραφή</button>'}
-                    </span>
-                </div>
-            </li>
-        `).join('');
-
-        const gridRows = admin.grids.map(grid => `
-            <li class="row" data-gridrow="${esc(grid.id)}">
-                <div class="row-fields">
-                    <label>Όνομα<input data-f="name" value="${esc(grid.name)}" maxlength="60"></label>
-                    <label>Instagram handle<input data-f="handle" value="${esc(grid.handle)}" maxlength="40" placeholder="χωρίς το @"></label>
-                </div>
-                <fieldset class="row-members">
-                    <legend>Ποιοι δουλεύουν πάνω του</legend>
-                    ${members.length ? members.map(user => `
-                        <label class="member">
-                            <input type="checkbox" data-member="${esc(user.id)}"${grid.memberIds.includes(user.id) ? ' checked' : ''}>
-                            <span>${esc(user.name)} <small>${ROLE_NAMES[user.role]}</small></span>
-                        </label>`).join('')
-                        : '<p class="row-none">Δεν υπάρχουν ακόμα λογαριασμοί για να μπουν.</p>'}
-                </fieldset>
-                <div class="row-foot">
-                    <small>Όποιος μπει πάνω του μπορεί να το αλλάξει. Τα σχόλια των πελατών ξεχωρίζουν και σηκώνουν ένδειξη μέχρι να απαντηθούν.</small>
-                    <span class="row-buttons">
-                        <button class="app-ghost" type="button" data-do="save-grid">Αποθήκευση</button>
-                        <button class="app-ghost app-danger" type="button" data-do="delete-grid">Διαγραφή</button>
-                    </span>
-                </div>
-            </li>
-        `).join('');
+        const gridLines = admin.grids
+            .map(grid => line(grid.id, 'grid', grid.name,
+                `${grid.handle ? `@${esc(grid.handle)} · ` : ''}${people((grid.memberIds || []).length)}`))
+            .join('');
 
         $('view-accounts').innerHTML = `
             <section class="panel">
                 <div class="panel-head">
                     <h2>Λογαριασμοί</h2>
-                    <p>Εσύ ανοίγεις και κλείνεις τους λογαριασμούς. Το όνομα είναι για τα μάτια σου και δέχεται ελληνικά. Το όνομα χρήστη είναι αυτό που πληκτρολογεί στην είσοδο, θέλει λατινικούς χαρακτήρες χωρίς κενά. Ο κωδικός δίνεται μία φορά και δεν ξαναφαίνεται.</p>
+                    <p>Εσύ ανοίγεις και κλείνεις τους λογαριασμούς. Το όνομα είναι για τα μάτια σου και δέχεται ελληνικά. Το όνομα χρήστη είναι αυτό που πληκτρολογεί στην είσοδο, θέλει λατινικούς χαρακτήρες χωρίς κενά. Το γρανάζι δίπλα σε κάθε όνομα ανοίγει τα πάντα γι' αυτόν, κωδικό μαζί.</p>
                 </div>
 
                 <form class="new-row" id="new-user">
                     <input name="name" placeholder="Όνομα" maxlength="60" required>
                     <input name="username" placeholder="Όνομα χρήστη, λατινικά" maxlength="32" pattern="[A-Za-z0-9._\-]{3,32}" title="3 ως 32 λατινικοί χαρακτήρες, αριθμοί, τελεία, παύλα ή κάτω παύλα, χωρίς κενά" autocapitalize="none" spellcheck="false" required>
                     <select name="role">${roleOptions('client')}</select>
-                    <input name="password" type="password" placeholder="Κωδικός, 8+ χαρακτήρες" minlength="8" autocomplete="new-password" required>
+                    <span class="pw-field">
+                        <input name="password" type="password" placeholder="Κωδικός, 8+ χαρακτήρες" minlength="8" autocomplete="new-password" required>
+                        ${EYE}
+                    </span>
                     <button class="btn btn-primary" type="submit">Προσθήκη</button>
                 </form>
 
                 <p class="panel-error" id="user-error" role="alert" hidden></p>
-                <ul class="rows">${userRows}</ul>
+                <ul class="lister">${userLines}</ul>
             </section>
 
             <section class="panel">
@@ -1676,7 +1695,7 @@
                 </form>
 
                 <p class="panel-error" id="grid-error" role="alert" hidden></p>
-                <ul class="rows">${gridRows}</ul>
+                <ul class="lister">${gridLines}</ul>
             </section>
         `;
     };
@@ -1719,58 +1738,155 @@
         }
     });
 
-    $('view-accounts').addEventListener('click', async (event) => {
-        const button = event.target.closest('button[data-do]');
-        if (!button) return;
+    // --- one account, or one grid, behind its gear -------------------------
+    // The list says who exists. This says everything else about one of them,
+    // and is the only place any of it can be changed.
+    const drawer = { kind: null, id: null };
 
-        const row = button.closest('.row');
-        const what = button.dataset.do;
+    const sayAcct = (message) => {
+        $('acct-error').textContent = message || '';
+        $('acct-error').hidden = !message;
+    };
+
+    const closeDrawer = () => {
+        drawer.kind = null;
+        drawer.id = null;
+        $('acct-modal').hidden = true;
+        unlock();
+    };
+
+    const openDrawer = (kind, id) => {
+        const body = $('acct-body');
+        sayAcct('');
+
+        if (kind === 'user') {
+            const user = admin.users.find(u => u.id === id);
+            if (!user) return;
+
+            $('acct-title').textContent = user.name;
+            $('acct-sub').textContent = user.lastLoginAt
+                ? `Τελευταία είσοδος: ${when(user.lastLoginAt)}`
+                : 'Δεν έχει μπει ακόμα.';
+
+            body.innerHTML = `
+                <div class="row-fields">
+                    <label>Όνομα<input data-f="name" value="${esc(user.name)}" maxlength="60"></label>
+                    <label>Όνομα χρήστη<input data-f="username" value="${esc(user.username)}" maxlength="32" pattern="[A-Za-z0-9._\-]{3,32}" title="3 ως 32 λατινικοί χαρακτήρες, αριθμοί, τελεία, παύλα ή κάτω παύλα, χωρίς κενά" autocapitalize="none" spellcheck="false"></label>
+                    <label>Ρόλος<select data-f="role">${roleOptions(user.role)}</select></label>
+                </div>
+
+                <label class="edit-label pw-head" for="acct-password">Νέος κωδικός</label>
+                <span class="pw-field">
+                    <input id="acct-password" data-f="password" type="password" minlength="8"
+                           placeholder="Άφησέ το κενό και μένει ο ίδιος" autocomplete="new-password">
+                    ${EYE}
+                </span>
+                <p class="pw-note">Ό,τι γράψεις εδώ γίνεται ο κωδικός του μόλις αποθηκεύσεις, και το ματάκι σου τον δείχνει για να τον διαβάσεις σωστά. Ο κωδικός που ισχύει τώρα δεν φαίνεται πουθενά: ο διακομιστής κρατάει μόνο ένα αποτύπωμά του.</p>
+            `;
+
+            // Your own account is the one you cannot take away.
+            $('acct-delete').hidden = user.id === state.me.id;
+        } else {
+            const grid = admin.grids.find(g => g.id === id);
+            if (!grid) return;
+            const members = admin.users.filter(u => u.role !== 'admin');
+
+            $('acct-title').textContent = grid.name;
+            $('acct-sub').textContent = 'Όποιος μπει πάνω του μπορεί να το αλλάξει. Τα σχόλια των πελατών ξεχωρίζουν και σηκώνουν ένδειξη μέχρι να απαντηθούν.';
+
+            body.innerHTML = `
+                <div class="row-fields">
+                    <label>Όνομα<input data-f="name" value="${esc(grid.name)}" maxlength="60"></label>
+                    <label>Instagram handle<input data-f="handle" value="${esc(grid.handle)}" maxlength="40" placeholder="χωρίς το @"></label>
+                </div>
+
+                <fieldset class="row-members">
+                    <legend>Ποιοι δουλεύουν πάνω του</legend>
+                    ${members.length ? members.map(user => `
+                        <label class="member">
+                            <input type="checkbox" data-member="${esc(user.id)}"${grid.memberIds.includes(user.id) ? ' checked' : ''}>
+                            <span>${esc(user.name)} <small>${ROLE_NAMES[user.role]}</small></span>
+                        </label>`).join('')
+                        : '<p class="row-none">Δεν υπάρχουν ακόμα λογαριασμοί για να μπουν.</p>'}
+                </fieldset>
+            `;
+
+            $('acct-delete').hidden = false;
+        }
+
+        drawer.kind = kind;
+        drawer.id = id;
+        $('acct-modal').hidden = false;
+        document.body.classList.add('is-locked');
+    };
+
+    $('view-accounts').addEventListener('click', (event) => {
+        const gear = event.target.closest('[data-open]');
+        if (gear) openDrawer(gear.dataset.open, gear.dataset.id);
+    });
+
+    $('acct-save').addEventListener('click', async () => {
+        if (!drawer.kind) return;
+        const body = $('acct-body');
+        sayAcct('');
+        busy('Αποθήκευση…');
 
         try {
-            if (what === 'save-user') {
-                const body = { kind: 'user', id: row.dataset.user, ...fields(row) };
-                if (!body.password) delete body.password;
-                await api('/api/accounts', { method: 'PATCH', body });
-                toast('Αποθηκεύτηκε.');
-                await openAccounts();
-                return;
-            }
-
-            if (what === 'delete-user') {
-                if (!confirm('Να αφαιρεθεί ο λογαριασμός; Χάνει αμέσως την πρόσβασή του.')) return;
-                await api(`/api/accounts?kind=user&id=${encodeURIComponent(row.dataset.user)}`, { method: 'DELETE' });
-                toast('Ο λογαριασμός αφαιρέθηκε.');
-                await openAccounts();
-                return;
-            }
-
-            if (what === 'save-grid') {
-                const memberIds = Array.from(row.querySelectorAll('[data-member]'))
+            if (drawer.kind === 'user') {
+                const sent = { kind: 'user', id: drawer.id, ...fields(body) };
+                // An empty box means the password stays as it was, so it is
+                // left out of the request rather than sent as nothing.
+                if (!sent.password) delete sent.password;
+                await api('/api/accounts', { method: 'PATCH', body: sent });
+            } else {
+                const memberIds = Array.from(body.querySelectorAll('[data-member]'))
                     .filter(box => box.checked)
                     .map(box => box.dataset.member);
                 await api('/api/accounts', {
                     method: 'PATCH',
-                    body: { kind: 'grid', id: row.dataset.gridrow, ...fields(row), memberIds }
+                    body: { kind: 'grid', id: drawer.id, ...fields(body), memberIds }
                 });
-                toast('Αποθηκεύτηκε.');
                 await loadGrids();
-                await openAccounts();
-                return;
             }
 
-            if (what === 'delete-grid') {
-                if (!confirm('Να διαγραφεί το grid μαζί με όλες τις εικόνες του; Δεν γίνεται αναίρεση.')) return;
-                await api(`/api/accounts?kind=grid&id=${encodeURIComponent(row.dataset.gridrow)}`, { method: 'DELETE' });
-                if (state.grid && state.grid.id === row.dataset.gridrow) {
-                    state.grid = null;
-                    remember.write(null);
-                }
-                toast('Το grid διαγράφηκε.');
-                await loadGrids();
-                await openAccounts();
-            }
+            closeDrawer();
+            toast('Αποθηκεύτηκε.');
+            await openAccounts();
         } catch (err) {
-            complain(button, explain(err));
+            sayAcct(explain(err));
+        } finally {
+            busy('');
+        }
+    });
+
+    $('acct-delete').addEventListener('click', async () => {
+        if (!drawer.kind) return;
+        const isUser = drawer.kind === 'user';
+
+        const sure = isUser
+            ? 'Να αφαιρεθεί ο λογαριασμός; Χάνει αμέσως την πρόσβασή του.'
+            : 'Να διαγραφεί το grid μαζί με όλες τις εικόνες του; Δεν γίνεται αναίρεση.';
+        if (!confirm(sure)) return;
+
+        sayAcct('');
+        busy('Διαγραφή…');
+        try {
+            await api(`/api/accounts?kind=${drawer.kind}&id=${encodeURIComponent(drawer.id)}`,
+                      { method: 'DELETE' });
+
+            if (!isUser && state.grid && state.grid.id === drawer.id) {
+                state.grid = null;
+                remember.write(null);
+            }
+
+            closeDrawer();
+            toast(isUser ? 'Ο λογαριασμός αφαιρέθηκε.' : 'Το grid διαγράφηκε.');
+            if (!isUser) await loadGrids();
+            await openAccounts();
+        } catch (err) {
+            sayAcct(explain(err));
+        } finally {
+            busy('');
         }
     });
 
