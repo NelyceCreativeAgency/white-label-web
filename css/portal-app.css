@@ -154,14 +154,65 @@
 .app-admin-nav { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, .07); }
 
 .app-me {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    position: relative;
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid rgba(255, 255, 255, .07);
 }
+
+/* The gear is what says the row does anything at all. Without it the account
+   at the foot of the sidebar reads as a label rather than as a way in. */
+.app-me-gear {
+    flex: 0 0 auto;
+    width: 16px; height: 16px;
+    color: rgba(184, 186, 194, .5);
+    fill: none; stroke: currentColor; stroke-width: 1.7;
+    stroke-linecap: round; stroke-linejoin: round;
+    transition: color .2s;
+}
+
+.app-me-who:hover .app-me-gear,
+.app-me-who[aria-expanded="true"] .app-me-gear { color: var(--text-primary); }
+
+.me-menu {
+    position: absolute;
+    left: 0; right: 0; bottom: calc(100% - 8px);
+    z-index: 50;
+    display: grid;
+    gap: 2px;
+    padding: 6px;
+    background: rgba(24, 24, 30, .98);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 13px;
+    box-shadow: 0 20px 44px rgba(0, 0, 0, .55);
+}
+
+.me-menu button {
+    padding: 9px 12px;
+    font: inherit;
+    font-size: .84rem;
+    text-align: left;
+    color: var(--text-primary);
+    background: none;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.me-menu button:hover { background: rgba(255, 255, 255, .07); }
+
+.me-name-field {
+    width: 100%;
+    padding: 10px 13px;
+    font: inherit;
+    font-size: .85rem;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 11px;
+}
+
+.me-name-field:focus { outline: none; border-color: var(--accent-orange); }
 
 /* --- faces ---------------------------------------------------------------- */
 /* A picture of somebody, or the initial that stands in for one. The colour
@@ -190,6 +241,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    width: 100%;
     min-width: 0;
     margin: -4px;
     padding: 4px;

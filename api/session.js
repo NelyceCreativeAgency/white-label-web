@@ -1,6 +1,6 @@
 // POST   { username, password, role } -> signs in and sets the session cookie
 // GET                                 -> { user } so a page knows who is here
-// PATCH  { avatar: <url> | null }     -> the one thing you may change yourself
+// PATCH  { avatar, name }             -> what you may change about yourself
 // DELETE                              -> signs out
 //
 // Everything about the account you are signed in as lives here, which is also
@@ -64,9 +64,9 @@ module.exports = async (req, res) => {
             return res.status(200).json({ user: user ? accounts.publicUser(user) : null });
         }
 
-        // The picture on your own account, and nothing else about it. A name,
-        // a username and a role are how everybody else knows who you are, and
-        // the admin decides those in api/accounts.js. A face is yours.
+        // How you appear: your picture and the name everybody reads beside it.
+        // Not the username, which is what you sign in with and what the admin
+        // gave you, and not the role, which is what you are allowed to do.
         if (req.method === 'PATCH') {
             const doc = await accounts.readAccounts();
             const me = await accounts.currentUser(req, doc);
@@ -75,13 +75,27 @@ module.exports = async (req, res) => {
             await presence.touch(me.id);
 
             const body = readBody(req);
-            if (!('avatar' in body)) return res.status(400).json({ error: 'bad-action' });
-            if (body.avatar && !blob.isOurImage(body.avatar)) {
-                return res.status(400).json({ error: 'bad-image' });
+            if (!('avatar' in body) && !('name' in body)) {
+                return res.status(400).json({ error: 'bad-action' });
             }
 
-            const was = me.avatar || null;
-            me.avatar = body.avatar ? String(body.avatar) : null;
+            let was = null;
+
+            if ('avatar' in body) {
+                if (body.avatar && !blob.isOurImage(body.avatar)) {
+                    return res.status(400).json({ error: 'bad-image' });
+                }
+                was = me.avatar || null;
+                me.avatar = body.avatar ? String(body.avatar) : null;
+            }
+
+            // Nobody goes by nothing. An empty box means the username, which
+            // is the name the account had before anybody chose one.
+            if ('name' in body) {
+                me.name = String(body.name == null ? '' : body.name).trim().slice(0, 60)
+                    || me.username;
+            }
+
             await accounts.writeAccounts(doc);
 
             // The one it replaced is nobody's picture now. If the store cannot

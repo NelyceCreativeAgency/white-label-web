@@ -67,14 +67,23 @@
         </nav>
 
         <div class="app-me">
-            <button class="app-me-who" type="button" id="me-open" aria-label="Η φωτογραφία μου">
+            <button class="app-me-who" type="button" id="me-open"
+                    aria-haspopup="menu" aria-expanded="false" aria-controls="me-menu">
                 <span class="app-avatar" id="me-avatar"></span>
                 <span class="app-me-text">
                     <strong id="me-name">…</strong>
                     <small id="me-role"></small>
                 </span>
+                <svg class="app-me-gear" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
             </button>
-            <button class="app-ghost" id="logout" type="button">Έξοδος</button>
+
+            <div class="me-menu" id="me-menu" role="menu" hidden>
+                <button type="button" role="menuitem" id="me-settings">Ρυθμίσεις</button>
+                <button type="button" role="menuitem" id="logout">Έξοδος</button>
+            </div>
         </div>
     </aside>
 
@@ -370,18 +379,27 @@
         <div class="modal-box modal-me" role="dialog" aria-modal="true" aria-labelledby="me-title">
             <button class="modal-x" type="button" data-close aria-label="Κλείσιμο">&times;</button>
 
-            <h2 class="modal-title" id="me-title">Η φωτογραφία μου</h2>
-            <p class="modal-sub">Φαίνεται δίπλα στο όνομά σου σε όλο το portal: στα μηνύματα, στα σχόλια και στις λίστες. Χωρίς φωτογραφία μένει το αρχικό σου, στο χρώμα που σου έχει δοθεί.</p>
+            <h2 class="modal-title" id="me-title">Οι ρυθμίσεις μου</h2>
+            <p class="modal-sub">Η φωτογραφία και το όνομα που βλέπουν οι υπόλοιποι δίπλα σου σε όλο το portal. Χωρίς φωτογραφία μένει το αρχικό σου, στο χρώμα που σου έχει δοθεί.</p>
 
             <div class="face-edit">
                 <span class="face-big" id="me-face"></span>
                 <span class="face-acts">
-                    <button class="btn btn-primary" type="button" id="me-pick">Διάλεξε φωτογραφία</button>
+                    <button class="app-ghost" type="button" id="me-pick">Διάλεξε φωτογραφία</button>
                     <button class="app-ghost app-danger" type="button" id="me-clear" hidden>Αφαίρεση</button>
                 </span>
             </div>
 
+            <label class="edit-label pw-head" for="me-name-field">Το όνομά μου</label>
+            <input class="me-name-field" id="me-name-field" maxlength="60" placeholder="Πώς θες να σε λένε">
+            <p class="pw-note" id="me-who"></p>
+
             <p class="edit-error" id="me-error" role="alert" hidden></p>
+
+            <div class="modal-foot">
+                <button class="app-ghost" type="button" data-close>Ακύρωση</button>
+                <button class="btn btn-primary" type="button" id="me-save">Αποθήκευση</button>
+            </div>
         </div>
     </div>
 

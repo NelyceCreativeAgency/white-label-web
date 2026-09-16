@@ -2273,7 +2273,8 @@
         }
 
         if (event.key === 'Escape') {
-            if (!$('bell-panel').hidden) closeBell();
+            if (!$('me-menu').hidden) closeMeMenu();
+            else if (!$('bell-panel').hidden) closeBell();
             else if (!$('me-modal').hidden) closeMe();
             else if (!$('picker').hidden) picker.close();
             else if (!$('acct-modal').hidden) closeDrawer();
@@ -2314,38 +2315,66 @@
         $('me-error').hidden = !message;
     };
 
+    // What the panel is showing before anything has been saved. undefined means
+    // the picture has not been touched, so a save leaves it alone.
+    const meDraft = { avatar: undefined };
+
+    const myFace = () => (meDraft.avatar === undefined ? state.me.avatar : meDraft.avatar);
+
     const renderMe = () => {
         paintFace($('me-avatar'), state.me, 'app-avatar');
-        paintFace($('me-face'), state.me, 'face-big');
-        $('me-clear').hidden = !state.me.avatar;
+        paintFace($('me-face'), { id: state.me.id, name: $('me-name-field').value || state.me.name,
+                                  avatar: myFace() }, 'face-big');
+        $('me-clear').hidden = !myFace();
     };
 
-    const closeMe = () => { $('me-modal').hidden = true; unlock(); };
+    const closeMe = () => {
+        meDraft.avatar = undefined;
+        $('me-modal').hidden = true;
+        unlock();
+    };
 
-    $('me-open').addEventListener('click', () => {
+    const openMe = () => {
+        meDraft.avatar = undefined;
         sayMe('');
+        $('me-name-field').value = state.me.name;
+        $('me-who').textContent =
+            `Μπαίνεις ως @${state.me.username}. Το όνομα χρήστη και ο ρόλος σου αλλάζουν μόνο από τον διαχειριστή.`;
         renderMe();
         $('me-modal').hidden = false;
         document.body.classList.add('is-locked');
-    });
-
-    const setMyFace = async (url) => {
-        const data = await api('/api/session', { method: 'PATCH', body: { avatar: url } });
-        state.me = data.user;
-        renderMe();
-
-        // Wherever else this account is drawn on the screen it is standing on.
-        if (!$('view-accounts').hidden) openAccounts();
     };
 
+    // --- the menu at the foot of the sidebar ---------------------------------
+    // The row was a label as far as anybody could tell. A gear on it says it
+    // does something, and what it does is behind one press rather than behind
+    // a guess.
+    const closeMeMenu = () => {
+        $('me-menu').hidden = true;
+        $('me-open').setAttribute('aria-expanded', 'false');
+    };
+
+    $('me-open').addEventListener('click', () => {
+        const open = $('me-menu').hidden;
+        $('me-menu').hidden = !open;
+        $('me-open').setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    $('me-settings').addEventListener('click', () => { closeMeMenu(); openMe(); });
+
+    document.addEventListener('click', (event) => {
+        if (!$('me-menu').hidden && !event.target.closest('.app-me')) closeMeMenu();
+    });
+
+    // --- saving ---------------------------------------------------------------
     $('me-pick').addEventListener('click', () => {
         pickFiles(false, async (files) => {
             sayMe('');
             busy('Ανέβασμα…');
             try {
                 const { url } = await acquire(files[0], SMALL_SIDE, 'me');
-                await setMyFace(url);
-                toast('Η φωτογραφία σου μπήκε.');
+                meDraft.avatar = url;
+                renderMe();
             } catch (err) {
                 sayMe(explain(err));
             } finally {
@@ -2354,12 +2383,39 @@
         });
     });
 
-    $('me-clear').addEventListener('click', async () => {
+    $('me-clear').addEventListener('click', () => {
+        meDraft.avatar = null;
+        renderMe();
+    });
+
+    $('me-name-field').addEventListener('input', renderMe);
+
+    $('me-save').addEventListener('click', async () => {
         sayMe('');
-        busy('…');
-        try { await setMyFace(null); }
-        catch (err) { sayMe(explain(err)); }
-        finally { busy(''); }
+        busy('Αποθήκευση…');
+
+        const sent = { name: $('me-name-field').value };
+        // A picture nobody touched is not sent, so nothing is replaced and the
+        // old one is not deleted out from under it.
+        if (meDraft.avatar !== undefined) sent.avatar = meDraft.avatar;
+
+        try {
+            const data = await api('/api/session', { method: 'PATCH', body: sent });
+            state.me = data.user;
+
+            closeMe();
+            $('me-name').textContent = state.me.name;
+            paintFace($('me-avatar'), state.me, 'app-avatar');
+            toast('Αποθηκεύτηκε.');
+
+            // Wherever else this account is drawn on the screen it is standing on.
+            if (!$('view-accounts').hidden) openAccounts();
+            if (!$('view-chat').hidden) renderChatList();
+        } catch (err) {
+            sayMe(explain(err));
+        } finally {
+            busy('');
+        }
     });
 
     // --- the bell ----------------------------------------------------------
