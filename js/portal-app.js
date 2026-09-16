@@ -98,6 +98,17 @@
         try { navigator.vibrate(ms); } catch { /* refused, and never mind */ }
     };
 
+    // And the thing that does reach an iPhone: the one that moved settles into
+    // its new place. The class is taken off again as soon as it is over, so
+    // landing in the same place twice running is felt twice.
+    const landed = (node) => {
+        if (!node) return;
+        node.classList.remove('is-landed');
+        void node.offsetWidth;
+        node.classList.add('is-landed');
+        node.addEventListener('animationend', () => node.classList.remove('is-landed'), { once: true });
+    };
+
     // --- faces ---------------------------------------------------------------
     // Eight tones, and which one somebody gets is worked out from their own id,
     // so it never changes and it is never stored. A list of five accounts is
@@ -770,6 +781,7 @@
         state.posts[from] = state.posts[to];
         state.posts[to] = moving;
         renderGrid();
+        landed(board.querySelector(`.cell[data-slot="${to}"]`));
 
         busy('Μετακίνηση…');
         try {
@@ -1806,6 +1818,7 @@
         const [moved] = images.splice(from, 1);
         images.splice(to, 0, moved);
         renderStrip();
+        landed(strip.querySelector(`.strip-tile[data-index="${to}"]`));
     };
 
     strip.addEventListener('pointerdown', (event) => {
@@ -3544,6 +3557,7 @@
         moved.group = group;
         wall.links.splice(to, 0, moved);
         renderLinks();
+        landed(linkList.querySelector(`li[data-link="${id}"]`));
 
         try {
             await moveLink(gridId, id, to, group);

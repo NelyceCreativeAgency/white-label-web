@@ -1596,6 +1596,34 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
 
 .cell.is-dragging { opacity: .3; }
 
+/* --- landing ---------------------------------------------------------------
+   An iPhone gives a web page no way to knock on the hand, so the eye is told
+   instead. Whatever was carried settles into its new place with a short press
+   and a smaller rebound, which is the shape of a thing being put down. It runs
+   once, on the one that moved, and is over before anybody would call it an
+   animation. */
+@keyframes settle {
+    0%   { transform: scale(1.055); }
+    55%  { transform: scale(.975); }
+    100% { transform: scale(1); }
+}
+
+@keyframes settle-row {
+    0%   { background: rgba(255, 107, 53, .2);  border-color: rgba(255, 107, 53, .45); }
+    100% { background: rgba(255, 255, 255, .03); border-color: rgba(255, 255, 255, .07); }
+}
+
+.cell.is-landed,
+.strip-tile.is-landed { animation: settle .34s cubic-bezier(0.34, 1.35, 0.64, 1); }
+.link-list li.is-landed { animation: settle-row .5s ease-out; }
+
+/* Told, not shaken at. */
+@media (prefers-reduced-motion: reduce) {
+    .cell.is-landed,
+    .strip-tile.is-landed,
+    .link-list li.is-landed { animation: none; }
+}
+
 .cell.is-over {
     outline: 2px solid var(--accent-orange);
     outline-offset: -2px;
