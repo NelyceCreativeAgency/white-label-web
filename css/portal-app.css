@@ -2005,6 +2005,54 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 
 .strip-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+/* --- carrying a picture along the carousel -------------------------------- */
+/* Which picture is first is which one the grid shows, so the order of these is
+   a decision rather than the order they happened to be chosen in. Nothing here
+   reaches the server until the post is saved: this is a list in a panel that
+   has not been submitted yet. */
+.strip-tile[data-index] {
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+}
+
+.strip-tile[data-index] img { -webkit-user-drag: none; pointer-events: none; }
+.strip-tile.is-lifting { opacity: .3; }
+
+/* A bar down the side the picture is going to land on. The strip wraps onto as
+   many rows as it needs, so the mark is on the tile rather than in the gap. */
+.strip-tile.is-before::before,
+.strip-tile.is-after::after {
+    content: "";
+    position: absolute;
+    top: 4px; bottom: 4px;
+    z-index: 2;
+    width: 3px;
+    background: var(--accent-orange);
+    border-radius: 3px;
+}
+
+.strip-tile.is-before::before { left: -6px; }
+.strip-tile.is-after::after { right: -6px; }
+
+body.is-dragging-strip,
+body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
+
+.strip-ghost {
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 130;
+    overflow: hidden;
+    pointer-events: none;
+    border: 1px solid rgba(255, 107, 53, .5);
+    border-radius: 13px;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, .55);
+    opacity: .94;
+    will-change: transform;
+}
+
+.strip-ghost img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
 .strip-flag {
     position: absolute; left: 6px; bottom: 6px;
     padding: 2px 7px;
@@ -2026,10 +2074,14 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     border-radius: 8px;
     cursor: pointer;
     opacity: 0;
+    /* Invisible and still in the way: without this it swallows a tap on a
+       touch screen, where nothing ever hovers, and a drag that begins on the
+       bottom of a tile never starts. */
+    pointer-events: none;
     transition: opacity .25s;
 }
 
-.strip-tile:hover .strip-first { opacity: 1; }
+.strip-tile:hover .strip-first { opacity: 1; pointer-events: auto; }
 
 .strip-x {
     position: absolute; top: 5px; right: 5px;

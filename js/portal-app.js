@@ -1234,6 +1234,164 @@
         $('edit-strip').innerHTML = tiles.join('');
     };
 
+    // --- carrying a picture along the carousel ------------------------------
+    // Which one is first is which one the grid shows, so their order is a
+    // decision and not the order they happened to be chosen in. It is the same
+    // gesture as everywhere else on this page, and it touches no server at all:
+    // the strip is a list in a panel that has not been saved yet, so the order
+    // travels with everything else when the post is.
+    const strip = $('edit-strip');
+
+    const carry = {
+        index: null, pointer: null, touch: false,
+        x: 0, y: 0, startX: 0, startY: 0,
+        hold: null, ghost: null, active: false, moved: false
+    };
+
+    const tileAt = (x, y) => {
+        const under = document.elementFromPoint(x, y);
+        const tile = under ? under.closest('.strip-tile[data-index]') : null;
+        return tile && Number(tile.dataset.index) !== carry.index ? tile : null;
+    };
+
+    const clearStripMarks = () => {
+        strip.querySelectorAll('.is-before, .is-after')
+            .forEach(one => one.classList.remove('is-before', 'is-after'));
+    };
+
+    // Which side of the tile under the pointer it is heading for. A strip runs
+    // across rather than down, so it is the left or right half that decides.
+    const stripGap = () => {
+        const tile = tileAt(carry.x, carry.y);
+        if (!tile) return null;
+        const box = tile.getBoundingClientRect();
+        return { tile, after: carry.x > box.left + box.width / 2 };
+    };
+
+    const markStripGap = () => {
+        clearStripMarks();
+        const spot = stripGap();
+        if (spot) spot.tile.classList.add(spot.after ? 'is-after' : 'is-before');
+    };
+
+    const placeCarry = () => {
+        if (carry.ghost) {
+            carry.ghost.style.transform =
+                `translate(${carry.x}px, ${carry.y}px) translate(-50%, -50%) scale(1.06)`;
+        }
+    };
+
+    const liftTile = () => {
+        const tile = strip.querySelector(`.strip-tile[data-index="${carry.index}"]`);
+        const image = tile && tile.querySelector('img');
+        if (!image) return;
+
+        carry.active = true;
+        carry.moved = true;
+        tile.classList.add('is-lifting');
+        document.body.classList.add('is-dragging-strip');
+
+        const box = tile.getBoundingClientRect();
+        carry.ghost = document.createElement('div');
+        carry.ghost.className = 'strip-ghost';
+        carry.ghost.style.width = `${box.width}px`;
+        carry.ghost.style.height = `${box.height}px`;
+        carry.ghost.innerHTML = `<img src="${esc(image.src)}" alt="">`;
+        document.body.appendChild(carry.ghost);
+
+        placeCarry();
+        markStripGap();
+    };
+
+    const dropTile = (dropped) => {
+        clearTimeout(carry.hold);
+        if (carry.ghost) { carry.ghost.remove(); carry.ghost = null; }
+
+        document.body.classList.remove('is-dragging-strip');
+        strip.querySelectorAll('.is-lifting').forEach(one => one.classList.remove('is-lifting'));
+
+        const spot = carry.active && dropped ? stripGap() : null;
+        clearStripMarks();
+
+        const from = carry.index;
+        const wasActive = carry.active;
+
+        carry.index = null;
+        carry.pointer = null;
+        carry.active = false;
+
+        if (!wasActive || !spot || !state.draft) return;
+
+        const onto = Number(spot.tile.dataset.index);
+        let to = spot.after ? onto + 1 : onto;
+        if (from < to) to -= 1;
+        if (to === from) return;
+
+        const images = state.draft.images;
+        const [moved] = images.splice(from, 1);
+        images.splice(to, 0, moved);
+        renderStrip();
+    };
+
+    strip.addEventListener('pointerdown', (event) => {
+        if (event.button > 0 || !state.draft) return;
+
+        // The cross and the "make it first" button are buttons of their own,
+        // and the square that adds one is not a picture yet.
+        const tile = event.target.closest('.strip-tile[data-index]');
+        if (!tile || event.target.closest('.strip-x, .strip-first')) return;
+
+        carry.index = Number(tile.dataset.index);
+        carry.pointer = event.pointerId;
+        carry.touch = event.pointerType !== 'mouse';
+        carry.startX = carry.x = event.clientX;
+        carry.startY = carry.y = event.clientY;
+        carry.moved = false;
+        carry.active = false;
+
+        strip.setPointerCapture(event.pointerId);
+        if (carry.touch) carry.hold = setTimeout(liftTile, HOLD_MS);
+    });
+
+    strip.addEventListener('pointermove', (event) => {
+        if (carry.pointer !== event.pointerId) return;
+
+        carry.x = event.clientX;
+        carry.y = event.clientY;
+
+        const strayed = Math.hypot(carry.x - carry.startX, carry.y - carry.startY);
+
+        if (!carry.active) {
+            if (carry.touch) { if (strayed > TOUCH_SLOP) clearTimeout(carry.hold); }
+            else if (strayed > MOUSE_SLOP) liftTile();
+            return;
+        }
+
+        event.preventDefault();
+        placeCarry();
+        markStripGap();
+    });
+
+    strip.addEventListener('pointerup', (event) => {
+        if (carry.pointer === event.pointerId) dropTile(true);
+    });
+
+    strip.addEventListener('pointercancel', (event) => {
+        if (carry.pointer === event.pointerId) dropTile(false);
+    });
+
+    // A picture that was carried should not also count as a click on the tile.
+    strip.addEventListener('click', (event) => {
+        if (!carry.moved) return;
+        carry.moved = false;
+        event.stopPropagation();
+        event.preventDefault();
+    }, true);
+
+    document.addEventListener('touchmove', (event) => {
+        if (carry.active) event.preventDefault();
+    }, { passive: false });
+
     $('edit-strip').addEventListener('click', (event) => {
         const button = event.target.closest('[data-do]');
         if (!button) return;
