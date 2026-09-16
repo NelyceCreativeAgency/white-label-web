@@ -58,6 +58,7 @@ const createUser = (doc, body) => {
         name: text(body.name, MAX_NAME) || username,
         role,
         password: auth.hashPassword(password),
+        secret: auth.sealPassword(password),
         createdAt: new Date().toISOString(),
         lastLoginAt: null
     };
@@ -98,6 +99,7 @@ const patchUser = (doc, me, body) => {
     if (body.password !== undefined && body.password !== '') {
         if (String(body.password).length < MIN_PASSWORD) throw new Error('short-password');
         user.password = auth.hashPassword(String(body.password));
+        user.secret = auth.sealPassword(String(body.password));
     }
 
     return user;
@@ -145,8 +147,14 @@ module.exports = async (req, res) => {
         if (me.role !== 'admin') return res.status(403).json({ error: 'not-allowed' });
 
         if (req.method === 'GET') {
+            // The only place a password is ever sent back, to the only role
+            // that is let through the check above. An account made before the
+            // sealed copy existed reads as null, and the panel says so.
             return res.status(200).json({
-                users: doc.users.map(accounts.publicUser),
+                users: doc.users.map(user => ({
+                    ...accounts.publicUser(user),
+                    password: auth.openPassword(user.secret)
+                })),
                 grids: doc.grids.map(gridOut)
             });
         }

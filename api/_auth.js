@@ -51,6 +51,41 @@ exports.verifyPassword = (plain, stored) => {
     return sameString(given, key);
 };
 
+// --- a password the admin can read back --------------------------------------
+// The scrypt hash above is what a sign-in is checked against, and it cannot be
+// undone. This is a second copy of the same password that can be, kept so that
+// the one person who hands these passwords out can look one up instead of
+// resetting it and telling the client a new one.
+//
+// It is sealed with AES-GCM under a key derived from ADMIN_SECRET, so the
+// contents of the store on their own give nobody a password, and it leaves the
+// server only through /api/accounts, which refuses anyone but an admin.
+const sealKey = () => crypto.createHmac('sha256', secret()).update('password-seal').digest();
+
+exports.sealPassword = (plain) => {
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', sealKey(), iv);
+    const body = Buffer.concat([cipher.update(String(plain), 'utf8'), cipher.final()]);
+    return `aesgcm$${iv.toString('hex')}$${cipher.getAuthTag().toString('hex')}$${body.toString('hex')}`;
+};
+
+// Null for an account made before any of this existed, for one sealed under a
+// secret that has since been changed, and for anything that has been tampered
+// with. All three mean the same thing to the admin: this one has to be set
+// again before it can be read.
+exports.openPassword = (sealed) => {
+    const [scheme, iv, tag, body] = String(sealed || '').split('$');
+    if (scheme !== 'aesgcm' || !iv || !tag || !body) return null;
+
+    try {
+        const decipher = crypto.createDecipheriv('aes-256-gcm', sealKey(), Buffer.from(iv, 'hex'));
+        decipher.setAuthTag(Buffer.from(tag, 'hex'));
+        return Buffer.concat([decipher.update(Buffer.from(body, 'hex')), decipher.final()]).toString('utf8');
+    } catch {
+        return null;
+    }
+};
+
 // The one password that does not live in an account: it is what creates the
 // first admin on an empty store, and what the price editor still signs in with.
 exports.checkEnvPassword = (given) => {

@@ -1741,7 +1741,7 @@
     // --- one account, or one grid, behind its gear -------------------------
     // The list says who exists. This says everything else about one of them,
     // and is the only place any of it can be changed.
-    const drawer = { kind: null, id: null };
+    const drawer = { kind: null, id: null, password: '' };
 
     const sayAcct = (message) => {
         $('acct-error').textContent = message || '';
@@ -1751,6 +1751,7 @@
     const closeDrawer = () => {
         drawer.kind = null;
         drawer.id = null;
+        drawer.password = '';
         $('acct-modal').hidden = true;
         unlock();
     };
@@ -1762,6 +1763,12 @@
         if (kind === 'user') {
             const user = admin.users.find(u => u.id === id);
             if (!user) return;
+
+            // The password as it stands, if the server could still read it
+            // back. Held so that saving can tell an untouched box from a
+            // changed one and leave the untouched one alone.
+            const known = user.password || '';
+            drawer.password = known;
 
             $('acct-title').textContent = user.name;
             $('acct-sub').textContent = user.lastLoginAt
@@ -1775,13 +1782,16 @@
                     <label>Ρόλος<select data-f="role">${roleOptions(user.role)}</select></label>
                 </div>
 
-                <label class="edit-label pw-head" for="acct-password">Νέος κωδικός</label>
+                <label class="edit-label pw-head" for="acct-password">Κωδικός</label>
                 <span class="pw-field">
                     <input id="acct-password" data-f="password" type="password" minlength="8"
-                           placeholder="Άφησέ το κενό και μένει ο ίδιος" autocomplete="new-password">
+                           value="${esc(known)}" autocomplete="off" spellcheck="false"
+                           placeholder="${known ? '' : 'Γράψε νέον κωδικό'}">
                     ${EYE}
                 </span>
-                <p class="pw-note">Ό,τι γράψεις εδώ γίνεται ο κωδικός του μόλις αποθηκεύσεις, και το ματάκι σου τον δείχνει για να τον διαβάσεις σωστά. Ο κωδικός που ισχύει τώρα δεν φαίνεται πουθενά: ο διακομιστής κρατάει μόνο ένα αποτύπωμά του.</p>
+                <p class="pw-note">${known
+                    ? 'Πάτα το ματάκι για να τον δεις. Γράψε από πάνω και αποθήκευσε για να τον αλλάξεις.'
+                    : 'Αυτός ο λογαριασμός φτιάχτηκε πριν κρατηθεί αντίγραφο του κωδικού του, οπότε δεν διαβάζεται. Όρισε νέον εδώ και από δω και πέρα θα τον βλέπεις με το ματάκι.'}</p>
             `;
 
             // Your own account is the one you cannot take away.
@@ -1834,9 +1844,10 @@
         try {
             if (drawer.kind === 'user') {
                 const sent = { kind: 'user', id: drawer.id, ...fields(body) };
-                // An empty box means the password stays as it was, so it is
-                // left out of the request rather than sent as nothing.
-                if (!sent.password) delete sent.password;
+                // A box left as it was found, or left empty, is not a change of
+                // password, so it goes out of the request rather than round
+                // through the hash again.
+                if (!sent.password || sent.password === drawer.password) delete sent.password;
                 await api('/api/accounts', { method: 'PATCH', body: sent });
             } else {
                 const memberIds = Array.from(body.querySelectorAll('[data-member]'))
