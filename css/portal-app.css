@@ -1834,19 +1834,47 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
    the element by object-fit. A box that is only as wide as its picture has to
    be placed somewhere, and whatever was placing it left it against the left
    edge with all the slack on the right. This has no placement to get wrong. */
-.post-image {
+/* Every picture of the carousel side by side on one strip, and the strip is
+   what moves. A finger drags the whole row, so the next one is already coming
+   in as the last one leaves rather than appearing once it has gone. */
+.post-track {
     position: absolute;
     inset: 0;
+    display: flex;
+    will-change: transform;
+    transition: transform .3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.post-track img {
+    flex: 0 0 100%;
     width: 100%;
     height: 100%;
     object-fit: contain;
     display: block;
-    transition: transform .28s cubic-bezier(0.25, 1, 0.5, 1);
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
-/* While a finger is on it the picture goes exactly where the finger goes, and
-   the easing only comes back for the snap at the end. */
-.post-stage.is-swiping .post-image { transition: none; }
+/* Which one of how many, said quietly. The dots below say the same thing to
+   anybody reading the shape rather than the number. */
+.post-count {
+    position: absolute; top: 14px; right: 14px;
+    z-index: 2;
+    padding: 4px 10px;
+    font-size: .72rem;
+    font-weight: var(--fw-medium);
+    color: #fff;
+    background: rgba(10, 10, 14, .55);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    border-radius: 999px;
+}
+
+/* Nothing to click with, nothing to click on. Where a finger is the only
+   pointer there is, the arrows are two things in the way of the picture. */
+@media (hover: none) and (pointer: coarse) {
+    .post-arrow { display: none; }
+}
 
 .post-arrow {
     position: absolute; top: 50%;
@@ -2641,6 +2669,9 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
         height: auto;
         max-height: none;
     }
+
+    /* Clear of the close button, which is pinned to the same corner. */
+    .post-count { right: 58px; }
     /* Everything here is its own height and the panel above does the
        scrolling. A caption of its natural height over a list with a scrollbar
        of its own was the old arrangement, and a long caption squeezed that

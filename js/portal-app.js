@@ -907,20 +907,31 @@
         const post = state.posts[slot];
         if (!post) { closeViewer(); return; }
 
-        const image = post.images[index] || post.images[0];
-        $('post-image').src = image.url;
+        // The strip is rebuilt only when what is on it has changed. Every note
+        // written about a post comes back through here, and rebuilding it would
+        // fetch every picture again to show the same ones.
+        const track = $('post-track');
+        const key = `${post.id}:${post.updatedAt || ''}:${post.images.length}`;
+
+        if (track.dataset.key !== key) {
+            track.dataset.key = key;
+            track.innerHTML = post.images
+                .map(one => `<img src="${esc(one.url)}" alt="" draggable="false">`).join('');
+        }
 
         const many = post.images.length > 1;
         $('post-prev').hidden = !many;
         $('post-next').hidden = !many;
-        $('post-dots').innerHTML = many
-            ? post.images.map((_, i) => `<span class="${i === index ? 'is-on' : ''}"></span>`).join('')
-            : '';
+        $('post-count').hidden = !many;
+        $('post-dots').innerHTML = many ? post.images.map(() => '<span></span>').join('') : '';
+
+        markIndex();
+        placeTrack(0, false);
 
         $('post-caption').textContent = post.caption || '';
         $('post-caption').hidden = !post.caption;
 
-        renderLike(post, image);
+        renderLike(post, post.images[index] || post.images[0]);
         // The sheet is something the studio sends out, so it is the studio's:
         // the admin and the partners working on the grid. A client reads the
         // post and says what they think of it, and that is the whole of what
@@ -934,6 +945,53 @@
         // With nothing left in it the row is a rule and a gap under a caption.
         $('post-actions').hidden = !sends && !canEdit();
         renderNotes(post, slot);
+    };
+
+    // --- where the strip stands ----------------------------------------------
+    // One picture per screen, so the strip sits at minus one screen per
+    // picture. A finger adds its own distance on top of that, which is what
+    // makes the next one arrive as this one leaves rather than after it.
+    const placeTrack = (dx = 0, glide = true) => {
+        if (!state.viewing) return;
+
+        const track = $('post-track');
+        const wasOff = track.style.transition === 'none';
+        track.style.transition = glide ? '' : 'none';
+
+        // Turning the easing back on and moving in the same breath gets both
+        // applied at once, and nothing animates. Reading the layout in between
+        // makes the browser settle the first before it sees the second, which
+        // is the difference between gliding to the next picture and appearing
+        // at it.
+        if (glide && wasOff) void track.offsetWidth;
+
+        track.style.transform = `translateX(calc(${-100 * state.viewing.index}% + ${dx}px))`;
+    };
+
+    const markIndex = () => {
+        if (!state.viewing) return;
+
+        const post = state.posts[state.viewing.slot];
+        if (!post) return;
+
+        const at = state.viewing.index;
+        $('post-count').textContent = `${at + 1}/${post.images.length}`;
+
+        Array.from($('post-dots').children)
+            .forEach((one, i) => one.classList.toggle('is-on', i === at));
+    };
+
+    // Everything that changes which picture is showing goes through here: the
+    // arrows, the keyboard and the finger all mean the same thing.
+    const goTo = (want) => {
+        const post = state.posts[state.viewing.slot];
+        const count = post.images.length;
+
+        state.viewing.index = ((want % count) + count) % count;
+
+        placeTrack(0, true);
+        markIndex();
+        renderLike(post, post.images[state.viewing.index]);
     };
 
     // --- the heart ----------------------------------------------------------
@@ -1216,7 +1274,7 @@
         if (!swipe.sideways) return;
 
         swipe.dx = dx;
-        $('post-image').style.transform = `translateX(${dx}px)`;
+        placeTrack(dx, false);
     });
 
     const letGoOfSwipe = (dropped) => {
@@ -1228,14 +1286,14 @@
         swipe.dx = 0;
 
         stage.classList.remove('is-swiping');
-        $('post-image').style.transform = '';
 
-        if (!sideways || !dropped) return;
-        if (Math.abs(dx) < FAR_ENOUGH(stage.getBoundingClientRect().width)) return;
+        const far = sideways && dropped
+            && Math.abs(dx) >= FAR_ENOUGH(stage.getBoundingClientRect().width);
 
-        // The arrows already know how to wrap round the ends of a carousel.
-        if (dx < 0) $('post-next').click();
-        else $('post-prev').click();
+        // Either way the strip glides to where it belongs from wherever the
+        // finger left it, which is one movement rather than a snap and a jump.
+        if (far) goTo(state.viewing.index + (dx < 0 ? 1 : -1));
+        else placeTrack(0, true);
     };
 
     stage.addEventListener('pointerup', (event) => {
@@ -1246,17 +1304,8 @@
         if (swipe.id === event.pointerId) letGoOfSwipe(false);
     });
 
-    $('post-prev').addEventListener('click', () => {
-        const post = state.posts[state.viewing.slot];
-        state.viewing.index = (state.viewing.index - 1 + post.images.length) % post.images.length;
-        renderViewer();
-    });
-
-    $('post-next').addEventListener('click', () => {
-        const post = state.posts[state.viewing.slot];
-        state.viewing.index = (state.viewing.index + 1) % post.images.length;
-        renderViewer();
-    });
+    $('post-prev').addEventListener('click', () => goTo(state.viewing.index - 1));
+    $('post-next').addEventListener('click', () => goTo(state.viewing.index + 1));
 
     // --- the post as one picture ---------------------------------------------
     // A sheet to send somebody who has no account here: the whole post at a
@@ -2365,8 +2414,8 @@
         if (!$('post-modal').hidden && state.viewing) {
             const post = state.posts[state.viewing.slot];
             if (post && post.images.length > 1) {
-                if (event.key === 'ArrowLeft') $('post-prev').click();
-                if (event.key === 'ArrowRight') $('post-next').click();
+                if (event.key === 'ArrowLeft') goTo(state.viewing.index - 1);
+                if (event.key === 'ArrowRight') goTo(state.viewing.index + 1);
             }
         }
     });
