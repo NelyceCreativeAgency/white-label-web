@@ -794,10 +794,15 @@
         const post = state.posts[slot];
         if (!post) return;
 
+        // The sheet is something the studio sends out, so the line that makes
+        // one is the studio's. Everything else here is about the grid itself.
+        const sends = state.me.role === 'admin' || state.me.role === 'partner';
+
         menu.innerHTML = `
             <button type="button" data-do="view">Προβολή</button>
             <button type="button" data-do="edit">Επεξεργασία</button>
             <button type="button" data-do="move">Μετακίνηση</button>
+            ${sends ? '<button type="button" data-do="export">Εξαγωγή</button>' : ''}
             <button type="button" data-do="delete" class="is-danger">Διαγραφή</button>
         `;
         menu.dataset.slot = String(slot);
@@ -827,6 +832,7 @@
         switch (button.dataset.do) {
             case 'view': openViewer(slot, 0); break;
             case 'edit': openEditor(slot, post); break;
+            case 'export': exportPost(slot); break;
             case 'move':
                 state.moving = slot;
                 renderGrid();
@@ -1178,24 +1184,35 @@
     });
 
     // --- the post as one picture ---------------------------------------------
-    // A sheet to send somebody who has no account here: every picture of the
-    // carousel down one page, in order, with the caption under them, saved as
-    // a single JPEG.
+    // A sheet to send somebody who has no account here: the whole post at a
+    // glance, its pictures side by side in the order they are in, numbered so
+    // the order survives being forwarded, with the caption underneath.
     //
-    // It is drawn in the browser on a canvas. Nothing is asked of the server,
-    // because the browser already has every one of these pictures on screen,
-    // and a sheet that is assembled here is a sheet that costs nothing to make
-    // and needs no endpoint of its own.
-    const SHEET_W = 1080;
+    // It is drawn on a canvas in the browser. The browser already has every one
+    // of these pictures on screen, so a sheet assembled here costs nothing and
+    // needs no endpoint of its own.
+    //
+    // Everything below is measured in one set of units and then drawn through a
+    // single scale, so a sheet that would come out too big for a phone to hand
+    // back is the same sheet, smaller.
+    const CELL = 560;           // one picture's box, four across by five down
+    const CELL_GAP = 22;
+    const SHEET_PAD = 56;
+    const SHEET_HEAD = 172;
+    const CAPTION_COL = 1180;   // as wide as a line of text should ever be
+
+    // A row of ten would be a sheet eight times wider than it is tall. Five is
+    // where a row stops being something anybody can look at.
+    const PER_ROW = 5;
 
     // A canvas has a size past which a phone quietly refuses to hand back what
-    // was drawn on it. Ten tall pictures would go past it, so a long post is
-    // drawn narrower rather than not at all.
+    // was drawn on it.
     const SHEET_AREA = 12 * 1000 * 1000;
 
     const INK = '#15151b';
     const FADED = '#6f7078';
     const PAPER = '#f6f5f3';
+    const CELL_BG = '#e9e7e3';
 
     // A picture from the store, loaded in a way that lets the canvas be read
     // back afterwards. Without the crossOrigin the drawing works and the saving
@@ -1240,6 +1257,16 @@
         return lines;
     };
 
+    // The whole picture inside its box, never cropped: an export is for showing
+    // somebody what was made, and a sheet that trimmed it would be showing them
+    // something else.
+    const fit = (picture, x, y, w, h) => {
+        const scale = Math.min(w / picture.naturalWidth, h / picture.naturalHeight);
+        const pw = picture.naturalWidth * scale;
+        const ph = picture.naturalHeight * scale;
+        return { x: x + (w - pw) / 2, y: y + (h - ph) / 2, w: pw, h: ph };
+    };
+
     const exportPost = async (slot) => {
         const post = state.posts[slot];
         if (!post) return;
@@ -1253,115 +1280,95 @@
 
             const pictures = await Promise.all(post.images.map(one => fetchImage(one.url)));
 
-            // Measure everything first, because the canvas has to be the right
-            // height before a single thing is drawn on it.
-            let width = SHEET_W;
-            const measure = () => {
-                const pad = Math.round(width * .055);
-                const inner = width - pad * 2;
-                const gap = Math.round(width * .022);
+            // Rows as even as they can be: seven pictures are four and three
+            // rather than five and two.
+            const rows = Math.ceil(pictures.length / PER_ROW);
+            const across = Math.ceil(pictures.length / rows);
 
-                const heights = pictures.map(one => Math.round(inner * (one.naturalHeight / one.naturalWidth)));
-
-                // Room for the name, the line under it and the rule below
-                // that, before the first picture starts.
-                const head = Math.round(width * .175);
-                const body = heights.reduce((sum, h) => sum + h + gap, 0);
-
-                return { pad, inner, gap, heights, head, body };
-            };
-
-            let plan = measure();
-            const caption = (post.caption || '').trim();
-
-            // A rough guess at the caption's height is enough to decide the
-            // width; it is measured properly once the canvas exists.
-            const guess = caption ? Math.round(width * .08) + caption.length * Math.round(width * .012) : 0;
-            const rough = plan.head + plan.body + guess + plan.pad;
-
-            if (width * rough > SHEET_AREA) {
-                width = Math.max(560, Math.floor(SHEET_AREA / rough));
-                plan = measure();
-            }
+            const cellH = Math.round(CELL * 5 / 4);
+            const width = SHEET_PAD * 2 + across * CELL + (across - 1) * CELL_GAP;
+            const inner = width - SHEET_PAD * 2;
+            const wall = rows * cellH + (rows - 1) * CELL_GAP;
 
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const font = (size, weight = 400) => `${weight} ${size}px Geologica, system-ui, sans-serif`;
 
-            // The caption, measured for real now that there is a context to
-            // measure it with.
-            const captionSize = Math.round(width * .028);
-            const captionStep = Math.round(captionSize * 1.55);
+            const caption = (post.caption || '').trim();
+            const captionSize = 30;
+            const captionStep = 46;
             ctx.font = font(captionSize);
-            const lines = caption ? wrap(ctx, caption, plan.inner) : [];
-            const captionBox = lines.length ? Math.round(width * .03) + lines.length * captionStep : 0;
 
-            canvas.width = width;
-            canvas.height = plan.head + plan.body + captionBox + plan.pad;
+            const lines = caption ? wrap(ctx, caption, Math.min(inner, CAPTION_COL)) : [];
+            const captionBox = lines.length ? 34 + lines.length * captionStep : 0;
+            const height = SHEET_HEAD + wall + captionBox + SHEET_PAD;
+
+            // Drawn at whatever size the platform will actually return.
+            const scale = Math.min(1, Math.sqrt(SHEET_AREA / (width * height)));
+            canvas.width = Math.round(width * scale);
+            canvas.height = Math.round(height * scale);
+            ctx.scale(scale, scale);
 
             ctx.fillStyle = PAPER;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, width, height);
 
             // --- the head ---------------------------------------------------
-            const nameSize = Math.round(width * .042);
             ctx.fillStyle = INK;
-            ctx.font = font(nameSize, 600);
-            ctx.textBaseline = 'alphabetic';
-            ctx.fillText(state.grid.name, plan.pad, plan.pad + nameSize);
+            ctx.font = font(44, 600);
+            ctx.fillText(state.grid.name, SHEET_PAD, SHEET_PAD + 44);
 
             ctx.fillStyle = FADED;
-            ctx.font = font(Math.round(width * .026));
-            const under = [
+            ctx.font = font(27);
+            ctx.fillText([
                 state.grid.handle ? `@${state.grid.handle}` : '',
-                post.images.length > 1 ? `Carousel, ${post.images.length} εικόνες` : 'Ανάρτηση'
-            ].filter(Boolean).join('  ·  ');
-            ctx.fillText(under, plan.pad, plan.pad + nameSize + Math.round(width * .036));
+                pictures.length > 1 ? `Carousel, ${pictures.length} εικόνες` : 'Ανάρτηση'
+            ].filter(Boolean).join('  ·  '), SHEET_PAD, SHEET_PAD + 88);
 
             ctx.fillStyle = '#ff6b35';
-            ctx.fillRect(plan.pad, plan.head - Math.round(width * .026), Math.round(width * .07), 3);
+            ctx.fillRect(SHEET_PAD, SHEET_HEAD - 28, 74, 3);
 
-            // --- the pictures -------------------------------------------------
-            let y = plan.head;
+            // --- the pictures, side by side -----------------------------------
             pictures.forEach((picture, i) => {
-                const h = plan.heights[i];
+                const x = SHEET_PAD + (i % across) * (CELL + CELL_GAP);
+                const y = SHEET_HEAD + Math.floor(i / across) * (cellH + CELL_GAP);
 
                 ctx.save();
-                roundRect(ctx, plan.pad, y, plan.inner, h, Math.round(width * .018));
+                roundRect(ctx, x, y, CELL, cellH, 20);
                 ctx.clip();
-                ctx.drawImage(picture, plan.pad, y, plan.inner, h);
+                ctx.fillStyle = CELL_BG;
+                ctx.fillRect(x, y, CELL, cellH);
+
+                const box = fit(picture, x, y, CELL, cellH);
+                ctx.drawImage(picture, box.x, box.y, box.w, box.h);
                 ctx.restore();
 
-                // Which one of how many, so that the order survives being sent
-                // on as a single picture.
+                // Which one of how many, so the order survives being sent on.
                 if (pictures.length > 1) {
                     const label = `${i + 1}/${pictures.length}`;
-                    const size = Math.round(width * .024);
-                    ctx.font = font(size, 500);
+                    ctx.font = font(24, 500);
 
-                    const w = ctx.measureText(label).width + size * 1.4;
-                    const h2 = size * 1.9;
-                    const x = plan.pad + plan.inner - w - Math.round(width * .02);
-                    const top = y + Math.round(width * .02);
+                    const w = ctx.measureText(label).width + 32;
+                    const h = 44;
+                    const bx = x + CELL - w - 16;
+                    const by = y + 16;
 
                     ctx.fillStyle = 'rgba(10, 10, 14, .62)';
-                    roundRect(ctx, x, top, w, h2, h2 / 2);
+                    roundRect(ctx, bx, by, w, h, h / 2);
                     ctx.fill();
 
                     ctx.fillStyle = '#fff';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText(label, x + size * .7, top + h2 / 2 + 1);
+                    ctx.fillText(label, bx + 16, by + h / 2 + 1);
                     ctx.textBaseline = 'alphabetic';
                 }
-
-                y += h + plan.gap;
             });
 
             // --- the caption ---------------------------------------------------
             if (lines.length) {
                 ctx.fillStyle = INK;
                 ctx.font = font(captionSize);
-                let line = y + Math.round(width * .03) + captionSize;
-                lines.forEach(said => { ctx.fillText(said, plan.pad, line); line += captionStep; });
+                let line = SHEET_HEAD + wall + 34 + captionSize;
+                lines.forEach(said => { ctx.fillText(said, SHEET_PAD, line); line += captionStep; });
             }
 
             // toBlob refuses on a canvas that has a picture on it the page was
