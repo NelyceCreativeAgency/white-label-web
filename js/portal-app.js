@@ -70,6 +70,11 @@
 
     const initials = (name) => String(name || '?').trim().slice(0, 1).toUpperCase();
 
+    // Somebody at their screen, said with a dot in the corner of their face.
+    // Nothing at all is drawn for somebody who is away: an absence reads as
+    // away on its own, without a grey dot to spell it out.
+    const LIVE = '<span class="chat-live" title="Σε σύνδεση"></span>';
+
     // --- talking to the server ------------------------------------------
     const api = async (url, { method = 'GET', body } = {}) => {
         const res = await fetch(url, {
@@ -155,7 +160,8 @@
         // The messages view. picked is null for the project thread and the id
         // of the other person for a private one, which is the only difference
         // between the two as far as this file is concerned.
-        chat: { gridId: null, gridName: '', picked: null, people: [], messages: [], unread: 0 }
+        chat: { gridId: null, gridName: '', picked: null, people: [],
+                messages: [], unread: 0, onlineCount: 0 }
     };
 
     const canEdit = () => Boolean(state.grid && state.grid.canEdit);
@@ -254,7 +260,7 @@
             // them at it and counts what is waiting there.
             if (state.chat.gridId !== id) {
                 state.chat = { gridId: id, gridName: state.grid.name, picked: null,
-                               people: [], messages: [], unread: 0, last: null };
+                               people: [], messages: [], unread: 0, onlineCount: 0, last: null };
             }
             loadChats();
         } catch (err) {
@@ -1832,6 +1838,7 @@
     const renderChatBadge = () => {
         const total = chatTotal();
         $('nav-chat').hidden = !state.grids.length;
+        $('nav-chat').classList.toggle('has-new', Boolean(total));
         $('nav-chat-badge').hidden = !total;
         $('nav-chat-badge').textContent = total > 99 ? '99+' : String(total || '');
     };
@@ -1842,7 +1849,8 @@
         const c = state.chat;
 
         $('chat-project').innerHTML = `
-            <button class="chat-pick${c.picked === null ? ' is-on' : ''}" type="button" data-thread="">
+            <button class="chat-pick${c.picked === null ? ' is-on' : ''}${c.unread ? ' has-new' : ''}"
+                    type="button" data-thread="">
                 <span class="chat-face is-team" aria-hidden="true">${TEAM_ICON}</span>
                 <span class="chat-pick-text">
                     <strong>Όλη η ομάδα</strong>
@@ -1853,10 +1861,10 @@
 
         $('chat-people').innerHTML = c.people.length
             ? c.people.map(one => `
-                <button class="chat-pick${c.picked === one.id ? ' is-on' : ''}" type="button"
-                        data-thread="${esc(one.id)}">
-                    <span class="chat-face is-private" aria-hidden="true">
-                        ${esc(initials(one.name))}<span class="chat-lock">${LOCK_ICON}</span>
+                <button class="chat-pick${c.picked === one.id ? ' is-on' : ''}${one.unread ? ' has-new' : ''}"
+                        type="button" data-thread="${esc(one.id)}">
+                    <span class="chat-face">
+                        ${esc(initials(one.name))}${one.online ? LIVE : ''}
                     </span>
                     <span class="chat-pick-text">
                         <strong>${esc(one.name)}</strong>
@@ -1875,12 +1883,21 @@
         const person = c.people.find(one => one.id === c.picked) || null;
         const name = person ? person.name : '';
 
+        const live = Boolean(person && person.online);
+
         $('chat-head-face').className = `chat-head-face${team ? ' is-team' : ''}`;
-        $('chat-head-face').innerHTML = team ? TEAM_ICON : esc(initials(name));
+        $('chat-head-face').innerHTML = team
+            ? TEAM_ICON
+            : `${esc(initials(name))}${live ? LIVE : ''}`;
+
         $('chat-head-name').textContent = team ? 'Όλη η ομάδα' : name;
+
+        // In the project thread the same fact is a count, because a name is not
+        // what is online there.
+        $('chat-head-who').className = live ? 'is-live' : '';
         $('chat-head-who').textContent = team
-            ? `Συζήτηση του project ${c.gridName}`
-            : `Προσωπικό μήνυμα · ${ROLE_NAMES[person ? person.role : ''] || ''}`;
+            ? `Συζήτηση του project ${c.gridName}${c.onlineCount ? ` · ${c.onlineCount} σε σύνδεση` : ''}`
+            : live ? 'Σε σύνδεση τώρα' : `Προσωπικό μήνυμα · ${ROLE_NAMES[person ? person.role : ''] || ''}`;
 
         // The sentence that says who is reading. It stays on screen for as long
         // as the conversation does, because forgetting which of the two you are
@@ -1895,6 +1912,12 @@
             : `Γράψε στον/στην ${name}`;
 
         const log = $('chat-log');
+
+        // Somebody who has scrolled up to read yesterday stays there. Somebody
+        // already at the bottom is carried down to whatever just arrived, and
+        // an empty log counts as at the bottom, which is how a conversation
+        // opens on its most recent line.
+        const atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 80;
 
         if (!c.messages.length) {
             log.innerHTML = `<li class="chat-empty">${team
@@ -1929,7 +1952,7 @@
                 </li>`;
         }).join('');
 
-        log.scrollTop = log.scrollHeight;
+        if (atEnd) log.scrollTop = log.scrollHeight;
     };
 
     // Opening a conversation is reading it, so the count beside it goes.
@@ -1944,9 +1967,15 @@
 
     const lastId = (messages) => (messages.length ? messages[messages.length - 1].id : null);
 
+    const isLive = (c, picked) => {
+        const person = c.people.find(one => one.id === picked);
+        return picked ? Boolean(person && person.online) : c.onlineCount || 0;
+    };
+
     const openThread = async (picked, { quiet = false } = {}) => {
         const c = state.chat;
         const before = lastId(c.messages);
+        const wasLive = isLive(c, picked);
 
         c.picked = picked;
 
@@ -1968,10 +1997,14 @@
                 c.people = data.people || [];
                 c.last = data.last || null;
                 c.gridName = (data.grid && data.grid.name) || c.gridName;
+                c.onlineCount = data.onlineCount || 0;
                 c.unread = 0;
             } else {
                 const person = c.people.find(one => one.id === picked);
-                if (person) person.unread = 0;
+                if (person) {
+                    person.unread = 0;
+                    if (data.withUser) person.online = data.withUser.online;
+                }
                 // Arriving straight at a private thread from the bell, before
                 // the list of people has been fetched at all.
                 else if (data.withUser) c.people = c.people.concat({ ...data.withUser, unread: 0, last: null });
@@ -1981,7 +2014,9 @@
             return;
         }
 
-        const changed = lastId(c.messages) !== before;
+        // Somebody arriving or leaving redraws the room too: the dot beside
+        // their name is the point of showing it at all.
+        const changed = lastId(c.messages) !== before || isLive(c, picked) !== wasLive;
 
         // Reading is what clears a conversation's count, and a refresh that
         // brought nothing new is not a fresh reading: it would write the store
@@ -2005,13 +2040,16 @@
             c.people = data.people || [];
             c.last = data.last || null;
             c.unread = data.unread || 0;
+            c.onlineCount = data.onlineCount || 0;
             if (c.picked === null && !$('view-chat').hidden) c.messages = data.messages || [];
         } catch {
             return;
         }
 
         renderChatBadge();
-        if (!$('view-chat').hidden) { renderChatList(); renderRoom(); }
+        // The list only. Whatever is open on the right is the business of
+        // openThread, which knows whether anything in it actually changed.
+        if (!$('view-chat').hidden) renderChatList();
     };
 
     const openChat = async (picked = null) => {
@@ -2117,10 +2155,17 @@
 
     // Nothing is pushed from the server here either. An open conversation asks
     // often, and the counts in the sidebar ask at the same pace as the bell.
+    // A private thread's own request says nothing about anybody else, so every
+    // third turn the list is fetched as well and the rest of the dots catch up.
+    let ticks = 0;
     setInterval(() => {
         if (document.hidden) return;
-        if (!$('view-chat').hidden) openThread(state.chat.picked, { quiet: true });
-        else loadChats();
+
+        if ($('view-chat').hidden) { loadChats(); return; }
+
+        ticks += 1;
+        openThread(state.chat.picked, { quiet: true });
+        if (state.chat.picked && ticks % 3 === 0) loadChats();
     }, 15000);
 
     // --- sidebar plumbing --------------------------------------------------
@@ -2202,9 +2247,9 @@
 
     const people = (count) => (count === 1 ? '1 άτομο' : `${count} άτομα`);
 
-    const line = (id, what, name, under) => `
+    const line = (id, what, name, under, online) => `
         <li>
-            <span class="lister-face" aria-hidden="true">${esc(initials(name))}</span>
+            <span class="lister-face">${esc(initials(name))}${online ? LIVE : ''}</span>
             <span class="lister-who">
                 <span class="lister-name">${esc(name)}</span>
                 <span class="lister-sub">${under}</span>
@@ -2216,7 +2261,7 @@
     const renderAccounts = () => {
         const userLines = admin.users
             .map(user => line(user.id, 'user', user.name,
-                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}`))
+                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}`, user.online))
             .join('');
 
         const gridLines = admin.grids

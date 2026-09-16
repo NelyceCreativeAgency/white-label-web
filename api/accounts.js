@@ -9,6 +9,7 @@
 const accounts = require('./_accounts');
 const blob = require('./_blob');
 const auth = require('./_auth');
+const presence = require('./_presence');
 
 const USERNAME = /^[a-zA-Z0-9._-]{3,32}$/;
 const MIN_PASSWORD = 8;
@@ -150,10 +151,13 @@ module.exports = async (req, res) => {
             // The only place a password is ever sent back, to the only role
             // that is let through the check above. An account made before the
             // sealed copy existed reads as null, and the panel says so.
+            const here = await presence.online(doc.users.map(user => user.id));
+
             return res.status(200).json({
                 users: doc.users.map(user => ({
                     ...accounts.publicUser(user),
-                    password: auth.openPassword(user.secret)
+                    password: auth.openPassword(user.secret),
+                    online: here.has(user.id)
                 })),
                 grids: doc.grids.map(gridOut)
             });

@@ -12,6 +12,7 @@
 const accounts = require('./_accounts');
 const chat = require('./_chat');
 const feed = require('./_feed');
+const presence = require('./_presence');
 
 const readBody = (req) =>
     typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
@@ -42,6 +43,8 @@ module.exports = async (req, res) => {
         const key = other ? chat.privateKey(me.id, other.id) : chat.projectKey(grid.id);
         const mark = other ? chat.privateMark(me.id, other.id) : chat.projectMark(grid.id);
 
+        await presence.touch(me.id);
+
         if (req.method === 'GET') {
             const messages = await chat.read(key);
             const seen = marks(me);
@@ -49,20 +52,30 @@ module.exports = async (req, res) => {
             // A named thread is asked for on its own. The list that goes beside
             // it is only worth building when no thread was named.
             if (other) {
+                const here = await presence.online([other.id]);
                 return res.status(200).json({
                     kind: 'private',
-                    withUser: { id: other.id, name: other.name || other.username, role: other.role },
+                    withUser: {
+                        id: other.id,
+                        name: other.name || other.username,
+                        role: other.role,
+                        online: here.has(other.id)
+                    },
                     messages
                 });
             }
 
+            const others = chat.peopleOn(doc, grid, me);
+            const here = await presence.online(others.map(user => user.id));
+
             const people = [];
-            for (const user of chat.peopleOn(doc, grid, me)) {
+            for (const user of others) {
                 const theirs = await chat.read(chat.privateKey(me.id, user.id));
                 people.push({
                     id: user.id,
                     name: user.name || user.username,
                     role: user.role,
+                    online: here.has(user.id),
                     unread: chat.unreadIn(theirs, me, seen[chat.privateMark(me.id, user.id)]),
                     last: chat.tail(theirs)
                 });
@@ -74,7 +87,10 @@ module.exports = async (req, res) => {
                 messages,
                 unread: chat.unreadIn(messages, me, seen[mark]),
                 last: chat.tail(messages),
-                people
+                people,
+                // Everybody else on the project who is at their screen. You are
+                // not counted: you can see that you are here.
+                onlineCount: here.size
             });
         }
 

@@ -7,6 +7,7 @@
 // a bell that lights up because you left a comment yourself is noise.
 const accounts = require('./_accounts');
 const feed = require('./_feed');
+const presence = require('./_presence');
 
 // The bell is a list of what happened lately, not an archive.
 const SHOWN = 40;
@@ -21,6 +22,11 @@ module.exports = async (req, res) => {
         const doc = await accounts.readAccounts();
         const me = await accounts.currentUser(req, doc);
         if (!me) return res.status(401).json({ error: 'not-signed-in' });
+
+        // Whoever is asking is at their screen. The bell is asked for once a
+        // minute by every tab that is in front, which makes it the heartbeat
+        // for somebody who is reading rather than typing.
+        await presence.touch(me.id);
 
         if (req.method === 'GET') {
             const events = (await feed.read())

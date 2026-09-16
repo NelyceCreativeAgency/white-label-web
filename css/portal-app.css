@@ -134,6 +134,25 @@
     border-radius: 999px;
 }
 
+/* Something is waiting. A tint and a small circle with a number in it, the way
+   a phone puts one on an app, rather than anything that shouts. */
+.app-nav-item.has-new { background: rgba(255, 107, 53, .07); }
+.app-nav-item.has-new .app-nav-text strong { color: #ffc4a4; }
+.app-nav-item.has-new:hover { background: rgba(255, 107, 53, .13); }
+
+.app-nav-count {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    min-width: 19px; height: 19px;
+    padding: 0 5px;
+    font-size: .67rem;
+    font-weight: var(--fw-semibold);
+    color: var(--bg-dark);
+    background: var(--accent-orange);
+    border-radius: 999px;
+}
+
 .app-admin-nav { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, .07); }
 
 .app-me {
@@ -400,6 +419,9 @@
 }
 
 .chat-group {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     margin: 0 0 10px;
     padding: 0 8px;
     font-size: .7rem;
@@ -407,6 +429,17 @@
     text-transform: uppercase;
     color: rgba(184, 186, 194, .6);
 }
+
+.chat-group svg {
+    flex: 0 0 auto;
+    width: 13px; height: 13px;
+    fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* The padlock is the heading's, not every avatar's: it belongs to the whole
+   list, and the avatars have a green dot to carry instead. */
+.chat-group.is-private { color: #8fc9ac; }
 
 .chat-picks + .chat-group { margin-top: 26px; }
 .chat-picks { display: grid; gap: 3px; }
@@ -433,6 +466,9 @@
     background: rgba(255, 107, 53, .1);
     border-color: rgba(255, 107, 53, .3);
 }
+
+.chat-pick.has-new .chat-pick-text strong { color: #ffc4a4; }
+.chat-pick.has-new .chat-pick-text small { color: rgba(255, 196, 164, .75); }
 
 /* The project thread wears the accent colour and a group of people; a private
    one wears initials and a padlock. You can tell them apart from across the
@@ -462,20 +498,22 @@
     stroke-linecap: round; stroke-linejoin: round;
 }
 
-/* A padlock on the face of a private conversation. The heading above it says
-   the same thing in words; this is for whoever is scanning rather than
-   reading. */
-.chat-lock {
-    position: absolute; right: -3px; bottom: -3px;
-    display: grid;
-    place-items: center;
-    width: 17px; height: 17px;
-    color: #7fc7a4;
-    background: #16161c;
+/* At their screen, or not. A dot in the corner of the face, where every
+   messenger has put one for twenty years. Nothing is drawn for somebody who is
+   away: an absence reads as away without a grey dot to explain it. */
+.chat-live {
+    position: absolute; right: -1px; bottom: -1px;
+    width: 11px; height: 11px;
+    background: #4ade80;
+    border: 2px solid #15151b;
     border-radius: 50%;
 }
 
-.chat-lock svg { width: 9px; height: 9px; stroke-width: 2.6; }
+.chat-head-face { position: relative; }
+.chat-head-face .chat-live { border-color: #0e0e13; }
+
+/* Said in words as well, under the name, for whoever does not read dots. */
+.chat-head-text small.is-live { color: #7fc7a4; }
 
 .chat-pick-text { min-width: 0; }
 
@@ -491,11 +529,12 @@
 .chat-pick-text small { margin-top: 2px; font-size: .74rem; color: rgba(184, 186, 194, .65); }
 
 .chat-count {
-    min-width: 20px;
-    padding: 2px 6px;
-    font-size: .7rem;
+    display: grid;
+    place-items: center;
+    min-width: 19px; height: 19px;
+    padding: 0 5px;
+    font-size: .67rem;
     font-weight: var(--fw-semibold);
-    text-align: center;
     color: var(--bg-dark);
     background: var(--accent-orange);
     border-radius: 999px;
@@ -1674,6 +1713,7 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .lister li:hover { border-color: rgba(255, 255, 255, .14); }
 
 .lister-face {
+    position: relative;
     display: grid;
     place-items: center;
     width: 34px; height: 34px;
