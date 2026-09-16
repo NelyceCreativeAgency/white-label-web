@@ -745,7 +745,23 @@
 .link-new input:focus { outline: none; border-color: var(--accent-orange); }
 .link-new .btn { flex: 0 0 auto; padding: 10px 20px; font-size: .84rem; }
 
+.link-new .link-group { flex: 0 1 190px; }
+
 .link-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+/* A heading over the links that were put under it, and nothing at all over the
+   ones that were not. It exists for as long as a link is still under it and no
+   longer, which is why there is nowhere to make one and nowhere to delete one. */
+.link-head {
+    margin: 0;
+    padding: 14px 4px 2px;
+    font-size: .7rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: rgba(184, 186, 194, .6);
+}
+
+.link-list li.link-head:first-child { padding-top: 2px; }
 
 .link-list li[data-link] {
     position: relative;

@@ -2946,8 +2946,17 @@
     };
 
     const renderLinks = () => {
+        // A heading appears where the heading changes, and the links that were
+        // never given one sit at the top under nothing at all.
+        let heading = '';
+
         $('link-list').innerHTML = wall.links.length
-            ? wall.links.map(link => `
+            ? wall.links.map(link => {
+                const group = link.group || '';
+                const head = group && group !== heading ? `<li class="link-head">${esc(group)}</li>` : '';
+                heading = group;
+
+                return head + `
                 <li data-link="${esc(link.id)}">
                     ${GRIP}
                     <span class="link-face" aria-hidden="true">${LINK_ICON}</span>
@@ -2959,8 +2968,17 @@
                     ${link.userId === state.me.id || state.me.role === 'admin'
                         ? '<button class="link-drop" type="button" data-do="drop-link">Αφαίρεση</button>'
                         : '<span></span>'}
-                </li>`).join('')
+                </li>`;
+            }).join('')
             : '<li class="room-none">Κανένας σύνδεσμος ακόμα. Βάλε εδώ ό,τι ψάχνει συνέχεια η ομάδα: φάκελο στο Drive, brief, ημερολόγιο.</li>';
+
+        // Whatever headings exist, offered to whoever is adding the next link,
+        // so that a category is typed once and picked from then on.
+        const names = [];
+        wall.links.forEach(link => {
+            if (link.group && !names.includes(link.group)) names.push(link.group);
+        });
+        $('link-groups').innerHTML = names.map(one => `<option value="${esc(one)}">`).join('');
     };
 
     // Every tag that anybody has written on a note, so the row of them is what
@@ -3066,10 +3084,10 @@
         renderIdeas();
     };
 
-    const moveLink = async (gridId, id, to) => {
+    const moveLink = async (gridId, id, to, group) => {
         const data = await api('/api/board', {
             method: 'POST',
-            body: { grid: gridId, action: 'move-link', id, to }
+            body: { grid: gridId, action: 'move-link', id, to, group: group || '' }
         });
         showBoard(gridId, data);
         return data;
@@ -3089,10 +3107,10 @@
     $('link-new').addEventListener('submit', async (event) => {
         event.preventDefault();
         const form = event.target;
-        const { url, title } = Object.fromEntries(new FormData(form).entries());
+        const { url, title, group } = Object.fromEntries(new FormData(form).entries());
 
         try {
-            const data = await boardAction({ action: 'add-link', url, title });
+            const data = await boardAction({ action: 'add-link', url, title, group });
             wall.links = data.links || [];
             form.reset();
             renderLinks();
@@ -3232,22 +3250,30 @@
         const onto = wall.links.findIndex(one => one.id === spot.row.dataset.link);
         if (from < 0 || onto < 0) return;
 
-        // Where it lands once it is no longer where it was: everything below a
-        // row that has been lifted out has already moved up one.
+        // Where a link lands says which heading it is under, so carrying one
+        // into another group is how it changes group. There is nothing else to
+        // learn and no second control to go and find.
+        const was = wall.links[from].group || '';
+        const group = wall.links[onto].group || '';
+
         let to = spot.after ? onto + 1 : onto;
         if (from < to) to -= 1;
-        if (to === from) return;
+        if (to === from && group === was) return;
 
         // The list is redrawn in its new order before the server has answered,
         // because a row that snaps back for a moment reads as a failed drag.
         const gridId = state.chat.gridId;
         const [moved] = wall.links.splice(from, 1);
+        moved.group = group;
         wall.links.splice(to, 0, moved);
         renderLinks();
 
         try {
-            await moveLink(gridId, id, to);
-            keepUndo({ what: 'Η μετακίνηση αναιρέθηκε.', run: () => moveLink(gridId, id, from) });
+            await moveLink(gridId, id, to, group);
+            keepUndo({
+                what: 'Η μετακίνηση αναιρέθηκε.',
+                run: () => moveLink(gridId, id, from, was)
+            });
         } catch (err) {
             toast(explain(err), 'bad');
             renderLinks();

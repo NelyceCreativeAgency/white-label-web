@@ -18,6 +18,7 @@ const MAX_LINKS = 200;
 const MAX_NOTES = 200;
 const MAX_URL = 2000;
 const MAX_TITLE = 120;
+const MAX_GROUP = 40;
 const MAX_NOTE = 1200;
 const MAX_TAGS = 5;
 const MAX_TAG = 24;
@@ -104,6 +105,26 @@ const cleanTags = (raw) => {
 
 const colourOf = (raw) => (COLOURS.includes(raw) ? raw : COLOURS[0]);
 
+// Nothing is offered and nothing is required. A heading is whatever somebody
+// typed when they added a link, and it exists for exactly as long as a link is
+// still under it.
+const groupOf = (raw) => text(raw, MAX_GROUP);
+
+// Links under one heading are kept together in the list itself, so the order
+// they are stored in is the order they are read in and nothing has to be
+// sorted on the way out. Headings keep the order they first appeared in, and
+// whatever has no heading stays at the top where it can be seen.
+const tidy = (links) => {
+    const names = [];
+    links.forEach(one => {
+        const name = one.group || '';
+        if (!names.includes(name)) names.push(name);
+    });
+
+    const order = names.includes('') ? ['', ...names.filter(one => one)] : names;
+    return order.reduce((out, name) => out.concat(links.filter(one => (one.group || '') === name)), []);
+};
+
 module.exports = async (req, res) => {
     res.setHeader('Cache-Control', 'no-store, max-age=0');
 
@@ -148,13 +169,16 @@ module.exports = async (req, res) => {
                 id: accounts.newId('lnk'),
                 url,
                 title: nameOf(url, body.title),
+                group: groupOf(body.group),
                 note: text(body.note, MAX_TITLE),
                 ...signature
             };
 
             // Newest first: a link that has just been found is the one somebody
-            // is about to want.
+            // is about to want. Then the headings are put back in order, which
+            // is what lands it under its own.
             board.links.unshift(link);
+            board.links = tidy(board.links);
             await writeBoard(grid.id, board);
 
             await feed.push({
@@ -177,7 +201,14 @@ module.exports = async (req, res) => {
             if (!Number.isInteger(want)) return res.status(400).json({ error: 'bad-action' });
 
             const [link] = board.links.splice(from, 1);
+
+            // Where it lands says which heading it belongs under, so carrying a
+            // link into another group is how it changes group. There is nothing
+            // else to learn and no second control to find.
+            if (body.group !== undefined) link.group = groupOf(body.group);
+
             board.links.splice(Math.max(0, Math.min(board.links.length, want)), 0, link);
+            board.links = tidy(board.links);
 
             await writeBoard(grid.id, board);
             return res.status(200).json({ links: board.links });
