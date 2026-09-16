@@ -2922,6 +2922,8 @@
 
     const showTab = (which) => {
         tab = which;
+        adding('pane-links', false);
+        adding('pane-ideas', false);
         ['talk', 'links', 'ideas'].forEach(one => {
             $(`pane-${one}`).hidden = one !== which;
         });
@@ -3124,6 +3126,26 @@
         showBoard(gridId, data);
     };
 
+    // On a phone the two forms are a button until somebody presses it, and go
+    // back to being a button once they have added the thing they came to add.
+    // On anything wider the stylesheet leaves them open and none of this shows.
+    const adding = (pane, open) => {
+        $(pane).classList.toggle('is-adding', open);
+        if (!open) return;
+
+        const first = $(pane).querySelector('input, textarea');
+        if (first) first.focus();
+    };
+
+    $('link-open').addEventListener('click', () => adding('pane-links', true));
+    $('idea-open').addEventListener('click', () => adding('pane-ideas', true));
+
+    document.querySelectorAll('[data-shut]').forEach(button => {
+        button.addEventListener('click', () => {
+            adding(button.closest('.room-pane').id, false);
+        });
+    });
+
     $('link-new').addEventListener('submit', async (event) => {
         event.preventDefault();
         const form = event.target;
@@ -3133,6 +3155,7 @@
             const data = await boardAction({ action: 'add-link', url, title, group });
             wall.links = data.links || [];
             form.reset();
+            adding('pane-links', false);
             renderLinks();
         } catch (err) {
             toast(explain(err), 'bad');
@@ -3414,6 +3437,8 @@
             wall.notes = data.notes || [];
             $('idea-text').value = '';
             $('idea-tags').value = '';
+            $('idea-text').style.height = 'auto';
+            adding('pane-ideas', false);
             renderIdeas();
         } catch (err) {
             toast(explain(err), 'bad');

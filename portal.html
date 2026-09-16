@@ -185,6 +185,10 @@
 
                 <!-- Useful links -->
                 <div class="room-pane" id="pane-links" hidden>
+                    <button class="room-open" type="button" id="link-open">
+                        <span aria-hidden="true">+</span> Προσθήκη συνδέσμου
+                    </button>
+
                     <form class="link-new" id="link-new">
                         <input name="url" type="text" inputmode="url" maxlength="2000"
                                placeholder="Διεύθυνση, π.χ. drive.google.com/…" required
@@ -194,6 +198,7 @@
                                placeholder="Κατηγορία (προαιρετικό)">
                         <datalist id="link-groups"></datalist>
                         <button class="btn btn-primary" type="submit">Προσθήκη</button>
+                        <button class="app-ghost room-cancel" type="button" data-shut>Ακύρωση</button>
                     </form>
 
                     <div class="room-scroll">
@@ -203,6 +208,10 @@
 
                 <!-- Brainstorming -->
                 <div class="room-pane" id="pane-ideas" hidden>
+                    <button class="room-open" type="button" id="idea-open">
+                        <span aria-hidden="true">+</span> Νέα ιδέα
+                    </button>
+
                     <form class="idea-new" id="idea-new">
                         <textarea name="text" id="idea-text" rows="2" maxlength="1200"
                                   placeholder="Γράψε την ιδέα"></textarea>
@@ -213,6 +222,7 @@
                             <input name="tags" id="idea-tags" maxlength="140"
                                    placeholder="Ετικέτες, χωρισμένες με κόμμα">
                             <button class="btn btn-primary" type="submit">Προσθήκη</button>
+                            <button class="app-ghost room-cancel" type="button" data-shut>Ακύρωση</button>
                         </div>
                     </form>
 
