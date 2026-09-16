@@ -26,6 +26,9 @@ module.exports = async (req, res) => {
             const events = (await feed.read())
                 .filter(event => {
                     if (event.actorId === me.id) return false;
+                    // A private message is addressed. Everything else goes to
+                    // whoever may open the grid it happened on.
+                    if (event.toId) return event.toId === me.id;
                     const grid = accounts.findGrid(doc, event.gridId);
                     return Boolean(grid) && accounts.canView(me, grid);
                 })

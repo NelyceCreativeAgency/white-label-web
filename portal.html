@@ -48,6 +48,15 @@
             <p class="app-nav-label">Grids</p>
             <ul class="app-grids" id="app-grids"></ul>
 
+            <button class="app-nav-item app-nav-chat" type="button" data-view="chat" id="nav-chat" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.8-.9L3 20.5l1.5-4.6A8.4 8.4 0 0 1 3.6 12a8.4 8.4 0 0 1 8.4-8.5h.5a8.4 8.4 0 0 1 8.5 8z"/></svg>
+                <span class="app-nav-text">
+                    <strong>Μηνύματα</strong>
+                    <small>Ομάδα και προσωπικά</small>
+                </span>
+                <span class="app-nav-badge" id="nav-chat-badge" hidden></span>
+            </button>
+
             <div class="app-admin-nav" id="app-admin-nav" hidden>
                 <p class="app-nav-label">Διαχείριση</p>
                 <button class="app-nav-item" type="button" data-view="accounts">
@@ -123,6 +132,42 @@
 
         <!-- Accounts, for the admin only ---------------------------------- -->
         <section class="app-view" id="view-accounts" hidden></section>
+
+        <!-- Messages -------------------------------------------------------- -->
+        <!-- Two conversations, kept visibly apart: the one the whole project
+             reads, and the one only two people do. -->
+        <section class="app-view app-chat" id="view-chat" hidden>
+            <aside class="chat-side" id="chat-side">
+                <p class="chat-group">Συζήτηση του project</p>
+                <div class="chat-picks" id="chat-project"></div>
+
+                <p class="chat-group">Προσωπικά μηνύματα</p>
+                <div class="chat-picks" id="chat-people"></div>
+            </aside>
+
+            <div class="chat-room">
+                <header class="chat-head">
+                    <button class="chat-back" id="chat-back" type="button" aria-label="Πίσω στις συνομιλίες">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <span class="chat-head-face" id="chat-head-face" aria-hidden="true"></span>
+                    <span class="chat-head-text">
+                        <strong id="chat-head-name"></strong>
+                        <small id="chat-head-who"></small>
+                    </span>
+                </header>
+
+                <p class="chat-banner" id="chat-banner"></p>
+
+                <ul class="chat-log" id="chat-log"></ul>
+
+                <form class="chat-form" id="chat-form">
+                    <textarea id="chat-text" rows="1" maxlength="2000"
+                              placeholder="Γράψε μήνυμα"></textarea>
+                    <button class="btn btn-primary" type="submit" id="chat-send">Αποστολή</button>
+                </form>
+            </div>
+        </section>
 
         <!-- Nothing to show ----------------------------------------------- -->
         <section class="app-view app-blank" id="view-blank" hidden>

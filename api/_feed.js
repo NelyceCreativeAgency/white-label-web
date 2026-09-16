@@ -60,6 +60,7 @@ exports.dress = (event, doc) => {
         gridName: grid ? grid.name : event.gridName || '',
         actorName: actor ? (actor.name || actor.username) : event.actorName || '',
         actorRole: actor ? actor.role : event.actorRole || 'client',
+        actorId: event.actorId || null,
         slot: typeof event.slot === 'number' ? event.slot : null,
         postId: event.postId || null,
         image: event.image || null,

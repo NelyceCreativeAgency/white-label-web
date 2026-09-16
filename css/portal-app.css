@@ -184,7 +184,15 @@
 }
 
 /* --- main --------------------------------------------------------------- */
-.app-main { margin-left: 268px; min-height: 100vh; }
+.app-main {
+    margin-left: 268px;
+    /* dvh, so that the messages view ends where the phone's screen does rather
+       than under its address bar, taking the box you type in with it. */
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
 
 .app-top {
     position: sticky; top: 0; z-index: 20;
@@ -368,6 +376,333 @@
 .app-view { padding: 28px 32px 80px; }
 
 .app-blank { max-width: 520px; margin: 60px auto; text-align: center; }
+
+/* --- messages ------------------------------------------------------------- */
+/* Two conversations that must never be mistaken for each other: the project
+   thread, which everybody on the grid reads, and a private one, which two
+   people read. They are apart in the list, apart on the server, and each one
+   says in plain words who can see it before a word is typed. */
+.app-chat {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    flex: 1;
+    min-height: 0;
+    padding: 0;
+}
+
+.chat-side {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px 14px 24px;
+    border-right: 1px solid rgba(255, 255, 255, .07);
+}
+
+.chat-group {
+    margin: 0 0 10px;
+    padding: 0 8px;
+    font-size: .7rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: rgba(184, 186, 194, .6);
+}
+
+.chat-picks + .chat-group { margin-top: 26px; }
+.chat-picks { display: grid; gap: 3px; }
+
+.chat-pick {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 10px;
+    font: inherit;
+    text-align: left;
+    color: var(--text-primary);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.chat-pick:hover { background: rgba(255, 255, 255, .05); }
+
+.chat-pick.is-on {
+    background: rgba(255, 107, 53, .1);
+    border-color: rgba(255, 107, 53, .3);
+}
+
+/* The project thread wears the accent colour and a group of people; a private
+   one wears initials and a padlock. You can tell them apart from across the
+   room, which is the point. */
+.chat-face {
+    display: grid;
+    place-items: center;
+    width: 38px; height: 38px;
+    font-size: .85rem;
+    font-weight: var(--fw-medium);
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .08);
+    border-radius: 50%;
+}
+
+.chat-face.is-team {
+    color: var(--bg-dark);
+    background: linear-gradient(135deg, var(--accent-amber), var(--accent-orange));
+    border-radius: 13px;
+}
+
+.chat-face { position: relative; }
+
+.chat-face svg {
+    width: 19px; height: 19px;
+    fill: none; stroke: currentColor; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* A padlock on the face of a private conversation. The heading above it says
+   the same thing in words; this is for whoever is scanning rather than
+   reading. */
+.chat-lock {
+    position: absolute; right: -3px; bottom: -3px;
+    display: grid;
+    place-items: center;
+    width: 17px; height: 17px;
+    color: #7fc7a4;
+    background: #16161c;
+    border-radius: 50%;
+}
+
+.chat-lock svg { width: 9px; height: 9px; stroke-width: 2.6; }
+
+.chat-pick-text { min-width: 0; }
+
+.chat-pick-text strong,
+.chat-pick-text small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-pick-text strong { font-size: .88rem; font-weight: var(--fw-medium); }
+.chat-pick-text small { margin-top: 2px; font-size: .74rem; color: rgba(184, 186, 194, .65); }
+
+.chat-count {
+    min-width: 20px;
+    padding: 2px 6px;
+    font-size: .7rem;
+    font-weight: var(--fw-semibold);
+    text-align: center;
+    color: var(--bg-dark);
+    background: var(--accent-orange);
+    border-radius: 999px;
+}
+
+.chat-none { padding: 4px 10px; font-size: .8rem; line-height: 1.5; color: rgba(184, 186, 194, .6); }
+
+/* --- the conversation itself ---------------------------------------------- */
+.chat-room { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+.chat-head {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    flex: 0 0 auto;
+    padding: 14px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+
+.chat-back {
+    display: none;
+    place-items: center;
+    width: 34px; height: 34px;
+    color: var(--text-secondary);
+    background: none;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.chat-back svg {
+    width: 17px; height: 17px;
+    fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+.chat-head-face {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 36px; height: 36px;
+    font-size: .85rem;
+    font-weight: var(--fw-medium);
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .08);
+    border-radius: 50%;
+}
+
+.chat-head-face.is-team {
+    color: var(--bg-dark);
+    background: linear-gradient(135deg, var(--accent-amber), var(--accent-orange));
+    border-radius: 12px;
+}
+
+.chat-head-face svg {
+    width: 18px; height: 18px;
+    fill: none; stroke: currentColor; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+.chat-head-text { min-width: 0; }
+.chat-head-text strong { display: block; font-size: .95rem; font-weight: var(--fw-semibold); }
+.chat-head-text small { display: block; font-size: .74rem; color: rgba(184, 186, 194, .65); }
+
+/* The sentence that says who is reading. It is the first thing in the room and
+   it never goes away, because forgetting which of the two you are in is the
+   one mistake this whole screen exists to prevent. */
+.chat-banner {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 11px 24px;
+    font-size: .79rem;
+    line-height: 1.45;
+}
+
+.chat-banner svg {
+    flex: 0 0 auto;
+    width: 16px; height: 16px;
+    fill: none; stroke: currentColor; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+.chat-banner.is-team {
+    color: #ffc9a3;
+    background: rgba(255, 107, 53, .1);
+    border-bottom: 1px solid rgba(255, 107, 53, .2);
+}
+
+.chat-banner.is-private {
+    color: #a9d8c2;
+    background: rgba(76, 175, 130, .1);
+    border-bottom: 1px solid rgba(76, 175, 130, .22);
+}
+
+.chat-log {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.chat-day {
+    align-self: center;
+    margin: 14px 0 10px;
+    padding: 4px 12px;
+    font-size: .7rem;
+    color: rgba(184, 186, 194, .7);
+    background: rgba(255, 255, 255, .05);
+    border-radius: 999px;
+}
+
+.chat-msg { max-width: min(560px, 82%); align-self: flex-start; }
+.chat-msg.is-mine { align-self: flex-end; }
+
+.chat-name {
+    margin: 10px 0 4px 13px;
+    font-size: .72rem;
+    font-weight: var(--fw-medium);
+    color: rgba(184, 186, 194, .75);
+}
+
+.chat-bubble {
+    position: relative;
+    padding: 10px 14px;
+    font-size: .87rem;
+    line-height: 1.55;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 16px 16px 16px 5px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.chat-msg.is-mine .chat-bubble {
+    color: var(--bg-dark);
+    background: linear-gradient(135deg, var(--accent-amber), var(--accent-orange));
+    border-color: transparent;
+    border-radius: 16px 16px 5px 16px;
+}
+
+.chat-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 13px 0;
+    font-size: .68rem;
+    color: rgba(184, 186, 194, .6);
+}
+
+.chat-msg.is-mine .chat-foot { justify-content: flex-end; }
+
+.chat-foot button {
+    padding: 0;
+    font: inherit;
+    font-size: .68rem;
+    color: rgba(184, 186, 194, .6);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.chat-foot button:hover { color: #ff8b6b; }
+
+.chat-empty {
+    margin: auto;
+    max-width: 330px;
+    font-size: .84rem;
+    line-height: 1.6;
+    text-align: center;
+    color: rgba(184, 186, 194, .6);
+}
+
+.chat-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex: 0 0 auto;
+    padding: 14px 24px 18px;
+    border-top: 1px solid rgba(255, 255, 255, .07);
+}
+
+.chat-form textarea {
+    flex: 1;
+    min-width: 0;
+    max-height: 140px;
+    padding: 11px 14px;
+    font: inherit;
+    font-size: .87rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 14px;
+    resize: none;
+}
+
+.chat-form textarea:focus { outline: none; border-color: var(--accent-orange); }
+.chat-form .btn { flex: 0 0 auto; padding: 11px 20px; font-size: .84rem; }
 .app-blank h2 { font-size: 1.25rem; font-weight: var(--fw-semibold); margin-bottom: 10px; }
 .app-blank p { color: var(--text-secondary); font-size: .92rem; }
 
@@ -808,6 +1143,17 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     .hl-ring { width: 58px; height: 58px; }
     .hl-label { max-width: 64px; }
     .cell-dots, .cell-x { opacity: 1; }
+
+    /* A phone shows one thing at a time: the list of conversations, or the one
+       that has been opened, with a way back to the list. */
+    .app-chat { grid-template-columns: minmax(0, 1fr); }
+    .app-chat .chat-side { border-right: none; }
+    .app-chat.is-open .chat-side { display: none; }
+    .app-chat:not(.is-open) .chat-room { display: none; }
+
+    .chat-back { display: grid; }
+    .chat-head, .chat-banner, .chat-log, .chat-form { padding-left: 16px; padding-right: 16px; }
+    .chat-msg { max-width: 88%; }
 }
 
 

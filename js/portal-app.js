@@ -25,6 +25,30 @@
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
+    // Just the time, for a message that already sits under a day.
+    const clock = (iso) => {
+        try {
+            return new Intl.DateTimeFormat('el-GR', { hour: '2-digit', minute: '2-digit' })
+                .format(new Date(iso));
+        } catch { return ''; }
+    };
+
+    // Which day a run of messages belongs to, said the way somebody would say
+    // it rather than as a date nobody reads.
+    const dayOf = (iso) => {
+        const day = new Date(iso);
+        const midnight = new Date();
+        midnight.setHours(0, 0, 0, 0);
+        const days = Math.floor((midnight - day) / 86400000);
+
+        if (days < 0) return 'Σήμερα';
+        if (days < 1) return 'Χθες';
+        try {
+            return new Intl.DateTimeFormat('el-GR', { weekday: 'long', day: 'numeric', month: 'long' })
+                .format(day);
+        } catch { return ''; }
+    };
+
     const when = (iso) => {
         if (!iso) return '';
         try {
@@ -127,7 +151,11 @@
         moving: null,   // the slot waiting to be swapped with another
         dragging: null, // the slot being carried by the mouse
         feed: [],       // what everybody else has been doing
-        unread: 0       // how much of it arrived since the bell was last opened
+        unread: 0,      // how much of it arrived since the bell was last opened
+        // The messages view. picked is null for the project thread and the id
+        // of the other person for a private one, which is the only difference
+        // between the two as far as this file is concerned.
+        chat: { gridId: null, gridName: '', picked: null, people: [], messages: [], unread: 0 }
     };
 
     const canEdit = () => Boolean(state.grid && state.grid.canEdit);
@@ -173,6 +201,8 @@
     const renderSidebar = () => {
         const list = $('app-grids');
 
+        renderChatBadge();
+
         if (!state.grids.length) {
             list.innerHTML = '<li class="app-grids-empty">Κανένα ακόμα</li>';
             return;
@@ -196,7 +226,7 @@
     };
 
     const showView = (name) => {
-        ['grid', 'accounts', 'blank'].forEach(view => {
+        ['grid', 'accounts', 'chat', 'blank'].forEach(view => {
             $(`view-${view}`).hidden = view !== name;
         });
         closeSidebar();
@@ -219,6 +249,14 @@
             $('app-title').textContent = state.grid.name;
             renderGrid();
             showView('grid');
+
+            // The messages belong to the project, so opening another one points
+            // them at it and counts what is waiting there.
+            if (state.chat.gridId !== id) {
+                state.chat = { gridId: id, gridName: state.grid.name, picked: null,
+                               people: [], messages: [], unread: 0, last: null };
+            }
+            loadChats();
         } catch (err) {
             toast(explain(err), 'bad');
         } finally {
@@ -1636,7 +1674,9 @@
         delete: 'διέγραψε μια ανάρτηση',
         note:   'σχολίασε',
         reply:  'απάντησε σε ένα σχόλιο',
-        like:   'έκανε λάικ σε μια φωτογραφία'
+        like:   'έκανε λάικ σε μια φωτογραφία',
+        chat:   'έγραψε στη συζήτηση του project',
+        dm:     'σου έστειλε προσωπικό μήνυμα'
     };
 
     // A deleted post has no picture left to show, so its line gets the same
@@ -1644,6 +1684,11 @@
     const NO_THUMB = '<svg viewBox="0 0 24 24" aria-hidden="true">'
         + '<rect x="3" y="3" width="18" height="18" rx="3"/>'
         + '<path d="M3 15l5-5 4 4 3-3 6 6"/></svg>';
+
+    // Neither has a picture: a message is a message.
+    const SAID_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+        + '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.8-.9L3 20.5l1.5-4.6A8.4 8.4 0 0 1 3.6 12a8.4 '
+        + '8.4 0 0 1 8.4-8.5h.5a8.4 8.4 0 0 1 8.5 8z"/></svg>';
 
     // How long ago, in the words somebody would use out loud. Anything past a
     // day is better said as the date, which is what when() gives.
@@ -1673,7 +1718,7 @@
                         data-event="${esc(event.id)}">
                     <span class="bell-thumb">${event.image
                         ? `<img src="${esc(event.image)}" alt="" loading="lazy" onerror="this.hidden = true">`
-                        : NO_THUMB}</span>
+                        : (event.kind === 'chat' || event.kind === 'dm' ? SAID_ICON : NO_THUMB)}</span>
                     <span class="bell-said">
                         <span class="bell-what"><strong>${esc(event.actorName)}</strong> ${
                             esc(EVENT_WORDS[event.kind] || 'άλλαξε κάτι')}${
@@ -1729,6 +1774,14 @@
         if (!event) return;
         closeBell();
 
+        // A message opens the conversation it was written in, on the side of it
+        // that the reader belongs to.
+        if (event.kind === 'chat' || event.kind === 'dm') {
+            if (!state.grid || state.grid.id !== event.gridId) await openGrid(event.gridId);
+            openChat(event.kind === 'dm' ? event.actorId : null);
+            return;
+        }
+
         if (!state.grid || state.grid.id !== event.gridId) await openGrid(event.gridId);
         if (!state.grid || state.grid.id !== event.gridId) return;
 
@@ -1753,6 +1806,323 @@
     setInterval(() => { if (!document.hidden) loadFeed(); }, 60000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) loadFeed(); });
 
+    // --- messages ----------------------------------------------------------
+    // Two conversations that must never be mistaken for one another: the
+    // project thread, which everybody on the grid reads, and a private one
+    // between two of them. They are separate documents on the server, separate
+    // lists on screen, and each one says in words who can read it.
+    const TEAM_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+        + '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'
+        + '<path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+
+    const LOCK_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+        + '<rect x="3" y="11" width="18" height="11" rx="2"/>'
+        + '<path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+
+    const chatGridId = () =>
+        (state.grid && state.grid.id) || (state.grids[0] && state.grids[0].id) || null;
+
+    const chatTotal = () =>
+        state.chat.unread + state.chat.people.reduce((sum, one) => sum + (one.unread || 0), 0);
+
+    // The last thing said in a conversation, signed the way a list signs it.
+    const lastLine = (last) =>
+        `${last.userId === state.me.id ? 'Εσύ' : last.name}: ${last.text}`;
+
+    const renderChatBadge = () => {
+        const total = chatTotal();
+        $('nav-chat').hidden = !state.grids.length;
+        $('nav-chat-badge').hidden = !total;
+        $('nav-chat-badge').textContent = total > 99 ? '99+' : String(total || '');
+    };
+
+    // The list on the left. The two kinds sit under headings of their own and
+    // never in the same list, which is the whole design.
+    const renderChatList = () => {
+        const c = state.chat;
+
+        $('chat-project').innerHTML = `
+            <button class="chat-pick${c.picked === null ? ' is-on' : ''}" type="button" data-thread="">
+                <span class="chat-face is-team" aria-hidden="true">${TEAM_ICON}</span>
+                <span class="chat-pick-text">
+                    <strong>Όλη η ομάδα</strong>
+                    <small>${c.last ? esc(lastLine(c.last)) : `Το διαβάζουν όλοι στο ${esc(c.gridName)}`}</small>
+                </span>
+                ${c.unread ? `<span class="chat-count">${c.unread}</span>` : ''}
+            </button>`;
+
+        $('chat-people').innerHTML = c.people.length
+            ? c.people.map(one => `
+                <button class="chat-pick${c.picked === one.id ? ' is-on' : ''}" type="button"
+                        data-thread="${esc(one.id)}">
+                    <span class="chat-face is-private" aria-hidden="true">
+                        ${esc(initials(one.name))}<span class="chat-lock">${LOCK_ICON}</span>
+                    </span>
+                    <span class="chat-pick-text">
+                        <strong>${esc(one.name)}</strong>
+                        <small>${one.last ? esc(lastLine(one.last)) : `Μόνο εσύ και ${esc(one.name)}`}</small>
+                    </span>
+                    ${one.unread ? `<span class="chat-count">${one.unread}</span>` : ''}
+                </button>`).join('')
+            : '<p class="chat-none">Δεν υπάρχει άλλος πάνω σε αυτό το project ακόμα.</p>';
+
+        renderChatBadge();
+    };
+
+    const renderRoom = () => {
+        const c = state.chat;
+        const team = c.picked === null;
+        const person = c.people.find(one => one.id === c.picked) || null;
+        const name = person ? person.name : '';
+
+        $('chat-head-face').className = `chat-head-face${team ? ' is-team' : ''}`;
+        $('chat-head-face').innerHTML = team ? TEAM_ICON : esc(initials(name));
+        $('chat-head-name').textContent = team ? 'Όλη η ομάδα' : name;
+        $('chat-head-who').textContent = team
+            ? `Συζήτηση του project ${c.gridName}`
+            : `Προσωπικό μήνυμα · ${ROLE_NAMES[person ? person.role : ''] || ''}`;
+
+        // The sentence that says who is reading. It stays on screen for as long
+        // as the conversation does, because forgetting which of the two you are
+        // in is the one mistake this screen exists to prevent.
+        $('chat-banner').className = `chat-banner ${team ? 'is-team' : 'is-private'}`;
+        $('chat-banner').innerHTML = team
+            ? `${TEAM_ICON}<span>Το διαβάζουν <strong>όλοι</strong> όσοι δουλεύουν στο ${esc(c.gridName)}.</span>`
+            : `${LOCK_ICON}<span>Ιδιωτικό. Το βλέπετε <strong>μόνο εσύ και ${esc(name)}</strong>.</span>`;
+
+        $('chat-text').placeholder = team
+            ? 'Γράψε σε όλη την ομάδα'
+            : `Γράψε στον/στην ${name}`;
+
+        const log = $('chat-log');
+
+        if (!c.messages.length) {
+            log.innerHTML = `<li class="chat-empty">${team
+                ? 'Κανείς δεν έχει γράψει ακόμα εδώ. Ό,τι γράψεις το βλέπει όλη η ομάδα του project.'
+                : `Δεν έχετε ανταλλάξει μήνυμα ακόμα. Ό,τι γράψεις εδώ το βλέπετε μόνο εσείς οι δύο.`}</li>`;
+            return;
+        }
+
+        let day = '';
+        let before = null;
+
+        log.innerHTML = c.messages.map(message => {
+            const mine = message.userId === state.me.id;
+            const its = dayOf(message.at);
+            const newDay = its !== day;
+            if (newDay) day = its;
+
+            // A run of messages from the same person on the same day is signed
+            // once, at the top, the way every other messenger does it.
+            const signed = team && !mine && (newDay || !before || before.userId !== message.userId);
+            before = message;
+
+            return `
+                ${newDay ? `<li class="chat-day">${esc(its)}</li>` : ''}
+                <li class="chat-msg${mine ? ' is-mine' : ''}" data-message="${esc(message.id)}">
+                    ${signed ? `<p class="chat-name">${esc(message.name)}</p>` : ''}
+                    <div class="chat-bubble">${esc(message.text)}</div>
+                    <p class="chat-foot">
+                        <span>${esc(clock(message.at))}</span>
+                        ${mine ? '<button type="button" data-do="unsay">Διαγραφή</button>' : ''}
+                    </p>
+                </li>`;
+        }).join('');
+
+        log.scrollTop = log.scrollHeight;
+    };
+
+    // Opening a conversation is reading it, so the count beside it goes.
+    const markRead = async (picked) => {
+        try {
+            await api('/api/chat', {
+                method: 'POST',
+                body: { grid: state.chat.gridId, with: picked || undefined, action: 'seen' }
+            });
+        } catch { /* it will be marked on the next opening */ }
+    };
+
+    const lastId = (messages) => (messages.length ? messages[messages.length - 1].id : null);
+
+    const openThread = async (picked, { quiet = false } = {}) => {
+        const c = state.chat;
+        const before = lastId(c.messages);
+
+        c.picked = picked;
+
+        // A quiet refresh never moves the screen. Somebody scrolled up reading
+        // yesterday, or back on the list on a phone, stays where they are.
+        if (!quiet) {
+            $('view-chat').classList.add('is-open');
+            renderChatList();
+            renderRoom();
+        }
+
+        try {
+            const data = picked
+                ? await api(`/api/chat?grid=${encodeURIComponent(c.gridId)}&with=${encodeURIComponent(picked)}`)
+                : await api(`/api/chat?grid=${encodeURIComponent(c.gridId)}`);
+
+            c.messages = data.messages || [];
+            if (!picked) {
+                c.people = data.people || [];
+                c.last = data.last || null;
+                c.gridName = (data.grid && data.grid.name) || c.gridName;
+                c.unread = 0;
+            } else {
+                const person = c.people.find(one => one.id === picked);
+                if (person) person.unread = 0;
+                // Arriving straight at a private thread from the bell, before
+                // the list of people has been fetched at all.
+                else if (data.withUser) c.people = c.people.concat({ ...data.withUser, unread: 0, last: null });
+            }
+        } catch (err) {
+            if (!quiet) toast(explain(err), 'bad');
+            return;
+        }
+
+        const changed = lastId(c.messages) !== before;
+
+        // Reading is what clears a conversation's count, and a refresh that
+        // brought nothing new is not a fresh reading: it would write the store
+        // every fifteen seconds for nobody.
+        if (!quiet || changed) await markRead(picked);
+
+        renderChatList();
+        if (!quiet || changed) renderRoom();
+    };
+
+    // The list, without opening anything: what the badge in the sidebar counts.
+    const loadChats = async () => {
+        const gridId = chatGridId();
+        if (!gridId) { state.chat.people = []; state.chat.unread = 0; renderChatBadge(); return; }
+
+        try {
+            const data = await api(`/api/chat?grid=${encodeURIComponent(gridId)}`);
+            const c = state.chat;
+            c.gridId = gridId;
+            c.gridName = (data.grid && data.grid.name) || '';
+            c.people = data.people || [];
+            c.last = data.last || null;
+            c.unread = data.unread || 0;
+            if (c.picked === null && !$('view-chat').hidden) c.messages = data.messages || [];
+        } catch {
+            return;
+        }
+
+        renderChatBadge();
+        if (!$('view-chat').hidden) { renderChatList(); renderRoom(); }
+    };
+
+    const openChat = async (picked = null) => {
+        const gridId = chatGridId();
+        if (!gridId) { toast('Δεν υπάρχει project για συζήτηση.'); return; }
+
+        state.chat.gridId = gridId;
+        $('app-title').textContent = 'Μηνύματα';
+        showView('chat');
+        document.querySelectorAll('.app-nav-item').forEach(item => {
+            item.classList.toggle('is-on', item.dataset.view === 'chat');
+        });
+
+        // On a phone the list comes first and a conversation covers it, so
+        // arriving here without one named shows the list.
+        $('view-chat').classList.toggle('is-open', Boolean(picked));
+
+        busy('Φόρτωση…');
+        try { await openThread(picked); }
+        finally { busy(''); }
+
+        // A private thread opened on its own knows about one person. The rest
+        // of the list catches up behind it.
+        if (picked) loadChats();
+    };
+
+    $('chat-side').addEventListener('click', (clicked) => {
+        const pick = clicked.target.closest('[data-thread]');
+        if (!pick) return;
+        openThread(pick.dataset.thread || null);
+    });
+
+    $('chat-back').addEventListener('click', () => {
+        $('view-chat').classList.remove('is-open');
+    });
+
+    const say = async () => {
+        const box = $('chat-text');
+        const said = box.value.trim();
+        if (!said) return;
+
+        box.value = '';
+        box.style.height = 'auto';
+        $('chat-send').disabled = true;
+
+        try {
+            const data = await api('/api/chat', {
+                method: 'POST',
+                body: { grid: state.chat.gridId, with: state.chat.picked || undefined, text: said }
+            });
+            state.chat.messages = data.messages || state.chat.messages.concat(data.message);
+            renderRoom();
+        } catch (err) {
+            box.value = said;
+            toast(explain(err), 'bad');
+        } finally {
+            $('chat-send').disabled = false;
+            box.focus();
+        }
+    };
+
+    $('chat-form').addEventListener('submit', (event) => { event.preventDefault(); say(); });
+
+    // Enter sends and shift with it breaks the line, which is what everybody
+    // already has in their fingers. A phone keyboard has no shift worth using,
+    // so there the button is the way.
+    $('chat-text').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey && !matchMedia('(max-width: 900px)').matches) {
+            event.preventDefault();
+            say();
+        }
+    });
+
+    // The box grows with what is written in it, up to the height the stylesheet
+    // allows, and then scrolls.
+    $('chat-text').addEventListener('input', () => {
+        const box = $('chat-text');
+        box.style.height = 'auto';
+        box.style.height = `${box.scrollHeight}px`;
+    });
+
+    $('chat-log').addEventListener('click', async (clicked) => {
+        const button = clicked.target.closest('button[data-do="unsay"]');
+        if (!button) return;
+        if (!confirm('Να διαγραφεί το μήνυμα;')) return;
+
+        const id = button.closest('.chat-msg').dataset.message;
+        try {
+            const data = await api('/api/chat', {
+                method: 'POST',
+                body: {
+                    grid: state.chat.gridId,
+                    with: state.chat.picked || undefined,
+                    action: 'delete', id
+                }
+            });
+            state.chat.messages = data.messages || [];
+            renderRoom();
+        } catch (err) {
+            toast(explain(err), 'bad');
+        }
+    });
+
+    // Nothing is pushed from the server here either. An open conversation asks
+    // often, and the counts in the sidebar ask at the same pace as the bell.
+    setInterval(() => {
+        if (document.hidden) return;
+        if (!$('view-chat').hidden) openThread(state.chat.picked, { quiet: true });
+        else loadChats();
+    }, 15000);
+
     // --- sidebar plumbing --------------------------------------------------
     const closeSidebar = () => {
         document.body.classList.remove('side-open');
@@ -1771,6 +2141,7 @@
         if (!item) return;
 
         if (item.dataset.grid) openGrid(item.dataset.grid);
+        else if (item.dataset.view === 'chat') openChat();
         else if (item.dataset.view === 'accounts') openAccounts();
     });
 
