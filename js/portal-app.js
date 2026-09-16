@@ -1195,10 +1195,14 @@
     // Everything below is measured in one set of units and then drawn through a
     // single scale, so a sheet that would come out too big for a phone to hand
     // back is the same sheet, smaller.
-    const CELL = 560;           // one picture's box, four across by five down
+    // Every picture in a row is drawn to the same height and to its own width,
+    // so each one comes out at its own shape with nothing padded around it. A
+    // row of five four-by-fives is what it was before; a square among them is
+    // a square rather than a square with grey above and below it.
+    const ROW_H = 700;
     const CELL_GAP = 22;
     const SHEET_PAD = 56;
-    const SHEET_HEAD = 172;
+    const SHEET_HEAD = 168;     // the name, the line under it, and air
     const CAPTION_COL = 1180;   // as wide as a line of text should ever be
 
     // A row of ten would be a sheet eight times wider than it is tall. Five is
@@ -1212,7 +1216,6 @@
     const INK = '#15151b';
     const FADED = '#6f7078';
     const PAPER = '#f6f5f3';
-    const CELL_BG = '#e9e7e3';
 
     // A picture from the store, loaded in a way that lets the canvas be read
     // back afterwards. Without the crossOrigin the drawing works and the saving
@@ -1255,16 +1258,6 @@
         });
 
         return lines;
-    };
-
-    // The whole picture inside its box, never cropped: an export is for showing
-    // somebody what was made, and a sheet that trimmed it would be showing them
-    // something else.
-    const fit = (picture, x, y, w, h) => {
-        const scale = Math.min(w / picture.naturalWidth, h / picture.naturalHeight);
-        const pw = picture.naturalWidth * scale;
-        const ph = picture.naturalHeight * scale;
-        return { x: x + (w - pw) / 2, y: y + (h - ph) / 2, w: pw, h: ph };
     };
 
     // A PDF around a JPEG, written out by hand. A PDF is a text format with
@@ -1364,10 +1357,25 @@
             const rows = Math.ceil(pictures.length / PER_ROW);
             const across = Math.ceil(pictures.length / rows);
 
-            const cellH = Math.round(CELL * 5 / 4);
-            const width = SHEET_PAD * 2 + across * CELL + (across - 1) * CELL_GAP;
-            const inner = width - SHEET_PAD * 2;
-            const wall = rows * cellH + (rows - 1) * CELL_GAP;
+            // Each picture at its own width, and each row as wide as what is
+            // in it. The sheet is as wide as its widest row, and a row with
+            // room to spare sits in the middle of it.
+            const shots = pictures.map(one => ({
+                picture: one,
+                w: Math.round(ROW_H * (one.naturalWidth / one.naturalHeight)),
+                h: ROW_H
+            }));
+
+            const bands = [];
+            for (let i = 0; i < shots.length; i += across) bands.push(shots.slice(i, i + across));
+
+            const rowWidth = (row) =>
+                row.reduce((sum, one) => sum + one.w, 0) + (row.length - 1) * CELL_GAP;
+
+            const widest = Math.max(...bands.map(rowWidth));
+            const width = SHEET_PAD * 2 + widest;
+            const inner = widest;
+            const wall = rows * ROW_H + (rows - 1) * CELL_GAP;
 
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -1403,43 +1411,43 @@
                 pictures.length > 1 ? `Carousel, ${pictures.length} εικόνες` : 'Ανάρτηση'
             ].filter(Boolean).join('  ·  '), SHEET_PAD, SHEET_PAD + 88);
 
-            ctx.fillStyle = '#ff6b35';
-            ctx.fillRect(SHEET_PAD, SHEET_HEAD - 28, 74, 3);
-
             // --- the pictures, side by side -----------------------------------
-            pictures.forEach((picture, i) => {
-                const x = SHEET_PAD + (i % across) * (CELL + CELL_GAP);
-                const y = SHEET_HEAD + Math.floor(i / across) * (cellH + CELL_GAP);
+            let seen = 0;
+            bands.forEach((row, r) => {
+                const y = SHEET_HEAD + r * (ROW_H + CELL_GAP);
+                let x = SHEET_PAD + Math.round((widest - rowWidth(row)) / 2);
 
-                ctx.save();
-                roundRect(ctx, x, y, CELL, cellH, 20);
-                ctx.clip();
-                ctx.fillStyle = CELL_BG;
-                ctx.fillRect(x, y, CELL, cellH);
+                row.forEach(shot => {
+                    seen += 1;
 
-                const box = fit(picture, x, y, CELL, cellH);
-                ctx.drawImage(picture, box.x, box.y, box.w, box.h);
-                ctx.restore();
+                    ctx.save();
+                    roundRect(ctx, x, y, shot.w, shot.h, 20);
+                    ctx.clip();
+                    ctx.drawImage(shot.picture, x, y, shot.w, shot.h);
+                    ctx.restore();
 
-                // Which one of how many, so the order survives being sent on.
-                if (pictures.length > 1) {
-                    const label = `${i + 1}/${pictures.length}`;
-                    ctx.font = font(24, 500);
+                    // Which one of how many, so the order survives being sent on.
+                    if (shots.length > 1) {
+                        const label = `${seen}/${shots.length}`;
+                        ctx.font = font(24, 500);
 
-                    const w = ctx.measureText(label).width + 32;
-                    const h = 44;
-                    const bx = x + CELL - w - 16;
-                    const by = y + 16;
+                        const w = ctx.measureText(label).width + 32;
+                        const h = 44;
+                        const bx = x + shot.w - w - 16;
+                        const by = y + 16;
 
-                    ctx.fillStyle = 'rgba(10, 10, 14, .62)';
-                    roundRect(ctx, bx, by, w, h, h / 2);
-                    ctx.fill();
+                        ctx.fillStyle = 'rgba(10, 10, 14, .62)';
+                        roundRect(ctx, bx, by, w, h, h / 2);
+                        ctx.fill();
 
-                    ctx.fillStyle = '#fff';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(label, bx + 16, by + h / 2 + 1);
-                    ctx.textBaseline = 'alphabetic';
-                }
+                        ctx.fillStyle = '#fff';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(label, bx + 16, by + h / 2 + 1);
+                        ctx.textBaseline = 'alphabetic';
+                    }
+
+                    x += shot.w + CELL_GAP;
+                });
             });
 
             // --- the caption ---------------------------------------------------
