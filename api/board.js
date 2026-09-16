@@ -214,6 +214,23 @@ module.exports = async (req, res) => {
             return res.status(200).json({ links: board.links });
         }
 
+        // A link that is already there: what it is called and which heading it
+        // is under. Both are things somebody decided rather than facts about
+        // the address, so both can be decided again. The address itself is not
+        // editable: a different address is a different link.
+        if (body.action === 'edit-link') {
+            const link = board.links.find(one => one.id === body.id);
+            if (!link) return res.status(404).json({ error: 'no-such-link' });
+            if (!mine(link)) return res.status(403).json({ error: 'not-yours' });
+
+            if (body.title !== undefined) link.title = nameOf(link.url, body.title);
+            if (body.group !== undefined) link.group = groupOf(body.group);
+
+            board.links = tidy(board.links);
+            await writeBoard(grid.id, board);
+            return res.status(200).json({ links: board.links });
+        }
+
         if (body.action === 'delete-link') {
             const link = board.links.find(one => one.id === body.id);
             if (!link) return res.status(404).json({ error: 'no-such-link' });

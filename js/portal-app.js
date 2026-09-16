@@ -2915,7 +2915,7 @@
         + '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>'
         + '<path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>';
 
-    const wall = { links: [], notes: [], tag: null, editing: null, colour: COLOURS[0] };
+    const wall = { links: [], notes: [], tag: null, editing: null, fixing: null, colour: COLOURS[0] };
 
     // Which of the three is showing. Only the project thread has them at all.
     let tab = 'talk';
@@ -2956,6 +2956,25 @@
                 const head = group && group !== heading ? `<li class="link-head">${esc(group)}</li>` : '';
                 heading = group;
 
+                const mine = link.userId === state.me.id || state.me.role === 'admin';
+
+                // Being renamed or put under another heading. The address is
+                // not in here: a different address is a different link.
+                if (wall.fixing === link.id) {
+                    return head + `
+                <li data-link="${esc(link.id)}" class="is-fixing">
+                    ${GRIP}
+                    <span class="link-edit">
+                        <input data-fix="title" value="${esc(link.title)}" maxlength="120"
+                               placeholder="Πώς να λέγεται">
+                        <input data-fix="group" value="${esc(link.group || '')}" maxlength="40"
+                               list="link-groups" placeholder="Κατηγορία">
+                        <button class="link-drop link-edit-btn" type="button" data-do="save-link">Αποθήκευση</button>
+                        <button class="link-drop link-edit-btn" type="button" data-do="cancel-link">Ακύρωση</button>
+                    </span>
+                </li>`;
+                }
+
                 return head + `
                 <li data-link="${esc(link.id)}">
                     ${GRIP}
@@ -2965,9 +2984,10 @@
                            draggable="false">${esc(link.title)}</a>
                         <small>${esc(host(link.url))} · ${esc(link.name)} · ${esc(ago(link.at))}</small>
                     </span>
-                    ${link.userId === state.me.id || state.me.role === 'admin'
-                        ? '<button class="link-drop" type="button" data-do="drop-link">Αφαίρεση</button>'
-                        : '<span></span>'}
+                    ${mine ? `<span class="link-acts">
+                        <button class="link-drop link-edit-btn" type="button" data-do="fix-link">Αλλαγή</button>
+                        <button class="link-drop" type="button" data-do="drop-link">Αφαίρεση</button>
+                    </span>` : '<span></span>'}
                 </li>`;
             }).join('')
             : '<li class="room-none">Κανένας σύνδεσμος ακόμα. Βάλε εδώ ό,τι ψάχνει συνέχεια η ομάδα: φάκελο στο Drive, brief, ημερολόγιο.</li>';
@@ -3120,18 +3140,38 @@
     });
 
     $('link-list').addEventListener('click', async (clicked) => {
-        const button = clicked.target.closest('button[data-do="drop-link"]');
+        const button = clicked.target.closest('button[data-do]');
         if (!button) return;
-        if (!confirm('Να αφαιρεθεί ο σύνδεσμος;')) return;
 
+        const row = button.closest('[data-link]');
+        const id = row.dataset.link;
+        const what = button.dataset.do;
         const gridId = state.chat.gridId;
-        const id = button.closest('[data-link]').dataset.link;
+
+        if (what === 'fix-link') { wall.fixing = id; renderLinks(); return; }
+        if (what === 'cancel-link') { wall.fixing = null; renderLinks(); return; }
 
         try {
-            const data = await boardAction({ action: 'delete-link', id });
-            wall.links = data.links || [];
-            renderLinks();
-            keepUndo({ what: 'Ο σύνδεσμος επανήλθε.', run: () => undelete(gridId, id) });
+            if (what === 'save-link') {
+                const data = await boardAction({
+                    action: 'edit-link',
+                    id,
+                    title: row.querySelector('[data-fix="title"]').value,
+                    group: row.querySelector('[data-fix="group"]').value
+                });
+                wall.links = data.links || [];
+                wall.fixing = null;
+                renderLinks();
+                return;
+            }
+
+            if (what === 'drop-link') {
+                if (!confirm('Να αφαιρεθεί ο σύνδεσμος;')) return;
+                const data = await boardAction({ action: 'delete-link', id });
+                wall.links = data.links || [];
+                renderLinks();
+                keepUndo({ what: 'Ο σύνδεσμος επανήλθε.', run: () => undelete(gridId, id) });
+            }
         } catch (err) {
             toast(explain(err), 'bad');
         }
@@ -3212,6 +3252,13 @@
         row.classList.add('is-lifting');
         document.body.classList.add('is-dragging-link');
 
+        // Capture from here and not a moment earlier. A captured pointer sends
+        // its click to whatever captured it rather than to what was under it,
+        // and what is under it here is a link somebody meant to open. Nothing
+        // is captured until a drag has actually begun, so an ordinary click on
+        // a link is an ordinary click on a link.
+        try { linkList.setPointerCapture(haul.pointer); } catch { /* it went already */ }
+
         const box = row.getBoundingClientRect();
         haul.ghost = document.createElement('div');
         haul.ghost.className = 'link-ghost';
@@ -3283,8 +3330,14 @@
     linkList.addEventListener('pointerdown', (event) => {
         if (event.button > 0) return;
 
+        // Only from the three lines. A row holds a link somebody means to
+        // open, and a click that wandered seven pixels on its way was carrying
+        // it off instead of following it. The handle is there to be taken hold
+        // of; everywhere else on the row belongs to the link.
+        if (!event.target.closest('.link-grip')) return;
+
         const row = event.target.closest('li[data-link]');
-        if (!row || event.target.closest('.link-drop')) return;
+        if (!row || row.classList.contains('is-fixing')) return;
 
         haul.id = row.dataset.link;
         haul.pointer = event.pointerId;
@@ -3294,7 +3347,6 @@
         haul.moved = false;
         haul.active = false;
 
-        linkList.setPointerCapture(event.pointerId);
         if (haul.touch) haul.hold = setTimeout(heave, HOLD_MS);
     });
 

@@ -766,31 +766,38 @@
 .link-list li[data-link] {
     position: relative;
     display: grid;
-    grid-template-columns: 16px 34px minmax(0, 1fr) auto;
+    grid-template-columns: 26px 34px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 12px;
-    padding: 11px 12px 11px 8px;
+    gap: 10px;
+    padding: 11px 12px 11px 6px;
     background: rgba(255, 255, 255, .03);
     border: 1px solid rgba(255, 255, 255, .07);
     border-radius: 13px;
-    /* A row is carried, not read word by word, so a drag across it should
-       never start selecting its text. */
-    user-select: none;
-    -webkit-user-select: none;
-    cursor: grab;
 }
 
 /* Faint until the row is pointed at, because it is a cue rather than a
    control: the whole row is what you actually pick up. */
+/* The handle, and the only part of the row that a drag begins on. The rest of
+   it is a link, and a link is for following. */
 .link-grip {
     display: grid;
     place-items: center;
-    width: 16px;
-    color: rgba(184, 186, 194, .35);
-    transition: color .2s;
+    align-self: stretch;
+    width: 26px;
+    color: rgba(184, 186, 194, .3);
+    border-radius: 8px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: color .2s, background .2s;
 }
 
-.link-list li[data-link]:hover .link-grip { color: rgba(184, 186, 194, .8); }
+.link-grip:hover {
+    color: rgba(184, 186, 194, .9);
+    background: rgba(255, 255, 255, .06);
+}
+
+.link-list li[data-link]:hover .link-grip { color: rgba(184, 186, 194, .65); }
 
 .link-grip svg {
     width: 15px; height: 15px;
@@ -819,14 +826,14 @@
 .link-list li.is-after::after { bottom: -5px; }
 
 body.is-dragging-link,
-body.is-dragging-link .link-list li[data-link] { cursor: grabbing; }
+body.is-dragging-link .link-grip { cursor: grabbing; }
 
 .link-ghost {
     position: fixed;
     top: 0; left: 0;
     z-index: 120;
     display: grid;
-    grid-template-columns: 16px 34px minmax(0, 1fr);
+    grid-template-columns: 26px 34px minmax(0, 1fr);
     align-items: center;
     gap: 12px;
     padding: 11px 12px;
@@ -879,6 +886,8 @@ body.is-dragging-link .link-list li[data-link] { cursor: grabbing; }
 .link-text a:hover { color: var(--accent-orange); }
 .link-text small { margin-top: 2px; font-size: .73rem; color: rgba(184, 186, 194, .62); }
 
+.link-acts { display: flex; gap: 6px; }
+
 .link-drop {
     padding: 6px 10px;
     font: inherit;
@@ -891,6 +900,25 @@ body.is-dragging-link .link-list li[data-link] { cursor: grabbing; }
 }
 
 .link-drop:hover { color: #ff8b6b; border-color: rgba(255, 107, 53, .45); }
+.link-edit-btn:hover { color: var(--text-primary); border-color: var(--border-hover); }
+
+/* The row, while it is being renamed or moved under another heading. */
+.link-edit { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; grid-column: 2 / -1; }
+
+.link-edit input {
+    flex: 1 1 150px;
+    min-width: 0;
+    padding: 8px 11px;
+    font: inherit;
+    font-size: .82rem;
+    color: var(--text-primary);
+    background: rgba(0, 0, 0, .25);
+    border: 1px solid rgba(255, 107, 53, .4);
+    border-radius: 9px;
+}
+
+.link-edit input:focus { outline: none; border-color: var(--accent-orange); }
+.link-edit button { flex: 0 0 auto; }
 
 /* --- brainstorming --------------------------------------------------------- */
 /* Paper, lit from behind. Five highlighter tones, kept faint enough that a
