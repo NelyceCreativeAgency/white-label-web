@@ -81,6 +81,27 @@
 
     const initials = (name) => String(name || '?').trim().slice(0, 1).toUpperCase();
 
+    // --- a knock when something lands ----------------------------------------
+    // Short enough to be felt rather than heard about. A picture being picked
+    // up and a picture landing are the two moments a hand wants told about,
+    // because both of them are the hand's own doing.
+    const PICK_UP = 8;
+    const PUT_DOWN = 16;
+
+    const knock = (ms) => {
+        // Android, and the desktop browsers that answer at all.
+        if (navigator.vibrate) {
+            try { navigator.vibrate(ms); } catch { /* refused, and never mind */ }
+            return;
+        }
+
+        // An iPhone has no vibration to ask for. What it has, since 17.4, is a
+        // switch that taps when it flips, so one nobody can see is flipped and
+        // the tap is the whole of what comes of it.
+        const tap = $('haptic');
+        if (tap) { try { tap.click(); } catch { /* nothing lost */ } }
+    };
+
     // --- faces ---------------------------------------------------------------
     // Eight tones, and which one somebody gets is worked out from their own id,
     // so it never changes and it is never stored. A list of five accounts is
@@ -552,6 +573,7 @@
 
         drag.active = true;
         drag.moved = true;
+        knock(PICK_UP);
         cell.classList.add('is-dragging');
         document.body.classList.add('is-dragging-cell');
 
@@ -590,7 +612,10 @@
 
         const cell = cellAt(drag.x, drag.y);
         const to = cell && cell.dataset.slot !== undefined ? Number(cell.dataset.slot) : NaN;
-        if (Number.isInteger(to) && to !== from) move(from, to);
+
+        // Only when it landed somewhere. A square put back where it came from
+        // has not been moved, and saying it has with the hand is a small lie.
+        if (Number.isInteger(to) && to !== from) { knock(PUT_DOWN); move(from, to); }
     };
 
     board.addEventListener('pointerdown', (event) => {
@@ -1739,6 +1764,7 @@
 
         carry.active = true;
         carry.moved = true;
+        knock(PICK_UP);
         tile.classList.add('is-lifting');
         document.body.classList.add('is-dragging-strip');
 
@@ -1777,6 +1803,8 @@
         let to = spot.after ? onto + 1 : onto;
         if (from < to) to -= 1;
         if (to === from) return;
+
+        knock(PUT_DOWN);
 
         const images = state.draft.images;
         const [moved] = images.splice(from, 1);
@@ -3452,6 +3480,7 @@
 
         haul.active = true;
         haul.moved = true;
+        knock(PICK_UP);
         row.classList.add('is-lifting');
         document.body.classList.add('is-dragging-link');
 
@@ -3509,6 +3538,8 @@
         let to = spot.after ? onto + 1 : onto;
         if (from < to) to -= 1;
         if (to === from && group === was) return;
+
+        knock(PUT_DOWN);
 
         // The list is redrawn in its new order before the server has answered,
         // because a row that snaps back for a moment reads as a failed drag.
