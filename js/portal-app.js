@@ -513,6 +513,8 @@
             <li class="ask is-${esc(ask.face)}"
                 data-ask="${esc(ask.id)}" data-room="${esc((rooms.open && rooms.open.id) || '')}">
                 <div class="ask-head">
+                    <svg class="ask-go" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 18l6-6-6-6"/></svg>
                     <strong class="ask-title">${esc(ask.title)}</strong>
                     <span class="ask-who">${mine ? 'Εσύ' : esc(ask.byName)} · ${whose}${
                         shut ? ' · ολοκληρωμένο' : ''}</span>

@@ -3453,7 +3453,22 @@ li.none-yet {
 .ask.is-open { border-color: rgba(255, 255, 255, .16); }
 .ask-do, .ask-thread { cursor: auto; }
 
-.ask-head { display: grid; gap: 3px; }
+.ask-head { display: grid; gap: 3px; padding-right: 26px; }
+
+/* A card that opens says so. The arrow leans in when the pointer is anywhere
+   on the card, because the whole card is the button. */
+.ask-go {
+    position: absolute;
+    top: 16px; right: 14px;
+    width: 16px; height: 16px;
+    color: rgba(184, 186, 194, .45);
+    fill: none; stroke: currentColor; stroke-width: 1.9;
+    stroke-linecap: round; stroke-linejoin: round;
+    transition: var(--transition-smooth);
+}
+
+.ask:hover .ask-go { color: var(--text-primary); transform: translateX(2px); }
+.ask.is-lit .ask-go { color: var(--accent-orange); }
 .ask-title { font-size: .95rem; font-weight: var(--fw-medium); }
 .ask-who { font-size: .74rem; color: rgba(184, 186, 194, .7); }
 
