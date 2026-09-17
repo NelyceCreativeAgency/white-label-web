@@ -1342,8 +1342,20 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
     border-radius: 999px;
 }
 
-.chat-msg { max-width: min(560px, 82%); align-self: flex-start; }
-.chat-msg.is-mine { align-self: flex-end; }
+/* The message, and the three dots in the dark beside it. Mine sit to the left
+   of what I said and everybody else's to the right of what they said, which is
+   the empty side in each case. */
+.chat-msg {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    max-width: min(560px, 86%);
+    align-self: flex-start;
+    flex-direction: row-reverse;
+}
+
+.chat-msg.is-mine { align-self: flex-end; flex-direction: row; }
+.chat-said { min-width: 0; }
 
 /* The bubble hugs its words. Without this it was as wide as the line of small
    print under it, so "Test" came out the width of "12:00 μμ · Απάντηση ·
@@ -1464,26 +1476,26 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
    buttons under every single message was a wall of words that had nothing to do
    with the conversation. */
 .chat-more {
-    padding: 0 4px;
-    font: inherit;
-    font-size: .8rem;
-    line-height: 1;
-    color: rgba(184, 186, 194, .7);
+    display: grid;
+    gap: 3px;
+    flex: 0 0 auto;
+    padding: 8px 6px;
     background: none;
     border: none;
     cursor: pointer;
-    opacity: 0;
+    opacity: .3;
     transition: opacity .18s;
 }
 
-.chat-msg:hover .chat-more { opacity: 1; }
-.chat-more:hover { color: var(--text-primary); }
-
-/* No hover, no dots: on a phone the press is the way in and a permanent
-   control would be the clutter this is undoing. */
-@media (hover: none) and (pointer: coarse) {
-    .chat-more { display: none; }
+.chat-more span {
+    width: 3px; height: 3px;
+    background: var(--text-secondary);
+    border-radius: 50%;
 }
+
+.chat-more:hover { opacity: .95; }
+.chat-msg:hover .chat-more { opacity: .6; }
+.chat-msg:hover .chat-more:hover { opacity: 1; }
 
 .msg-menu {
     position: fixed;

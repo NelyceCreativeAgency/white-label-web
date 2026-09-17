@@ -3147,13 +3147,15 @@
             return `
                 ${newDay ? `<li class="chat-day">${esc(its)}</li>` : ''}
                 <li class="chat-msg${mine ? ' is-mine' : ''}" data-message="${esc(message.id)}">
-                    ${signed ? `<p class="chat-name">${esc(message.name)}</p>` : ''}
-                    <div class="chat-bubble">${quoted(message)}${esc(message.text)}</div>
-                    <p class="chat-foot">
-                        <span>${esc(clock(message.at))}</span>
-                        <button class="chat-more" type="button" data-do="more"
-                                aria-label="Τι να γίνει με αυτό το μήνυμα">•••</button>
-                    </p>
+                    <button class="chat-more" type="button" data-do="more"
+                            aria-label="Τι να γίνει με αυτό το μήνυμα">
+                        <span></span><span></span><span></span>
+                    </button>
+                    <div class="chat-said">
+                        ${signed ? `<p class="chat-name">${esc(message.name)}</p>` : ''}
+                        <div class="chat-bubble">${quoted(message)}${esc(message.text)}</div>
+                        <p class="chat-foot"><span>${esc(clock(message.at))}</span></p>
+                    </div>
                 </li>`;
         }).join('');
 
@@ -3239,48 +3241,18 @@
         msgMenu.style.top = `${Math.max(10, top)}px`;
     };
 
-    // A finger has to hold still. One that wanders was scrolling the
-    // conversation, which is what a finger on a conversation usually is.
-    let press = null;
-
-    const letGoOfPress = () => { clearTimeout(press); press = null; };
-
-    $('chat-log').addEventListener('pointerdown', (event) => {
-        if (event.target.closest('button')) return;
-
-        const row = event.target.closest('.chat-msg');
-        if (!row || event.pointerType === 'mouse') return;
-
-        const x = event.clientX;
-        const y = event.clientY;
-        const from = { x, y };
-
-        press = setTimeout(() => {
-            press = null;
-            knock(PICK_UP);
-            openMsgMenu(row, x, y);
-        }, HOLD_MS);
-
-        const wander = (moved) => {
-            if (Math.hypot(moved.clientX - from.x, moved.clientY - from.y) > TOUCH_SLOP) letGoOfPress();
-        };
-
-        $('chat-log').addEventListener('pointermove', wander);
-        ['pointerup', 'pointercancel'].forEach(name =>
-            $('chat-log').addEventListener(name, letGoOfPress, { once: true }));
-
-        setTimeout(() => $('chat-log').removeEventListener('pointermove', wander), HOLD_MS + 40);
-    });
-
-    $('chat-log').addEventListener('scroll', letGoOfPress);
-
-    // A right click means the same thing on a machine that has one.
-    $('chat-log').addEventListener('contextmenu', (event) => {
-        const row = event.target.closest('.chat-msg');
-        if (!row) return;
-        event.preventDefault();
-        openMsgMenu(row, event.clientX, event.clientY);
-    });
+    // A right click means the same thing on a machine that has one. Only on
+    // one that has one: a long press on a touch screen belongs to the system,
+    // which puts its own copy-and-select menu up, and two menus arriving
+    // together are worse than neither.
+    if (matchMedia('(hover: hover)').matches) {
+        $('chat-log').addEventListener('contextmenu', (event) => {
+            const row = event.target.closest('.chat-msg');
+            if (!row) return;
+            event.preventDefault();
+            openMsgMenu(row, event.clientX, event.clientY);
+        });
+    }
 
     msgMenu.addEventListener('click', (clicked) => {
         const button = clicked.target.closest('button[data-do]');
