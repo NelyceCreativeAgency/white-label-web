@@ -1316,6 +1316,13 @@
         // there themselves, after this has run.
         showBack(null);
 
+        // And with nothing in the sidebar marked as the open one. Every screen
+        // marks its own line afterwards, so a line cannot be left lit by the
+        // screen before it — which is what happened to Μηνύματα, because
+        // opening a project only ever lit its own and told nobody else.
+        document.querySelectorAll('.app-nav-item.is-on')
+            .forEach(one => one.classList.remove('is-on'));
+
         ['grid', 'accounts', 'clients', 'partners', 'chat', 'client', 'project', 'blank']
             .forEach(view => {
             $(`view-${view}`).hidden = view !== name;
@@ -1340,14 +1347,17 @@
             state.moving = null;
             remember.write(id);
 
-            document.querySelectorAll('.app-nav-item').forEach(item => {
-                item.classList.toggle('is-on', item.dataset.grid === id);
-            });
-
             $('app-title').textContent = state.grid.name;
             renderGrid();
             showView('grid');
             where.write('grid', id);
+
+            // After the view has changed, not before: changing it is what puts
+            // out whatever was lit last, so a line marked first would be marked
+            // and then unmarked in the same breath.
+            document.querySelectorAll('.app-nav-item').forEach(item => {
+                item.classList.toggle('is-on', item.dataset.grid === id);
+            });
         } catch (err) {
             toast(explain(err), 'bad');
         } finally {
