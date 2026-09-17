@@ -5330,8 +5330,13 @@
                 </div>
 
                 <div class="row-fields">
+                    <label>Ανήκει σε<select data-f="subId">
+                        <option value="">Μεμονωμένη χρέωση</option>
+                        ${purse.money.subs.map(sub =>
+                            `<option value="${esc(sub.id)}"${sub.id === entry.subId ? ' selected' : ''}>${esc(sub.title)}</option>`).join('')}
+                    </select></label>
                     ${dayField('Ημερομηνία', 'on', entry.on)}
-                    ${dayField('Καλύπτει ως', 'to', entry.to)}
+                    <label id="entry-covers"${entry.subId ? '' : ' hidden'}>Καλύπτει ως<input data-f="to" type="date" value="${esc(entry.to || '')}"></label>
                     <label>Αριθμός τιμολογίου<input data-f="invoiceNo" value="${esc(entry.invoiceNo)}" maxlength="40"></label>
                 </div>
 
@@ -5385,6 +5390,16 @@
                 busy('');
             }
         });
+    });
+
+    // A period is a thing a subscription has. A one-off invoice is dated; it
+    // does not run until a date, so the box for one is not there to be filled.
+    $('money-body').addEventListener('change', (changed) => {
+        if (tray.kind !== 'entry' || changed.target.dataset.f !== 'subId') return;
+
+        const covers = $('entry-covers');
+        covers.hidden = !changed.target.value;
+        if (covers.hidden) covers.querySelector('input').value = '';
     });
 
     $('money-save').addEventListener('click', async () => {

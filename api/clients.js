@@ -440,6 +440,18 @@ const patchEntry = (money, body) => {
     if (body.amount !== undefined) entry.cents = toCents(body.amount);
     if (body.on !== undefined) entry.on = toDay(body.on, entry.on);
     if (body.to !== undefined) entry.to = toDay(body.to, '') || null;
+
+    // Which subscription this is a turn of, if any. A charge that belongs to
+    // none of them covers no period either: an invoice for a logo is dated, it
+    // does not run until a date. This comes after the period above so that
+    // detaching a charge clears it whatever else was sent alongside.
+    if (body.subId !== undefined) {
+        const wanted = text(body.subId, 40) || null;
+        if (wanted && !money.subs.some(sub => sub.id === wanted)) throw new Error('no-such-sub');
+        entry.subId = wanted;
+        if (!wanted) entry.to = null;
+    }
+
     if (entry.to && entry.to < entry.on) throw new Error('bad-date');
 
     if (body.status !== undefined) {
