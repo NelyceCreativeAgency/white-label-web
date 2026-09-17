@@ -408,7 +408,7 @@
     // --- projects ----------------------------------------------------------
     // The team's own rooms. A client has none and is not shown the category at
     // all; everybody else may start one and put whoever they work with on it.
-    const rooms = { list: [], people: [], open: null, asks: [], reading: new Set() };
+    const rooms = { list: [], people: [], open: null, asks: [], reading: new Set(), tab: 'me' };
 
     const loadProjects = async () => {
         if (!state.me || state.me.role === 'client') { rooms.list = []; renderProjectNav(); return; }
@@ -454,6 +454,10 @@
             const data = await api(`/api/projects?project=${encodeURIComponent(id)}`);
             rooms.open = data.project;
             rooms.asks = data.asks || [];
+            // Opening a room lands on the shelf that is waiting for you, and
+            // on what was asked of you when nothing is.
+            rooms.tab = (SHELVES.find(one =>
+                rooms.asks.some(ask => one.is(ask) && ask.face === 'lit')) || SHELVES[1]).key;
 
             $('app-title').textContent = data.project.name;
             renderProject();
@@ -554,20 +558,35 @@
     // that order, and says nothing at all about a half that is empty.
     const askList = (rows) => `<ul class="asks">${rows.map(askCard).join('')}</ul>`;
 
+    // A project is read the way an inbox is read: what was sent to everybody,
+    // what was sent to you, and what you sent. Three shelves that are always
+    // there, because a shelf that disappears when it empties is one you stop
+    // trusting to be the whole picture.
+    const SHELVES = [
+        { key: 'all',  name: 'Προς όλους',
+          empty: 'Δεν έχει σταλεί τίποτα σε όλη την ομάδα ακόμα.',
+          is: (ask) => !ask.toId },
+        { key: 'me',   name: 'Προς εσένα',
+          empty: 'Δεν σου έχει ζητήσει κανείς κάτι εδώ ακόμα.',
+          is: (ask) => ask.toId === state.me.id },
+        { key: 'mine', name: 'Τα αιτήματά μου',
+          empty: 'Δεν έχεις ζητήσει κάτι εδώ ακόμα.',
+          is: (ask) => ask.by === state.me.id }
+    ];
+
+    // What is on one shelf, with whatever is lit on top of it: nothing that is
+    // waiting should ever sit under something that has been settled.
+    const askShelf = (key) => {
+        const shelf = SHELVES.find(one => one.key === (key || rooms.tab)) || SHELVES[0];
+        return rooms.asks.filter(shelf.is)
+            .sort((a, b) => (b.face === 'lit') - (a.face === 'lit'));
+    };
+
     const renderProject = () => {
         const room = rooms.open;
         if (!room) return;
 
-        // Sorted by who it is for, because that is the first thing anybody
-        // wants to know about a request: is this mine to answer, is it the
-        // room's, or is it one of mine that I am waiting on. Inside each, what
-        // is lit rises to the top, so nothing waiting is ever buried.
-        const first = (rows) => rows.slice()
-            .sort((a, b) => (b.face === 'lit') - (a.face === 'lit'));
-
-        const forMe = first(rooms.asks.filter(one => one.toId === state.me.id));
-        const forAll = first(rooms.asks.filter(one => !one.toId));
-        const sent = first(rooms.asks.filter(one => one.toId && one.toId !== state.me.id));
+        const shown = askShelf();
 
         $('view-project').innerHTML = `
             <section class="panel client-card">
@@ -590,19 +609,21 @@
 
                 <button class="btn btn-primary" type="button" id="ask-new">Νέο αίτημα</button>
 
-                ${forMe.length ? `
-                    <p class="asks-head is-first">Προς εσένα</p>
-                    ${askList(forMe)}` : ''}
+                <div class="room-tabs asks-tabs" role="tablist">
+                    ${SHELVES.map(shelf => `
+                        <button type="button" role="tab" data-shelf="${shelf.key}"
+                                aria-selected="${rooms.tab === shelf.key ? 'true' : 'false'}"
+                                class="${rooms.tab === shelf.key ? 'is-on' : ''}">
+                            ${shelf.name}${(() => {
+                                const lit = askShelf(shelf.key).filter(one => one.face === 'lit').length;
+                                return lit ? `<span class="asks-pip">${lit}</span>` : '';
+                            })()}
+                        </button>`).join('')}
+                </div>
 
-                ${forAll.length ? `
-                    <p class="asks-head${forMe.length ? '' : ' is-first'}">Προς όλους</p>
-                    ${askList(forAll)}` : ''}
-
-                ${sent.length ? `
-                    <p class="asks-head${forMe.length || forAll.length ? '' : ' is-first'}">Έστειλες</p>
-                    ${askList(sent)}` : ''}
-
-                ${rooms.asks.length ? '' : '<ul class="asks"><li class="none-yet">Κανένα αίτημα ακόμα</li></ul>'}
+                ${shown.length
+                    ? askList(shown)
+                    : `<p class="asks-none">${SHELVES.find(one => one.key === rooms.tab).empty}</p>`}
             </section>
         `;
     };
@@ -633,6 +654,9 @@
     $('view-project').addEventListener('click', async (event) => {
         if (event.target.closest('#prj-open')) { openProjectPanel(rooms.open); return; }
         if (event.target.closest('#ask-new')) { openAskPanel(); return; }
+
+        const shelf = event.target.closest('[data-shelf]');
+        if (shelf) { rooms.tab = shelf.dataset.shelf; renderProject(); return; }
 
         const card = event.target.closest('.ask');
         if (!card) return;

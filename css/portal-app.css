@@ -3417,7 +3417,7 @@ li.none-yet {
 /* --- what one person asks another ---------------------------------------- */
 /* A request is a card rather than a row: it carries a sentence, sometimes a
    picture, and a thing to press, and none of that fits on a line. */
-.asks { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 10px; }
+.asks { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 10px; }
 
 .ask {
     display: grid;
@@ -3515,16 +3515,35 @@ li.none-yet {
 
 #say-text { min-height: 120px; resize: vertical; }
 
-/* Which half of the room's requests is which. */
-.asks-head {
-    margin: 22px 0 -4px;
-    font-size: .72rem;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: rgba(184, 186, 194, .55);
+/* The three shelves of a room, read the way an inbox is read. Always all
+   three, because a shelf that disappears when it empties is one you stop
+   trusting to be the whole picture. */
+.asks-tabs {
+    margin: 20px 0 0;
+    padding: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
 }
 
-.asks-head.is-first { margin-top: 18px; }
+.asks-tabs button { display: inline-flex; align-items: center; gap: 7px; }
+
+.asks-pip {
+    display: grid;
+    place-items: center;
+    min-width: 18px; height: 18px;
+    padding: 0 5px;
+    font-size: .66rem;
+    font-weight: var(--fw-semibold);
+    color: var(--bg-dark);
+    background: var(--accent-orange);
+    border-radius: 999px;
+}
+
+.asks-none {
+    margin: 26px 0 8px;
+    font-size: .84rem;
+    text-align: center;
+    color: rgba(184, 186, 194, .55);
+}
 
 #ask-new { margin-top: 2px; }
 #ask-add { margin-top: 10px; }
