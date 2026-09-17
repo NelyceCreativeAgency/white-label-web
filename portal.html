@@ -222,8 +222,10 @@
                     </button>
 
                     <form class="idea-new" id="idea-new">
-                        <textarea name="text" id="idea-text" rows="2" maxlength="1200"
-                                  placeholder="Γράψε την ιδέα"></textarea>
+                        <div class="ink-bar" id="idea-bar"></div>
+                        <div class="ink" id="idea-text" contenteditable="true" role="textbox"
+                             aria-multiline="true" aria-label="Η ιδέα"
+                             data-empty="Γράψε την ιδέα"></div>
 
                         <div class="idea-bits">
                             <span class="idea-colours" id="idea-colours" role="radiogroup"

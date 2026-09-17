@@ -11,6 +11,7 @@ const store = require('./_store');
 const accounts = require('./_accounts');
 const feed = require('./_feed');
 const presence = require('./_presence');
+const rich = require('./_rich');
 
 const KEY = (gridId) => `portal:board:${gridId}`;
 
@@ -19,7 +20,9 @@ const MAX_NOTES = 200;
 const MAX_URL = 2000;
 const MAX_TITLE = 120;
 const MAX_GROUP = 40;
-const MAX_NOTE = 1200;
+// A note carries its own markup now, and markup costs characters that nobody
+// typed. This is what a long note plus the tags around it comes to.
+const MAX_NOTE = 4000;
 const MAX_TAGS = 5;
 const MAX_TAG = 24;
 
@@ -245,12 +248,17 @@ module.exports = async (req, res) => {
         if (body.action === 'add-note') {
             if (board.notes.length >= MAX_NOTES) return res.status(400).json({ error: 'board-full' });
 
-            const said = text(body.text, MAX_NOTE);
-            if (!said) return res.status(400).json({ error: 'empty-note' });
+            // What comes back from here is the only markup that will ever be
+            // put on anybody's screen. See api/_rich.js for what survives it.
+            const said = rich.clean(body.text, MAX_NOTE);
+
+            // A box that was formatted and never written in is still empty.
+            if (!rich.plain(said)) return res.status(400).json({ error: 'empty-note' });
 
             const note = {
                 id: accounts.newId('ide'),
                 text: said,
+                rich: true,
                 colour: colourOf(body.colour),
                 tags: cleanTags(body.tags),
                 ...signature
@@ -262,7 +270,7 @@ module.exports = async (req, res) => {
             await feed.push({
                 gridId: grid.id, gridName: grid.name,
                 actorId: me.id, actorName: me.name || me.username, actorRole: me.role,
-                kind: 'idea', text: feed.excerpt(said)
+                kind: 'idea', text: feed.excerpt(rich.plain(said))
             });
 
             return res.status(200).json({ notes: board.notes });
@@ -276,10 +284,13 @@ module.exports = async (req, res) => {
             // included: taking it down is the most anyone else may do.
             if (note.userId !== me.id) return res.status(403).json({ error: 'not-yours' });
 
-            const said = text(body.text, MAX_NOTE);
-            if (!said) return res.status(400).json({ error: 'empty-note' });
+            const said = rich.clean(body.text, MAX_NOTE);
+            if (!rich.plain(said)) return res.status(400).json({ error: 'empty-note' });
 
             note.text = said;
+            // A note written before any of this could be formatted becomes one
+            // that can be, the first time somebody opens it.
+            note.rich = true;
             note.colour = colourOf(body.colour);
             note.tags = cleanTags(body.tags);
             note.editedAt = now;

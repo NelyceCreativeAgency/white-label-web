@@ -3132,6 +3132,117 @@
         + '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>'
         + '<path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>';
 
+    // --- writing a note with formatting in it --------------------------------
+    // The browser's own editing commands, which is what lets this be a toolbar
+    // and not an editor. They are old and they are deprecated and every browser
+    // still runs them, and what they write is the plainest markup there is:
+    // b, i, u, lists and the font tag. Every one of those is on the list in
+    // api/_rich.js, which is the thing that decides what anybody else's browser
+    // is allowed to see. Nothing here is a defence; this end only has to be
+    // convenient.
+    const INK_SIZES = [['2', 'Μικρά'], ['3', 'Κανονικά'], ['5', 'Μεγάλα'], ['6', 'Πολύ μεγάλα']];
+
+    const INK_COLOURS = [
+        ['#ffffff', 'Λευκό'], ['#b8babe', 'Γκρι'], ['#e8894a', 'Πορτοκαλί'],
+        ['#e0648a', 'Ροζ'], ['#5bb98c', 'Πράσινο'], ['#5b9fe0', 'Γαλάζιο'],
+        ['#a07ae0', 'Μωβ'], ['#d9a441', 'Χρυσό']
+    ];
+
+    const INK_FACES = [['Geologica', 'Κανονική'], ['Georgia', 'Με πατούρες'], ['Courier New', 'Γραφομηχανή']];
+
+    const picker_of = (cmd, label, options) => `
+        <select data-ink="${cmd}" aria-label="${label}">
+            <option value="">${label}</option>
+            ${options.map(([value, name]) => `<option value="${value}">${name}</option>`).join('')}
+        </select>`;
+
+    const INK_BAR = `
+        <button type="button" data-ink="bold" title="Έντονα" style="font-weight:700">B</button>
+        <button type="button" data-ink="italic" title="Πλάγια" style="font-style:italic">I</button>
+        <button type="button" data-ink="underline" title="Υπογράμμιση" style="text-decoration:underline">U</button>
+        <button type="button" data-ink="strikeThrough" title="Διαγραφή" style="text-decoration:line-through">S</button>
+        <span class="ink-sep" aria-hidden="true"></span>
+        <button type="button" data-ink="insertUnorderedList" title="Κουκκίδες">•—</button>
+        <button type="button" data-ink="insertOrderedList" title="Αρίθμηση">1.</button>
+        <span class="ink-sep" aria-hidden="true"></span>
+        ${picker_of('fontSize', 'Μέγεθος', INK_SIZES)}
+        ${picker_of('foreColor', 'Χρώμα', INK_COLOURS)}
+        ${picker_of('fontName', 'Γραμματοσειρά', INK_FACES)}
+        <button type="button" data-ink="removeFormat" title="Καθάρισμα μορφοποίησης">✕</button>`;
+
+    // Where the caret was the last time it was in a writing box. A toolbar
+    // button takes the focus away for a moment, and without this the command
+    // would have nothing to apply itself to.
+    let inked = null;
+    let mark = null;
+
+    document.addEventListener('selectionchange', () => {
+        const chosen = document.getSelection();
+        if (!chosen || !chosen.rangeCount) return;
+
+        const node = chosen.anchorNode;
+        const box = node && (node.nodeType === 1 ? node : node.parentElement);
+        const editor = box && box.closest('.ink[contenteditable="true"]');
+        if (!editor) return;
+
+        inked = editor;
+        mark = chosen.getRangeAt(0).cloneRange();
+    });
+
+    const ink = (cmd, value) => {
+        if (!inked || !document.contains(inked)) return;
+
+        inked.focus();
+
+        if (mark) {
+            const chosen = document.getSelection();
+            chosen.removeAllRanges();
+            chosen.addRange(mark);
+        }
+
+        try {
+            // Tags rather than inline styles, because tags are what the list on
+            // the server is a list of.
+            document.execCommand('styleWithCSS', false, false);
+            document.execCommand(cmd, false, value);
+        } catch { /* a browser that will not, and a note that stays plain */ }
+
+        const after = document.getSelection();
+        if (after && after.rangeCount) mark = after.getRangeAt(0).cloneRange();
+    };
+
+    // One listener for every toolbar there will ever be, including the one that
+    // appears inside a note being edited.
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('.ink-bar button[data-ink]');
+        if (button) { event.preventDefault(); ink(button.dataset.ink); }
+    });
+
+    document.addEventListener('change', (event) => {
+        const picker = event.target.closest('.ink-bar select[data-ink]');
+        if (!picker || !picker.value) return;
+
+        ink(picker.dataset.ink, picker.value);
+        picker.value = '';
+    });
+
+    // Pressing a button must not take the caret with it. A select has to take
+    // the focus to open at all, which is what the remembered range is for.
+    document.addEventListener('mousedown', (event) => {
+        if (event.target.closest('.ink-bar button')) event.preventDefault();
+    });
+
+    // Whatever is pasted arrives as words. A paste from a word processor brings
+    // a document's worth of markup with it, and none of it is wanted here.
+    document.addEventListener('paste', (event) => {
+        const editor = event.target.closest && event.target.closest('.ink[contenteditable="true"]');
+        if (!editor) return;
+
+        event.preventDefault();
+        const said = (event.clipboardData || window.clipboardData).getData('text/plain');
+        document.execCommand('insertText', false, said);
+    });
+
     const wall = { links: [], notes: [], tag: null, editing: null, fixing: null, colour: COLOURS[0] };
 
     // Which of the three is showing. Only the project thread has them at all.
@@ -3253,9 +3364,17 @@
             const mine = note.userId === state.me.id;
             const editing = wall.editing === note.id;
 
+            // A note written before any of this could be formatted is still
+            // the plain text it was, and is put on screen as text. One that has
+            // been through the server's list is put on screen as the markup the
+            // list allowed, and nothing else can have survived it.
+            const said = note.rich ? note.text : esc(note.text);
+
             const body = editing
                 ? `<div class="idea-edit">
-                       <textarea maxlength="1200" data-edit>${esc(note.text)}</textarea>
+                       <div class="ink-bar">${INK_BAR}</div>
+                       <div class="ink" contenteditable="true" role="textbox" aria-multiline="true"
+                            data-edit data-empty="Γράψε την ιδέα">${said}</div>
                        <input maxlength="140" data-tags value="${esc((note.tags || []).join(', '))}"
                               placeholder="Ετικέτες, χωρισμένες με κόμμα">
                        <p class="idea-foot">
@@ -3263,7 +3382,7 @@
                            <button type="button" data-do="cancel-idea">Ακύρωση</button>
                        </p>
                    </div>`
-                : `<p class="idea-said">${esc(note.text)}</p>
+                : `<p class="idea-said${note.rich ? ' is-rich' : ''}">${said}</p>
                    ${(note.tags || []).length ? `<p class="idea-tags">${
                        note.tags.map(tag => `<span class="idea-tag">${esc(tag)}</span>`).join('')}</p>` : ''}
                    <p class="idea-foot">
@@ -3350,7 +3469,7 @@
         $(pane).classList.toggle('is-adding', open);
         if (!open) return;
 
-        const first = $(pane).querySelector('input, textarea');
+        const first = $(pane).querySelector('input, textarea, [contenteditable="true"]');
         if (first) first.focus();
     };
 
@@ -3643,10 +3762,13 @@
         renderSwatches();
     });
 
+    $('idea-bar').innerHTML = INK_BAR;
+
     $('idea-new').addEventListener('submit', async (event) => {
         event.preventDefault();
-        const text = $('idea-text').value.trim();
-        if (!text) return;
+
+        const text = $('idea-text').innerHTML;
+        if (!$('idea-text').textContent.trim()) return;
 
         try {
             const data = await boardAction({
@@ -3656,9 +3778,8 @@
                 tags: $('idea-tags').value
             });
             wall.notes = data.notes || [];
-            $('idea-text').value = '';
+            $('idea-text').innerHTML = '';
             $('idea-tags').value = '';
-            $('idea-text').style.height = 'auto';
             adding('pane-ideas', false);
             renderIdeas();
         } catch (err) {
@@ -3691,7 +3812,7 @@
                 const data = await boardAction({
                     action: 'edit-note',
                     id,
-                    text: card.querySelector('[data-edit]').value,
+                    text: card.querySelector('[data-edit]').innerHTML,
                     colour: note ? note.colour : wall.colour,
                     tags: card.querySelector('[data-tags]').value
                 });
