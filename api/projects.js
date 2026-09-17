@@ -182,6 +182,12 @@ module.exports = async (req, res) => {
             } else if (body.action === 'got') {
                 asks.got(ask, me);
                 tell(ask.by);
+            } else if (body.action === 'edit') {
+                if (!asks.mine(ask, me)) return res.status(403).json({ error: 'not-allowed' });
+                const dropped = asks.edit(ask, body, blob);
+                if (dropped.length) {
+                    try { await blob.client(req).del(dropped); } catch { /* litter */ }
+                }
             } else if (body.action === 'close' || body.action === 'open') {
                 if (!asks.mine(ask, me)) return res.status(403).json({ error: 'not-allowed' });
                 const dropped = asks.shut(ask, body.action === 'close');
@@ -196,6 +202,9 @@ module.exports = async (req, res) => {
 
             await asks.write(project.id, kept);
 
+            // Only what somebody else needs to know about. Looking is nobody's
+            // business but the looker's, and an edit is the same request said
+            // better rather than a new one.
             await Promise.all(Array.from(new Set(told)).map(id => feed.push({
                 kind: body.action === 'got' ? 'ask-got' : 'ask-back',
                 actorId: me.id,

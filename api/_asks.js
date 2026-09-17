@@ -159,6 +159,36 @@ exports.add = (doc, body, me, project, blob) => {
     return ask;
 };
 
+// Changing one after it has gone out. Only whoever asked, and only while it is
+// still open — a finished request is a record, and a record that can be rewritten
+// is not one.
+//
+// Who it was sent to is not up for changing. It decided who was told and who may
+// read it, and moving it afterwards would take a request out from under somebody
+// who has already been asked. Deleting it and asking again is the honest way.
+exports.edit = (ask, body, blob) => {
+    if (ask.closedAt) throw new Error('ask-closed');
+
+    if (body.title !== undefined) {
+        const title = text(body.title, MAX_TITLE);
+        if (!title) throw new Error('bad-name');
+        ask.title = title;
+    }
+
+    if (body.said !== undefined) ask.said = text(body.said, MAX_SAID);
+    if (body.url !== undefined) ask.url = toLink(body.url);
+
+    if (body.shots === undefined) return [];
+
+    const was = Array.isArray(ask.shots) ? ask.shots : [];
+    ask.shots = (Array.isArray(body.shots) ? body.shots : [])
+        .slice(0, MAX_SHOTS)
+        .filter(url => blob.isOurImage(url));
+
+    // Whatever is no longer on it is no longer anybody's.
+    return was.filter(url => !ask.shots.includes(url));
+};
+
 const MAX_REPLIES = 200;
 
 // Answering one. Not a chat: a chat is for talking and this is for saying the

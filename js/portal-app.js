@@ -533,6 +533,9 @@
                     ${!shut && !mine && !ask.toId && !noted
                         ? `<button class="app-ghost" type="button" data-got="${esc(ask.id)}">Το έλαβα</button>` : ''}
 
+                    ${mine && !shut ? `<button class="app-ghost" type="button"
+                                              data-fix="${esc(ask.id)}">Επεξεργασία</button>` : ''}
+
                     ${mine ? `<button class="app-ghost" type="button" data-shut="${esc(ask.id)}"
                                       data-to="${shut ? 'open' : 'close'}">${
                         shut ? 'Επαναφορά' : 'Ολοκληρώθηκε'}</button>` : ''}
@@ -555,8 +558,16 @@
         const room = rooms.open;
         if (!room) return;
 
-        const waiting = rooms.asks.filter(one => one.face === 'lit');
-        const rest = rooms.asks.filter(one => one.face !== 'lit');
+        // Sorted by who it is for, because that is the first thing anybody
+        // wants to know about a request: is this mine to answer, is it the
+        // room's, or is it one of mine that I am waiting on. Inside each, what
+        // is lit rises to the top, so nothing waiting is ever buried.
+        const first = (rows) => rows.slice()
+            .sort((a, b) => (b.face === 'lit') - (a.face === 'lit'));
+
+        const forMe = first(rooms.asks.filter(one => one.toId === state.me.id));
+        const forAll = first(rooms.asks.filter(one => !one.toId));
+        const sent = first(rooms.asks.filter(one => one.toId && one.toId !== state.me.id));
 
         $('view-project').innerHTML = `
             <section class="panel client-card">
@@ -579,14 +590,17 @@
 
                 <button class="btn btn-primary" type="button" id="ask-new">Νέο αίτημα</button>
 
-                ${waiting.length ? `
-                    <p class="asks-head">Περιμένουν εσένα</p>
-                    ${askList(waiting)}` : ''}
+                ${forMe.length ? `
+                    <p class="asks-head is-first">Προς εσένα</p>
+                    ${askList(forMe)}` : ''}
 
-                ${rest.length ? `
-                    <p class="asks-head${waiting.length ? '' : ' is-first'}">${
-                        waiting.length ? 'Τα υπόλοιπα' : 'Όλα τα αιτήματα'}</p>
-                    ${askList(rest)}` : ''}
+                ${forAll.length ? `
+                    <p class="asks-head${forMe.length ? '' : ' is-first'}">Προς όλους</p>
+                    ${askList(forAll)}` : ''}
+
+                ${sent.length ? `
+                    <p class="asks-head${forMe.length || forAll.length ? '' : ' is-first'}">Έστειλες</p>
+                    ${askList(sent)}` : ''}
 
                 ${rooms.asks.length ? '' : '<ul class="asks"><li class="none-yet">Κανένα αίτημα ακόμα</li></ul>'}
             </section>
@@ -626,6 +640,9 @@
 
         const say = event.target.closest('[data-say]');
         if (say) { openSayPanel(say.dataset.say, room); return; }
+
+        const fix = event.target.closest('[data-fix]');
+        if (fix) { openAskPanel(rooms.asks.find(one => one.id === fix.dataset.fix)); return; }
 
         const got = event.target.closest('[data-got]');
         if (got) { await askDo(got.dataset.got, room, { action: 'got' }, 'Σημειώθηκε.'); return; }
@@ -722,7 +739,7 @@
     // pictures are uploaded as they are chosen, because an upload that waits
     // for a Send button is an upload that happens while somebody watches a
     // spinner wondering whether it worked.
-    const asking = { shots: [] };
+    const asking = { shots: [], id: null };
 
     const sayAsk = (message) => {
         $('ask-error').textContent = message || '';
@@ -731,6 +748,7 @@
 
     const shutAsk = () => {
         asking.shots = [];
+        asking.id = null;
         $('ask-modal').hidden = true;
         unlock();
     };
@@ -749,34 +767,50 @@
         $('ask-add').hidden = asking.shots.length >= ASK_SHOTS;
     };
 
-    const openAskPanel = () => {
+    // The same panel writes one and changes one. Who it was sent to is the one
+    // thing it will not change: that decided who was told and who may read it,
+    // and moving it afterwards would take a request out from under somebody who
+    // has already been asked.
+    const openAskPanel = (ask) => {
         const room = rooms.open;
         if (!room) return;
 
-        asking.shots = [];
+        asking.id = ask ? ask.id : null;
+        asking.shots = ask ? ask.shots.slice() : [];
         sayAsk('');
 
         const others = room.members.filter(one => one.id !== state.me.id);
 
-        $('ask-sub').textContent = 'Διάλεξε σε ποιον πάει. Ό,τι στέλνεις σε έναν άνθρωπο το βλέπει μόνο εκείνος.';
+        $('ask-title').textContent = ask ? 'Επεξεργασία αιτήματος' : 'Νέο αίτημα';
+        $('ask-save').textContent = ask ? 'Αποθήκευση' : 'Αποστολή';
+        $('ask-sub').textContent = ask
+            ? 'Ό,τι έχει ήδη απαντηθεί μένει εκεί που είναι. Ο παραλήπτης δεν αλλάζει.'
+            : 'Διάλεξε σε ποιον πάει. Ό,τι στέλνεις σε έναν άνθρωπο το βλέπει μόνο εκείνος.';
+
         $('ask-body').innerHTML = `
-            <div class="row-fields">
-                <label>Σε ποιον<select data-f="toId">
-                    <option value="">Σε όλη την ομάδα</option>
-                    ${others.map(one =>
-                        `<option value="${esc(one.id)}">${esc(one.name)}</option>`).join('')}
-                </select></label>
-            </div>
+            ${ask ? `
+                <p class="pw-note">Προς ${ask.toId ? esc(ask.toName) : 'όλη την ομάδα'}.</p>`
+            : `
+                <div class="row-fields">
+                    <label>Σε ποιον<select data-f="toId">
+                        <option value="">Σε όλη την ομάδα</option>
+                        ${others.map(one =>
+                            `<option value="${esc(one.id)}">${esc(one.name)}</option>`).join('')}
+                    </select></label>
+                </div>`}
 
             <label class="edit-label pw-head" for="ask-what">Τι ζητάς</label>
             <input class="me-name-field" id="ask-what" data-f="title" maxlength="120"
+                   value="${esc(ask ? ask.title : '')}"
                    placeholder="π.χ. Τσέκαρε το νέο layout στο Figma">
 
             <label class="edit-label pw-head" for="ask-more">Λεπτομέρειες, αν χρειάζονται</label>
-            <textarea class="me-name-field" id="ask-more" data-f="said" rows="3" maxlength="4000"></textarea>
+            <textarea class="me-name-field" id="ask-more" data-f="said" rows="3"
+                      maxlength="4000">${esc(ask ? ask.said : '')}</textarea>
 
             <label class="edit-label pw-head" for="ask-url">Σύνδεσμος, αν υπάρχει</label>
-            <input class="me-name-field" id="ask-url" data-f="url" placeholder="https://…" spellcheck="false">
+            <input class="me-name-field" id="ask-url" data-f="url" value="${esc(ask ? ask.url : '')}"
+                   placeholder="https://…" spellcheck="false">
 
             <label class="edit-label pw-head">Εικόνες, ως ${ASK_SHOTS}</label>
             <div class="ask-shots is-editing" id="ask-shots"></div>
@@ -822,8 +856,19 @@
         if (!said.title.trim()) { sayAsk('Πες τι ζητάς.'); return; }
 
         sayAsk('');
-        busy('Αποστολή…');
+        busy('Αποθήκευση…');
         try {
+            if (asking.id) {
+                // Read out before the panel is shut, because shutting it is
+                // what empties them.
+                const id = asking.id;
+                const room = rooms.open.id;
+                const shots = asking.shots.slice();
+                shutAsk();
+                await askDo(id, room, { action: 'edit', ...said, shots }, 'Αποθηκεύτηκε.');
+                return;
+            }
+
             const back = await api('/api/projects', {
                 method: 'POST',
                 body: { kind: 'ask', project: rooms.open.id, ...said, shots: asking.shots }
@@ -831,6 +876,7 @@
             rooms.asks.unshift(back.ask);
             shutAsk();
             renderProject();
+            await loadProjects();
             toast('Στάλθηκε.');
         } catch (err) {
             sayAsk(explain(err));
