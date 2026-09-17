@@ -3548,6 +3548,12 @@ li.none-yet {
    to itself. */
 #post-modal.is-bare .post-side { display: none; }
 
+/* With the column beside it gone, the right edge of the stage is the right
+   edge of the box, and the counter and the close button were both put in that
+   corner by different rules that had never met there. The counter steps aside
+   by the width of the button and the gap it sits in. */
+#post-modal.is-bare .post-count { right: 58px; }
+
 /* Above the fold the box is two columns and one of them has just gone, so the
    box narrows to what is left rather than standing half empty. Kept to the
    wide layout on purpose: below it the box is a column that scrolls, and
