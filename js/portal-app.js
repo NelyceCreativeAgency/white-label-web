@@ -588,7 +588,11 @@
         { key: 'me',   name: 'Προς εσένα',
           empty: 'Δεν σου έχει ζητήσει κανείς κάτι εδώ ακόμα.',
           is: (ask) => ask.toId === state.me.id },
-        { key: 'mine', name: 'Τα αιτήματά μου',
+        // Your own sent things, which is a different kind of list from the two
+        // beside it: those are what is being asked of the room and of you, and
+        // this is what you have gone and asked. It stands apart so that nobody
+        // reads it as the third place to look for work.
+        { key: 'mine', name: 'Τα αιτήματά μου', apart: true,
           empty: 'Δεν έχεις ζητήσει κάτι εδώ ακόμα.',
           is: (ask) => ask.by === state.me.id }
     ];
@@ -632,7 +636,7 @@
                     ${SHELVES.map(shelf => `
                         <button type="button" role="tab" data-shelf="${shelf.key}"
                                 aria-selected="${rooms.tab === shelf.key ? 'true' : 'false'}"
-                                class="${rooms.tab === shelf.key ? 'is-on' : ''}">
+                                class="${rooms.tab === shelf.key ? 'is-on' : ''}${shelf.apart ? ' is-apart' : ''}">
                             ${shelf.name}${(() => {
                                 const lit = askShelf(shelf.key).filter(one => one.face === 'lit').length;
                                 return lit ? `<span class="asks-pip">${lit}</span>` : '';

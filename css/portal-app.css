@@ -3652,6 +3652,21 @@ li.none-yet {
 
 .asks-tabs button { display: inline-flex; align-items: center; gap: 7px; }
 
+/* The first two shelves are what somebody opened the room to find: what the
+   team has been asked, and what they have been asked. The third is their own
+   sent folder, which is a different question — so it sits at the far end of
+   the row and is quieter, chosen or not, and its underline is grey rather than
+   the colour that means something wants you.
+   Where the row is too narrow to have a far end, it simply follows the other
+   two and the row scrolls, which is what it already did. */
+.asks-tabs .is-apart { margin-left: auto; color: rgba(184, 186, 194, .45); }
+.asks-tabs .is-apart:hover { color: rgba(184, 186, 194, .85); }
+
+.asks-tabs .is-apart.is-on {
+    color: var(--text-secondary);
+    border-bottom-color: rgba(255, 255, 255, .26);
+}
+
 .asks-pip {
     display: grid;
     place-items: center;
