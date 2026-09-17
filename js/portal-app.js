@@ -2903,6 +2903,7 @@
             else if (button.closest('#acct-modal')) closeDrawer();
             else if (button.closest('#me-modal')) closeMe();
             else if (button.closest('#money-modal')) closeMoney();
+            else if (button.closest('#prj-modal')) shutPrj();
             else closeViewer();
         });
     });
@@ -2932,6 +2933,8 @@
             else if (!$('bell-panel').hidden) closeBell();
             else if (!$('me-modal').hidden) closeMe();
             else if (!$('picker').hidden) picker.close();
+            else if (!$('prj-modal').hidden) shutPrj();
+            else if (!$('money-modal').hidden) closeMoney();
             else if (!$('acct-modal').hidden) closeDrawer();
             else if (!$('hl-modal').hidden) closeHighlight();
             else if (!$('edit-modal').hidden) closeEditor();
