@@ -1999,19 +1999,23 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     /* Nothing between the box and the bottom of what is showing. */
     body.is-chatting .chat-form { margin-bottom: 0; padding-bottom: 10px; }
 
-    /* While somebody is writing, three things hold still: the name at the top,
-       the box they are writing in, and the keyboard under it. Everything else
-       gives up its room.
+    /* Nothing moves when somebody taps the box.
 
-       The sentence about who reads this and the row of tabs are both fixed
-       bands above the messages, and together they are a third of what is left
-       of a phone once a keyboard is up. They have been read by then. */
-    body.is-typing .chat-banner,
-    body.is-typing .room-tabs { display: none; }
+       Folding bands away at that moment was the jump: the box was already
+       sitting at the bottom of the flex column, exactly where it belongs, and
+       then a third of the screen above it disappeared and everything leapt.
+       Whatever is going to be out of the way is out of the way before anybody
+       touches anything.
 
-    /* The top bar of the app goes too. The conversation has a name of its own
-       three lines below it, and one of the two is saying it twice. */
-    body.is-typing .app-top { display: none; }
+       So the app's own bar goes when a conversation opens, which is a whole
+       screen changing anyway and hides nothing. The conversation has a name of
+       its own three lines below it, and one of the two was saying it twice. */
+    body.is-inroom .app-top { display: none; }
+
+    /* And the sentence about how long messages are kept is a desktop's to
+       carry. On a phone it is a third line on a band that has to earn every
+       one of them. */
+    .chat-kept { display: none; }
 
     /* No safe-area padding. The height above already stops short of the home
        indicator, and adding the same inset a second time is the black band

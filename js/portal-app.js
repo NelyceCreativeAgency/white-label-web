@@ -406,7 +406,7 @@
         const chatting = !$('view-chat').hidden && matchMedia('(max-width: 900px)').matches;
 
         if (!chatting) {
-            document.body.classList.remove('is-chatting', 'is-lifted', 'is-typing');
+            document.body.classList.remove('is-chatting', 'is-lifted', 'is-typing', 'is-inroom');
             delete root.dataset.vvh;
             delete root.dataset.vvtop;
             root.style.removeProperty('--vvh');
@@ -2926,6 +2926,15 @@
 
     const sameThread = (a, b) => Boolean(a && b && a.kind === b.kind && a.id === b.id);
 
+    // Whether a conversation is covering the list, which on a phone is what
+    // decides whether the app's own bar is in the way. Said in one place so
+    // that it is never said twice differently.
+    const inRoom = (on) => {
+        $('view-chat').classList.toggle('is-open', on);
+        document.body.classList.toggle('is-inroom',
+            on && matchMedia('(max-width: 900px)').matches);
+    };
+
     const renderChatList = () => {
         const c = state.chat;
 
@@ -3014,8 +3023,8 @@
 
         $('chat-banner').className = `chat-banner ${team ? 'is-team' : 'is-private'}`;
         $('chat-banner').innerHTML = team
-            ? `${TEAM_ICON}<span>Το διαβάζουν <strong>όλοι</strong> όσοι δουλεύουν στο ${esc(name)}. ${KEPT}</span>`
-            : `${LOCK_ICON}<span>Ιδιωτικό. Το βλέπετε <strong>μόνο εσύ και ${esc(name)}</strong>. ${KEPT}</span>`;
+            ? `${TEAM_ICON}<span>Το διαβάζουν <strong>όλοι</strong> όσοι δουλεύουν στο ${esc(name)}.<span class="chat-kept"> ${KEPT}</span></span>`
+            : `${LOCK_ICON}<span>Ιδιωτικό. Το βλέπετε <strong>μόνο εσύ και ${esc(name)}</strong>.<span class="chat-kept"> ${KEPT}</span></span>`;
 
         $('chat-text').placeholder = team
             ? 'Γράψε σε όλη την ομάδα'
@@ -3125,7 +3134,7 @@
         // A quiet refresh never moves the screen. Somebody scrolled up reading
         // yesterday, or back on the list on a phone, stays where they are.
         if (!quiet) {
-            if (reveal) $('view-chat').classList.add('is-open');
+            if (reveal) inRoom(true);
             renderChatList();
             renderRoom();
         }
@@ -3195,7 +3204,7 @@
         // On a phone the list comes first and a conversation covers it, so
         // arriving here without one named shows the list.
         const phone = matchMedia('(max-width: 900px)').matches;
-        $('view-chat').classList.toggle('is-open', Boolean(open));
+        inRoom(Boolean(open));
 
         // The list on its own is a screen of its own; a conversation names
         // itself as well, so a refresh comes back inside it.
@@ -3239,7 +3248,7 @@
     });
 
     $('chat-back').addEventListener('click', () => {
-        $('view-chat').classList.remove('is-open');
+        inRoom(false);
         where.write('chat');
     });
 
