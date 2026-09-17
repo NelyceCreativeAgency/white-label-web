@@ -79,6 +79,24 @@
         }
     };
 
+    // A section says whether it is open, and the page it lives on redraws
+    // itself whenever anything changes, so what is open has to be remembered
+    // somewhere outside the page or every change would shut it again.
+    const folded = {
+        all: (() => {
+            try { return JSON.parse(localStorage.getItem('nelyce-folds')) || {}; }
+            catch { return {}; }
+        })(),
+        open(name, byDefault) {
+            return typeof this.all[name] === 'boolean' ? this.all[name] : byDefault;
+        },
+        write(name, open) {
+            this.all[name] = open;
+            try { localStorage.setItem('nelyce-folds', JSON.stringify(this.all)); }
+            catch { /* nothing to remember with */ }
+        }
+    };
+
     const initials = (name) => String(name || '?').trim().slice(0, 1).toUpperCase();
 
     // --- a knock when something lands ----------------------------------------
@@ -207,6 +225,9 @@
         'too-many-clients': 'Πάρα πολλοί πελάτες.',
         'too-many-subs': 'Πάρα πολλές συνδρομές σε έναν πελάτη.',
         'too-many-entries': 'Πάρα πολλές χρεώσεις σε έναν πελάτη.',
+        'no-such-file': 'Το αρχείο δεν βρέθηκε.',
+        'not-expired': 'Ο σύνδεσμος είναι ακόμα ενεργός.',
+        'too-many-files': 'Πάρα πολλά αρχεία σε έναν πελάτη.',
         'no-such-post': 'Η ανάρτηση δεν βρέθηκε.',
         'too-large': 'Η εικόνα είναι πολύ μεγάλη.',
         'bad-type': 'Δεκτές είναι εικόνες JPG, PNG και WebP.',
@@ -376,6 +397,12 @@
         const list = $('app-grids');
 
         renderChatBadge();
+
+        // For the admin the heading stays and says the list is empty, because
+        // an empty list is something they are about to fill. For a client with
+        // no grid there is no grid to be waiting for: they never bought one,
+        // and the portal is their account and their files.
+        $('app-grids-wrap').hidden = Boolean(!state.grids.length && state.me && state.me.role !== 'admin');
 
         if (!state.grids.length) {
             list.innerHTML = '<li class="app-grids-empty">Κανένα ακόμα</li>';
@@ -2801,7 +2828,8 @@
         chat:   'έγραψε στη συζήτηση του project',
         dm:     'σου έστειλε προσωπικό μήνυμα',
         link:   'πρόσθεσε έναν χρήσιμο σύνδεσμο',
-        idea:   'πρόσθεσε μια ιδέα στο brainstorming'
+        idea:   'πρόσθεσε μια ιδέα στο brainstorming',
+        'file-ask': 'ζητάει ξανά τον σύνδεσμο ενός αρχείου'
     };
 
     // A deleted post has no picture left to show, so its line gets the same
@@ -2818,8 +2846,13 @@
     const IDEA_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true">'
         + '<path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>';
 
+    const FILE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+        + '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>'
+        + '<path d="M14 3v5h5"/></svg>';
+
     const BELL_ICONS = {
         chat: SAID_ICON,
+        'file-ask': FILE_ICON,
         dm: SAID_ICON,
         idea: IDEA_ICON,
         link: '<svg viewBox="0 0 24 24" aria-hidden="true">'
@@ -2900,6 +2933,13 @@
         const event = state.feed.find(one => one.id === item.dataset.event);
         if (!event) return;
         closeBell();
+
+        // A request for a file opens the page it was asked from, where the row
+        // that is waiting says so itself.
+        if (event.kind === 'file-ask') {
+            if (event.clientId) await openClient(event.clientId);
+            return;
+        }
 
         // A message opens the conversation it was written in, on the side of it
         // that the reader belongs to.
@@ -2996,7 +3036,14 @@
 
     const renderChatBadge = () => {
         const total = chatTotal();
-        $('nav-chat').hidden = !state.grids.length;
+        // Anybody who is not the admin can always write to the admin, grid or
+        // no grid: a client who is not on a project still has somebody to ask
+        // how to be on one. The admin's own button waits until there is a
+        // portal for it to be about.
+        $('app-chat-nav').hidden = Boolean(!state.grids.length && (!state.me || state.me.role === 'admin'));
+        // What the button is about, for somebody it is only half about.
+        $('nav-chat').querySelector('small').textContent =
+            state.grids.length ? 'Ομάδα και προσωπικά' : 'Προσωπικά μηνύματα';
         $('nav-chat').classList.toggle('has-new', Boolean(total));
         $('nav-chat-badge').hidden = !total;
         $('nav-chat-badge').textContent = total > 99 ? '99+' : String(total || '');
@@ -3019,6 +3066,13 @@
 
     const renderChatList = () => {
         const c = state.chat;
+
+        // Somebody who is on no project has one kind of conversation, and a
+        // pair of tabs where one of them can only ever be empty is a choice
+        // that is not a choice.
+        const alone = !c.teams.length;
+        if (alone) c.kind = 'people';
+        $('chat-kinds').hidden = alone;
 
         // A dot on the tab that has something waiting, so the other kind is
         // never the one being missed.
@@ -4415,6 +4469,11 @@
         + '2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 '
         + '0-1.51 1z"/></svg>';
 
+    // The arrow a section is opened by. It points down while the section is
+    // shut, which is the direction the section will come from.
+    const CARET = '<svg class="fold-arrow" viewBox="0 0 24 24" aria-hidden="true">'
+        + '<path d="M6 9l6 6 6-6"/></svg>';
+
     const EYE = '<button class="pw-eye" type="button" aria-pressed="false" aria-label="Εμφάνιση κωδικού">'
         + '<svg class="pw-open" viewBox="0 0 24 24" aria-hidden="true">'
         + '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
@@ -4794,7 +4853,12 @@
     // after an invoice had already been issued somewhere else, and the link on a
     // row goes to that invoice. What the page adds is that it is in one place
     // and that the client can read it without having to ask.
-    const purse = { list: [], id: null, client: null, money: null, people: [], grids: [] };
+    const purse = { list: [], id: null, client: null, money: null, files: [],
+                    seesGrids: false, people: [], grids: [] };
+
+    // How long a link is the client's. The server decides it; this is only the
+    // same number, for the sentence that explains it.
+    const FILE_MONTHS = 12;
 
     const euro = (cents) => {
         try {
@@ -4946,6 +5010,8 @@
             purse.id = data.client.id;
             purse.client = data.client;
             purse.money = data.money || { subs: [], entries: [], owed: 0, paid: 0 };
+            purse.files = data.files || [];
+            purse.seesGrids = Boolean(data.seesGrids);
             purse.people = data.people || [];
             purse.grids = data.grids || [];
 
@@ -5069,7 +5135,8 @@
                     ${boss ? `<button class="lister-gear" type="button" data-open="sub"
                                       data-id="${esc(sub.id)}" aria-label="Ρυθμίσεις: ${esc(sub.title)}">${GEAR}</button>` : ''}
                 </div>
-                <p class="sub-when">${said}${paid}${owing}</p>
+                <p class="sub-when">${said}${paid}${owing}${
+                    boss && !sub.social ? ' · <span class="not-social">εκτός social media</span>' : ''}</p>
                 ${monthsOf(sub)}
                 ${boss ? `<p class="months-how">Κάθε μήνας γεμίζει όσο τον καλύπτουν οι χρεώσεις από κάτω, οπότε μια περίοδος που πιάνει δύο μήνες τους αφήνει και τους δύο μισογεμάτους. Για να πληρωθεί ένας μήνας, πρόσθεσε τη χρέωση στο ιστορικό και βάλ' την πάνω σε αυτή τη συνδρομή.</p>` : ''}
             </li>`;
@@ -5114,6 +5181,43 @@
             </li>`;
     };
 
+    // One piece of work, and the address it was left at. What the client is
+    // shown depends on whether that address is still theirs: while it is, the
+    // link itself; once it is not, a way of asking for it back.
+    const fileRow = (file, boss) => `
+        <li class="file${file.expired ? ' is-old' : ''}${file.askedAt ? ' is-asked' : ''}">
+            <div class="file-said">
+                <strong>${esc(file.title)}</strong>
+                <small>${file.expired
+                    ? `Ο σύνδεσμος έληξε στις ${onDay(file.expiresOn)}`
+                    : `Διαθέσιμο μέχρι τις ${onDay(file.expiresOn)}`}${
+                    boss && file.askedAt ? ` · Ζητήθηκε ${esc(ago(file.askedAt))}` : ''}</small>
+            </div>
+
+            <div class="file-do">
+                ${file.url
+                    ? `<a class="app-ghost" href="${esc(file.url)}"
+                          target="_blank" rel="noopener noreferrer">Άνοιγμα</a>` : ''}
+                ${!boss && file.expired ? (file.askedAt
+                    ? '<span class="file-asked">Το αίτημα στάλθηκε</span>'
+                    : `<button class="btn btn-primary" type="button"
+                               data-ask="${esc(file.id)}">Αίτημα για σύνδεσμο</button>`) : ''}
+                ${boss ? `<button class="file-drop" type="button" data-drop="${esc(file.id)}"
+                                  aria-label="Διαγραφή">&times;</button>` : ''}
+            </div>
+
+            ${boss ? `
+            <details class="file-edit">
+                <summary>Αλλαγή</summary>
+                <form class="new-row" data-file="${esc(file.id)}">
+                    <input name="title" value="${esc(file.title)}" maxlength="80" required>
+                    <input name="url" value="${esc(file.url || '')}" maxlength="600"
+                           placeholder="https://" required>
+                    <button class="btn btn-primary" type="submit">Αποθήκευση</button>
+                </form>
+            </details>` : ''}
+        </li>`;
+
     const renderClient = () => {
         const boss = state.me.role === 'admin';
         const client = purse.client;
@@ -5151,11 +5255,12 @@
                     ? `<p class="client-note"><span>Μόνο εσύ</span>${esc(client.note)}</p>` : ''}
             </section>
 
-            <section class="panel">
-                <div class="panel-head">
+            <details class="panel panel-fold" data-fold="subs"${folded.open('subs', true) ? ' open' : ''}>
+                <summary class="panel-head">
                     <h2>Συνδρομές</h2>
-                    <p>Τι τρέχει αυτή τη στιγμή, διαβασμένο από τις χρεώσεις πιο κάτω. Οι μήνες είναι η φετινή χρονιά: γεμάτος ο πληρωμένος, περιγραμμένος ο τιμολογημένος που δεν έχει πληρωθεί ακόμα, θαμπός αυτός που δεν έχει χρεωθεί καθόλου. Ό,τι παλιότερο είναι στο ιστορικό πιο κάτω.</p>
-                </div>
+                    ${CARET}
+                </summary>
+                <p class="panel-why">Τι τρέχει αυτή τη στιγμή, διαβασμένο από τις χρεώσεις πιο κάτω. Οι μήνες είναι η φετινή χρονιά: γεμάτος ο πληρωμένος, περιγραμμένος ο τιμολογημένος που δεν έχει πληρωθεί ακόμα, θαμπός αυτός που δεν έχει χρεωθεί καθόλου. Ό,τι παλιότερο είναι στο ιστορικό πιο κάτω.</p>
 
                 ${boss ? `
                 <form class="new-row" id="new-sub">
@@ -5166,22 +5271,53 @@
                         <option value="quarter">Κάθε τρίμηνο</option>
                         <option value="year">Κάθε χρόνο</option>
                     </select>
+                    <label class="member row-mark">
+                        <input type="checkbox" name="social" value="1" checked>
+                        <span>Social media</span>
+                    </label>
                     <button class="btn btn-primary" type="submit">Νέα συνδρομή</button>
                 </form>` : ''}
+
+                ${boss ? `<p class="sees-grids${purse.seesGrids ? ' is-on' : ''}">${purse.seesGrids
+                    ? 'Βλέπει τα grids που του έχεις δώσει: έχει πληρώσει συνδρομή social media τουλάχιστον μία φορά, και αυτό δεν χάνεται.'
+                    : 'Δεν βλέπει grids: καμία πληρωμένη χρέωση πάνω σε συνδρομή social media. Μόλις μπει η πρώτη, τα grids του ανοίγουν και μένουν ανοιχτά.'}</p>` : ''}
 
                 <p class="panel-error" role="alert" hidden></p>
                 <ul class="subs">${owned.subs.length
                     ? owned.subs.map(sub => subCard(sub, boss)).join('')
                     : '<li class="none-yet">Καμία συνδρομή ακόμα</li>'}</ul>
-            </section>
+            </details>
 
-            <section class="panel">
-                <div class="panel-head">
+            <details class="panel panel-fold" data-fold="files"${folded.open('files', false) ? ' open' : ''}>
+                <summary class="panel-head">
+                    <h2>${boss ? 'Αρχεία' : 'Τα αρχεία μου'}</h2>
+                    ${CARET}
+                </summary>
+                <p class="panel-why">${boss
+                    ? `Η κάθε δουλειά με τον σύνδεσμό της στο cloud. Ο σύνδεσμος είναι του πελάτη για ${FILE_MONTHS} μήνες από τη μέρα που τον βάζεις εδώ· μετά μένει το όνομα της δουλειάς και ένα κουμπί που σου ζητάει καινούριον. Εσύ τον βλέπεις πάντα. Αν δώσεις καινούριο σύνδεσμο, οι ${FILE_MONTHS} μήνες ξεκινούν από την αρχή.`
+                    : `Οι δουλειές σου, με τον σύνδεσμο για να τις κατεβάσεις. Ο κάθε σύνδεσμος μένει ανοιχτός ${FILE_MONTHS} μήνες· όταν λήξει, ζήτα τον ξανά και θα τον ανεβάσουμε πάλι για σένα.`}</p>
+
+                ${boss ? `
+                <form class="new-row" id="new-file">
+                    <input name="title" placeholder="Τι είναι, π.χ. Λογότυπο σε vector" maxlength="80" required>
+                    <input name="url" placeholder="https://… ο σύνδεσμος του φακέλου" maxlength="600" required>
+                    <button class="btn btn-primary" type="submit">Προσθήκη</button>
+                </form>` : ''}
+
+                <p class="panel-error" role="alert" hidden></p>
+                <ul class="files">${purse.files.length
+                    ? purse.files.map(file => fileRow(file, boss)).join('')
+                    : '<li class="none-yet">Κανένα αρχείο ακόμα</li>'}</ul>
+            </details>
+
+            <details class="panel panel-fold" data-fold="ledger"${folded.open('ledger', false) ? ' open' : ''}>
+                <summary class="panel-head">
                     <h2>Ιστορικό και τιμολόγια</h2>
-                    <p>${boss
+                    ${CARET}
+                </summary>
+                <p class="panel-why">${boss
                         ? 'Κάθε χρέωση όπως εκδόθηκε, και αν έχει εξοφληθεί ή όχι. Βάλε την πάνω σε μια συνδρομή και ανάβουν μόνοι τους οι μήνες της από πάνω. Ο σύνδεσμος πάει στο ίδιο το αρχείο του τιμολογίου, όπου κι αν το ανεβάζεις. Η ημερομηνία πληρωμής και τα υπόλοιπα στοιχεία κάθε γραμμής είναι πίσω από το γρανάζι της.'
                         : 'Ό,τι έχει τιμολογηθεί, με τον σύνδεσμο για να κατεβάσεις το κάθε τιμολόγιο.'}</p>
-                </div>
 
                 ${boss ? `
                 <form class="new-row" id="new-entry">
@@ -5204,7 +5340,7 @@
                 <ul class="ledger${boss ? ' is-live' : ''}">${owned.entries.length
                     ? owned.entries.map(entry => ledgerRow(entry, boss)).join('')
                     : '<li class="none-yet">Καμία χρέωση ακόμα</li>'}</ul>
-            </section>
+            </details>
         `;
     };
 
@@ -5216,16 +5352,52 @@
         toast(message);
     };
 
+    // The files are their own document on the server, so what comes back from
+    // a change to them is the list and nothing else.
+    const afterFiles = (back, message) => {
+        purse.files = back.files || [];
+        renderClient();
+        toast(message);
+    };
+
     $('view-client').addEventListener('submit', async (event) => {
         event.preventDefault();
         const form = event.target;
+
+        // A file is handed over, or handed over again under the same name. Both
+        // are the same sentence to the server, told apart by whether the row
+        // already exists.
+        if (form.id === 'new-file' || form.dataset.file) {
+            const said = Object.fromEntries(new FormData(form).entries());
+            busy('Αποθήκευση…');
+            try {
+                const back = await api('/api/files', {
+                    method: form.dataset.file ? 'PATCH' : 'POST',
+                    body: { clientId: purse.id, ...(form.dataset.file ? { id: form.dataset.file } : {}), ...said }
+                });
+                if (!form.dataset.file) form.reset();
+                afterFiles(back, form.dataset.file ? 'Ο σύνδεσμος ανανεώθηκε.' : 'Το αρχείο μπήκε.');
+            } catch (err) {
+                complain(form, explain(err));
+            } finally {
+                busy('');
+            }
+            return;
+        }
+
         const kind = form.id === 'new-sub' ? 'sub' : 'entry';
 
         busy('Αποθήκευση…');
         try {
+            // A box nobody ticked sends nothing at all, and a subscription
+            // that is not social media work has to say so rather than simply
+            // not say the opposite.
+            const said = Object.fromEntries(new FormData(form).entries());
+            if (kind === 'sub') said.social = Boolean(form.social && form.social.checked);
+
             const back = await api('/api/clients', {
                 method: 'POST',
-                body: { kind, clientId: purse.id, ...Object.fromEntries(new FormData(form).entries()) }
+                body: { kind, clientId: purse.id, ...said }
             });
             form.reset();
             await afterMoney(back, kind === 'sub' ? 'Η συνδρομή μπήκε.' : 'Η χρέωση μπήκε.');
@@ -5236,7 +5408,52 @@
         }
     });
 
+    // A section opening does not bubble the way a click does, so it is caught
+    // on the way down instead.
+    $('view-client').addEventListener('toggle', (event) => {
+        const fold = event.target.closest && event.target.closest('.panel-fold[data-fold]');
+        if (fold) folded.write(fold.dataset.fold, fold.open);
+    }, true);
+
     $('view-client').addEventListener('click', async (event) => {
+        // Asking for a link back. The row says so from then on, whether or not
+        // the bell that has just gone off is ever looked at.
+        const ask = event.target.closest('[data-ask]');
+        if (ask) {
+            ask.disabled = true;
+            busy('Αποστολή…');
+            try {
+                const back = await api('/api/files', {
+                    method: 'POST', body: { action: 'ask', id: ask.dataset.ask }
+                });
+                afterFiles(back, 'Το αίτημα στάλθηκε.');
+            } catch (err) {
+                ask.disabled = false;
+                toast(explain(err), 'bad');
+            } finally {
+                busy('');
+            }
+            return;
+        }
+
+        const drop = event.target.closest('[data-drop]');
+        if (drop) {
+            const row = purse.files.find(one => one.id === drop.dataset.drop);
+            if (!confirm(`Να φύγει η γραμμή «${row ? row.title : ''}»; Το ίδιο το αρχείο στο cloud μένει εκεί που είναι.`)) return;
+            busy('Διαγραφή…');
+            try {
+                const back = await api(
+                    `/api/files?clientId=${encodeURIComponent(purse.id)}&id=${encodeURIComponent(drop.dataset.drop)}`,
+                    { method: 'DELETE' });
+                afterFiles(back, 'Η γραμμή έφυγε.');
+            } catch (err) {
+                toast(explain(err), 'bad');
+            } finally {
+                busy('');
+            }
+            return;
+        }
+
         const gear = event.target.closest('[data-open]');
         if (gear) { openMoney(gear.dataset.open, gear.dataset.id); return; }
 
@@ -5358,6 +5575,12 @@
 
                 <label class="edit-label pw-head" for="sub-note">Σημείωση, μόνο για σένα</label>
                 <textarea class="me-name-field" id="sub-note" data-f="note" rows="2" maxlength="2000">${esc(sub.note || '')}</textarea>
+
+                <label class="member sub-stop">
+                    <input type="checkbox" id="sub-social"${sub.social ? ' checked' : ''}>
+                    <span>Είναι συνδρομή social media</span>
+                </label>
+                <p class="pw-note">Μια πληρωμένη χρέωση πάνω σε μια τέτοια συνδρομή είναι αυτό που ανοίγει τα grids για τον πελάτη, μια για πάντα. Ξεμαρκάροντάς την, δεν μετράει πια γι' αυτό — και αν δεν έχει μείνει καμία άλλη, ο πελάτης παύει να βλέπει τα grids του.</p>
 
                 <label class="member sub-stop">
                     <input type="checkbox" id="sub-ended"${sub.endedAt ? ' checked' : ''}>
@@ -5519,7 +5742,9 @@
 
                 await api('/api/clients', { method: 'PATCH', body: sent });
             } else {
-                const extra = tray.kind === 'sub' ? { ended: $('sub-ended').checked } : {};
+                const extra = tray.kind === 'sub'
+                    ? { ended: $('sub-ended').checked, social: $('sub-social').checked }
+                    : {};
                 await api('/api/clients', {
                     method: 'PATCH',
                     body: { kind: tray.kind, clientId: purse.id, id: tray.id, ...fields(body), ...extra }

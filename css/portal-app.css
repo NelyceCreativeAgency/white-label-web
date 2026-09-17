@@ -184,6 +184,7 @@
     border-radius: 999px;
 }
 
+.app-chat-nav,
 .app-admin-nav { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, .07); }
 
 .app-me {
@@ -2816,7 +2817,45 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
 }
 
 .panel-head h2 { font-size: 1.15rem; font-weight: var(--fw-semibold); }
-.panel-head p { margin: 8px 0 20px; font-size: .84rem; line-height: 1.6; color: var(--text-secondary); }
+.panel-head p,
+.panel-why { margin: 8px 0 20px; font-size: .84rem; line-height: 1.6; color: var(--text-secondary); }
+
+/* A section that opens. Three of them one under the other would be a page
+   nobody can see the end of, so each one is a heading until it is asked for.
+   The whole heading is the handle, which is what a thumb needs. */
+.panel-fold > .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.panel-fold > .panel-head::-webkit-details-marker { display: none; }
+.panel-fold > .panel-head:hover .fold-arrow { color: var(--text-primary); }
+
+.panel-fold > .panel-head:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, .35);
+    outline-offset: 6px;
+    border-radius: 10px;
+}
+
+.fold-arrow {
+    flex: 0 0 auto;
+    width: 18px; height: 18px;
+    margin-left: auto;
+    color: var(--text-secondary);
+    fill: none; stroke: currentColor; stroke-width: 1.8;
+    stroke-linecap: round; stroke-linejoin: round;
+    transition: var(--transition-smooth);
+}
+
+.panel-fold[open] > .panel-head .fold-arrow { transform: rotate(180deg); }
+
+/* Shut, a section is one line, and the room underneath it belonged to what is
+   no longer there. */
+.panel-fold:not([open]) { padding-bottom: 20px; }
 
 .new-row {
     display: flex;
@@ -3216,6 +3255,11 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
     .profile-hint { padding-top: 12px; font-size: .75rem; }
 
     .panel { padding: 18px 16px; border-radius: 18px; }
+    .panel-fold:not([open]) { padding-bottom: 16px; }
+    .file { grid-template-columns: minmax(0, 1fr); }
+    .file-do { justify-content: flex-start; flex-wrap: wrap; }
+    .file-do .btn { flex: 1 1 auto; }
+    .panel-fold > .panel-head { gap: 10px; }
     .new-row input, .new-row select { flex-basis: 100%; }
     .new-row .btn { width: 100%; }
 
@@ -3335,7 +3379,103 @@ li.none-yet {
 }
 
 /* --- subscriptions -------------------------------------------------------- */
-.subs, .ledger { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.subs, .ledger, .files { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+
+/* Whether this client's accounts can open a grid, said where the reason for it
+   is. Not a warning: both answers are ordinary, and only one of them is a
+   thing to do something about. */
+.sees-grids {
+    margin: 0 0 18px;
+    padding: 10px 14px;
+    font-size: .78rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-left: 2px solid rgba(255, 107, 53, .45);
+    border-radius: 10px;
+}
+
+.sees-grids.is-on { border-left-color: rgba(76, 175, 118, .5); }
+.not-social { color: rgba(184, 186, 194, .75); }
+
+/* A tick box standing in a row of boxes to type in. */
+.row-mark { flex: 0 0 auto; align-self: center; white-space: nowrap; }
+
+/* --- what a client has been handed --------------------------------------- */
+/* A name, how long the link is theirs, and the one thing there is to do about
+   it. A row whose link has run out is not an error and does not shout; it is
+   simply a row with nothing to open. */
+.file {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 11px 14px;
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 13px;
+}
+
+.file-said { min-width: 0; display: grid; gap: 3px; }
+
+.file-said strong {
+    font-size: .88rem;
+    font-weight: var(--fw-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-said small { font-size: .72rem; color: rgba(184, 186, 194, .6); }
+.file.is-old .file-said small { color: rgba(255, 196, 164, .75); }
+
+.file-do { display: flex; align-items: center; gap: 8px; }
+.file-do .btn { padding: 8px 14px; font-size: .78rem; }
+
+/* Somebody is waiting for an answer, and the row says so until it is given. */
+.file.is-asked { border-color: rgba(255, 107, 53, .32); }
+
+.file-asked {
+    padding: 4px 10px;
+    font-size: .7rem;
+    white-space: nowrap;
+    color: #ffc4a4;
+    background: rgba(255, 107, 53, .12);
+    border: 1px solid rgba(255, 107, 53, .3);
+    border-radius: 999px;
+}
+
+.file-drop {
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    font-size: 1.1rem; line-height: 1;
+    color: var(--text-secondary);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.file-drop:hover { color: #ffc4a4; background: rgba(255, 107, 53, .1); border-color: rgba(255, 107, 53, .28); }
+
+/* The address itself is the admin's business, so it is behind a word rather
+   than in the row: a column of long links is not a list anybody can read. */
+.file-edit { grid-column: 1 / -1; }
+
+.file-edit > summary {
+    display: inline-block;
+    font-size: .74rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    list-style: none;
+}
+
+.file-edit > summary::-webkit-details-marker { display: none; }
+.file-edit > summary:hover { color: var(--text-primary); }
+.file-edit .new-row { margin: 10px 0 2px; }
+
 
 .sub {
     padding: 15px 16px;

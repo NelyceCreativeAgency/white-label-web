@@ -10,6 +10,11 @@ const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TO
 
 const PRICE_KEY = 'portal:prices';
 
+// A client's charges and subscriptions. Written by api/clients.js and read by
+// anything that has to know what a client has paid for, so the name of the key
+// is said once, here, rather than spelled out again wherever it is wanted.
+exports.moneyKey = (clientId) => `portal:money:${clientId}`;
+
 const command = async (...args) => {
     if (!URL || !TOKEN) throw new Error('No store is connected to this deployment.');
 

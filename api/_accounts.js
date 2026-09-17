@@ -7,6 +7,7 @@
 const crypto = require('crypto');
 const store = require('./_store');
 const auth = require('./_auth');
+const social = require('./_social');
 
 const ACCOUNTS_KEY = 'portal:accounts';
 const postsKey = (gridId) => `portal:grid:${gridId}`;
@@ -77,13 +78,25 @@ exports.publicUser = (user) => ({
 const isMember = (user, grid) =>
     Array.isArray(grid.memberIds) && grid.memberIds.includes(user.id);
 
-const canView = (user, grid) => user.role === 'admin' || isMember(user, grid);
+// A client who has never paid for social media work is on no grid, whatever
+// the grid's own list of members says. The two are not the same question and
+// both have to be true: being put on a grid is the admin saying which work is
+// theirs, and having paid for it is what makes there be any work at all.
+//
+// The answer is worked out once, when the account is read from the cookie, and
+// hung on the account for the rest of the request. It is asked here because
+// everything that serves a grid — its posts, its conversation, its bell — asks
+// here first, so there is one door rather than seven.
+const SEES = 'seesGrids';
+
+const canView = (user, grid) =>
+    user.role === 'admin' || (user[SEES] !== false && isMember(user, grid));
 
 // Anybody put on a grid works on it, client or partner. What the two roles
 // still separate is whose voice a note is written in: a note from a client is
 // the one that raises a flag on the slot until somebody answers it.
 const canEdit = (user, grid) =>
-    user.role === 'admin' || isMember(user, grid);
+    user.role === 'admin' || (user[SEES] !== false && isMember(user, grid));
 
 exports.isMember = isMember;
 exports.canView = canView;
@@ -109,8 +122,21 @@ exports.currentUser = async (req, doc) => {
     const accounts = doc || await exports.readAccounts();
     const user = exports.findUser(accounts, claim.id);
     if (!user) return null;
+    if (claim.version !== exports.passwordVersion(user)) return null;
 
-    return claim.version === exports.passwordVersion(user) ? user : null;
+    // Written so that it cannot be saved: this is an answer about the account,
+    // not a fact of it, and the accounts document is rewritten whole by
+    // anything that changes a name or a password. A property that does not
+    // enumerate is not one JSON.stringify can carry into the store.
+    if (user.role === 'client' && !(SEES in user)) {
+        Object.defineProperty(user, SEES, {
+            value: await social.everPaid(user.clientId),
+            enumerable: false,
+            configurable: true
+        });
+    }
+
+    return user;
 };
 
 // --- a grid's posts ---------------------------------------------------------

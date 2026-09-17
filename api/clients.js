@@ -19,6 +19,13 @@
 const accounts = require('./_accounts');
 const store = require('./_store');
 const blob = require('./_blob');
+// What a client has been handed, which is read with their page and written
+// through api/files.js. It lives in its own document for the same reason the
+// money does: it is asked for in one place and has nothing to do with the rest.
+const files = require('./_files');
+// What makes a subscription social media work, and therefore what decides
+// whether this client has any business seeing a grid.
+const social = require('./_social');
 
 const MAX_CLIENTS = 300;
 const MAX_SUBS    = 24;
@@ -34,7 +41,7 @@ const CYCLES = { month: 1, quarter: 3, year: 12 };
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-const moneyKey = (clientId) => `portal:money:${clientId}`;
+const moneyKey = store.moneyKey;
 
 const text = (value, max) => String(value == null ? '' : value).trim().slice(0, max);
 
@@ -203,7 +210,9 @@ const subOut = (sub, entries, mine) => {
         // has paid for.
         paidUntil: ends('paid'),
         due: ours.filter(entry => entry.status === 'due').length,
-        ...(mine ? {} : { note: sub.note || '' })
+        // Whether this one is social media work is a lever of yours, not
+        // something the client is told about their own subscription.
+        ...(mine ? {} : { note: sub.note || '', social: social.isSocial(sub) })
     };
 };
 
@@ -297,6 +306,9 @@ const createSub = (money, body) => {
         title,
         cents: toCents(body.amount),
         cycle: CYCLES[body.cycle] ? body.cycle : 'month',
+        // Most of what is sold here is social media work, so that is what a
+        // new subscription is unless it is said otherwise.
+        social: body.social === undefined ? true : Boolean(body.social),
         payUrl: toLink(body.payUrl),
         note: text(body.note, MAX_NOTE),
         startedAt: toDay(body.startedAt, today()),
@@ -317,6 +329,7 @@ const patchSub = (money, body) => {
     }
     if (body.amount !== undefined) sub.cents = toCents(body.amount);
     if (body.cycle !== undefined && CYCLES[body.cycle]) sub.cycle = body.cycle;
+    if (body.social !== undefined) sub.social = Boolean(body.social);
     if (body.payUrl !== undefined) sub.payUrl = toLink(body.payUrl);
     if (body.note !== undefined) sub.note = text(body.note, MAX_NOTE);
     if (body.startedAt !== undefined) sub.startedAt = toDay(body.startedAt, sub.startedAt);
@@ -473,7 +486,8 @@ module.exports = async (req, res) => {
                 const money = await readMoney(client.id);
                 return res.status(200).json({
                     client: clientOut(client, true, doc),
-                    money: moneyOut(money, true)
+                    money: moneyOut(money, true),
+                    files: files.listOut(await files.read(client.id), true)
                 });
             }
 
@@ -500,6 +514,12 @@ module.exports = async (req, res) => {
             return res.status(200).json({
                 client: clientOut(client, false, doc),
                 money: moneyOut(money, false),
+                files: files.listOut(await files.read(client.id), false),
+                // Whether their accounts can open a grid at all, said on the
+                // page where the reason for it lives. Read off the same charges
+                // the rest of this page is read off, so it cannot disagree with
+                // what the sidebar does.
+                seesGrids: await social.everPaid(client.id),
                 // Everybody who could be put on this client, and every grid that
                 // could belong to it, so the panel can offer them.
                 people: doc.users
@@ -551,6 +571,7 @@ module.exports = async (req, res) => {
                 // belonging to anybody, because deleting a client should never
                 // be a way of deleting a year of work by accident.
                 await store.deleteKey(moneyKey(client.id));
+                await files.forget(client.id);
                 doc.users.forEach(user => { if (user.clientId === client.id) user.clientId = null; });
                 doc.grids.forEach(grid => { if (grid.clientId === client.id) grid.clientId = null; });
                 doc.clients = doc.clients.filter(one => one.id !== client.id);
