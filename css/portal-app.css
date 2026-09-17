@@ -2920,6 +2920,10 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
 
 .lister-who { display: grid; gap: 2px; min-width: 0; }
 
+/* A line has three columns and always will, however many buttons end up on
+   the end of it. They travel together in the third. */
+.lister-acts { display: flex; align-items: center; gap: 2px; }
+
 .lister-name,
 .lister-sub {
     overflow: hidden;

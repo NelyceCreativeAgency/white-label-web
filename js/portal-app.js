@@ -4513,10 +4513,12 @@
                 <span class="lister-name">${esc(name)}</span>
                 <span class="lister-sub">${under}</span>
             </span>
-            ${go ? `<button class="lister-gear" type="button" data-go="${esc(id)}"
-                            aria-label="Τιμολόγια: ${esc(name)}">${ARROW}</button>` : ''}
-            <button class="lister-gear" type="button" data-open="${what}" data-id="${esc(id)}"
-                    aria-label="Ρυθμίσεις: ${esc(name)}">${GEAR}</button>
+            <span class="lister-acts">
+                ${go ? `<button class="lister-gear" type="button" data-go="${esc(id)}"
+                                aria-label="Τιμολόγια: ${esc(name)}">${ARROW}</button>` : ''}
+                <button class="lister-gear" type="button" data-open="${what}" data-id="${esc(id)}"
+                        aria-label="Ρυθμίσεις: ${esc(name)}">${GEAR}</button>
+            </span>
         </li>`;
 
     const renderAccounts = () => {
