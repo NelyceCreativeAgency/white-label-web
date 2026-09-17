@@ -4950,7 +4950,7 @@
     //
     // A quarter fills three of them and a year fills all twelve, without this
     // having to know which: it asks each month whether some period covers it.
-    const monthsOf = (sub) => {
+    const monthsOf = (sub, boss) => {
         const now = new Date();
         const year = now.getFullYear();
         const ours = purse.money.entries.filter(entry => entry.subId === sub.id && entry.to);
@@ -4964,9 +4964,17 @@
             const how = covering.some(entry => entry.status === 'paid') ? ' is-paid'
                 : covering.length ? ' is-due' : '';
             const said = how === ' is-paid' ? 'πληρωμένος' : how === ' is-due' ? 'εκκρεμεί' : 'χωρίς χρέωση';
+            const here = `${how}${month === now.getMonth() ? ' is-now' : ''}`;
 
-            return `<span class="month${how}${month === now.getMonth() ? ' is-now' : ''}"
-                          title="${name} ${year}: ${said}">${name}</span>`;
+            if (!boss) return `<span class="month${here}" title="${name} ${year}: ${said}">${name}</span>`;
+
+            const tip = how === ' is-paid'
+                ? `${name} ${year}: πληρωμένος. Πάτα τον για να το πάρεις πίσω.`
+                : `${name} ${year}: ${said}. Πάτα τον για να τον σημειώσεις πληρωμένο.`;
+
+            return `<button class="month${here}" type="button" data-do="cover"
+                            data-id="${esc(sub.id)}" data-month="${year}-${mm}"
+                            title="${tip}">${name}</button>`;
         }).join('');
 
         return `<div class="months"><span class="months-year">${year}</span>${cells}</div>`;
@@ -4993,11 +5001,13 @@
                                       data-id="${esc(sub.id)}" aria-label="Ρυθμίσεις: ${esc(sub.title)}">${GEAR}</button>` : ''}
                 </div>
                 <p class="sub-when">${said}${owing}</p>
-                ${monthsOf(sub)}
-                ${boss && !stopped ? `
-                    <button class="app-ghost sub-renew" type="button" data-do="renew" data-id="${esc(sub.id)}">
-                        Ανανέωση για τον επόμενο ${cycle}
-                    </button>` : ''}
+                ${monthsOf(sub, boss)}
+                ${boss ? `
+                    <p class="months-how">Πάτα έναν μήνα για να τον σημειώσεις πληρωμένο. Ξαναπάτησέ τον για να το πάρεις πίσω.</p>
+                    ${stopped ? '' : `
+                        <button class="app-ghost sub-renew" type="button" data-do="renew" data-id="${esc(sub.id)}">
+                            Χρέωσε τον επόμενο ${cycle} χωρίς πληρωμή
+                        </button>`}` : ''}
             </li>`;
     };
 
@@ -5073,7 +5083,7 @@
             <section class="panel">
                 <div class="panel-head">
                     <h2>Συνδρομές</h2>
-                    <p>Τι τρέχει αυτή τη στιγμή. Οι μήνες από κάτω είναι η φετινή χρονιά: γεμάτος ο πληρωμένος, περιγραμμένος ο τιμολογημένος που δεν έχει πληρωθεί ακόμα. Ό,τι παλιότερο είναι στο ιστορικό πιο κάτω.</p>
+                    <p>Τι τρέχει αυτή τη στιγμή. Οι μήνες από κάτω είναι η φετινή χρονιά: γεμάτος ο πληρωμένος, περιγραμμένος ο τιμολογημένος που δεν έχει πληρωθεί ακόμα, θαμπός αυτός που δεν έχει χρεωθεί καθόλου. Ό,τι παλιότερο είναι στο ιστορικό πιο κάτω.</p>
                 </div>
 
                 ${boss ? `
@@ -5147,6 +5157,23 @@
     });
 
     $('view-client').addEventListener('click', async (event) => {
+        const square = event.target.closest('[data-do="cover"]');
+        if (square) {
+            busy('Αποθήκευση…');
+            try {
+                const back = await api('/api/clients', {
+                    method: 'POST',
+                    body: { kind: 'cover', clientId: purse.id, subId: square.dataset.id, month: square.dataset.month }
+                });
+                await afterMoney(back, 'Καταχωρήθηκε.');
+            } catch (err) {
+                toast(explain(err), 'bad');
+            } finally {
+                busy('');
+            }
+            return;
+        }
+
         const renewing = event.target.closest('[data-do="renew"]');
         if (renewing) {
             busy('Ανανέωση…');
