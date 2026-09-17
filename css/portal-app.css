@@ -2794,34 +2794,41 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
 /* --- accounts ------------------------------------------------------------ */
 /* The way back to the list a page was opened from. It sits above the card
    rather than on it, because it is about the page and not about the person. */
-.app-backrow { max-width: 880px; margin: 0 auto 10px; }
-
-.app-back {
+/* The way back, on the bar. One of it, beside the name of wherever you are. */
+.app-top-back {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    margin-left: -8px;
+    gap: 5px;
+    flex: 0 0 auto;
     padding: 6px 12px 6px 8px;
     font: inherit;
     font-size: .78rem;
     color: var(--text-secondary);
     background: none;
-    border: 1px solid transparent;
+    border: 1px solid rgba(255, 255, 255, .09);
     border-radius: 999px;
     cursor: pointer;
     transition: var(--transition-smooth);
 }
 
-.app-back svg {
+.app-top-back svg {
     width: 15px; height: 15px;
     fill: none; stroke: currentColor; stroke-width: 2;
     stroke-linecap: round; stroke-linejoin: round;
 }
 
-.app-back:hover {
+.app-top-back:hover {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, .05);
-    border-color: rgba(255, 255, 255, .1);
+    background: rgba(255, 255, 255, .06);
+    border-color: var(--border-hover);
+}
+
+/* On a narrow bar the name of the page is what matters; the arrow stays and
+   the word it carries goes, since its label says the same thing to anything
+   that reads labels. */
+@media (max-width: 600px) {
+    .app-top-back span { display: none; }
+    .app-top-back { padding: 6px 8px; }
 }
 
 .panel {

@@ -131,6 +131,13 @@
             <button class="app-burger" id="app-burger" type="button" aria-label="Μενού">
                 <span></span><span></span><span></span>
             </button>
+            <!-- The way back to the list this page was opened from. It lives
+                 on the bar because that is where you are when you want it, and
+                 there is only ever one of it. -->
+            <button class="app-top-back" id="app-back" type="button" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                <span id="app-back-name"></span>
+            </button>
             <h1 class="app-top-title" id="app-title">Portal</h1>
             <span class="app-top-status" id="app-status" aria-live="polite"></span>
 
