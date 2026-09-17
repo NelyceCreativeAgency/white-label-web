@@ -150,17 +150,30 @@ exports.tail = (messages) => {
     return { at: last.at, text: last.text, userId: last.userId, name: last.name };
 };
 
-// Who this account may talk to in private: the other people on the same grid.
-// An admin is on no grid by design but may open every one of them, so an admin
-// can write to anybody on the grid being looked at, and they to the admin.
-exports.peopleOn = (doc, grid, me) => {
-    const ids = Array.isArray(grid.memberIds) ? grid.memberIds : [];
+// Who this account may talk to in private: everybody it shares any grid with,
+// and the admins.
+//
+// Not per grid. A private conversation is between two people and has never had
+// a project in it: the key it lives under is the two of them and nothing else.
+// Reaching it through a project meant somebody on four of them had to remember
+// which one they had been standing in when they last wrote to a person, which
+// is a question about this portal's plumbing rather than about anything they
+// were doing.
+exports.peopleFor = (doc, me) => {
+    const shared = new Set();
+
+    doc.grids.forEach(grid => {
+        if (!accounts.canView(me, grid)) return;
+        (Array.isArray(grid.memberIds) ? grid.memberIds : []).forEach(id => shared.add(id));
+    });
 
     return doc.users.filter(user => {
         if (user.id === me.id) return false;
-        if (ids.includes(user.id)) return true;
-        // The admins, so that whoever is on the grid can reach the person who
-        // runs it without being put on a grid with them.
+        if (shared.has(user.id)) return true;
+        // The admins, so that anybody working here can reach whoever runs it
+        // without having to be put on a grid alongside them.
         return user.role === 'admin';
     });
 };
+
+exports.mayWriteTo = (doc, me, id) => exports.peopleFor(doc, me).find(user => user.id === id) || null;

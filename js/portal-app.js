@@ -255,8 +255,9 @@
         // The messages view. picked is null for the project thread and the id
         // of the other person for a private one, which is the only difference
         // between the two as far as this file is concerned.
-        chat: { gridId: null, gridName: '', picked: null, people: [],
-                messages: [], unread: 0, more: false, onlineCount: 0 }
+        // Every conversation this account has, and which one is open. None of
+        // it depends on which grid is being looked at.
+        chat: { kind: 'teams', teams: [], people: [], open: null, gridId: null, messages: [] }
     };
 
     const canEdit = () => Boolean(state.grid && state.grid.canEdit);
@@ -316,6 +317,7 @@
 
         await loadGrids();
         loadFeed();
+        loadChats();
 
         // The grid that was open last time, if it is still there.
         const remembered = remember.read();
@@ -389,14 +391,6 @@
             $('app-title').textContent = state.grid.name;
             renderGrid();
             showView('grid');
-
-            // The messages belong to the project, so opening another one points
-            // them at it and counts what is waiting there.
-            if (state.chat.gridId !== id) {
-                state.chat = { gridId: id, gridName: state.grid.name, picked: null,
-                               people: [], messages: [], unread: 0, onlineCount: 0, last: null };
-            }
-            loadChats();
         } catch (err) {
             toast(explain(err), 'bad');
         } finally {
@@ -2641,7 +2635,8 @@
                         <span class="bell-what"><strong>${esc(event.actorName)}</strong> ${
                             esc(EVENT_WORDS[event.kind] || 'άλλαξε κάτι')}${
                             event.text ? `: «${esc(event.text)}»` : '.'}</span>
-                        <small class="bell-when">${esc(event.gridName)} · ${esc(ago(event.at))}</small>
+                        <small class="bell-when">${event.gridName
+                            ? `${esc(event.gridName)} · ` : ''}${esc(ago(event.at))}</small>
                     </span>
                 </button>
             </li>
@@ -2695,8 +2690,10 @@
         // A message opens the conversation it was written in, on the side of it
         // that the reader belongs to.
         if (['chat', 'dm', 'link', 'idea'].includes(event.kind)) {
-            if (!state.grid || state.grid.id !== event.gridId) await openGrid(event.gridId);
-            await openChat(event.kind === 'dm' ? event.actorId : null);
+            await openChat(event.kind === 'dm'
+                ? { kind: 'dm', id: event.actorId }
+                : { kind: 'team', id: event.gridId });
+
             if (event.kind === 'link') showTab('links');
             if (event.kind === 'idea') showTab('ideas');
             return;
@@ -2750,10 +2747,11 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) stillHere(); });
 
     // --- messages ----------------------------------------------------------
-    // Two conversations that must never be mistaken for one another: the
-    // project thread, which everybody on the grid reads, and a private one
-    // between two of them. They are separate documents on the server, separate
-    // lists on screen, and each one says in words who can read it.
+    // Two kinds of conversation and neither of them belongs to whichever grid
+    // happens to be open. A project thread names its project and a private one
+    // names a person; somebody on four projects should not have to remember
+    // which one they were standing in when they last wrote to somebody, which
+    // is a question about this portal's plumbing rather than about their work.
     const TEAM_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true">'
         + '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'
         + '<path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
@@ -2762,11 +2760,21 @@
         + '<rect x="3" y="11" width="18" height="11" rx="2"/>'
         + '<path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
 
-    const chatGridId = () =>
-        (state.grid && state.grid.id) || (state.grids[0] && state.grids[0].id) || null;
+    const NOTES = {
+        teams: 'Τις διαβάζουν όλοι όσοι δουλεύουν στο project.',
+        people: 'Τα βλέπετε μόνο εσείς οι δύο.'
+    };
 
-    const chatTotal = () =>
-        state.chat.unread + state.chat.people.reduce((sum, one) => sum + (one.unread || 0), 0);
+    // The grid of the project thread that is open, and nothing when the open
+    // conversation is a private one. The links and the brainstorming hang off
+    // it, and neither of those belongs to two people.
+    const chatGridId = () => {
+        const open = state.chat.open;
+        return open && open.kind === 'team' ? open.id : null;
+    };
+
+    const count = (list) => list.reduce((sum, one) => sum + (one.unread || 0), 0);
+    const chatTotal = () => count(state.chat.teams) + count(state.chat.people);
 
     // The last thing said in a conversation, signed the way a list signs it.
     const lastLine = (last) =>
@@ -2780,81 +2788,99 @@
         $('nav-chat-badge').textContent = total > 99 ? '99+' : String(total || '');
     };
 
-    // The list on the left. The two kinds sit under headings of their own and
-    // never in the same list, which is the whole design.
+    const sameThread = (a, b) => Boolean(a && b && a.kind === b.kind && a.id === b.id);
+
     const renderChatList = () => {
         const c = state.chat;
 
-        $('chat-project').innerHTML = `
-            <button class="chat-pick${c.picked === null ? ' is-on' : ''}${c.unread ? ' has-new' : ''}"
-                    type="button" data-thread="">
-                <span class="chat-face is-team" aria-hidden="true">${TEAM_ICON}</span>
-                <span class="chat-pick-text">
-                    <strong>Όλη η ομάδα</strong>
-                    <small>${c.last ? esc(lastLine(c.last)) : `Το διαβάζουν όλοι στο ${esc(c.gridName)}`}</small>
-                </span>
-                ${c.unread ? `<span class="chat-count">${c.unread}${c.more ? '+' : ''}</span>` : ''}
-            </button>`;
+        // A dot on the tab that has something waiting, so the other kind is
+        // never the one being missed.
+        document.querySelectorAll('#chat-kinds button').forEach(button => {
+            const kind = button.dataset.kind;
+            const on = kind === c.kind;
+            button.classList.toggle('is-on', on);
+            button.setAttribute('aria-selected', on ? 'true' : 'false');
+            button.querySelector('.chat-pip').hidden = !count(kind === 'teams' ? c.teams : c.people);
+        });
 
-        $('chat-people').innerHTML = c.people.length
-            ? c.people.map(one => `
-                <button class="chat-pick${c.picked === one.id ? ' is-on' : ''}${one.unread ? ' has-new' : ''}"
-                        type="button" data-thread="${esc(one.id)}">
-                    ${faceOf(one, 'chat-face', dot(one))}
+        $('chat-note').textContent = NOTES[c.kind];
+
+        const rows = c.kind === 'teams'
+            ? c.teams.map(one => ({
+                open: { kind: 'team', id: one.id },
+                face: faceOf({ id: one.id, name: one.name, icon: one.icon }, 'chat-face is-team', ''),
+                name: one.name,
+                under: one.last ? esc(lastLine(one.last)) : 'Όλη η ομάδα του project',
+                unread: one.unread, more: one.more
+            }))
+            : c.people.map(one => ({
+                open: { kind: 'dm', id: one.id },
+                face: faceOf(one, 'chat-face', dot(one)),
+                name: one.name,
+                under: one.last ? esc(lastLine(one.last)) : `${ROLE_NAMES[one.role] || ''}`,
+                unread: one.unread, more: one.more
+            }));
+
+        $('chat-list').innerHTML = rows.length
+            ? rows.map(row => `
+                <button class="chat-pick${sameThread(c.open, row.open) ? ' is-on' : ''}${row.unread ? ' has-new' : ''}"
+                        type="button" data-kind="${row.open.kind}" data-id="${esc(row.open.id)}">
+                    ${row.face}
                     <span class="chat-pick-text">
-                        <strong>${esc(one.name)}</strong>
-                        <small>${one.last ? esc(lastLine(one.last)) : `Μόνο εσύ και ${esc(one.name)}`}</small>
+                        <strong>${esc(row.name)}</strong>
+                        <small>${row.under}</small>
                     </span>
-                    ${one.unread ? `<span class="chat-count">${one.unread}${one.more ? '+' : ''}</span>` : ''}
+                    ${row.unread ? `<span class="chat-count">${row.unread}${row.more ? '+' : ''}</span>` : ''}
                 </button>`).join('')
-            : '<p class="chat-none">Δεν υπάρχει άλλος πάνω σε αυτό το project ακόμα.</p>';
+            : `<p class="chat-none">${c.kind === 'teams'
+                ? 'Δεν είσαι σε κανένα project ακόμα.'
+                : 'Δεν υπάρχει άλλος να του γράψεις ακόμα.'}</p>`;
 
         renderChatBadge();
     };
 
+    const openTeam = () => state.chat.teams.find(one => one.id === state.chat.open.id) || null;
+    const openPerson = () => state.chat.people.find(one => one.id === state.chat.open.id) || null;
+
     const renderRoom = () => {
         const c = state.chat;
-        const team = c.picked === null;
-        const person = c.people.find(one => one.id === c.picked) || null;
-        const name = person ? person.name : '';
+        if (!c.open) return;
 
-        const live = Boolean(person && person.online);
+        const team = c.open.kind === 'team';
+        const who = team ? openTeam() : openPerson();
+        const name = who ? who.name : '';
+        const live = Boolean(!team && who && who.online);
 
         $('chat-head-face').className = `chat-head-face${team ? ' is-team' : ''}${
-            !team && person && person.avatar ? ' has-photo' : ''}`;
-        $('chat-head-face').style.setProperty('--face', toneOf(person ? person.id : ''));
-        $('chat-head-face').innerHTML = team
-            ? TEAM_ICON
-            : (person && person.avatar
-                ? `<img src="${esc(person.avatar)}" alt="">${dot(person)}`
-                : `${esc(initials(name))}${dot(person)}`);
+            who && (who.avatar || who.icon) ? ' has-photo' : ''}`;
+        $('chat-head-face').style.setProperty('--face', toneOf(c.open.id));
+        $('chat-head-face').innerHTML = who && (who.avatar || who.icon)
+            ? `<img src="${esc(who.avatar || who.icon)}" alt="">${team ? '' : dot(who)}`
+            : (team ? TEAM_ICON : `${esc(initials(name))}${dot(who || {})}`);
 
-        $('chat-head-name').textContent = team ? 'Όλη η ομάδα' : name;
+        $('chat-head-name').textContent = name;
 
-        // In the project thread the same fact is a count, because a name is not
-        // what is online there.
         $('chat-head-who').className = live ? 'is-live' : '';
         $('chat-head-who').textContent = team
-            ? `Συζήτηση του project ${c.gridName}${c.onlineCount ? ` · ${c.onlineCount} σε σύνδεση` : ''}`
-            : person ? here(person) : 'Προσωπικό μήνυμα';
+            ? 'Όλη η ομάδα του project'
+            : who ? here(who) : 'Προσωπικό μήνυμα';
 
-        // The sentence that says who is reading. It stays on screen for as long
-        // as the conversation does, because forgetting which of the two you are
-        // in is the one mistake this screen exists to prevent.
-        $('chat-banner').className = `chat-banner ${team ? 'is-team' : 'is-private'}`;
-        // What is kept and for how long is said where it is written, not in a
-        // policy somewhere nobody opens.
+        // The sentence that says who is reading, and how long it is kept. It
+        // stays on screen for as long as the conversation does, because
+        // forgetting which of the two you are in is the one mistake this screen
+        // exists to prevent.
         const KEPT = 'Τα μηνύματα σβήνονται μετά από έναν μήνα.';
 
+        $('chat-banner').className = `chat-banner ${team ? 'is-team' : 'is-private'}`;
         $('chat-banner').innerHTML = team
-            ? `${TEAM_ICON}<span>Το διαβάζουν <strong>όλοι</strong> όσοι δουλεύουν στο ${esc(c.gridName)}. ${KEPT}</span>`
+            ? `${TEAM_ICON}<span>Το διαβάζουν <strong>όλοι</strong> όσοι δουλεύουν στο ${esc(name)}. ${KEPT}</span>`
             : `${LOCK_ICON}<span>Ιδιωτικό. Το βλέπετε <strong>μόνο εσύ και ${esc(name)}</strong>. ${KEPT}</span>`;
 
         $('chat-text').placeholder = team
             ? 'Γράψε σε όλη την ομάδα'
             : `Γράψε στον/στην ${name}`;
 
-        // Links and ideas are the project's. A private conversation has none of
+        // Links and ideas are a project's. A private conversation has none of
         // them, so opening one puts the talk back in front rather than leaving
         // somebody looking at a wall of notes with a padlock over it.
         $('room-tabs').hidden = !team;
@@ -2874,7 +2900,7 @@
         if (!c.messages.length) {
             log.innerHTML = `<li class="chat-empty">${team
                 ? 'Κανείς δεν έχει γράψει ακόμα εδώ. Ό,τι γράψεις το βλέπει όλη η ομάδα του project.'
-                : `Δεν έχετε ανταλλάξει μήνυμα ακόμα. Ό,τι γράψεις εδώ το βλέπετε μόνο εσείς οι δύο.`}</li>`;
+                : 'Δεν έχετε ανταλλάξει μήνυμα ακόμα. Ό,τι γράψεις εδώ το βλέπετε μόνο εσείς οι δύο.'}</li>`;
             return;
         }
 
@@ -2907,29 +2933,39 @@
         if (atEnd) log.scrollTop = log.scrollHeight;
     };
 
+    // What a conversation is asked for by.
+    const asks = (open) => open.kind === 'team'
+        ? `grid=${encodeURIComponent(open.id)}`
+        : `with=${encodeURIComponent(open.id)}`;
+
     // Opening a conversation is reading it, so the count beside it goes.
-    const markRead = async (picked) => {
+    const markRead = async (open) => {
         try {
             await api('/api/chat', {
                 method: 'POST',
-                body: { grid: state.chat.gridId, with: picked || undefined, action: 'seen' }
+                body: open.kind === 'team' ? { grid: open.id, action: 'seen' } : { with: open.id, action: 'seen' }
             });
         } catch { /* it will be marked on the next opening */ }
     };
 
     const lastId = (messages) => (messages.length ? messages[messages.length - 1].id : null);
 
-    const isLive = (c, picked) => {
-        const person = c.people.find(one => one.id === picked);
-        return picked ? Boolean(person && person.online) : c.onlineCount || 0;
+    const shown = (open) => {
+        if (!open) return null;
+        const row = (open.kind === 'team' ? state.chat.teams : state.chat.people)
+            .find(one => one.id === open.id);
+        return row ? Boolean(row.online) : null;
     };
 
-    const openThread = async (picked, { quiet = false } = {}) => {
+    const openThread = async (open, { quiet = false } = {}) => {
+        if (!open) return;
+
         const c = state.chat;
         const before = lastId(c.messages);
-        const wasLive = isLive(c, picked);
+        const wasLive = shown(open);
 
-        c.picked = picked;
+        c.open = open;
+        c.gridId = chatGridId();
 
         // A quiet refresh never moves the screen. Somebody scrolled up reading
         // yesterday, or back on the list on a phone, stays where they are.
@@ -2939,67 +2975,47 @@
             renderRoom();
         }
 
+        let data;
         try {
-            const data = picked
-                ? await api(`/api/chat?grid=${encodeURIComponent(c.gridId)}&with=${encodeURIComponent(picked)}`)
-                : await api(`/api/chat?grid=${encodeURIComponent(c.gridId)}`);
-
-            c.messages = data.messages || [];
-            if (!picked) {
-                c.people = data.people || [];
-                c.last = data.last || null;
-                c.more = false;
-                c.gridName = (data.grid && data.grid.name) || c.gridName;
-                c.onlineCount = data.onlineCount || 0;
-                c.unread = 0;
-            } else {
-                const person = c.people.find(one => one.id === picked);
-                if (person) {
-                    person.unread = 0;
-                    if (data.withUser) person.online = data.withUser.online;
-                }
-                // Arriving straight at a private thread from the bell, before
-                // the list of people has been fetched at all.
-                else if (data.withUser) c.people = c.people.concat({ ...data.withUser, unread: 0, last: null });
-            }
+            data = await api(`/api/chat?${asks(open)}`);
         } catch (err) {
             if (!quiet) toast(explain(err), 'bad');
             return;
         }
 
-        // Somebody arriving or leaving redraws the room too: the dot beside
-        // their name is the point of showing it at all.
-        const changed = lastId(c.messages) !== before || isLive(c, picked) !== wasLive;
+        c.messages = data.messages || [];
+
+        // What the list says about this one is now known first hand.
+        const row = (open.kind === 'team' ? c.teams : c.people).find(one => one.id === open.id);
+        if (row) {
+            row.unread = 0;
+            row.more = false;
+            if (data.withUser) { row.online = data.withUser.online; row.seenAt = data.withUser.seenAt; }
+            if (data.messages && data.messages.length) {
+                const last = data.messages[data.messages.length - 1];
+                row.last = { at: last.at, text: last.text, userId: last.userId, name: last.name };
+            }
+        }
+
+        const changed = lastId(c.messages) !== before || shown(open) !== wasLive;
 
         // Reading is what clears a conversation's count, and a refresh that
         // brought nothing new is not a fresh reading: it would write the store
         // every fifteen seconds for nobody.
-        if (!quiet || changed) await markRead(picked);
+        if (!quiet || changed) await markRead(open);
 
         renderChatList();
         if (!quiet || changed) renderRoom();
     };
 
-    // The list, without opening anything: what the badge in the sidebar counts.
-    // With the messages screen shut there is nothing on it to draw, so it asks
-    // for the numbers and none of the words behind them.
+    // Every conversation this account has, which is what the list is made of.
     const loadChats = async () => {
-        const gridId = chatGridId();
-        if (!gridId) { state.chat.people = []; state.chat.unread = 0; renderChatBadge(); return; }
-
         const shut = $('view-chat').hidden;
 
         try {
-            const data = await api(`/api/chat?grid=${encodeURIComponent(gridId)}${shut ? '&only=counts' : ''}`);
-            const c = state.chat;
-            c.gridId = gridId;
-            c.gridName = (data.grid && data.grid.name) || '';
-            c.people = data.people || [];
-            c.last = data.last || null;
-            c.more = Boolean(data.more);
-            c.unread = data.unread || 0;
-            c.onlineCount = data.onlineCount || 0;
-            if (c.picked === null && !shut) c.messages = data.messages || [];
+            const data = await api(`/api/chat${shut ? '?only=counts' : ''}`);
+            state.chat.teams = data.teams || [];
+            state.chat.people = data.people || [];
         } catch {
             return;
         }
@@ -3007,16 +3023,11 @@
         renderChatBadge();
         // The list only. Whatever is open on the right is the business of
         // openThread, which knows whether anything in it actually changed.
-        if (!$('view-chat').hidden) renderChatList();
+        if (!shut) renderChatList();
     };
 
-    const openChat = async (picked = null) => {
-        const gridId = chatGridId();
-        if (!gridId) { toast('Δεν υπάρχει project για συζήτηση.'); return; }
-
-        state.chat.gridId = gridId;
-        // Another project's links are not this one's, so arriving at messages
-        // always arrives at the talk.
+    const openChat = async (open = null) => {
+        // Arriving at messages arrives at the talk of whatever is opened.
         tab = 'talk';
         $('app-title').textContent = 'Μηνύματα';
         showView('chat');
@@ -3026,21 +3037,43 @@
 
         // On a phone the list comes first and a conversation covers it, so
         // arriving here without one named shows the list.
-        $('view-chat').classList.toggle('is-open', Boolean(picked));
+        $('view-chat').classList.toggle('is-open', Boolean(open));
 
         busy('Φόρτωση…');
-        try { await openThread(picked); }
-        finally { busy(''); }
+        try {
+            await loadChats();
 
-        // A private thread opened on its own knows about one person. The rest
-        // of the list catches up behind it.
-        if (picked) loadChats();
+            // Arriving with nothing named opens the first conversation there
+            // is, so a wide screen is never half empty. On a phone the list is
+            // still what shows, and this is what waits behind it.
+            const first = open
+                || (state.chat.teams[0] && { kind: 'team', id: state.chat.teams[0].id })
+                || (state.chat.people[0] && { kind: 'dm', id: state.chat.people[0].id })
+                || null;
+
+            if (!first) { state.chat.open = null; state.chat.gridId = null; renderChatList(); return; }
+
+            state.chat.kind = first.kind === 'team' ? 'teams' : 'people';
+            await openThread(first);
+
+            // openThread puts a conversation in front of the list, which is not
+            // what somebody who named none of them asked for on a phone.
+            if (!open) $('view-chat').classList.remove('is-open');
+        } finally {
+            busy('');
+        }
     };
 
-    $('chat-side').addEventListener('click', (clicked) => {
-        const pick = clicked.target.closest('[data-thread]');
-        if (!pick) return;
-        openThread(pick.dataset.thread || null);
+    $('chat-kinds').addEventListener('click', (clicked) => {
+        const button = clicked.target.closest('button[data-kind]');
+        if (!button) return;
+        state.chat.kind = button.dataset.kind;
+        renderChatList();
+    });
+
+    $('chat-list').addEventListener('click', (clicked) => {
+        const pick = clicked.target.closest('button[data-kind]');
+        if (pick) openThread({ kind: pick.dataset.kind, id: pick.dataset.id });
     });
 
     $('chat-back').addEventListener('click', () => {
@@ -3050,8 +3083,9 @@
     const say = async () => {
         const box = $('chat-text');
         const said = box.value.trim();
-        if (!said) return;
+        if (!said || !state.chat.open) return;
 
+        const open = state.chat.open;
         box.value = '';
         box.style.height = 'auto';
         $('chat-send').disabled = true;
@@ -3059,7 +3093,9 @@
         try {
             const data = await api('/api/chat', {
                 method: 'POST',
-                body: { grid: state.chat.gridId, with: state.chat.picked || undefined, text: said }
+                body: open.kind === 'team'
+                    ? { grid: open.id, text: said }
+                    : { with: open.id, text: said }
             });
             state.chat.messages = data.messages || state.chat.messages.concat(data.message);
             renderRoom();
@@ -3097,15 +3133,15 @@
         if (!button) return;
         if (!confirm('Να διαγραφεί το μήνυμα;')) return;
 
+        const open = state.chat.open;
         const id = button.closest('.chat-msg').dataset.message;
+
         try {
             const data = await api('/api/chat', {
                 method: 'POST',
-                body: {
-                    grid: state.chat.gridId,
-                    with: state.chat.picked || undefined,
-                    action: 'delete', id
-                }
+                body: open.kind === 'team'
+                    ? { grid: open.id, action: 'delete', id }
+                    : { with: open.id, action: 'delete', id }
             });
             state.chat.messages = data.messages || [];
             renderRoom();
@@ -3114,10 +3150,6 @@
         }
     });
 
-    // Nothing is pushed from the server here either. An open conversation asks
-    // often, and the counts in the sidebar ask at the same pace as the bell.
-    // A private thread's own request says nothing about anybody else, so every
-    // third turn the list is fetched as well and the rest of the dots catch up.
     // Fifteen seconds is the pace of somebody waiting for an answer, and it is
     // only that while the conversation is on the screen. Behind the grid the
     // same question was being asked four times a minute to move a number nobody
@@ -3129,8 +3161,8 @@
 
         if ($('view-chat').hidden) { if (ticks % 4 === 0) loadChats(); return; }
 
-        openThread(state.chat.picked, { quiet: true });
-        if (state.chat.picked && ticks % 3 === 0) loadChats();
+        if (state.chat.open) openThread(state.chat.open, { quiet: true });
+        if (ticks % 3 === 0) loadChats();
     }, 15000);
 
     // --- the project's links and its loose ideas ----------------------------

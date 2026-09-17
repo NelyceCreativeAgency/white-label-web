@@ -504,30 +504,69 @@
     border-right: 1px solid rgba(255, 255, 255, .07);
 }
 
-.chat-group {
+/* Two kinds of conversation, told apart before either is opened. A dot on a tab
+   says the other kind has something waiting, so neither is the one being
+   missed. */
+.chat-kinds {
     display: flex;
-    align-items: center;
-    gap: 7px;
-    margin: 0 0 10px;
-    padding: 0 8px;
-    font-size: .7rem;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: rgba(184, 186, 194, .6);
+    gap: 4px;
+    margin-bottom: 12px;
+    padding: 4px;
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 13px;
 }
 
-.chat-group svg {
+.chat-kinds button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    flex: 1;
+    min-width: 0;
+    padding: 8px 6px;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.chat-kinds button:hover { color: var(--text-primary); }
+
+.chat-kinds button.is-on {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .08);
+}
+
+.chat-kinds svg {
     flex: 0 0 auto;
-    width: 13px; height: 13px;
-    fill: none; stroke: currentColor; stroke-width: 2;
+    width: 15px; height: 15px;
+    fill: none; stroke: currentColor; stroke-width: 1.8;
     stroke-linecap: round; stroke-linejoin: round;
 }
 
-/* The padlock is the heading's, not every avatar's: it belongs to the whole
-   list, and the avatars have a green dot to carry instead. */
-.chat-group.is-private { color: #8fc9ac; }
+.chat-kinds button[data-kind="people"].is-on { color: #9fd4b8; }
 
-.chat-picks + .chat-group { margin-top: 26px; }
+.chat-pip {
+    position: absolute; top: 5px; right: 8px;
+    width: 7px; height: 7px;
+    background: var(--accent-orange);
+    border-radius: 50%;
+}
+
+.chat-note {
+    margin: 0 0 10px;
+    padding: 0 8px;
+    font-size: .73rem;
+    line-height: 1.45;
+    color: rgba(184, 186, 194, .6);
+}
+
 .chat-picks { display: grid; gap: 3px; }
 
 .chat-pick {
