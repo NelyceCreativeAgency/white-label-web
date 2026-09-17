@@ -5360,9 +5360,12 @@
                         ${purse.money.subs.map(sub =>
                             `<option value="${esc(sub.id)}"${sub.id === entry.subId ? ' selected' : ''}>${esc(sub.title)}</option>`).join('')}
                     </select></label>
-                    ${dayField('Ημερομηνία', 'on', entry.on)}
-                    <label id="entry-covers"${entry.subId ? '' : ' hidden'}>Καλύπτει ως<input data-f="to" type="date" value="${esc(entry.to || '')}"></label>
                     <label>Αριθμός τιμολογίου<input data-f="invoiceNo" value="${esc(entry.invoiceNo)}" maxlength="40"></label>
+                </div>
+
+                <div class="row-fields">
+                    <label><span id="entry-on-name">${entry.subId ? 'Καλύπτει από' : 'Ημερομηνία'}</span><input data-f="on" type="date" value="${esc(entry.on || '')}"></label>
+                    <label id="entry-covers"${entry.subId ? '' : ' hidden'}>Καλύπτει ως<input data-f="to" type="date" value="${esc(entry.to || '')}"></label>
                 </div>
 
                 <label class="edit-label pw-head" for="entry-file">Σύνδεσμος τιμολογίου</label>
@@ -5425,9 +5428,17 @@
         const what = changed.target.dataset.f;
 
         if (what === 'subId') {
+            const inside = Boolean(changed.target.value);
             const covers = $('entry-covers');
-            covers.hidden = !changed.target.value;
-            if (covers.hidden) covers.querySelector('input').value = '';
+
+            covers.hidden = !inside;
+            if (!inside) covers.querySelector('input').value = '';
+
+            // The same box, and two different things it is the date of. On a
+            // one-off it is when the charge was made; on a turn of a
+            // subscription it is where the period it covers begins, which is
+            // only readable as a pair with the date it ends.
+            $('entry-on-name').textContent = inside ? 'Καλύπτει από' : 'Ημερομηνία';
         }
 
         if (what === 'status') $('entry-paidat').hidden = changed.target.value !== 'paid';
