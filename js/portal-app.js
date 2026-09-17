@@ -393,6 +393,13 @@
     const root = document.documentElement;
     let frame = null;
 
+    // What the browser's number turns out to be wrong by, measured from where
+    // the box actually landed rather than from anything it said. A keyboard, an
+    // accessory bar over it and a browser's own toolbars are three layers this
+    // end cannot see, and the only honest way to be right about all three is to
+    // look at the result and correct for it.
+    let slack = 0;
+
     const measure = () => {
         frame = null;
 
@@ -413,7 +420,7 @@
         // starts. Both are asked of it rather than worked out from pixels here,
         // because a keyboard, an accessory bar above it and a browser's own
         // toolbars are three things this end cannot see and it can.
-        const tall = String(Math.round(view ? view.height : window.innerHeight));
+        const tall = String(Math.round((view ? view.height : window.innerHeight) + slack));
         const lift = String(Math.round(view ? Math.max(0, view.offsetTop) : 0));
 
         // Writing the same number again is a reflow for nothing, and a reflow
@@ -447,9 +454,30 @@
 
     window.addEventListener('orientationchange', fitToKeyboard);
 
+    // Whatever the browser said, this is where the box actually is. A band of
+    // nothing under it means the page is that much shorter than the screen, and
+    // the difference is kept and added to every measurement after it.
+    const trueUp = () => {
+        const view = window.visualViewport;
+        if (!view || !document.body.classList.contains('is-typing')) return;
+
+        const box = $('chat-form').getBoundingClientRect();
+        const out = Math.round(view.height - box.bottom);
+        if (Math.abs(out) < 2) return;
+
+        // Only ever a nudge. A number this far out is something else going on,
+        // and guessing harder at it would make a worse mess than the band.
+        slack = Math.max(-200, Math.min(200, slack + out));
+        measure();
+    };
+
     // A keyboard takes about a third of a second to arrive and its accessory
-    // bar lands after it, so the answer is asked for again as they settle.
-    const settle = () => [60, 180, 340, 600].forEach(ms => setTimeout(fitToKeyboard, ms));
+    // bar lands after it, so the answer is asked for again as they settle, and
+    // then checked against where things ended up.
+    const settle = () => {
+        [60, 180, 340, 600].forEach(ms => setTimeout(fitToKeyboard, ms));
+        [700, 950].forEach(ms => setTimeout(trueUp, ms));
+    };
 
     // --- where you were ------------------------------------------------------
     // Every screen in here has a name in the address bar, so a refresh comes
@@ -3274,6 +3302,13 @@
     // stylesheet folds away everything between the name and them.
     $('chat-text').addEventListener('focus', () => {
         document.body.classList.add('is-typing');
+
+        // Safari scrolls the page by itself to bring a field into view, and
+        // between that and the page being given a new height the two of them
+        // leave a band of nothing. Put back once, here, rather than argued with
+        // continuously inside the measuring, which is what shook the screen.
+        window.scrollTo(0, 0);
+
         settle();
 
         setTimeout(() => {
@@ -3284,6 +3319,7 @@
 
     $('chat-text').addEventListener('blur', () => {
         document.body.classList.remove('is-typing');
+        slack = 0;
         settle();
     });
 
