@@ -1971,30 +1971,28 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
        --vvtop is what a phone offsets the view by when it decides to lift it
        anyway. Taking it back here is the difference between a conversation that
        sits still and one that creeps off the top. */
+    /* The page is exactly as tall as what is showing, keyboard or no keyboard,
+       and --vvh is what that turned out to be rather than what anything claimed
+       it would be. 100dvh is only the first guess, used for the blink before
+       the first measurement lands.
+
+       Units were tried here and every one of them was wrong on some phone in
+       some state: dvh does not shrink for a keyboard, svh and lvh are the two
+       ends of a browser's toolbars rather than where they are now, and a
+       keyboard's accessory bar is in none of them. */
     body.is-chatting {
         position: fixed;
-        top: 0; left: 0;
+        top: var(--vvtop, 0px);
+        left: 0;
         width: 100%;
-        /* The screen, and no more: the min-height further up this file would
-           otherwise make the page taller than what is showing. */
-        height: 100dvh;
+        height: var(--vvh, 100dvh);
         min-height: 0;
         overflow: hidden;
     }
 
-    /* Only while somebody is typing is the measured height worth anything.
-       With the keyboard down, 100dvh is what the browser already says the
-       screen is, and second-guessing it is how a gap appears at the bottom. */
-    body.is-chatting.is-typing { height: var(--vvh, 100dvh); }
-
     body.is-chatting .app-main { height: 100%; min-height: 0; }
     body.is-chatting .app-chat { min-height: 0; }
     body.is-chatting .chat-log { overscroll-behavior: contain; }
-
-    /* Where the showing part of the page starts, when a browser has decided
-       that is not the top. Set on top rather than as a transform, so nothing
-       inside changes what it is measured from. */
-    body.is-chatting.is-typing { top: var(--vvtop, 0px); }
 
     /* Nothing between the box and the bottom of what is showing. */
     body.is-chatting .chat-form { margin-bottom: 0; padding-bottom: 10px; }

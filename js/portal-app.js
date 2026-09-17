@@ -394,11 +394,16 @@
     let frame = null;
 
     // What the browser's number turns out to be wrong by, measured from where
-    // the box actually landed rather than from anything it said. A keyboard, an
-    // accessory bar over it and a browser's own toolbars are three layers this
-    // end cannot see, and the only honest way to be right about all three is to
-    // look at the result and correct for it.
-    let slack = 0;
+    // the box actually landed rather than from anything it said.
+    //
+    // A keyboard, an accessory bar over it and a browser's own toolbars are
+    // three layers this end cannot see, and every unit invented for guessing at
+    // them is wrong on some phone in some state. So none of them are guessed
+    // at: the page is given a height, the box is asked where that put it, and
+    // the difference is kept. The lie is a different size with a keyboard up
+    // than with it down, so it is remembered separately for each.
+    const slack = { idle: 0, typing: 0 };
+    const atKeys = () => document.body.classList.contains('is-typing');
 
     const measure = () => {
         frame = null;
@@ -420,7 +425,8 @@
         // starts. Both are asked of it rather than worked out from pixels here,
         // because a keyboard, an accessory bar above it and a browser's own
         // toolbars are three things this end cannot see and it can.
-        const tall = String(Math.round((view ? view.height : window.innerHeight) + slack));
+        const said = view ? view.height : window.innerHeight;
+        const tall = String(Math.round(said + (atKeys() ? slack.typing : slack.idle)));
         const lift = String(Math.round(view ? Math.max(0, view.offsetTop) : 0));
 
         // Writing the same number again is a reflow for nothing, and a reflow
@@ -459,24 +465,32 @@
     // the difference is kept and added to every measurement after it.
     const trueUp = () => {
         const view = window.visualViewport;
-        if (!view || !document.body.classList.contains('is-typing')) return;
+        if (!view || !document.body.classList.contains('is-chatting')) return;
 
-        const box = $('chat-form').getBoundingClientRect();
-        const out = Math.round(view.height - box.bottom);
+        const form = $('chat-form');
+        if (!form.offsetParent) return;
+
+        // Where the box ends against where the showing part of the screen does.
+        // A band of nothing under it is a page that came out short, and this is
+        // the only number in here that is a fact rather than a claim.
+        const out = Math.round(view.height - form.getBoundingClientRect().bottom);
         if (Math.abs(out) < 2) return;
 
-        // Only ever a nudge. A number this far out is something else going on,
-        // and guessing harder at it would make a worse mess than the band.
-        slack = Math.max(-200, Math.min(200, slack + out));
+        // Only ever a nudge. Anything further out than this is something else
+        // going on, and guessing harder at it would make a worse mess.
+        const which = atKeys() ? 'typing' : 'idle';
+        slack[which] = Math.max(-260, Math.min(260, slack[which] + out));
         measure();
     };
 
     // A keyboard takes about a third of a second to arrive and its accessory
     // bar lands after it, so the answer is asked for again as they settle, and
-    // then checked against where things ended up.
+    // then checked against where things actually ended up. The same check runs
+    // with no keyboard at all, because a browser's own bars are just as capable
+    // of leaving a band under the box.
     const settle = () => {
         [60, 180, 340, 600].forEach(ms => setTimeout(fitToKeyboard, ms));
-        [700, 950].forEach(ms => setTimeout(trueUp, ms));
+        [700, 950, 1400].forEach(ms => setTimeout(trueUp, ms));
     };
 
     // --- where you were ------------------------------------------------------
@@ -2933,6 +2947,10 @@
         $('view-chat').classList.toggle('is-open', on);
         document.body.classList.toggle('is-inroom',
             on && matchMedia('(max-width: 900px)').matches);
+
+        // Opening one changes what is on the screen above the box, so where the
+        // box lands is worth asking about again.
+        if (on) settle();
     };
 
     const renderChatList = () => {
@@ -3328,7 +3346,6 @@
 
     $('chat-text').addEventListener('blur', () => {
         document.body.classList.remove('is-typing');
-        slack = 0;
         settle();
     });
 
