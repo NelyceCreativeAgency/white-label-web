@@ -8,6 +8,7 @@
 const accounts = require('./_accounts');
 const feed = require('./_feed');
 const presence = require('./_presence');
+const read = require('./_read');
 
 // The bell is a list of what happened lately, not an archive.
 const SHOWN = 40;
@@ -44,7 +45,7 @@ module.exports = async (req, res) => {
             // Anything newer than the last time the bell was opened. A brand
             // new account has seen nothing, and would otherwise open to forty
             // unread lines about work it was not there for.
-            const since = me.seenAt || me.createdAt || null;
+            const since = (await read.of(me)).bell || me.createdAt || null;
             const unread = since
                 ? events.filter(event => event.at > since).length
                 : events.length;
@@ -55,11 +56,9 @@ module.exports = async (req, res) => {
         if (req.method === 'POST') {
             if (readBody(req).action !== 'seen') return res.status(400).json({ error: 'bad-action' });
 
-            const user = accounts.findUser(doc, me.id);
-            user.seenAt = new Date().toISOString();
-            await accounts.writeAccounts(doc);
-
-            return res.status(200).json({ seenAt: user.seenAt });
+            // A key of this account's own. The document that holds every
+            // account is not touched by anybody reading their own bell.
+            return res.status(200).json({ seenAt: await read.markBell(me) });
         }
 
         res.setHeader('Allow', 'GET, POST');

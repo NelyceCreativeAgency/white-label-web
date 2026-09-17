@@ -16,30 +16,46 @@ const MAX_MESSAGES = 400;   // the oldest fall off the end
 exports.MAX_TEXT = MAX_TEXT;
 
 // A private thread is named by both people, in a fixed order, so that whoever
-// opens it first is looking at the same document as the other one.
-exports.privateKey = (a, b) => `portal:dm:${[a, b].sort().join('__')}`;
-exports.projectKey = (gridId) => `portal:chat:${gridId}`;
+// opens it first is looking at the same list as the other one.
+//
+// Two names each. Conversations were one JSON document per thread before this,
+// and a key in Redis cannot be a document one day and a list the next, so the
+// list gets a name of its own and the old document is still read from. Nothing
+// is migrated and nothing is thrown away: whatever was said back then simply
+// comes first, and everything since is on the list.
+exports.privateKey = (a, b) => `portal:dms:${[a, b].sort().join('__')}`;
+exports.projectKey = (gridId) => `portal:talk:${gridId}`;
+
+exports.oldKey = (key) => key.replace(/^portal:dms:/, 'portal:dm:').replace(/^portal:talk:/, 'portal:chat:');
 
 // What the reader has and has not caught up with is kept per conversation, and
 // this is the name it is kept under.
 exports.privateMark = (a, b) => `dm:${[a, b].sort().join('__')}`;
 exports.projectMark = (gridId) => `grid:${gridId}`;
 
-exports.read = async (key) => {
-    const doc = await store.readJson(key);
+// What was said before this key was a list, if anything was.
+const before = async (key) => {
+    const doc = await store.readJson(exports.oldKey(key));
     return doc && Array.isArray(doc.messages) ? doc.messages : [];
 };
 
+exports.read = async (key) => (await before(key)).concat(await store.listRead(key));
+
+// One command, and nothing read back first. Two people writing in the same
+// second each get their own message on the end, which is the whole point of
+// doing it this way.
 exports.append = async (key, message) => {
-    const messages = await exports.read(key);
-    messages.push(message);
-    if (messages.length > MAX_MESSAGES) messages.splice(0, messages.length - MAX_MESSAGES);
-    await store.writeJson(key, { messages, updatedAt: new Date().toISOString() });
-    return messages;
+    await store.listAdd(key, message, MAX_MESSAGES);
+    return exports.read(key);
 };
 
+// Only for taking something out of the middle, which is rare enough to afford
+// writing the list again. Anything left from before the list existed is folded
+// into it at the same time, so a thread is rewritten into one shape the first
+// time somebody deletes from it.
 exports.write = async (key, messages) => {
-    await store.writeJson(key, { messages, updatedAt: new Date().toISOString() });
+    await store.listWrite(key, messages.slice(-MAX_MESSAGES));
+    await store.deleteKey(exports.oldKey(key));
 };
 
 exports.newMessage = (me, said) => ({

@@ -105,6 +105,11 @@ const patchUser = (doc, me, body) => {
         if (String(body.password).length < MIN_PASSWORD) throw new Error('short-password');
         user.password = auth.hashPassword(String(body.password));
         user.secret = auth.sealPassword(String(body.password));
+
+        // Every cookie handed out against the old password stops working here.
+        // Somebody who had got in is out, which is what changing a password is
+        // supposed to mean.
+        user.pwv = accounts.passwordVersion(user) + 1;
     }
 
     return user;

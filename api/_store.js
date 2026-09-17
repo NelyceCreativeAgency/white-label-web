@@ -43,6 +43,44 @@ exports.writeJson = async (key, value) => { await command('SET', key, JSON.strin
 exports.deleteKey = async (key) => { await command('DEL', key); };
 
 
+// --- lists ------------------------------------------------------------------
+// A conversation and a bell are things that get one more item on the end, over
+// and over. Kept as one JSON document, adding an item meant reading all of them
+// back, adding one, and writing all of them out again: slow, and worse than
+// slow, because two people adding at the same moment each wrote a document that
+// did not have the other's item in it and one of the two vanished.
+//
+// A list is the shape Redis already has for this. Adding is one command, it is
+// atomic, and nothing else is read or rewritten.
+const listOut = (raw) => (Array.isArray(raw) ? raw : []).reduce((out, one) => {
+    try { out.push(JSON.parse(one)); } catch { /* not ours, and not shown */ }
+    return out;
+}, []);
+
+exports.listRead = async (key) => listOut(await command('LRANGE', key, '0', '-1'));
+
+// Onto the end, and then the oldest trimmed off the front. The trim is a second
+// command rather than part of the first, which is fine: between the two the
+// list is one item over its length and nobody can tell.
+exports.listAdd = async (key, value, keep) => {
+    await command('RPUSH', key, JSON.stringify(value));
+    await command('LTRIM', key, String(-keep), '-1');
+};
+
+// Onto the front, for a list that is read newest first.
+exports.listAddFirst = async (key, value, keep) => {
+    await command('LPUSH', key, JSON.stringify(value));
+    await command('LTRIM', key, '0', String(keep - 1));
+};
+
+// Writing a whole list out again, which only happens when something is taken
+// out of the middle of one.
+exports.listWrite = async (key, values) => {
+    await command('DEL', key);
+    if (values.length) await command('RPUSH', key, ...values.map(one => JSON.stringify(one)));
+};
+
+
 // --- prices -----------------------------------------------------------------
 const EMPTY = () => ({ site: { services: {} }, portal: { services: {} }, updatedAt: null });
 

@@ -83,14 +83,25 @@ exports.canEdit = canEdit;
 exports.gridsFor = (doc, user) =>
     doc.grids.filter(grid => canView(user, grid));
 
-// The signed-in account, or null. A cookie naming an account that has since
-// been removed reads as signed out, so deleting someone takes effect at once
-// rather than when their fortnight runs out.
+// Which password an account is on. It goes up by one every time the password
+// is changed, and a cookie is only good for the count it was handed out under.
+exports.passwordVersion = (user) => Number(user && user.pwv) || 0;
+
+// The signed-in account, or null.
+//
+// A cookie naming an account that has since been removed reads as signed out,
+// so deleting somebody takes effect at once rather than when their fortnight
+// runs out. A cookie handed out against a password that has since been changed
+// reads the same way, so changing a password shuts every door it opened.
 exports.currentUser = async (req, doc) => {
-    const id = auth.sessionUserId(req);
-    if (!id) return null;
+    const claim = auth.sessionClaim(req);
+    if (!claim) return null;
+
     const accounts = doc || await exports.readAccounts();
-    return exports.findUser(accounts, id);
+    const user = exports.findUser(accounts, claim.id);
+    if (!user) return null;
+
+    return claim.version === exports.passwordVersion(user) ? user : null;
 };
 
 // --- a grid's posts ---------------------------------------------------------

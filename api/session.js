@@ -158,7 +158,7 @@ module.exports = async (req, res) => {
         user.lastLoginAt = new Date().toISOString();
         await accounts.writeAccounts(doc);
 
-        res.setHeader('Set-Cookie', auth.issueCookie(user.id));
+        res.setHeader('Set-Cookie', auth.issueCookie(user.id, accounts.passwordVersion(user)));
         return res.status(200).json({
             user: accounts.publicUser(user),
             // false when someone picked the wrong door on the first screen. The

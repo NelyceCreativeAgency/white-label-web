@@ -13,11 +13,10 @@ const accounts = require('./_accounts');
 const chat = require('./_chat');
 const feed = require('./_feed');
 const presence = require('./_presence');
+const read = require('./_read');
 
 const readBody = (req) =>
     typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-
-const marks = (user) => (user.chatSeen && typeof user.chatSeen === 'object') ? user.chatSeen : {};
 
 module.exports = async (req, res) => {
     res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -47,10 +46,10 @@ module.exports = async (req, res) => {
 
         if (req.method === 'GET') {
             const messages = await chat.read(key);
-            const seen = marks(me);
 
             // A named thread is asked for on its own. The list that goes beside
-            // it is only worth building when no thread was named.
+            // it, and the markers that say how far each of them has been read,
+            // are only worth fetching when no thread was named.
             if (other) {
                 const here = await presence.of([other.id]);
                 return res.status(200).json({
@@ -66,6 +65,7 @@ module.exports = async (req, res) => {
                 });
             }
 
+            const seen = (await read.of(me)).chats;
             const others = chat.peopleOn(doc, grid, me);
             const here = await presence.of(others.map(user => user.id));
 
@@ -102,9 +102,9 @@ module.exports = async (req, res) => {
         }
 
         if (body.action === 'seen') {
-            const user = accounts.findUser(doc, me.id);
-            user.chatSeen = { ...marks(user), [mark]: new Date().toISOString() };
-            await accounts.writeAccounts(doc);
+            // Its own key, so catching up with a thread no longer rewrites the
+            // document that holds everybody's password.
+            await read.markChat(me, mark);
             return res.status(200).json({ seen: mark });
         }
 

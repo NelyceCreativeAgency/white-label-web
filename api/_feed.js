@@ -11,7 +11,11 @@
 const store = require('./_store');
 const accounts = require('./_accounts');
 
-const KEY = 'portal:feed';
+// The list, and the document it used to be. A key cannot change shape, so the
+// list is named afresh and what was written before it is read from the old name
+// and put behind everything newer. Nothing is migrated and nothing is lost.
+const KEY = 'portal:events';
+const WAS = 'portal:feed';
 
 // Enough for the bell to have something to say after a quiet fortnight, and
 // short enough that the document stays small.
@@ -21,19 +25,25 @@ const MAX_EVENTS = 150;
 const EXCERPT = 90;
 
 exports.read = async () => {
-    const doc = await store.readJson(KEY);
-    return doc && Array.isArray(doc.events) ? doc.events : [];
+    const events = await store.listRead(KEY);
+
+    const doc = await store.readJson(WAS);
+    const older = doc && Array.isArray(doc.events) ? doc.events : [];
+
+    // Newest first, both here and on the list, so what came before goes after.
+    return events.concat(older).slice(0, MAX_EVENTS);
 };
 
-// Two things happening in the same second can lose one of them, because this
-// reads the list and writes it back. With a handful of people on a grid that
-// is a missed line in a bell, and it is not worth a lock.
+// Onto the front of the list, in one command. Two things happening in the same
+// second used to lose one of them, because this read the whole list and wrote
+// it back; now neither of them reads anything.
 exports.push = async (event) => {
     try {
-        const events = await exports.read();
-        events.unshift({ id: accounts.newId('evt'), at: new Date().toISOString(), ...event });
-        if (events.length > MAX_EVENTS) events.length = MAX_EVENTS;
-        await store.writeJson(KEY, { events });
+        await store.listAddFirst(
+            KEY,
+            { id: accounts.newId('evt'), at: new Date().toISOString(), ...event },
+            MAX_EVENTS
+        );
     } catch {
         // An event that cannot be written is a line missing from a bell. The
         // thing it was about has already happened and been saved.

@@ -95,9 +95,17 @@ exports.checkEnvPassword = (given) => {
 };
 
 // --- session cookie ---------------------------------------------------------
-exports.issueCookie = (userId) => {
+// The cookie names the account, says which password it was issued against, and
+// says when it runs out. The middle one is the point: changing a password moves
+// the account's count on by one, and every cookie handed out under the old one
+// stops meaning anything the moment it does.
+//
+// Without it, changing the password of an account somebody else had got into
+// closed nothing. They stayed signed in for the rest of the fortnight, while
+// the person who changed it believed they had shut the door.
+exports.issueCookie = (userId, version) => {
     const expires = Date.now() + TTL_MS;
-    const payload = `${userId}.${expires}`;
+    const payload = `${userId}.${Number(version) || 0}.${expires}`;
     const token = `${payload}.${sign(payload)}`;
     return `${COOKIE}=${token}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${TTL_MS / 1000}`;
 };
@@ -105,9 +113,10 @@ exports.issueCookie = (userId) => {
 exports.clearCookie = () =>
     `${COOKIE}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`;
 
-// Returns the account id the cookie names, or null. Whether that account still
-// exists, and what it is allowed to do, is the accounts module's business.
-exports.sessionUserId = (req) => {
+// What the cookie claims: which account, and against which password. Whether
+// that account still exists, whether the password is still that one, and what
+// it is allowed to do are all the accounts module's business.
+exports.sessionClaim = (req) => {
     const header = req.headers.cookie || '';
     const match = header.split(';')
         .map(c => c.trim())
@@ -120,7 +129,14 @@ exports.sessionUserId = (req) => {
 
     const payload = token.slice(0, cut);
     const signature = token.slice(cut + 1);
-    const [userId, expires] = payload.split('.');
+    const bits = payload.split('.');
+
+    // A cookie handed out before there was a version to put in one says nothing
+    // about which password it belongs to, and reads as the first.
+    const userId = bits[0];
+    const version = bits.length >= 3 ? bits[1] : '0';
+    const expires = bits[bits.length - 1];
+
     if (!userId || !expires) return null;
     if (Number(expires) < Date.now()) return null;
 
@@ -128,8 +144,10 @@ exports.sessionUserId = (req) => {
     // worth surfacing when something is written, but here it only ever means
     // the visitor is not signed in.
     try {
-        return sameString(signature, sign(payload)) ? userId : null;
+        if (!sameString(signature, sign(payload))) return null;
     } catch {
         return null;
     }
+
+    return { id: userId, version: Number(version) || 0 };
 };

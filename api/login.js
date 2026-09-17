@@ -83,7 +83,7 @@ module.exports = async (req, res) => {
 
         await store.clearFailures(ip);
         const user = await adminAccount();
-        res.setHeader('Set-Cookie', auth.issueCookie(user.id));
+        res.setHeader('Set-Cookie', auth.issueCookie(user.id, accounts.passwordVersion(user)));
         return res.status(200).json({ authenticated: true });
     } catch (err) {
         return res.status(500).json({ error: err.message });
