@@ -48,6 +48,9 @@
             <p class="app-nav-label">Grids</p>
             <ul class="app-grids" id="app-grids"></ul>
 
+            <p class="app-nav-label" id="app-clients-label" hidden>Πελάτες</p>
+            <ul class="app-grids" id="app-clients" hidden></ul>
+
             <button class="app-nav-item app-nav-chat" type="button" data-view="chat" id="nav-chat" hidden>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.8-.9L3 20.5l1.5-4.6A8.4 8.4 0 0 1 3.6 12a8.4 8.4 0 0 1 8.4-8.5h.5a8.4 8.4 0 0 1 8.5 8z"/></svg>
                 <span class="app-nav-text">
@@ -141,6 +144,9 @@
 
         <!-- Accounts, for the admin only ---------------------------------- -->
         <section class="app-view" id="view-accounts" hidden></section>
+
+        <!-- A client: their work, their invoices, what is still running ---- -->
+        <section class="app-view" id="view-client" hidden></section>
 
         <!-- Messages -------------------------------------------------------- -->
         <!-- Two conversations, kept visibly apart: the one the whole project
@@ -440,6 +446,27 @@
                 <button class="app-ghost app-danger" type="button" id="acct-delete">Διαγραφή</button>
                 <button class="app-ghost" type="button" data-close>Ακύρωση</button>
                 <button class="btn btn-primary" type="button" id="acct-save">Αποθήκευση</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Editing a client, a subscription or a charge ---------------------- -->
+    <div class="modal" id="money-modal" hidden>
+        <div class="modal-scrim" data-close></div>
+        <div class="modal-box modal-acct" role="dialog" aria-modal="true" aria-labelledby="money-title">
+            <button class="modal-x" type="button" data-close aria-label="Κλείσιμο">&times;</button>
+
+            <h2 class="modal-title" id="money-title"></h2>
+            <p class="modal-sub" id="money-sub"></p>
+
+            <div id="money-body"></div>
+
+            <p class="edit-error" id="money-error" role="alert" hidden></p>
+
+            <div class="modal-foot">
+                <button class="app-ghost app-danger" type="button" id="money-delete">Διαγραφή</button>
+                <button class="app-ghost" type="button" data-close>Ακύρωση</button>
+                <button class="btn btn-primary" type="button" id="money-save">Αποθήκευση</button>
             </div>
         </div>
     </div>

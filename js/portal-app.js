@@ -197,6 +197,15 @@
     const ERRORS = {
         'not-allowed': 'Δεν έχεις δικαίωμα για αυτή την αλλαγή.',
         'no-such-grid': 'Το grid δεν βρέθηκε.',
+        'no-such-client': 'Ο πελάτης δεν βρέθηκε.',
+        'no-such-sub': 'Η συνδρομή δεν βρέθηκε.',
+        'no-such-entry': 'Η χρέωση δεν βρέθηκε.',
+        'bad-amount': 'Γράψε ένα ποσό, π.χ. 150 ή 150,50.',
+        'bad-date': 'Η ημερομηνία δεν βγάζει νόημα. Η λήξη δεν μπορεί να είναι πριν την έναρξη.',
+        'bad-link': 'Ο σύνδεσμος πρέπει να ξεκινάει με https://',
+        'too-many-clients': 'Πάρα πολλοί πελάτες.',
+        'too-many-subs': 'Πάρα πολλές συνδρομές σε έναν πελάτη.',
+        'too-many-entries': 'Πάρα πολλές χρεώσεις σε έναν πελάτη.',
         'no-such-post': 'Η ανάρτηση δεν βρέθηκε.',
         'too-large': 'Η εικόνα είναι πολύ μεγάλη.',
         'bad-type': 'Δεκτές είναι εικόνες JPG, PNG και WebP.',
@@ -317,6 +326,7 @@
         $('app-admin-nav').hidden = state.me.role !== 'admin';
 
         await loadGrids();
+        await loadClients();
         loadFeed();
         loadChats();
 
@@ -331,13 +341,21 @@
         }
 
         if (view === 'accounts' && state.me.role === 'admin') { openAccounts(); return; }
-        if (view === 'grid' && id && state.grids.some(g => g.id === id)) { openGrid(id); return; }
+        if (view === 'client' && kind && purse.list.some(one => one.id === kind)) { openClient(kind); return; }
+
+        // A grid address has two parts, so the id of the grid is the second of
+        // them. It was being read as the third, which meant a link somebody
+        // sent opened whatever grid this browser had open last.
+        if (view === 'grid' && kind && state.grids.some(g => g.id === kind)) { openGrid(kind); return; }
 
         const remembered = remember.read();
         const first = state.grids.find(g => g.id === remembered) || state.grids[0];
 
         if (first) openGrid(first.id);
         else if (state.me.role === 'admin') openAccounts();
+        // Nothing to work on, but an account to read: a client who is with us
+        // for something that never had a grid still has somewhere to land.
+        else if (purse.list.length) openClient(purse.list[0].id);
         else showView('blank');
     };
 
@@ -552,7 +570,7 @@
     };
 
     const showView = (name) => {
-        ['grid', 'accounts', 'chat', 'blank'].forEach(view => {
+        ['grid', 'accounts', 'chat', 'client', 'blank'].forEach(view => {
             $(`view-${view}`).hidden = view !== name;
         });
 
@@ -1110,7 +1128,7 @@
 
     // The page stays still while any of the three panels is open.
     const unlock = () => {
-        const open = ['post-modal', 'edit-modal', 'hl-modal', 'acct-modal', 'me-modal']
+        const open = ['post-modal', 'edit-modal', 'hl-modal', 'acct-modal', 'me-modal', 'money-modal']
             .some(id => !$(id).hidden);
         if (!open) document.body.classList.remove('is-locked');
     };
@@ -2595,6 +2613,7 @@
             else if (button.closest('#hl-modal')) closeHighlight();
             else if (button.closest('#acct-modal')) closeDrawer();
             else if (button.closest('#me-modal')) closeMe();
+            else if (button.closest('#money-modal')) closeMoney();
             else closeViewer();
         });
     });
@@ -4331,6 +4350,7 @@
         if (!item) return;
 
         if (item.dataset.grid) openGrid(item.dataset.grid);
+        else if (item.dataset.client) openClient(item.dataset.client);
         else if (item.dataset.view === 'chat') openChat();
         else if (item.dataset.view === 'accounts') openAccounts();
     });
@@ -4416,6 +4436,24 @@
                 grid))
             .join('');
 
+        // A client is the company or the person being invoiced, which is not
+        // the same thing as the account somebody signs in with: one client can
+        // have two people, and both of them read the same page of invoices.
+        const clientLines = purse.list.map(one => `
+            <li>
+                ${faceOf(one, 'lister-face')}
+                <span class="lister-who">
+                    <span class="lister-name">${esc(one.name)}</span>
+                    <span class="lister-sub">${one.owed
+                        ? `${esc(euro(one.owed))} εκκρεμεί`
+                        : esc(one.company || 'Τακτοποιημένα')}</span>
+                </span>
+                <button class="lister-gear" type="button" data-go="${esc(one.id)}"
+                        aria-label="Άνοιγμα: ${esc(one.name)}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+            </li>`).join('');
+
         $('view-accounts').innerHTML = `
             <section class="panel">
                 <div class="panel-head">
@@ -4453,6 +4491,22 @@
                 <p class="panel-error" id="grid-error" role="alert" hidden></p>
                 <ul class="lister">${gridLines}</ul>
             </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Πελάτες</h2>
+                    <p>Ο πελάτης είναι αυτός που τιμολογείς, και δεν είναι το ίδιο πράγμα με τον λογαριασμό που κάνει είσοδο: μια εταιρεία μπορεί να έχει δύο ανθρώπους και να διαβάζουν και οι δύο το ίδιο ιστορικό. Πάτα το βελάκι για να ανοίξεις τη σελίδα του, όπου είναι τα τιμολόγια, οι συνδρομές και το τι του ανήκει.</p>
+                </div>
+
+                <form class="new-row" id="new-client">
+                    <input name="name" placeholder="Όνομα, π.χ. Μελίνα Φωτεινού" maxlength="80" required>
+                    <input name="company" placeholder="Εταιρεία, αν υπάρχει" maxlength="80">
+                    <button class="btn btn-primary" type="submit">Νέος πελάτης</button>
+                </form>
+
+                <p class="panel-error" id="client-error" role="alert" hidden></p>
+                <ul class="lister">${clientLines || '<li class="none-yet">Κανένας πελάτης ακόμα</li>'}</ul>
+            </section>
         `;
     };
 
@@ -4482,6 +4536,10 @@
             if (form.id === 'new-user') {
                 await api('/api/accounts', { method: 'POST', body: { kind: 'user', ...data } });
                 toast('Ο λογαριασμός δημιουργήθηκε.');
+            } else if (form.id === 'new-client') {
+                await api('/api/clients', { method: 'POST', body: { kind: 'client', ...data } });
+                toast('Ο πελάτης δημιουργήθηκε.');
+                await loadClients();
             } else {
                 await api('/api/accounts', { method: 'POST', body: { kind: 'grid', ...data } });
                 toast('Το grid δημιουργήθηκε.');
@@ -4603,6 +4661,9 @@
     };
 
     $('view-accounts').addEventListener('click', (event) => {
+        const go = event.target.closest('[data-go]');
+        if (go) { openClient(go.dataset.go); return; }
+
         const gear = event.target.closest('[data-open]');
         if (gear) openDrawer(gear.dataset.open, gear.dataset.id);
     });
@@ -4701,6 +4762,597 @@
             await openAccounts();
         } catch (err) {
             sayAcct(explain(err));
+        } finally {
+            busy('');
+        }
+    });
+
+    // --- a client ------------------------------------------------------------
+    // What has been done for somebody, what it cost, and what is still running.
+    //
+    // No figure on this page was worked out here. Every one of them was typed in
+    // after an invoice had already been issued somewhere else, and the link on a
+    // row goes to that invoice. What the page adds is that it is in one place
+    // and that the client can read it without having to ask.
+    const purse = { list: [], id: null, client: null, money: null, people: [], grids: [] };
+
+    const euro = (cents) => {
+        try {
+            return new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR' })
+                .format((cents || 0) / 100);
+        } catch { return `${((cents || 0) / 100).toFixed(2)} €`; }
+    };
+
+    // A date on its own, for a row in a ledger where the time of day means
+    // nothing. The stored form is already the day, so this only turns it round.
+    const onDay = (iso) => {
+        const [year, month, day] = String(iso || '').split('-');
+        return day ? `${day}/${month}/${year}` : '';
+    };
+
+    const CYCLE_NAMES = { month: 'μήνα', quarter: 'τρίμηνο', year: 'χρόνο' };
+    const MONTHS = ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μάι', 'Ιούν',
+                    'Ιούλ', 'Αύγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'];
+
+    const renderClientNav = () => {
+        const list = $('app-clients');
+        const label = $('app-clients-label');
+
+        if (!purse.list.length) {
+            label.hidden = true;
+            list.hidden = true;
+            list.innerHTML = '';
+            return;
+        }
+
+        label.hidden = false;
+        list.hidden = false;
+        // The same list, and two entirely different things to the two people
+        // reading it. One of them is looking at their clients; the other is
+        // looking at themselves, and should never be shown a heading that
+        // suggests there are others.
+        label.textContent = state.me.role === 'admin' ? 'Πελάτες' : 'Ο λογαριασμός μου';
+
+        list.innerHTML = purse.list.map(one => `
+            <li>
+                <button class="app-nav-item${purse.id === one.id ? ' is-on' : ''}"
+                        type="button" data-client="${esc(one.id)}">
+                    ${faceOf(one, 'app-nav-dot')}
+                    <span class="app-nav-text">
+                        <strong>${esc(one.name)}</strong>
+                        <small>${one.owed
+                            ? `${esc(euro(one.owed))} εκκρεμεί`
+                            : esc(one.company || 'Τακτοποιημένα')}</small>
+                    </span>
+                    ${one.owed ? '<span class="app-nav-badge" title="Εκκρεμεί πληρωμή">!</span>' : ''}
+                </button>
+            </li>`).join('');
+    };
+
+    const loadClients = async () => {
+        // A partner is here to do the work. What the work was charged for is
+        // not part of it, and the server refuses them either way.
+        if (!state.me || state.me.role === 'partner') { purse.list = []; renderClientNav(); return; }
+
+        try {
+            const data = await api('/api/clients');
+            if (data.clients) purse.list = data.clients;
+            else if (data.client) purse.list = [{ ...data.client, owed: (data.money || {}).owed || 0 }];
+            else purse.list = [];
+        } catch {
+            purse.list = [];
+        }
+        renderClientNav();
+    };
+
+    const openClient = async (id) => {
+        const mine = state.me.role !== 'admin';
+        busy('Φόρτωση…');
+        try {
+            const data = await api(mine ? '/api/clients' : `/api/clients?id=${encodeURIComponent(id)}`);
+            if (!data.client) { toast('Δεν υπάρχει ακόμα λογαριασμός για σένα.', 'bad'); return; }
+
+            purse.id = data.client.id;
+            purse.client = data.client;
+            purse.money = data.money || { subs: [], entries: [], owed: 0, paid: 0 };
+            purse.people = data.people || [];
+            purse.grids = data.grids || [];
+
+            $('app-title').textContent = mine ? 'Ο λογαριασμός μου' : data.client.name;
+            renderClient();
+            showView('client');
+            where.write('client', purse.id);
+
+            document.querySelectorAll('.app-nav-item').forEach(item => {
+                item.classList.toggle('is-on', item.dataset.client === purse.id);
+            });
+        } catch (err) {
+            toast(explain(err), 'bad');
+        } finally {
+            busy('');
+        }
+    };
+
+    // Twelve squares for the year: filled where the month has been paid for,
+    // outlined where it has been invoiced and not paid yet, and faint where
+    // nothing covers it. The year is the one we are in, and anything older is
+    // in the ledger underneath, which is where a year-old month belongs.
+    //
+    // A quarter fills three of them and a year fills all twelve, without this
+    // having to know which: it asks each month whether some period covers it.
+    const monthsOf = (sub) => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const ours = purse.money.entries.filter(entry => entry.subId === sub.id && entry.to);
+
+        const cells = MONTHS.map((name, month) => {
+            const mm = String(month + 1).padStart(2, '0');
+            // Compared as text, never parsed: every date here is already
+            // zero-padded, so the thirty-first stands in for the end of any
+            // month without having to know how long February is.
+            const covering = ours.filter(entry => entry.on <= `${year}-${mm}-31` && entry.to >= `${year}-${mm}-01`);
+            const how = covering.some(entry => entry.status === 'paid') ? ' is-paid'
+                : covering.length ? ' is-due' : '';
+            const said = how === ' is-paid' ? 'πληρωμένος' : how === ' is-due' ? 'εκκρεμεί' : 'χωρίς χρέωση';
+
+            return `<span class="month${how}${month === now.getMonth() ? ' is-now' : ''}"
+                          title="${name} ${year}: ${said}">${name}</span>`;
+        }).join('');
+
+        return `<div class="months"><span class="months-year">${year}</span>${cells}</div>`;
+    };
+
+    const subCard = (sub, boss) => {
+        const stopped = Boolean(sub.endedAt);
+        const cycle = CYCLE_NAMES[sub.cycle] || 'μήνα';
+
+        const said = stopped ? `Σταμάτησε ${onDay(sub.endedAt)}`
+            : sub.paidUntil ? `Πληρωμένο μέχρι ${onDay(sub.paidUntil)}`
+            : 'Δεν έχει πληρωθεί ακόμα';
+
+        const owing = sub.due
+            ? ` · <span class="is-due">${sub.due === 1 ? 'μία χρέωση εκκρεμεί' : `${sub.due} χρεώσεις εκκρεμούν`}</span>`
+            : '';
+
+        return `
+            <li class="sub${stopped ? ' is-stopped' : ''}" data-sub="${esc(sub.id)}">
+                <div class="sub-top">
+                    <span class="sub-name">${esc(sub.title)}</span>
+                    <span class="sub-price">${esc(euro(sub.cents))} / ${cycle}</span>
+                    ${boss ? `<button class="lister-gear" type="button" data-open="sub"
+                                      data-id="${esc(sub.id)}" aria-label="Ρυθμίσεις: ${esc(sub.title)}">${GEAR}</button>` : ''}
+                </div>
+                <p class="sub-when">${said}${owing}</p>
+                ${monthsOf(sub)}
+                ${boss && !stopped ? `
+                    <button class="app-ghost sub-renew" type="button" data-do="renew" data-id="${esc(sub.id)}">
+                        Ανανέωση για τον επόμενο ${cycle}
+                    </button>` : ''}
+            </li>`;
+    };
+
+    const ledgerRow = (entry, boss) => {
+        const sub = entry.subId && purse.money.subs.find(one => one.id === entry.subId);
+        const under = [];
+        if (entry.to) under.push(`Καλύπτει ως ${onDay(entry.to)}`);
+        if (entry.invoiceNo) under.push(`Τιμολόγιο ${esc(entry.invoiceNo)}`);
+        if (sub) under.push(esc(sub.title));
+
+        // Only what there is to offer. An empty row of buttons still takes a
+        // line of its own once the layout stacks on a phone.
+        const acts = [
+            entry.invoiceUrl ? `<a class="app-ghost" href="${esc(entry.invoiceUrl)}"
+                                   target="_blank" rel="noopener noreferrer">Τιμολόγιο</a>` : '',
+            entry.status !== 'paid' && entry.payUrl ? `<a class="app-ghost is-pay" href="${esc(entry.payUrl)}"
+                                   target="_blank" rel="noopener noreferrer">Πληρωμή</a>` : '',
+            boss ? `<button class="lister-gear" type="button" data-open="entry"
+                            data-id="${esc(entry.id)}" aria-label="Επεξεργασία χρέωσης">${GEAR}</button>` : ''
+        ].filter(Boolean);
+
+        return `
+            <li class="led" data-entry="${esc(entry.id)}">
+                <span class="led-when">${onDay(entry.on)}</span>
+                <span class="led-what">
+                    <strong>${esc(entry.title)}</strong>
+                    ${under.length ? `<small>${under.join(' · ')}</small>` : ''}
+                </span>
+                <span class="led-sum">${esc(euro(entry.cents))}</span>
+                <span class="led-state ${entry.status === 'paid' ? 'is-paid' : 'is-due'}">${
+                    entry.status === 'paid' ? 'Πληρώθηκε' : 'Εκκρεμεί'}</span>
+                ${acts.length ? `<span class="led-acts">${acts.join('')}</span>` : ''}
+            </li>`;
+    };
+
+    const renderClient = () => {
+        const boss = state.me.role === 'admin';
+        const client = purse.client;
+        const owned = purse.money;
+
+        // Paid up to the furthest date any running subscription has reached.
+        // Nothing is stored for this: it is read off the charges, so it cannot
+        // say a month is covered that nobody has paid for.
+        const until = owned.subs.filter(sub => !sub.endedAt && sub.paidUntil)
+            .map(sub => sub.paidUntil).sort().pop();
+
+        const said = [client.company, client.email, client.phone].filter(Boolean).map(esc).join(' · ');
+
+        $('view-client').innerHTML = `
+            <section class="panel client-card">
+                <div class="client-id">
+                    ${faceOf(client, 'client-face')}
+                    <div class="client-who">
+                        <h2>${esc(client.name)}</h2>
+                        <p>${said || 'Χωρίς στοιχεία επικοινωνίας'}</p>
+                    </div>
+                    ${boss ? `<button class="lister-gear" type="button" data-open="client"
+                                      data-id="${esc(client.id)}" aria-label="Ρυθμίσεις πελάτη">${GEAR}</button>` : ''}
+                </div>
+
+                <div class="client-sums">
+                    ${owned.owed
+                        ? `<span class="sum-due"><strong>${esc(euro(owned.owed))}</strong> εκκρεμεί</span>`
+                        : '<span><strong>Τακτοποιημένα</strong> όλα</span>'}
+                    <span><strong>${esc(euro(owned.paid))}</strong> πληρωμένα ως τώρα</span>
+                    ${until ? `<span>Ενεργό μέχρι <strong>${onDay(until)}</strong></span>` : ''}
+                </div>
+
+                ${boss && client.note
+                    ? `<p class="client-note"><span>Μόνο εσύ</span>${esc(client.note)}</p>` : ''}
+            </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Συνδρομές</h2>
+                    <p>Τι τρέχει αυτή τη στιγμή. Οι μήνες από κάτω είναι η φετινή χρονιά: γεμάτος ο πληρωμένος, περιγραμμένος ο τιμολογημένος που δεν έχει πληρωθεί ακόμα. Ό,τι παλιότερο είναι στο ιστορικό πιο κάτω.</p>
+                </div>
+
+                ${boss ? `
+                <form class="new-row" id="new-sub">
+                    <input name="title" placeholder="Τι είναι, π.χ. Πρόγραμμα Social Media" maxlength="80" required>
+                    <input name="amount" placeholder="Ποσό ανά περίοδο" inputmode="decimal" required>
+                    <select name="cycle">
+                        <option value="month">Κάθε μήνα</option>
+                        <option value="quarter">Κάθε τρίμηνο</option>
+                        <option value="year">Κάθε χρόνο</option>
+                    </select>
+                    <button class="btn btn-primary" type="submit">Νέα συνδρομή</button>
+                </form>` : ''}
+
+                <p class="panel-error" role="alert" hidden></p>
+                <ul class="subs">${owned.subs.length
+                    ? owned.subs.map(sub => subCard(sub, boss)).join('')
+                    : '<li class="none-yet">Καμία συνδρομή ακόμα</li>'}</ul>
+            </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Ιστορικό και τιμολόγια</h2>
+                    <p>${boss
+                        ? 'Κάθε χρέωση όπως εκδόθηκε. Ο σύνδεσμος πάει στο ίδιο το αρχείο του τιμολογίου, όπου κι αν το ανεβάζεις. Τα υπόλοιπα στοιχεία κάθε γραμμής είναι πίσω από το γρανάζι της.'
+                        : 'Ό,τι έχει τιμολογηθεί, με τον σύνδεσμο για να κατεβάσεις το κάθε τιμολόγιο.'}</p>
+                </div>
+
+                ${boss ? `
+                <form class="new-row" id="new-entry">
+                    <input name="title" placeholder="Τι αφορά, π.χ. Λογότυπο" maxlength="80" required>
+                    <input name="amount" placeholder="Ποσό" inputmode="decimal" required>
+                    <input name="on" type="date" aria-label="Ημερομηνία">
+                    <button class="btn btn-primary" type="submit">Προσθήκη</button>
+                </form>` : ''}
+
+                <p class="panel-error" role="alert" hidden></p>
+                <ul class="ledger">${owned.entries.length
+                    ? owned.entries.map(entry => ledgerRow(entry, boss)).join('')
+                    : '<li class="none-yet">Καμία χρέωση ακόμα</li>'}</ul>
+            </section>
+        `;
+    };
+
+    // --- adding, changing and taking away ------------------------------------
+    const afterMoney = async (back, message) => {
+        purse.money = back.money;
+        renderClient();
+        await loadClients();
+        toast(message);
+    };
+
+    $('view-client').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const kind = form.id === 'new-sub' ? 'sub' : 'entry';
+
+        busy('Αποθήκευση…');
+        try {
+            const back = await api('/api/clients', {
+                method: 'POST',
+                body: { kind, clientId: purse.id, ...Object.fromEntries(new FormData(form).entries()) }
+            });
+            form.reset();
+            await afterMoney(back, kind === 'sub' ? 'Η συνδρομή μπήκε.' : 'Η χρέωση μπήκε.');
+        } catch (err) {
+            complain(form, explain(err));
+        } finally {
+            busy('');
+        }
+    });
+
+    $('view-client').addEventListener('click', async (event) => {
+        const renewing = event.target.closest('[data-do="renew"]');
+        if (renewing) {
+            busy('Ανανέωση…');
+            try {
+                const back = await api('/api/clients', {
+                    method: 'POST',
+                    body: { kind: 'renew', clientId: purse.id, subId: renewing.dataset.id }
+                });
+                await afterMoney(back, 'Μπήκε η επόμενη περίοδος και περιμένει πληρωμή.');
+            } catch (err) {
+                toast(explain(err), 'bad');
+            } finally {
+                busy('');
+            }
+            return;
+        }
+
+        const gear = event.target.closest('[data-open]');
+        if (gear) openMoney(gear.dataset.open, gear.dataset.id);
+    });
+
+    // --- the panel behind a gear ---------------------------------------------
+    const tray = { kind: null, id: null, icon: null };
+
+    const sayMoney = (message) => {
+        $('money-error').textContent = message || '';
+        $('money-error').hidden = !message;
+    };
+
+    const closeMoney = () => {
+        tray.kind = null;
+        tray.id = null;
+        $('money-modal').hidden = true;
+        unlock();
+    };
+
+    const dayField = (label, name, value) =>
+        `<label>${label}<input data-f="${name}" type="date" value="${esc(value || '')}"></label>`;
+
+    const openMoney = (kind, id) => {
+        const body = $('money-body');
+        sayMoney('');
+
+        if (kind === 'client') {
+            const client = purse.client;
+            tray.icon = client.icon || null;
+
+            $('money-title').textContent = client.name;
+            $('money-sub').textContent = 'Τα στοιχεία του, τι του ανήκει, και οι σημειώσεις σου. Τις σημειώσεις δεν τις βλέπει ποτέ ο ίδιος.';
+
+            const people = purse.people;
+            const grids = purse.grids;
+
+            body.innerHTML = `
+                <div class="row-fields">
+                    <label>Όνομα<input data-f="name" value="${esc(client.name)}" maxlength="80"></label>
+                    <label>Εταιρεία<input data-f="company" value="${esc(client.company)}" maxlength="80"></label>
+                    <label>Email<input data-f="email" value="${esc(client.email)}" maxlength="140"></label>
+                    <label>Τηλέφωνο<input data-f="phone" value="${esc(client.phone)}" maxlength="40"></label>
+                </div>
+
+                <label class="edit-label pw-head">Εικονίδιο στη λίστα</label>
+                <div class="face-edit">
+                    <span class="face-big" id="client-face"></span>
+                    <span class="face-acts">
+                        <button class="app-ghost" type="button" data-do="pick-icon">Διάλεξε εικόνα</button>
+                        <button class="app-ghost app-danger" type="button" data-do="clear-icon">Αφαίρεση</button>
+                    </span>
+                </div>
+
+                <label class="edit-label pw-head" for="client-note">Σημειώσεις, μόνο για σένα</label>
+                <textarea class="me-name-field" id="client-note" data-f="note" rows="3" maxlength="2000"
+                          placeholder="Ό,τι θες να θυμάσαι γι' αυτόν.">${esc(client.note || '')}</textarea>
+
+                <fieldset class="row-members">
+                    <legend>Ποιοι λογαριασμοί είναι δικοί του</legend>
+                    ${people.length ? people.map(one => `
+                        <label class="member">
+                            <input type="checkbox" data-member="${esc(one.id)}"${one.clientId === client.id ? ' checked' : ''}>
+                            <span>${esc(one.name)} <small>@${esc(one.username)}</small></span>
+                        </label>`).join('')
+                        : '<p class="row-none">Δεν υπάρχει ακόμα λογαριασμός πελάτη.</p>'}
+                </fieldset>
+
+                <fieldset class="row-members">
+                    <legend>Ποια grids είναι δικά του</legend>
+                    ${grids.length ? grids.map(one => `
+                        <label class="member">
+                            <input type="checkbox" data-gridlink="${esc(one.id)}"${one.clientId === client.id ? ' checked' : ''}>
+                            <span>${esc(one.name)}</span>
+                        </label>`).join('')
+                        : '<p class="row-none">Δεν υπάρχει ακόμα grid.</p>'}
+                </fieldset>
+            `;
+
+            paintFace($('client-face'), { id: client.id, name: client.name, icon: tray.icon }, 'face-big');
+            body.querySelector('[data-do="clear-icon"]').hidden = !tray.icon;
+        }
+
+        if (kind === 'sub') {
+            const sub = purse.money.subs.find(one => one.id === id);
+            if (!sub) return;
+
+            $('money-title').textContent = sub.title;
+            $('money-sub').textContent = 'Η συμφωνία. Αλλάζοντάς την δεν αλλάζει καμία χρέωση που έχει ήδη εκδοθεί.';
+
+            body.innerHTML = `
+                <div class="row-fields">
+                    <label>Τι είναι<input data-f="title" value="${esc(sub.title)}" maxlength="80"></label>
+                    <label>Ποσό ανά περίοδο<input data-f="amount" value="${(sub.cents / 100).toFixed(2)}" inputmode="decimal"></label>
+                    <label>Κάθε πότε<select data-f="cycle">
+                        ${Object.keys(CYCLE_NAMES).map(one =>
+                            `<option value="${one}"${one === sub.cycle ? ' selected' : ''}>Κάθε ${CYCLE_NAMES[one]}</option>`).join('')}
+                    </select></label>
+                    ${dayField('Ξεκίνησε', 'startedAt', sub.startedAt)}
+                </div>
+
+                <label class="edit-label pw-head" for="sub-pay">Σύνδεσμος πληρωμής</label>
+                <input class="me-name-field" id="sub-pay" data-f="payUrl" value="${esc(sub.payUrl)}"
+                       placeholder="https://…" spellcheck="false">
+                <p class="pw-note">Μπαίνει μόνος του σε κάθε νέα περίοδο που ανανεώνεις, και ο πελάτης βλέπει κουμπί πληρωμής όσο η χρέωση εκκρεμεί.</p>
+
+                <label class="edit-label pw-head" for="sub-note">Σημείωση, μόνο για σένα</label>
+                <textarea class="me-name-field" id="sub-note" data-f="note" rows="2" maxlength="2000">${esc(sub.note || '')}</textarea>
+
+                <label class="member sub-stop">
+                    <input type="checkbox" id="sub-ended"${sub.endedAt ? ' checked' : ''}>
+                    <span>Έχει σταματήσει</span>
+                </label>
+            `;
+        }
+
+        if (kind === 'entry') {
+            const entry = purse.money.entries.find(one => one.id === id);
+            if (!entry) return;
+
+            $('money-title').textContent = entry.title;
+            $('money-sub').textContent = 'Μία χρέωση, όπως εκδόθηκε. Ο σύνδεσμος του τιμολογίου κρατάει μέσα του το κλειδί του αρχείου, οπότε δώσ\' τον μόνο εδώ.';
+
+            body.innerHTML = `
+                <div class="row-fields">
+                    <label>Τι αφορά<input data-f="title" value="${esc(entry.title)}" maxlength="80"></label>
+                    <label>Ποσό<input data-f="amount" value="${(entry.cents / 100).toFixed(2)}" inputmode="decimal"></label>
+                    <label>Κατάσταση<select data-f="status">
+                        <option value="due"${entry.status === 'due' ? ' selected' : ''}>Εκκρεμεί</option>
+                        <option value="paid"${entry.status === 'paid' ? ' selected' : ''}>Πληρώθηκε</option>
+                    </select></label>
+                </div>
+
+                <div class="row-fields">
+                    ${dayField('Ημερομηνία', 'on', entry.on)}
+                    ${dayField('Καλύπτει ως', 'to', entry.to)}
+                    <label>Αριθμός τιμολογίου<input data-f="invoiceNo" value="${esc(entry.invoiceNo)}" maxlength="40"></label>
+                </div>
+
+                <label class="edit-label pw-head" for="entry-file">Σύνδεσμος τιμολογίου</label>
+                <input class="me-name-field" id="entry-file" data-f="invoiceUrl" value="${esc(entry.invoiceUrl)}"
+                       placeholder="https://mega.nz/…" spellcheck="false">
+
+                <label class="edit-label pw-head" for="entry-pay">Σύνδεσμος πληρωμής</label>
+                <input class="me-name-field" id="entry-pay" data-f="payUrl" value="${esc(entry.payUrl)}"
+                       placeholder="https://…" spellcheck="false">
+
+                <label class="edit-label pw-head" for="entry-note">Σημείωση, μόνο για σένα</label>
+                <textarea class="me-name-field" id="entry-note" data-f="note" rows="2" maxlength="2000">${esc(entry.note || '')}</textarea>
+            `;
+        }
+
+        tray.kind = kind;
+        tray.id = id;
+        $('money-modal').hidden = false;
+        document.body.classList.add('is-locked');
+    };
+
+    // The picture is chosen now and saved with the rest of the panel, so that
+    // backing out of the panel backs out of the picture too.
+    $('money-body').addEventListener('click', (clicked) => {
+        const button = clicked.target.closest('button[data-do]');
+        if (!button || tray.kind !== 'client') return;
+
+        if (button.dataset.do === 'clear-icon') {
+            tray.icon = null;
+            paintFace($('client-face'), purse.client, 'face-big');
+            button.hidden = true;
+            return;
+        }
+
+        if (button.dataset.do !== 'pick-icon') return;
+
+        pickFiles(false, async (files) => {
+            sayMoney('');
+            busy('Ανέβασμα…');
+            try {
+                const { url } = await acquire(files[0], SMALL_SIDE, purse.id);
+                tray.icon = url;
+                paintFace($('client-face'), { ...purse.client, icon: url }, 'face-big');
+                $('money-body').querySelector('[data-do="clear-icon"]').hidden = false;
+            } catch (err) {
+                sayMoney(explain(err));
+            } finally {
+                busy('');
+            }
+        });
+    });
+
+    $('money-save').addEventListener('click', async () => {
+        if (!tray.kind) return;
+        const body = $('money-body');
+        sayMoney('');
+        busy('Αποθήκευση…');
+
+        try {
+            if (tray.kind === 'client') {
+                const pick = (what) => Array.from(body.querySelectorAll(`[${what}]`))
+                    .filter(box => box.checked)
+                    .map(box => box.getAttribute(what));
+
+                await api('/api/clients', {
+                    method: 'PATCH',
+                    body: {
+                        kind: 'client', id: tray.id, ...fields(body), icon: tray.icon,
+                        userIds: pick('data-member'), gridIds: pick('data-gridlink')
+                    }
+                });
+            } else {
+                const extra = tray.kind === 'sub' ? { ended: $('sub-ended').checked } : {};
+                await api('/api/clients', {
+                    method: 'PATCH',
+                    body: { kind: tray.kind, clientId: purse.id, id: tray.id, ...fields(body), ...extra }
+                });
+            }
+
+            closeMoney();
+            toast('Αποθηκεύτηκε.');
+            await openClient(purse.id);
+            await loadClients();
+        } catch (err) {
+            sayMoney(explain(err));
+        } finally {
+            busy('');
+        }
+    });
+
+    $('money-delete').addEventListener('click', async () => {
+        if (!tray.kind) return;
+
+        const asking = {
+            client: 'Να διαγραφεί ο πελάτης μαζί με όλο το ιστορικό χρεώσεών του; Τα grids και οι λογαριασμοί του μένουν, απλώς παύουν να ανήκουν κάπου. Δεν γίνεται αναίρεση.',
+            sub: 'Να διαγραφεί η συνδρομή; Οι χρεώσεις που έχει ήδη κάνει μένουν στο ιστορικό.',
+            entry: 'Να διαγραφεί αυτή η χρέωση από το ιστορικό;'
+        }[tray.kind];
+        if (!confirm(asking)) return;
+
+        sayMoney('');
+        busy('Διαγραφή…');
+        try {
+            const tail = tray.kind === 'client'
+                ? `kind=client&id=${encodeURIComponent(tray.id)}`
+                : `kind=${tray.kind}&id=${encodeURIComponent(tray.id)}&clientId=${encodeURIComponent(purse.id)}`;
+            await api(`/api/clients?${tail}`, { method: 'DELETE' });
+
+            const gone = tray.kind === 'client';
+            closeMoney();
+            toast('Διαγράφηκε.');
+
+            if (gone) {
+                purse.id = null;
+                await loadClients();
+                if (purse.list.length) await openClient(purse.list[0].id);
+                else openAccounts();
+            } else {
+                await openClient(purse.id);
+                await loadClients();
+            }
+        } catch (err) {
+            sayMoney(explain(err));
         } finally {
             busy('');
         }

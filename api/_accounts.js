@@ -24,7 +24,7 @@ exports.SLOTS = SLOTS;
 
 exports.newId = (prefix) => `${prefix}_${crypto.randomBytes(8).toString('hex')}`;
 
-const EMPTY = () => ({ users: [], grids: [], updatedAt: null });
+const EMPTY = () => ({ users: [], grids: [], clients: [], updatedAt: null });
 
 exports.readAccounts = async () => {
     const doc = await store.readJson(ACCOUNTS_KEY);
@@ -32,6 +32,9 @@ exports.readAccounts = async () => {
     return {
         users: Array.isArray(doc.users) ? doc.users : [],
         grids: Array.isArray(doc.grids) ? doc.grids : [],
+        // Added after the portal had been in use for a while, so a document
+        // written before clients existed reads as a portal with none.
+        clients: Array.isArray(doc.clients) ? doc.clients : [],
         updatedAt: doc.updatedAt || null
     };
 };

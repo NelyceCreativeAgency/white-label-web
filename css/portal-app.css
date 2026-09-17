@@ -3205,3 +3205,247 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
     .note.is-reply { margin-left: 14px; }
     .note.is-reply::before { left: -9px; width: 6px; }
 }
+
+/* --- a client's page ------------------------------------------------------ */
+/* Their work, their invoices, and what is still running. Two people read this
+   screen: the one who issues the invoices and the one who pays them. What
+   separates them is only which controls are drawn, so everything here has to
+   read as well without a gear beside it as with one. */
+.client-card { display: grid; gap: 18px; }
+
+.client-id {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+}
+
+.client-face {
+    display: grid;
+    place-items: center;
+    width: 56px; height: 56px;
+    font-size: 1.3rem;
+    font-weight: var(--fw-semibold);
+    border-radius: 50%;
+    color: rgb(var(--face, 255, 255, 255));
+    background: rgba(var(--face, 255, 255, 255), .16);
+}
+
+.client-who { min-width: 0; }
+.client-who h2 { font-size: 1.25rem; font-weight: var(--fw-semibold); }
+
+.client-who p {
+    margin-top: 4px;
+    font-size: .82rem;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.client-sums {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    padding-top: 16px;
+    font-size: .84rem;
+    color: var(--text-secondary);
+    border-top: 1px solid rgba(255, 255, 255, .07);
+}
+
+.client-sums strong { font-weight: var(--fw-semibold); color: var(--text-primary); }
+.client-sums .sum-due strong { color: var(--accent-orange); }
+
+/* Your own note about them, on the same page they read. It is marked rather
+   than merely placed, because one day something will be written here that
+   would be awkward to find out was shared. */
+.client-note {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    font-size: .84rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, .03);
+    border: 1px dashed rgba(255, 255, 255, .14);
+    border-radius: 13px;
+}
+
+.client-note span {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    padding: 2px 8px;
+    font-size: .64rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--bg-dark);
+    background: rgba(184, 186, 194, .8);
+    border-radius: 999px;
+}
+
+li.none-yet {
+    display: block;
+    grid-column: 1 / -1;
+    padding: 18px 4px;
+    font-size: .84rem;
+    text-align: center;
+    color: rgba(184, 186, 194, .6);
+    background: none;
+    border: 0;
+}
+
+/* --- subscriptions -------------------------------------------------------- */
+.subs, .ledger { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+
+.sub {
+    padding: 15px 16px;
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 15px;
+}
+
+.sub.is-stopped { opacity: .55; }
+
+.sub-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 12px;
+}
+
+.sub-name { font-size: .95rem; font-weight: var(--fw-medium); }
+.sub-price { font-size: .84rem; color: var(--text-secondary); white-space: nowrap; }
+
+.sub-when { margin-top: 5px; font-size: .78rem; color: rgba(184, 186, 194, .7); }
+.sub-when .is-due { color: #ffc4a4; }
+
+/* Twelve squares, one per month of this year. Full is paid, outlined is
+   invoiced and waiting, faint is nothing at all. A quarter fills three of them
+   and a year fills the row, which is the whole reason it is months and not
+   one line per payment. */
+.months {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 3px;
+    margin-top: 12px;
+}
+
+.months-year {
+    grid-column: 1 / -1;
+    margin-bottom: 2px;
+    font-size: .64rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: rgba(184, 186, 194, .45);
+}
+
+.month {
+    padding: 7px 0;
+    font-size: .6rem;
+    text-align: center;
+    color: rgba(184, 186, 194, .32);
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid transparent;
+    border-radius: 7px;
+}
+
+.month.is-due { color: #ffc4a4; border-color: rgba(255, 107, 53, .55); }
+
+.month.is-paid {
+    color: var(--bg-dark);
+    font-weight: var(--fw-semibold);
+    background: rgba(255, 107, 53, .85);
+}
+
+.month.is-now { box-shadow: 0 0 0 1px rgba(255, 255, 255, .28); }
+
+.sub-renew { margin-top: 12px; }
+
+/* --- the ledger ----------------------------------------------------------- */
+.led {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 14px;
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 13px;
+}
+
+.led:hover { border-color: rgba(255, 255, 255, .14); }
+
+.led-when { font-size: .78rem; color: rgba(184, 186, 194, .7); white-space: nowrap; }
+.led-what { min-width: 0; display: grid; gap: 2px; }
+
+.led-what strong {
+    font-size: .88rem;
+    font-weight: var(--fw-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.led-what small { font-size: .72rem; color: rgba(184, 186, 194, .6); }
+.led-sum { font-size: .9rem; font-weight: var(--fw-medium); white-space: nowrap; }
+
+.led-state {
+    padding: 4px 10px;
+    font-size: .7rem;
+    white-space: nowrap;
+    border-radius: 999px;
+    border: 1px solid transparent;
+}
+
+.led-state.is-paid { color: #9fe0b5; background: rgba(76, 175, 118, .12); }
+.led-state.is-due { color: #ffc4a4; background: rgba(255, 107, 53, .12); border-color: rgba(255, 107, 53, .3); }
+
+.led-acts { display: flex; align-items: center; gap: 8px; }
+.led-acts a { text-decoration: none; white-space: nowrap; }
+
+.led-acts .is-pay {
+    color: var(--bg-dark);
+    background: var(--accent-orange);
+    border-color: transparent;
+}
+
+.led-acts .is-pay:hover { color: var(--bg-dark); filter: brightness(1.08); }
+
+.sub-stop { margin-top: 16px; }
+
+@media (max-width: 860px) {
+    .client-sums { gap: 14px; font-size: .8rem; }
+
+    /* On a narrow screen a table stops being a table. What it was saying, in
+       the order somebody would say it out loud: what, how much, when, and
+       whether it has been settled. */
+    .led {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "what sum" "when state";
+        gap: 8px 12px;
+    }
+
+    .led-what { grid-area: what; }
+    .led-sum { grid-area: sum; }
+    .led-when { grid-area: when; }
+    .led-state { grid-area: state; justify-self: end; }
+    /* Onto a row of its own, and only when there is something to put there. */
+    .led-acts { grid-column: 1 / -1; }
+}
+
+@media (max-width: 560px) {
+    .client-id { grid-template-columns: 46px minmax(0, 1fr) auto; gap: 12px; }
+    .client-face { width: 46px; height: 46px; font-size: 1.1rem; }
+    .client-who h2 { font-size: 1.08rem; }
+    .month { font-size: .54rem; padding: 6px 0; border-radius: 5px; }
+    .sub-top {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "name gear" "price price";
+        gap: 4px 12px;
+    }
+
+    .sub-name { grid-area: name; }
+    .sub-price { grid-area: price; font-size: .8rem; }
+    .sub-top .lister-gear { grid-area: gear; }
+    .sub-renew { width: 100%; }
+}
