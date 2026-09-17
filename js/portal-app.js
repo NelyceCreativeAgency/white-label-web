@@ -3657,6 +3657,51 @@
 
     $('me-settings').addEventListener('click', () => { closeMeMenu(); openMe(); });
 
+    // --- the colour of the light at the top of the page ----------------------
+    // The body was already painting that gradient; this only says what colour
+    // it is. So the whole feature is one custom property: nothing is added to
+    // the page, nothing listens while it is being used, and the cost of a
+    // different colour is a repaint of a background that was being painted
+    // anyway.
+    //
+    // Remembered here rather than on the server, like the fold: it is how this
+    // browser looks to whoever is at it, and a round trip to be told the
+    // colour of your own background is a round trip too many. Which does mean
+    // it does not follow anybody to another machine.
+    const WARM = '255, 107, 53';
+
+    const glow = {
+        read() { try { return localStorage.getItem('nelyce-glow'); } catch { return null; } },
+        write(value) {
+            try { localStorage.setItem('nelyce-glow', value); }
+            catch { /* nothing to remember with */ }
+        }
+    };
+
+    // Nothing chosen and chosen to have none are different answers, so null and
+    // an empty string stay apart the whole way through.
+    const lightUp = (value) => {
+        const root = document.documentElement;
+        root.style.setProperty('--glow', value || WARM);
+        root.style.setProperty('--glow-a', value === '' ? '0' : '');
+
+        document.querySelectorAll('.me-tint-dot').forEach(dot => {
+            dot.setAttribute('aria-checked',
+                dot.dataset.glow === (value === null ? WARM : value) ? 'true' : 'false');
+        });
+    };
+
+    $('me-tint').addEventListener('click', (event) => {
+        const dot = event.target.closest('.me-tint-dot');
+        if (!dot) return;
+        lightUp(dot.dataset.glow);
+        glow.write(dot.dataset.glow);
+    });
+
+    // The colour itself is already on the document — the head put it there
+    // before the first frame. This is the tick under the one it came from.
+    lightUp(glow.read());
+
     document.addEventListener('click', (event) => {
         if (!$('me-menu').hidden && !event.target.closest('.app-me')) closeMeMenu();
     });

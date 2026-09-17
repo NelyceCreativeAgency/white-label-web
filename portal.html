@@ -34,6 +34,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="css/style.min.css"/>
     <link type="text/css" rel="stylesheet" href="css/portal-app.css"/>
+
+    <!-- The colour of the light at the top of the page, put on the document
+         before anything is drawn. Five lines here rather than a wait for the
+         portal's own script, which is three hundred kilobytes further down the
+         page: by the time that ran, the first frame could already have been
+         somebody else's orange. -->
+    <script>
+        try {
+            var glow = localStorage.getItem('nelyce-glow');
+            if (glow !== null) {
+                document.documentElement.style.setProperty('--glow', glow || '255, 107, 53');
+                if (glow === '') document.documentElement.style.setProperty('--glow-a', '0');
+            }
+        } catch (e) { /* nothing to remember with */ }
+    </script>
 </head>
 <body class="app-body">
 
@@ -128,6 +143,34 @@
 
             <div class="me-menu" id="me-menu" role="menu" hidden>
                 <button type="button" role="menuitem" id="me-settings">Ρυθμίσεις</button>
+
+                <!-- The light at the top of the page, in whatever colour suits
+                     the person looking at it. It stays open while they try
+                     them, because choosing a colour is looking at it. -->
+                <div class="me-tint" id="me-tint" role="group" aria-label="Φωτισμός">
+                    <p class="me-tint-what">Φωτισμός</p>
+                    <div class="me-tint-dots">
+                        <button class="me-tint-dot" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Πορτοκαλί" title="Πορτοκαλί"
+                                data-glow="255, 107, 53" style="--dot: 255, 107, 53"></button>
+                        <button class="me-tint-dot" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Ροζ" title="Ροζ"
+                                data-glow="236, 72, 153" style="--dot: 236, 72, 153"></button>
+                        <button class="me-tint-dot" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Μωβ" title="Μωβ"
+                                data-glow="139, 92, 246" style="--dot: 139, 92, 246"></button>
+                        <button class="me-tint-dot" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Μπλε" title="Μπλε"
+                                data-glow="56, 130, 246" style="--dot: 56, 130, 246"></button>
+                        <button class="me-tint-dot" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Πράσινο" title="Πράσινο"
+                                data-glow="34, 197, 94" style="--dot: 34, 197, 94"></button>
+                        <button class="me-tint-dot is-off" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Σβηστό" title="Σβηστό"
+                                data-glow=""></button>
+                    </div>
+                </div>
+
                 <button type="button" role="menuitem" id="logout">Έξοδος</button>
             </div>
         </div>

@@ -2,10 +2,19 @@
    Tokens, reset and .btn come from style.css. Nothing here belongs to the
    marketing pages, and nothing there is asked to carry a workspace. */
 
+/* The light at the top of the page. It was already being painted, in the one
+   colour the brand comes in; all that is new is that the colour is a variable,
+   so somebody choosing their own costs a repaint of a background the browser
+   was painting anyway — no element, no filter, no blur, nothing that runs
+   while the page is being used. The alpha is separate so that "off" is a
+   number rather than a fourth thing to keep in step. */
+:root { --glow: 255, 107, 53; }
+
 .app-body {
     min-height: 100vh;
     background:
-        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 107, 53, .07), transparent 70%),
+        radial-gradient(ellipse 80% 50% at 50% -10%,
+            rgba(var(--glow), var(--glow-a, .13)), transparent 70%),
         var(--bg-dark);
     color: var(--text-primary);
 }
@@ -182,7 +191,7 @@
                                  font-size .14s var(--fold-ease); }
 
     /* Wider than the rail it hangs off, or it would be a menu of one letter. */
-    .app-body.is-folded .me-menu { left: 0; right: auto; min-width: 176px; }
+    .app-body.is-folded .me-menu { left: 0; right: auto; min-width: 184px; }
 }
 
 .app-nav { flex: 1; overflow-y: auto; }
@@ -369,7 +378,10 @@
     box-shadow: 0 20px 44px rgba(0, 0, 0, .55);
 }
 
-.me-menu button {
+/* The menu's own lines, which is not everything with a border in it: the
+   swatches below are buttons too, and this rule used to outrank the colour
+   they are supposed to be. */
+.me-menu > button {
     padding: 9px 12px;
     font: inherit;
     font-size: .84rem;
@@ -381,7 +393,53 @@
     cursor: pointer;
 }
 
-.me-menu button:hover { background: rgba(255, 255, 255, .07); }
+.me-menu > button:hover { background: rgba(255, 255, 255, .07); }
+
+/* Which colour that light is, under the gear where the rest of what belongs to
+   one person is. Six swatches rather than a picker: it is a colour you judge by
+   looking at the page behind it, so it wants one press and a glance, not a
+   second screen with a hex field on it. */
+.me-tint {
+    margin: 4px 0;
+    padding: 10px 6px 4px;
+    border-top: 1px solid rgba(255, 255, 255, .08);
+}
+
+.me-tint-what {
+    margin: 0 0 9px;
+    font-size: .66rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: rgba(184, 186, 194, .55);
+}
+
+.me-tint-dots { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.me-tint-dot {
+    flex: 0 0 auto;
+    width: 20px; height: 20px;
+    padding: 0;
+    background: rgb(var(--dot, 255, 255, 255));
+    border: none;
+    border-radius: 50%;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    cursor: pointer;
+    transition: outline-color .2s, transform .2s var(--fold-ease);
+}
+
+.me-tint-dot:hover { transform: scale(1.14); }
+.me-tint-dot[aria-checked="true"] { outline-color: rgba(255, 255, 255, .8); }
+
+/* No light at all is a choice like any of the others, so it is a swatch like
+   any of the others rather than a word off to one side. */
+.me-tint-dot.is-off {
+    background:
+        linear-gradient(135deg, transparent calc(50% - 1px),
+            rgba(255, 255, 255, .5) 50%, transparent calc(50% + 1px)),
+        rgba(255, 255, 255, .07);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16);
+}
 
 .me-name-field {
     width: 100%;
