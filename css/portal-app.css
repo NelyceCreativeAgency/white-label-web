@@ -1936,15 +1936,36 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     .chat-msg { max-width: 88%; }
 
     /* The conversation takes the screen the keyboard has left, measured by the
-       browser and handed over in --vvh. Nothing behind it moves, nothing
-       scrolls but the messages, and the box being typed in stays above the
-       keys where it can be read. */
-    body.is-chatting { overflow: hidden; }
+       browser and handed over in --vvh.
+       
+       The page itself is pinned first. Telling a phone not to scroll is not
+       enough: as long as there is a page under the keyboard it can move, it
+       moves it, and the box being typed in goes behind the keys. Pinned, there
+       is nothing left to move, and the only thing that scrolls is the messages.
 
-    body.is-chatting .app-chat {
-        height: calc(var(--vvh) - var(--topbar));
+       --vvtop is what a phone offsets the view by when it decides to lift it
+       anyway. Taking it back here is the difference between a conversation that
+       sits still and one that creeps off the top. */
+    body.is-chatting {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    body.is-chatting .app-main {
+        height: var(--vvh);
         min-height: 0;
     }
+
+    /* Only when a phone has actually lifted the view. A transform that is
+       always there, even by nothing, makes this the frame that everything
+       fixed inside it is measured from, which is not a thing to take on for
+       an offset of zero. */
+    body.is-chatting.is-lifted .app-main { transform: translateY(var(--vvtop)); }
+
+    body.is-chatting .app-chat { min-height: 0; }
+    body.is-chatting .chat-log { overscroll-behavior: contain; }
 
     .chat-form { padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
     .chat-send { width: 40px; height: 40px; }

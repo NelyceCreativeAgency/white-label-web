@@ -380,21 +380,24 @@
         const chatting = !$('view-chat').hidden && matchMedia('(max-width: 900px)').matches;
 
         if (!chatting) {
-            document.body.classList.remove('is-chatting');
+            document.body.classList.remove('is-chatting', 'is-lifted');
             root.style.removeProperty('--vvh');
-            root.style.removeProperty('--topbar');
+            root.style.removeProperty('--vvtop');
             return;
         }
 
-        const top = document.querySelector('.app-top');
-        const room = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const view = window.visualViewport;
 
-        root.style.setProperty('--vvh', `${room}px`);
-        root.style.setProperty('--topbar', `${top ? top.offsetHeight : 0}px`);
+        const lifted = view ? Math.max(0, view.offsetTop) : 0;
+
+        root.style.setProperty('--vvh', `${view ? view.height : window.innerHeight}px`);
+        root.style.setProperty('--vvtop', `${lifted}px`);
+
         document.body.classList.add('is-chatting');
+        document.body.classList.toggle('is-lifted', lifted > 1);
 
-        // Safari shrinks the view and scrolls the page as well, and the two
-        // together put the conversation half off the top.
+        // With the page pinned there is nothing left to scroll, and this is
+        // what puts it back if something scrolled it before it was.
         if (window.scrollY) window.scrollTo(0, 0);
     };
 
