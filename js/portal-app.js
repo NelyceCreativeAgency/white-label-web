@@ -6222,6 +6222,18 @@
                 : '<li class="none-yet">Κανένα ακόμα</li>'}</ul>
         </details>`;
 
+    // Somebody's page is opened from a list, and a page opened from a list
+    // needs the way back on it. Only for the admin: a client or a partner
+    // reading their own page came from nowhere and has nowhere to return to.
+    const backTo = (where, name) => (state.me.role === 'admin'
+        ? `<div class="app-backrow">
+               <button class="app-back" type="button" data-back="${where}">
+                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+                   <span>${name}</span>
+               </button>
+           </div>`
+        : '');
+
     const renderPartner = () => {
         const boss = state.me.role === 'admin';
         const who = purse.partner;
@@ -6234,6 +6246,8 @@
         const owing = owedOneWay(purse.money, 'out');
 
         $('view-client').innerHTML = `
+            ${backTo('partners', 'Συνεργάτες')}
+
             <section class="panel client-card">
                 <div class="client-id">
                     ${faceOf(faceFor({ ...who, faceOf: who.id }), 'client-face')}
@@ -6287,6 +6301,8 @@
         const said = [client.company, client.email, client.phone].filter(Boolean).map(esc).join(' · ');
 
         $('view-client').innerHTML = `
+            ${backTo('clients', 'Πελάτες')}
+
             <section class="panel client-card">
                 <div class="client-id">
                     ${faceOf(faceFor(client), 'client-face')}
@@ -6472,6 +6488,13 @@
     }, true);
 
     $('view-client').addEventListener('click', async (event) => {
+        const back = event.target.closest('[data-back]');
+        if (back) {
+            if (back.dataset.back === 'partners') openPartners();
+            else openClients();
+            return;
+        }
+
         // Asking for a link back. The row says so from then on, whether or not
         // the bell that has just gone off is ever looked at.
         const ask = event.target.closest('[data-ask]');
