@@ -1445,7 +1445,19 @@
 
     // --- clicking around the grid ------------------------------------------
     $('ig-grid').addEventListener('click', (event) => {
-        const cell = event.target.closest('.cell');
+        // Which square was pressed. Normally that is simply what the click
+        // landed on, but a pointer that has been captured is reported against
+        // the element holding the capture rather than the button underneath
+        // it, and the grid holds one from the moment a finger or a mouse goes
+        // down on it, in case what follows is a drag. When that happens the
+        // click arrives against the grid itself, belongs to no square, and
+        // nothing on the grid can be pressed at all. So where the target is
+        // not inside a square, the square is whatever is under the pointer.
+        const aimed = event.target.closest('.cell')
+            ? event.target
+            : (document.elementFromPoint(event.clientX, event.clientY) || event.target);
+
+        const cell = aimed.closest('.cell');
         if (!cell) return;
 
         const slot = Number(cell.dataset.slot);
@@ -1458,7 +1470,7 @@
             return;
         }
 
-        const act = event.target.closest('[data-act]');
+        const act = aimed.closest('[data-act]');
         const what = act ? act.dataset.act : null;
 
         if (what === 'menu') { openMenu(act, slot); return; }
@@ -1554,6 +1566,14 @@
         clearTimeout(drag.hold);
         if (scrolling) { cancelAnimationFrame(scrolling); scrolling = null; }
         if (drag.ghost) { drag.ghost.remove(); drag.ghost = null; }
+
+        // Given back before the click that follows this is worked out, so that
+        // the click is reported against the button it was on rather than
+        // against the grid that was holding the pointer.
+        if (drag.pointer !== null) {
+            try { board.releasePointerCapture(drag.pointer); }
+            catch { /* the browser has already taken it back */ }
+        }
 
         document.body.classList.remove('is-dragging-cell');
         board.querySelectorAll('.is-over, .is-dragging')
