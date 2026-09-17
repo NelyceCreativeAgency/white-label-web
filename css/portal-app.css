@@ -2,33 +2,62 @@
    Tokens, reset and .btn come from style.css. Nothing here belongs to the
    marketing pages, and nothing there is asked to carry a workspace. */
 
-/* The light at the top of the page. It was already being painted, in the one
-   colour the brand comes in; all that is new is that the colour is a variable,
-   so somebody choosing their own costs a repaint of a background the browser
-   was painting anyway — no element, no filter, no blur, nothing that runs
-   while the page is being used. The alpha is separate so that "off" is a
-   number rather than a fourth thing to keep in step. */
+/* The colour of the light the portal is lit by — the brand's own, until
+   somebody picks another one under the gear. Three numbers, so that every
+   place below can decide its own alpha on them. How bright it all is lives in
+   --glow-a, set only when somebody has turned the light off, so that one
+   number takes every pool of it out at once. */
 :root { --glow: 255, 107, 53; }
 
+/* No background of its own, deliberately: the dark comes from the root (see
+   style.css) and the light below is painted behind this element. Give the body
+   a colour and it covers the light with it. */
 .app-body {
     min-height: 100vh;
-    background:
-        /* The light. A colour on its own over a background this dark only ever
-           goes brown, however much of it there is; a little white at the top is
-           what makes the rest of it read as something lit rather than something
-           painted. It is a share of the same number, so it goes out with it. */
-        radial-gradient(ellipse 80vw 34vh at 50% -6%,
-            rgba(255, 255, 255, calc(var(--glow-a, .34) * .21)), transparent 70%),
-        /* The colour, brightest just off the top edge and carried a long way
-           down by the middle stop. Sized in the screen rather than in the page,
-           or a long conversation would spread the same light over three
-           thousand pixels and a short one over eight hundred. */
-        radial-gradient(ellipse 120vw 52vh at 50% -2%,
-            rgba(var(--glow), var(--glow-a, .34)) 0%,
-            rgba(var(--glow), calc(var(--glow-a, .34) * .4)) 45%,
-            transparent 76%),
-        var(--bg-dark);
     color: var(--text-primary);
+}
+
+/* The light the page sits in. Pools of it, scattered and overlapping, rather
+   than one band across the top: it is meant to read as a room somebody left a
+   few lamps on in, not as a header.
+
+   Fixed to the screen and not to the page, which is the whole trick. Laid on
+   the page it would have to know how long the page is — a grid of eight
+   hundred pixels and a conversation of three thousand would get the same light
+   spread over wildly different distances, and it would slide away as soon as
+   anybody scrolled. Fixed, it is simply the room: every screen of every view
+   is lit the same.
+
+   And it stays free. One layer, painted once, that never moves and never
+   animates: the browser composites it and forgets about it. No filter, no
+   blur, no element anybody can hit — the blur is the gradient's own falloff,
+   which costs nothing, rather than a filter, which does.
+
+   A colour over a background this dark only ever goes brown, so the two
+   brightest pools carry a little white at the centre. That is what makes them
+   read as light rather than as paint. Every alpha here is a share of one
+   number, so the swatch that turns it off turns all of it off. */
+.app-body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 15vw 10vh at 19% 13%,
+            rgba(255, 255, 255, calc(var(--glow-a, .34) * .17)), transparent 70%),
+        radial-gradient(ellipse 11vw 8vh at 81% 35%,
+            rgba(255, 255, 255, calc(var(--glow-a, .34) * .11)), transparent 70%),
+        radial-gradient(ellipse 38vw 26vh at 19% 13%,
+            rgba(var(--glow), var(--glow-a, .34)), transparent 70%),
+        radial-gradient(ellipse 32vw 23vh at 81% 35%,
+            rgba(var(--glow), calc(var(--glow-a, .34) * .72)), transparent 70%),
+        radial-gradient(ellipse 34vw 24vh at 42% 79%,
+            rgba(var(--glow), calc(var(--glow-a, .34) * .5)), transparent 70%),
+        radial-gradient(ellipse 26vw 20vh at 95% 92%,
+            rgba(var(--glow), calc(var(--glow-a, .34) * .42)), transparent 70%),
+        radial-gradient(ellipse 22vw 17vh at 2% 62%,
+            rgba(var(--glow), calc(var(--glow-a, .34) * .38)), transparent 70%);
 }
 
 .app-body.is-locked { overflow: hidden; }
