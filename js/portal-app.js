@@ -5156,11 +5156,16 @@
         if (entry.invoiceNo) under.push(`Τιμολόγιο ${esc(entry.invoiceNo)}`);
         if (sub && sub.title !== entry.title) under.push(esc(sub.title));
 
-        // Only what there is to offer. An empty row of buttons still takes a
-        // line of its own once the layout stacks on a phone.
+        // Whether a charge has been paid and whether it has been invoiced are
+        // two different facts, and a row that is waiting on the second says so
+        // rather than showing nothing: a client who is owed a document should
+        // be able to see that it is coming, and the admin should be able to
+        // read down the column and find what is still to be issued.
         const acts = [
-            entry.invoiceUrl ? `<a class="app-ghost" href="${esc(entry.invoiceUrl)}"
-                                   target="_blank" rel="noopener noreferrer">Τιμολόγιο</a>` : '',
+            entry.invoiceUrl
+                ? `<a class="app-ghost" href="${esc(entry.invoiceUrl)}"
+                      target="_blank" rel="noopener noreferrer">Τιμολόγιο</a>`
+                : '<span class="led-nobill">Εκκρεμεί έκδοση</span>',
             entry.status !== 'paid' && entry.payUrl ? `<a class="app-ghost is-pay" href="${esc(entry.payUrl)}"
                                    target="_blank" rel="noopener noreferrer">Πληρωμή</a>` : '',
             boss ? `<button class="lister-gear" type="button" data-open="entry"
@@ -5316,8 +5321,8 @@
                     ${CARET}
                 </summary>
                 <p class="panel-why">${boss
-                        ? 'Κάθε χρέωση όπως εκδόθηκε, και αν έχει εξοφληθεί ή όχι. Βάλε την πάνω σε μια συνδρομή και ανάβουν μόνοι τους οι μήνες της από πάνω. Ο σύνδεσμος πάει στο ίδιο το αρχείο του τιμολογίου, όπου κι αν το ανεβάζεις. Η ημερομηνία πληρωμής και τα υπόλοιπα στοιχεία κάθε γραμμής είναι πίσω από το γρανάζι της.'
-                        : 'Ό,τι έχει τιμολογηθεί, με τον σύνδεσμο για να κατεβάσεις το κάθε τιμολόγιο.'}</p>
+                        ? 'Κάθε χρέωση όπως εκδόθηκε, και αν έχει εξοφληθεί ή όχι. Βάλε την πάνω σε μια συνδρομή και ανάβουν μόνοι τους οι μήνες της από πάνω. Η πληρωμή και το τιμολόγιο είναι δύο χωριστά πράγματα: μπορείς να καταχωρήσεις μια δουλειά που εκκρεμεί πριν καν εκδώσεις το παραστατικό, και όσο δεν έχεις βάλει σύνδεσμο η γραμμή γράφει «Εκκρεμεί έκδοση». Η ημερομηνία πληρωμής και τα υπόλοιπα στοιχεία κάθε γραμμής είναι πίσω από το γρανάζι της.'
+                        : 'Κάθε δουλειά που έχει χρεωθεί, με τον σύνδεσμο για να κατεβάσεις το τιμολόγιό της. Όπου γράφει «Εκκρεμεί έκδοση», το παραστατικό δεν έχει εκδοθεί ακόμα.'}</p>
 
                 ${boss ? `
                 <form class="new-row" id="new-entry">

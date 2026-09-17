@@ -3592,6 +3592,17 @@ li.none-yet {
 .led-state.is-paid { color: #9fe0b5; background: rgba(76, 175, 118, .12); }
 .led-state.is-due { color: #ffc4a4; background: rgba(255, 107, 53, .12); border-color: rgba(255, 107, 53, .3); }
 
+/* Not a button, because there is nothing to press. It sits where the invoice
+   link will sit, so the column answers the same question on every line. */
+.led-nobill {
+    font-size: .72rem;
+    white-space: nowrap;
+    color: rgba(184, 186, 194, .55);
+    border: 1px dashed rgba(255, 255, 255, .13);
+    border-radius: 9px;
+    padding: 6px 11px;
+}
+
 .led-acts { display: flex; align-items: center; gap: 8px; }
 .led-acts a { text-decoration: none; white-space: nowrap; }
 
