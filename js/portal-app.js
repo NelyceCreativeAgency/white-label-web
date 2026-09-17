@@ -5306,7 +5306,13 @@
             <button class="btn btn-primary" type="submit">Προσθήκη</button>
         </form>`;
 
-    const billsPanel = (way, title, why, rows, boss, openBy) => `
+    // Whether the person reading a charge may change it. The admin may change
+    // anything; a partner may change what they have invoiced us and not what we
+    // have invoiced them, because a bill is not something its recipient edits.
+    const mayEditEntry = (entry) => state.me.role === 'admin'
+        || (purse.kind === 'partner' && Boolean(entry) && entry.way === 'in');
+
+    const billsPanel = (way, title, why, rows, mayEdit, openBy) => `
         <details class="panel panel-fold" data-fold="${way === 'in' ? 'bills-in' : 'bills-out'}"${
             folded.open(way === 'in' ? 'bills-in' : 'bills-out', openBy) ? ' open' : ''}>
             <summary class="panel-head">
@@ -5315,11 +5321,11 @@
             </summary>
             <p class="panel-why">${why}</p>
 
-            ${boss ? billsForm(way) : ''}
+            ${mayEdit ? billsForm(way) : ''}
 
             <p class="panel-error" role="alert" hidden></p>
-            <ul class="ledger${boss ? ' is-live' : ''}">${rows.length
-                ? rows.map(entry => ledgerRow(entry, boss)).join('')
+            <ul class="ledger${mayEdit ? ' is-live' : ''}">${rows.length
+                ? rows.map(entry => ledgerRow(entry, mayEdit)).join('')
                 : '<li class="none-yet">Κανένα ακόμα</li>'}</ul>
         </details>`;
 
@@ -5358,13 +5364,13 @@
             ${billsPanel('in', 'Τιμολόγια προς Nelyce',
                 boss
                     ? 'Ό,τι σου έχει τιμολογήσει αυτός ο συνεργάτης. Τα καταχωρεί ο ίδιος και ο ίδιος λέει αν πληρώθηκαν· εσύ μπορείς να διορθώσεις μια γραμμή που δεν βγάζει νόημα.'
-                    : 'Ό,τι έχεις τιμολογήσει στη Nelyce, με τον σύνδεσμο προς το δικό σου παραστατικό.',
-                theirs, boss, true)}
+                    : 'Ό,τι έχεις τιμολογήσει στη Nelyce. Τα καταχωρείς εσύ, βάζεις τον σύνδεσμο προς το δικό σου παραστατικό, και εσύ λες πότε πληρώθηκε. Πάτα πάνω σε μια γραμμή για να την αλλάξεις.',
+                theirs, true, true)}
 
             ${billsPanel('out', 'Τιμολόγια από Nelyce',
                 boss
                     ? 'Ό,τι του έχεις τιμολογήσει εσύ. Σπάνιο, αλλά υπάρχει, και έχει τη θέση του εδώ ώστε η μία σελίδα να λέει όλη την ιστορία.'
-                    : 'Ό,τι σου έχει τιμολογήσει η Nelyce, με τον σύνδεσμο για να το κατεβάσεις.',
+                    : 'Ό,τι σου έχει τιμολογήσει η Nelyce, με τον σύνδεσμο για να το κατεβάσεις. Αυτή η μισή σελίδα είναι για ανάγνωση.',
                 ours, boss, false)}
         `;
     };
@@ -5619,7 +5625,8 @@
         // so the whole row opens it. Not the links inside it, which go where
         // they say they go.
         const row = event.target.closest('.led');
-        if (row && state.me.role === 'admin' && !event.target.closest('a')) {
+        if (row && !event.target.closest('a')
+            && mayEditEntry(purse.money.entries.find(one => one.id === row.dataset.entry))) {
             openMoney('entry', row.dataset.entry);
         }
     });
@@ -5751,8 +5758,12 @@
             const entry = purse.money.entries.find(one => one.id === id);
             if (!entry) return;
 
+            const boss = state.me.role === 'admin';
+
             $('money-title').textContent = entry.title;
-            $('money-sub').textContent = 'Μία χρέωση, όπως εκδόθηκε. Ο σύνδεσμος του τιμολογίου κρατάει μέσα του το κλειδί του αρχείου, οπότε δώσ\' τον μόνο εδώ.';
+            $('money-sub').textContent = boss
+                ? 'Μία χρέωση, όπως εκδόθηκε. Ο σύνδεσμος του τιμολογίου κρατάει μέσα του το κλειδί του αρχείου, οπότε δώσ\' τον μόνο εδώ.'
+                : 'Ένα τιμολόγιό σου, όπως το έκοψες. Ο σύνδεσμος οδηγεί στο δικό σου παραστατικό και τον βλέπει μόνο η Nelyce.';
 
             body.innerHTML = `
                 <div class="row-fields">
@@ -5766,11 +5777,11 @@
                 </div>
 
                 <div class="row-fields">
-                    <label>Ανήκει σε<select data-f="subId">
+                    ${boss ? `<label>Ανήκει σε<select data-f="subId">
                         <option value="">Μεμονωμένη χρέωση</option>
                         ${purse.money.subs.map(sub =>
                             `<option value="${esc(sub.id)}"${sub.id === entry.subId ? ' selected' : ''}>${esc(sub.title)}</option>`).join('')}
-                    </select></label>
+                    </select></label>` : ''}
                     <label>Αριθμός τιμολογίου<input data-f="invoiceNo" value="${esc(entry.invoiceNo)}" maxlength="40"></label>
                 </div>
 
@@ -5788,8 +5799,9 @@
                 <input class="me-name-field" id="entry-pay" data-f="payUrl" value="${esc(entry.payUrl)}"
                        placeholder="https://…" spellcheck="false">
 
+                ${boss ? `
                 <label class="edit-label pw-head" for="entry-note">Σημείωση, μόνο για σένα</label>
-                <textarea class="me-name-field" id="entry-note" data-f="note" rows="2" maxlength="2000">${esc(entry.note || '')}</textarea>
+                <textarea class="me-name-field" id="entry-note" data-f="note" rows="2" maxlength="2000">${esc(entry.note || '')}</textarea>` : ''}
             `;
         }
 
@@ -5843,16 +5855,22 @@
     // something to read.
     const shapeEntry = () => {
         const body = $('money-body');
+        const paid = body.querySelector('[data-f="status"]').value === 'paid';
+        const when = body.querySelector('[data-f="paidAt"]');
+
+        // The day the money arrived is asked for the moment somebody says it
+        // did, and this much is true of every charge there is.
+        $('entry-paidat').hidden = !paid;
+
+        // The rest of it is about belonging to a subscription. A page with no
+        // subscriptions on it has none of that to work out.
         const belongs = body.querySelector('[data-f="subId"]');
         if (!belongs) return;
 
         const inside = Boolean(belongs.value);
-        const paid = body.querySelector('[data-f="status"]').value === 'paid';
-        const when = body.querySelector('[data-f="paidAt"]');
         const from = $('entry-on');
         const until = $('entry-covers').querySelector('input');
 
-        $('entry-paidat').hidden = !paid;
         $('entry-covers').hidden = !inside;
         $('entry-on-name').textContent = inside ? 'Καλύπτει από' : 'Ημερομηνία';
         $('entry-on-note').hidden = !inside;

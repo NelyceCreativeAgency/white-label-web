@@ -490,6 +490,25 @@ const partnerMoney = async (user) => ({
     money: moneyOut(await readMoney(user.id), true)
 });
 
+// What a partner is allowed to say about one of their own invoices. Written as
+// a list of what may pass rather than a list of what may not, so that a field
+// added to a charge later stays the admin's until somebody decides otherwise.
+// The note is the clearest case: it is where you write what you think, and it
+// has never been for the person it is about.
+const theirsToSay = (body) => ({
+    kind: 'entry',
+    id: body.id,
+    title: body.title,
+    amount: body.amount,
+    on: body.on,
+    status: body.status,
+    paidAt: body.paidAt,
+    invoiceNo: body.invoiceNo,
+    invoiceUrl: body.invoiceUrl,
+    payUrl: body.payUrl,
+    way: 'in'
+});
+
 const mineOnly = (doc, me) => {
     if (!me.clientId) return null;
     return doc.clients.find(one => one.id === me.clientId) || null;
@@ -507,12 +526,46 @@ module.exports = async (req, res) => {
 
         const boss = me.role === 'admin';
 
-        // A partner reads their own column and nothing else at all: not the
-        // clients, not what any of them was charged, not even the shape of the
-        // question. It is answered here and the request goes no further.
+        // A partner's own column, and nothing else at all: not the clients, not
+        // what any of them was charged, not even the shape of the question. It
+        // is answered here and the request goes no further.
+        //
+        // They write on one half of it — the invoices they have issued to us,
+        // which are theirs to raise and theirs to mark as settled. The other
+        // half is what we have invoiced them, and that is read only: a bill is
+        // not something its recipient gets to edit.
         if (me.role === 'partner') {
-            if (req.method !== 'GET') return res.status(403).json({ error: 'not-allowed' });
-            return res.status(200).json(await partnerMoney(me));
+            if (req.method === 'GET') return res.status(200).json(await partnerMoney(me));
+
+            const ledger = await readMoney(me.id);
+            const answer = () => res.status(200).json({ money: moneyOut(ledger, true) });
+
+            const ours = (id) => {
+                const row = ledger.entries.find(one => one.id === text(id, 40));
+                if (!row) throw new Error('no-such-entry');
+                if (wayOf(row) !== 'in') throw new Error('not-allowed');
+                return row;
+            };
+
+            if (req.method === 'POST' || req.method === 'PATCH') {
+                const body = readBody(req);
+                if (body.kind !== 'entry') throw new Error('not-allowed');
+
+                if (req.method === 'POST') createEntry(ledger, theirsToSay(body), me);
+                else patchEntry(ledger, theirsToSay({ ...body, id: ours(body.id).id }));
+
+                await writeMoney(me.id, ledger);
+                return answer();
+            }
+
+            if (req.method === 'DELETE') {
+                const gone = ours(req.query && req.query.id);
+                ledger.entries = ledger.entries.filter(one => one.id !== gone.id);
+                await writeMoney(me.id, ledger);
+                return answer();
+            }
+
+            return res.status(403).json({ error: 'not-allowed' });
         }
 
         // A client reads their own page and nothing else.
@@ -735,11 +788,13 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: 'Method not allowed.' });
     } catch (err) {
         const known = ['bad-name', 'bad-amount', 'bad-link', 'bad-date', 'bad-kind', 'bad-image',
+                       'not-allowed',
                        'no-such-client', 'no-such-partner', 'no-such-sub', 'no-such-entry',
                        'no-such-file',
                        'no-account', 'not-expired',
                        'too-many-clients', 'too-many-subs', 'too-many-entries', 'too-many-files'];
-        const status = known.includes(err.message) ? 400 : 500;
+        const status = err.message === 'not-allowed' ? 403
+            : known.includes(err.message) ? 400 : 500;
         return res.status(status).json({ error: err.message });
     }
 };
