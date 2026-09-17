@@ -1392,12 +1392,14 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
     color: rgba(184, 186, 194, .6);
 }
 
+/* One rounded field with the send inside its end, which is the shape every
+   messenger has settled on. */
 .chat-form {
     display: flex;
     align-items: flex-end;
-    gap: 10px;
+    gap: 8px;
     flex: 0 0 auto;
-    padding: 14px 24px 18px;
+    padding: 12px 24px 16px;
     border-top: 1px solid rgba(255, 255, 255, .07);
 }
 
@@ -1405,19 +1407,49 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
     flex: 1;
     min-width: 0;
     max-height: 140px;
-    padding: 11px 14px;
+    padding: 11px 16px;
     font: inherit;
-    font-size: .87rem;
-    line-height: 1.5;
+    /* Never under sixteen pixels. An iPhone zooms the whole page into any
+       field smaller than that the moment it is tapped, and the page it zooms
+       into is one nobody asked to be in. */
+    font-size: 16px;
+    line-height: 1.45;
     color: var(--text-primary);
-    background: rgba(255, 255, 255, .05);
+    background: rgba(255, 255, 255, .06);
     border: 1px solid rgba(255, 255, 255, .1);
-    border-radius: 14px;
+    border-radius: 21px;
     resize: none;
 }
 
-.chat-form textarea:focus { outline: none; border-color: var(--accent-orange); }
-.chat-form .btn { flex: 0 0 auto; padding: 11px 20px; font-size: .84rem; }
+.chat-form textarea:focus {
+    outline: none;
+    background: rgba(255, 255, 255, .08);
+    border-color: rgba(255, 255, 255, .22);
+}
+
+.chat-send {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 42px; height: 42px;
+    color: var(--bg-dark);
+    background: linear-gradient(135deg, var(--accent-amber), var(--accent-orange));
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform .18s, opacity .18s;
+}
+
+.chat-send:hover { transform: scale(1.07); }
+.chat-send:active { transform: scale(.94); }
+.chat-send:disabled { opacity: .45; cursor: default; transform: none; }
+
+.chat-send svg {
+    width: 19px; height: 19px;
+    margin-left: -1px;
+    fill: none; stroke: currentColor; stroke-width: 1.9;
+    stroke-linecap: round; stroke-linejoin: round;
+}
 .app-blank h2 { font-size: 1.25rem; font-weight: var(--fw-semibold); margin-bottom: 10px; }
 .app-blank p { color: var(--text-secondary); font-size: .92rem; }
 
@@ -1902,6 +1934,23 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     }
 
     .chat-msg { max-width: 88%; }
+
+    /* The conversation takes the screen the keyboard has left, measured by the
+       browser and handed over in --vvh. Nothing behind it moves, nothing
+       scrolls but the messages, and the box being typed in stays above the
+       keys where it can be read. */
+    body.is-chatting { overflow: hidden; }
+
+    body.is-chatting .app-chat {
+        height: calc(var(--vvh) - var(--topbar));
+        min-height: 0;
+    }
+
+    .chat-form { padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
+    .chat-send { width: 40px; height: 40px; }
+
+    /* Same reason as the message box: sixteen pixels or the page jumps. */
+    .ink, #note-text, .link-new input, .idea-bits input, .me-name-field { font-size: 16px; }
 
     .room-open {
         display: inline-flex;

@@ -367,11 +367,50 @@
         `).join('');
     };
 
+    // --- the screen a keyboard has left behind --------------------------------
+    // A phone does not make room for its keyboard: it slides the page up from
+    // under itself, which on a conversation means the box being typed in ends
+    // up behind the keys and everything above it has wandered off the top.
+    //
+    // visualViewport is the browser saying how much screen is actually left.
+    // Handed to the stylesheet, the conversation becomes exactly that tall, the
+    // box sits above the keys, and nothing moves because nothing had to.
+    const fitToKeyboard = () => {
+        const root = document.documentElement;
+        const chatting = !$('view-chat').hidden && matchMedia('(max-width: 900px)').matches;
+
+        if (!chatting) {
+            document.body.classList.remove('is-chatting');
+            root.style.removeProperty('--vvh');
+            root.style.removeProperty('--topbar');
+            return;
+        }
+
+        const top = document.querySelector('.app-top');
+        const room = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+        root.style.setProperty('--vvh', `${room}px`);
+        root.style.setProperty('--topbar', `${top ? top.offsetHeight : 0}px`);
+        document.body.classList.add('is-chatting');
+
+        // Safari shrinks the view and scrolls the page as well, and the two
+        // together put the conversation half off the top.
+        if (window.scrollY) window.scrollTo(0, 0);
+    };
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', fitToKeyboard);
+        window.visualViewport.addEventListener('scroll', fitToKeyboard);
+    }
+
+    window.addEventListener('orientationchange', fitToKeyboard);
+
     const showView = (name) => {
         ['grid', 'accounts', 'chat', 'blank'].forEach(view => {
             $(`view-${view}`).hidden = view !== name;
         });
         closeSidebar();
+        fitToKeyboard();
     };
 
     // --- opening a grid ----------------------------------------------------
@@ -2808,7 +2847,12 @@
         const rows = c.kind === 'teams'
             ? c.teams.map(one => ({
                 open: { kind: 'team', id: one.id },
-                face: faceOf({ id: one.id, name: one.name, icon: one.icon }, 'chat-face is-team', ''),
+                // Its own square if the admin gave it one, and the mark of a
+                // group if not. An initial here would say nothing the name
+                // beside it does not already say.
+                face: one.icon
+                    ? faceOf(one, 'chat-face is-team', '')
+                    : `<span class="chat-face is-team">${TEAM_ICON}</span>`,
                 name: one.name,
                 under: one.last ? esc(lastLine(one.last)) : 'Όλη η ομάδα του project',
                 unread: one.unread, more: one.more
@@ -3121,11 +3165,27 @@
     });
 
     // The box grows with what is written in it, up to the height the stylesheet
-    // allows, and then scrolls.
-    $('chat-text').addEventListener('input', () => {
+    // allows, and then scrolls. Growing takes room from the messages above, so
+    // the last of them is kept in sight.
+    const growBox = () => {
         const box = $('chat-text');
         box.style.height = 'auto';
         box.style.height = `${box.scrollHeight}px`;
+
+        const log = $('chat-log');
+        log.scrollTop = log.scrollHeight;
+    };
+
+    $('chat-text').addEventListener('input', growBox);
+
+    // A keyboard arriving takes half the screen, and the half it takes is the
+    // half the last message was in.
+    $('chat-text').addEventListener('focus', () => {
+        setTimeout(() => {
+            fitToKeyboard();
+            const log = $('chat-log');
+            log.scrollTop = log.scrollHeight;
+        }, 250);
     });
 
     $('chat-log').addEventListener('click', async (clicked) => {

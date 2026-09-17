@@ -2,7 +2,7 @@
 <html lang="el" data-lang="el">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="Το ιδιωτικό περιβάλλον της Nelyce. Δες το Instagram grid σου όπως θα φαίνεται στο προφίλ, σχολίασε και ζήτησε αλλαγές.">
     <meta name="theme-color" content="#0a0a0e">
@@ -195,7 +195,11 @@
                     <form class="chat-form" id="chat-form">
                         <textarea id="chat-text" rows="1" maxlength="2000"
                                   placeholder="Γράψε μήνυμα"></textarea>
-                        <button class="btn btn-primary" type="submit" id="chat-send">Αποστολή</button>
+                        <button class="chat-send" type="submit" id="chat-send" aria-label="Αποστολή">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 11.5 20.5 4l-7.5 16.5-1.8-6.7z"/><path d="M11.2 13.8 20.5 4"/>
+                            </svg>
+                        </button>
                     </form>
                 </div>
 
