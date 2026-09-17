@@ -3151,8 +3151,8 @@
                     <div class="chat-bubble">${quoted(message)}${esc(message.text)}</div>
                     <p class="chat-foot">
                         <span>${esc(clock(message.at))}</span>
-                        <button type="button" data-do="answer">Απάντηση</button>
-                        ${mine ? '<button type="button" data-do="unsay">Διαγραφή</button>' : ''}
+                        <button class="chat-more" type="button" data-do="more"
+                                aria-label="Τι να γίνει με αυτό το μήνυμα">•••</button>
                     </p>
                 </li>`;
         }).join('');
@@ -3193,6 +3193,124 @@
         void row.offsetWidth;
         row.classList.add('is-found');
     };
+
+    // --- what a message can be asked -----------------------------------------
+    // Held down on a touch screen, and behind three dots on hover everywhere
+    // else. Two spelled-out buttons under every message was a wall of words
+    // that had nothing to do with the conversation.
+    const msgMenu = document.createElement('div');
+    msgMenu.className = 'msg-menu';
+    msgMenu.hidden = true;
+    document.body.appendChild(msgMenu);
+
+    const closeMsgMenu = () => {
+        msgMenu.hidden = true;
+        const asked = $('chat-log').querySelector('.is-asked');
+        if (asked) asked.classList.remove('is-asked');
+    };
+
+    const openMsgMenu = (row, x, y) => {
+        const id = row.dataset.message;
+        const said = state.chat.messages.find(one => one.id === id);
+        if (!said) return;
+
+        closeMsgMenu();
+        row.classList.add('is-asked');
+
+        msgMenu.innerHTML = `
+            <button type="button" data-do="answer">Απάντηση</button>
+            <button type="button" data-do="copy">Αντιγραφή</button>
+            ${said.userId === state.me.id
+                ? '<button type="button" data-do="unsay" class="is-danger">Διαγραφή</button>' : ''}
+        `;
+        msgMenu.dataset.message = id;
+        msgMenu.dataset.at = String(Date.now());
+        msgMenu.hidden = false;
+
+        // Above the finger where there is room and below it where there is
+        // not, and never off the side of the screen.
+        const wide = msgMenu.offsetWidth;
+        const tall = msgMenu.offsetHeight;
+
+        const left = Math.min(Math.max(10, x - wide / 2), window.innerWidth - wide - 10);
+        const top = y - tall - 12 < 10 ? y + 14 : y - tall - 12;
+
+        msgMenu.style.left = `${left}px`;
+        msgMenu.style.top = `${Math.max(10, top)}px`;
+    };
+
+    // A finger has to hold still. One that wanders was scrolling the
+    // conversation, which is what a finger on a conversation usually is.
+    let press = null;
+
+    const letGoOfPress = () => { clearTimeout(press); press = null; };
+
+    $('chat-log').addEventListener('pointerdown', (event) => {
+        if (event.target.closest('button')) return;
+
+        const row = event.target.closest('.chat-msg');
+        if (!row || event.pointerType === 'mouse') return;
+
+        const x = event.clientX;
+        const y = event.clientY;
+        const from = { x, y };
+
+        press = setTimeout(() => {
+            press = null;
+            knock(PICK_UP);
+            openMsgMenu(row, x, y);
+        }, HOLD_MS);
+
+        const wander = (moved) => {
+            if (Math.hypot(moved.clientX - from.x, moved.clientY - from.y) > TOUCH_SLOP) letGoOfPress();
+        };
+
+        $('chat-log').addEventListener('pointermove', wander);
+        ['pointerup', 'pointercancel'].forEach(name =>
+            $('chat-log').addEventListener(name, letGoOfPress, { once: true }));
+
+        setTimeout(() => $('chat-log').removeEventListener('pointermove', wander), HOLD_MS + 40);
+    });
+
+    $('chat-log').addEventListener('scroll', letGoOfPress);
+
+    // A right click means the same thing on a machine that has one.
+    $('chat-log').addEventListener('contextmenu', (event) => {
+        const row = event.target.closest('.chat-msg');
+        if (!row) return;
+        event.preventDefault();
+        openMsgMenu(row, event.clientX, event.clientY);
+    });
+
+    msgMenu.addEventListener('click', (clicked) => {
+        const button = clicked.target.closest('button[data-do]');
+        if (!button) return;
+
+        const id = msgMenu.dataset.message;
+        const said = state.chat.messages.find(one => one.id === id);
+        closeMsgMenu();
+        if (!said) return;
+
+        if (button.dataset.do === 'answer') { answer(id); return; }
+
+        if (button.dataset.do === 'copy') {
+            try { navigator.clipboard.writeText(said.text); toast('Αντιγράφηκε.'); }
+            catch { toast('Δεν έγινε η αντιγραφή.', 'bad'); }
+            return;
+        }
+
+        if (button.dataset.do === 'unsay') unsay(id);
+    });
+
+    document.addEventListener('click', (event) => {
+        if (msgMenu.hidden || event.target.closest('.msg-menu')) return;
+
+        // The press that opened it often ends in a click of its own, and that
+        // click would shut it again before anybody saw it.
+        if (Date.now() - Number(msgMenu.dataset.at || 0) < 350) return;
+
+        closeMsgMenu();
+    });
 
     $('chat-answering-drop').addEventListener('click', () => {
         state.chat.answering = null;
@@ -3452,15 +3570,7 @@
         settle();
     });
 
-    $('chat-log').addEventListener('click', async (clicked) => {
-        const button = clicked.target.closest('button[data-do]');
-        if (!button) return;
-
-        if (button.dataset.do === 'find') { findMessage(button.dataset.at); return; }
-
-        const id = button.closest('.chat-msg').dataset.message;
-
-        if (button.dataset.do === 'answer') { answer(id); return; }
+    const unsay = async (id) => {
         if (!confirm('Να διαγραφεί το μήνυμα;')) return;
 
         const open = state.chat.open;
@@ -3468,14 +3578,29 @@
         try {
             const data = await api('/api/chat', {
                 method: 'POST',
-                body: open.kind === 'team'
-                    ? { grid: open.id, action: 'delete', id }
-                    : { with: open.id, action: 'delete', id }
+                body: {
+                    ...(open.kind === 'team' ? { grid: open.id } : { with: open.id }),
+                    action: 'delete', id
+                }
             });
             state.chat.messages = data.messages || [];
             renderRoom();
         } catch (err) {
             toast(explain(err), 'bad');
+        }
+    };
+
+    $('chat-log').addEventListener('click', (clicked) => {
+        const button = clicked.target.closest('button[data-do]');
+        if (!button) return;
+
+        if (button.dataset.do === 'find') { findMessage(button.dataset.at); return; }
+
+        if (button.dataset.do === 'more') {
+            clicked.stopPropagation();
+            const row = button.closest('.chat-msg');
+            const box = button.getBoundingClientRect();
+            openMsgMenu(row, box.left + box.width / 2, box.top);
         }
     });
 

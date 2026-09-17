@@ -1458,6 +1458,65 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
 
 .chat-answering button:hover { color: var(--text-primary); }
 
+/* --- what a message can be asked ------------------------------------------- */
+/* Behind a long press on a touch screen and behind three dots on hover
+   everywhere else, which is where every messenger keeps them. Two spelled-out
+   buttons under every single message was a wall of words that had nothing to do
+   with the conversation. */
+.chat-more {
+    padding: 0 4px;
+    font: inherit;
+    font-size: .8rem;
+    line-height: 1;
+    color: rgba(184, 186, 194, .7);
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .18s;
+}
+
+.chat-msg:hover .chat-more { opacity: 1; }
+.chat-more:hover { color: var(--text-primary); }
+
+/* No hover, no dots: on a phone the press is the way in and a permanent
+   control would be the clutter this is undoing. */
+@media (hover: none) and (pointer: coarse) {
+    .chat-more { display: none; }
+}
+
+.msg-menu {
+    position: fixed;
+    z-index: 130;
+    min-width: 168px;
+    padding: 6px;
+    background: rgba(26, 26, 33, .98);
+    border: 1px solid rgba(255, 255, 255, .13);
+    border-radius: 13px;
+    box-shadow: 0 22px 48px rgba(0, 0, 0, .6);
+}
+
+.msg-menu button {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: .85rem;
+    text-align: left;
+    color: var(--text-primary);
+    background: none;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.msg-menu button:hover { background: rgba(255, 255, 255, .08); }
+.msg-menu .is-danger { color: #ff8b6b; }
+
+/* The one the menu is about, so it is never in doubt which message is being
+   answered or thrown away. */
+.chat-msg.is-asked .chat-bubble { box-shadow: 0 0 0 2px rgba(255, 255, 255, .3); }
+
 .chat-foot {
     display: flex;
     align-items: center;
