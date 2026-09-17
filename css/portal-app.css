@@ -745,16 +745,21 @@ html.is-lit .app-body::after {
    instead. */
 .hello {
     position: fixed;
-    left: 18px; bottom: 86px;
+    left: 18px; bottom: 92px;
     z-index: 60;
-    width: 246px;
-    padding: 15px 16px 13px;
-    background: rgba(24, 24, 30, .98);
+    width: 288px;
+    padding: 18px 18px 15px;
+    background: rgba(26, 26, 33, .99);
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, .13);
-    border-radius: 15px;
-    box-shadow: 0 22px 50px rgba(0, 0, 0, .6);
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: 17px;
+    /* A ring in the light's own colour, so the card and the thing it is about
+       are plainly the same subject. */
+    box-shadow:
+        0 0 0 1px rgba(var(--glow), .45),
+        0 0 34px rgba(var(--glow), .18),
+        0 26px 60px rgba(0, 0, 0, .68);
     animation: hello-in .42s var(--fold-ease) both;
 }
 
@@ -764,30 +769,49 @@ html.is-lit .app-body::after {
 .hello::after {
     content: '';
     position: absolute;
-    left: 26px; bottom: -7px;
-    width: 12px; height: 12px;
-    background: rgba(24, 24, 30, .98);
-    border-right: 1px solid rgba(255, 255, 255, .13);
-    border-bottom: 1px solid rgba(255, 255, 255, .13);
+    left: 26px; bottom: -8px;
+    width: 14px; height: 14px;
+    background: rgba(26, 26, 33, .99);
+    border-right: 1px solid rgba(var(--glow), .45);
+    border-bottom: 1px solid rgba(var(--glow), .45);
     transform: rotate(45deg);
 }
 
 .hello strong {
     display: block;
-    margin-bottom: 5px;
-    font-size: .95rem;
+    margin-bottom: 7px;
+    font-size: 1.08rem;
     font-weight: var(--fw-semibold);
 }
 
 .hello p {
-    margin: 0 0 13px;
-    font-size: .83rem;
+    margin: 0 0 15px;
+    font-size: .88rem;
     line-height: 1.55;
-    color: var(--text-secondary);
+    color: rgba(226, 227, 232, .92);
 }
 
 .hello .hello-there { display: none; }
-.hello button { width: 100%; }
+.hello button { width: 100%; padding: 10px 14px; border-radius: 10px; }
+
+/* While it is up, the row it is pointing at breathes, so the eye goes there
+   rather than reading the sentence and then hunting. It is one ring fading in
+   and out — opacity, which costs nothing to animate — and it goes with the
+   card. */
+.is-greeting .app-me::after {
+    content: '';
+    position: absolute;
+    left: 2px; right: 2px; top: 10px; bottom: -4px;
+    border: 1px solid rgba(var(--glow), .85);
+    border-radius: 14px;
+    pointer-events: none;
+    animation: nudge 2.1s ease-in-out infinite;
+}
+
+@keyframes nudge {
+    0%, 100% { opacity: 0; }
+    45%      { opacity: .9; }
+}
 
 @keyframes hello-in {
     from { opacity: 0; transform: translateY(10px); }
@@ -2515,6 +2539,7 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
     :root { --fold-ms: 0s; }
 
     .hello { animation: none; }
+    .is-greeting .app-me::after { animation: none; opacity: .75; }
 
     /* And the light stops where it stands, rather than wandering. */
     html.is-lit::before,

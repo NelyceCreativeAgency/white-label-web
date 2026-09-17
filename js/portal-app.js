@@ -3769,8 +3769,15 @@
     // That is the right unit for it: what it is explaining is where a thing is
     // on the screen in front of them, and a new screen is a fair reason to be
     // told again.
+    // TEMPORARY, while the wording is still being decided: the greeting is
+    // shown on every load, to whoever opens the portal, so it can be read
+    // without clearing a browser to see it. Set this to false and it goes back
+    // to being said once per machine, which is the whole of the change.
+    const GREET_EVERY_TIME = true;
+
     const greeted = {
         read() {
+            if (GREET_EVERY_TIME) return false;
             try {
                 return localStorage.getItem('nelyce-hello') === '1'
                     || Boolean(localStorage.getItem('nelyce-glow'));
@@ -3785,6 +3792,7 @@
     const hush = () => {
         if ($('hello').hidden) return;
         $('hello').hidden = true;
+        document.body.classList.remove('is-greeting');
         greeted.write();
     };
 
@@ -3792,7 +3800,11 @@
     // thing landing in the middle of everything else landing.
     const greet = () => {
         if (greeted.read()) return;
-        setTimeout(() => { if (!greeted.read()) $('hello').hidden = false; }, 900);
+        setTimeout(() => {
+            if (greeted.read()) return;
+            $('hello').hidden = false;
+            document.body.classList.add('is-greeting');
+        }, 900);
     };
 
     $('hello-ok').addEventListener('click', hush);
