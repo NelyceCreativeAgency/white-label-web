@@ -4387,6 +4387,15 @@
         }
     };
 
+    // Which client this account or this grid is for. The same link can be made
+    // from the client's own page, where it is a list of ticks; here it is a
+    // dropdown, because this is where somebody is looking the moment they make
+    // the account and having to go and find the client afterwards is a detour.
+    const clientOptions = (selected) =>
+        `<option value="">Κανένας</option>` + purse.list
+            .map(one => `<option value="${esc(one.id)}"${one.id === selected ? ' selected' : ''}>${esc(one.name)}</option>`)
+            .join('');
+
     const roleOptions = (selected) => ['partner', 'client', 'admin']
         .map(role => `<option value="${role}"${role === selected ? ' selected' : ''}>${ROLE_NAMES[role]}</option>`)
         .join('');
@@ -4425,14 +4434,19 @@
         </li>`;
 
     const renderAccounts = () => {
+        const named = (clientId) => {
+            const one = purse.list.find(client => client.id === clientId);
+            return one ? ` · ${esc(one.name)}` : '';
+        };
+
         const userLines = admin.users
             .map(user => line(user.id, 'user', user.name,
-                `@${esc(user.username)} · ${ROLE_NAMES[user.role]} · ${esc(here(user))}`, user))
+                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}${named(user.clientId)} · ${esc(here(user))}`, user))
             .join('');
 
         const gridLines = admin.grids
             .map(grid => line(grid.id, 'grid', grid.name,
-                `${grid.handle ? `@${esc(grid.handle)} · ` : ''}${people((grid.memberIds || []).length)}`,
+                `${grid.handle ? `@${esc(grid.handle)} · ` : ''}${people((grid.memberIds || []).length)}${named(grid.clientId)}`,
                 grid))
             .join('');
 
@@ -4594,7 +4608,9 @@
                     <label>Όνομα<input data-f="name" value="${esc(user.name)}" maxlength="60"></label>
                     <label>Όνομα χρήστη<input data-f="username" value="${esc(user.username)}" maxlength="32" pattern="[A-Za-z0-9._\-]{3,32}" title="3 ως 32 λατινικοί χαρακτήρες, αριθμοί, τελεία, παύλα ή κάτω παύλα, χωρίς κενά" autocapitalize="none" spellcheck="false"></label>
                     <label>Ρόλος<select data-f="role">${roleOptions(user.role)}</select></label>
+                    <label>Πελάτης<select data-f="clientId">${clientOptions(user.clientId)}</select></label>
                 </div>
+                <p class="pw-note">Ο πελάτης είναι η εταιρεία ή ο άνθρωπος που τιμολογείς, και είναι αυτό που δίνει σε αυτόν τον λογαριασμό τη σελίδα «Ο λογαριασμός μου» με τα τιμολόγιά του. Ισχύει μόνο για λογαριασμούς με ρόλο πελάτη.</p>
 
                 <label class="edit-label pw-head" for="acct-password">Κωδικός</label>
                 <span class="pw-field">
@@ -4623,6 +4639,7 @@
                 <div class="row-fields">
                     <label>Όνομα<input data-f="name" value="${esc(grid.name)}" maxlength="60"></label>
                     <label>Instagram handle<input data-f="handle" value="${esc(grid.handle)}" maxlength="40" placeholder="χωρίς το @"></label>
+                    <label>Πελάτης<select data-f="clientId">${clientOptions(grid.clientId)}</select></label>
                 </div>
 
                 <label class="edit-label pw-head">Εικονίδιο στη λίστα</label>

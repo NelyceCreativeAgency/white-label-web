@@ -35,6 +35,7 @@ const gridOut = (grid) => ({
     highlights: Array.isArray(grid.highlights) ? grid.highlights : [],
     slots: Number(grid.slots) || 0,
     memberIds: Array.isArray(grid.memberIds) ? grid.memberIds : [],
+    clientId: grid.clientId || null,
     createdAt: grid.createdAt || null
 });
 
@@ -102,6 +103,15 @@ const patchUser = (doc, me, body) => {
         }
     }
 
+    if (body.clientId !== undefined) {
+        const wanted = text(body.clientId, 40);
+        user.clientId = wanted && doc.clients.some(one => one.id === wanted) ? wanted : null;
+    }
+
+    // Whatever was asked for, an account that is not a client's belongs to
+    // nobody. This runs last so it has the final say over both boxes.
+    if (user.role !== 'client') user.clientId = null;
+
     if (body.password !== undefined && body.password !== '') {
         if (String(body.password).length < MIN_PASSWORD) throw new Error('short-password');
         user.password = auth.hashPassword(String(body.password));
@@ -150,6 +160,11 @@ const patchGrid = (doc, body) => {
     }
     if (body.memberIds !== undefined) grid.memberIds = cleanMembers(doc, body.memberIds);
 
+    if (body.clientId !== undefined) {
+        const wanted = text(body.clientId, 40);
+        grid.clientId = wanted && doc.clients.some(one => one.id === wanted) ? wanted : null;
+    }
+
     return grid;
 };
 
@@ -172,6 +187,7 @@ module.exports = async (req, res) => {
                 users: doc.users.map(user => ({
                     ...accounts.publicUser(user),
                     password: auth.openPassword(user.secret),
+                    clientId: user.clientId || null,
                     ...here[user.id]
                 })),
                 grids: doc.grids.map(gridOut)
