@@ -1967,6 +1967,20 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     body.is-chatting .app-chat { min-height: 0; }
     body.is-chatting .chat-log { overscroll-behavior: contain; }
 
+    /* While somebody is writing, three things hold still: the name at the top,
+       the box they are writing in, and the keyboard under it. Everything else
+       gives up its room.
+
+       The sentence about who reads this and the row of tabs are both fixed
+       bands above the messages, and together they are a third of what is left
+       of a phone once a keyboard is up. They have been read by then. */
+    body.is-typing .chat-banner,
+    body.is-typing .room-tabs { display: none; }
+
+    /* The top bar of the app goes too. The conversation has a name of its own
+       three lines below it, and one of the two is saying it twice. */
+    body.is-typing .app-top { display: none; }
+
     .chat-form { padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
     .chat-send { width: 40px; height: 40px; }
 

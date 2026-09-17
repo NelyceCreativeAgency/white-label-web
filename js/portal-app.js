@@ -3182,13 +3182,23 @@
     $('chat-text').addEventListener('input', growBox);
 
     // A keyboard arriving takes half the screen, and the half it takes is the
-    // half the last message was in.
+    // half the last message was in. What is left goes to the messages: the
+    // stylesheet folds away everything between the name and them.
     $('chat-text').addEventListener('focus', () => {
+        document.body.classList.add('is-typing');
+
+        // The keyboard takes a moment to arrive and the measurements are only
+        // worth anything once it has.
         setTimeout(() => {
             fitToKeyboard();
             const log = $('chat-log');
             log.scrollTop = log.scrollHeight;
-        }, 250);
+        }, 260);
+    });
+
+    $('chat-text').addEventListener('blur', () => {
+        document.body.classList.remove('is-typing');
+        setTimeout(fitToKeyboard, 120);
     });
 
     $('chat-log').addEventListener('click', async (clicked) => {
