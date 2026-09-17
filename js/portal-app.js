@@ -4999,17 +4999,24 @@
                 .filter(band => !paid || band.paid)
                 .reduce((total, band) => total + (band.to - band.from), 0);
 
-            const pin = (n) => `${(Math.min(1, Math.max(0, n)) * 100).toFixed(1)}%`;
+            // Stops land on whole days and the two ends land exactly on the
+            // edges, so a band that runs to the end of the month runs to the
+            // end of the square rather than a rounding of a percent short of it.
+            const pin = (n) => {
+                const at = Math.min(1, Math.max(0, n));
+                return at <= 0 ? '0%' : at >= 1 ? '100%' : `${(at * 100).toFixed(2)}%`;
+            };
+
             const paints = [];
             let at = 0;
 
             bands.forEach(band => {
-                if (band.from > at) paints.push(`transparent ${pin(at)} ${pin(band.from)}`);
+                if (band.from - at > 0.001) paints.push(`transparent ${pin(at)} ${pin(band.from)}`);
                 paints.push(`${band.paid ? 'rgba(255,107,53,.85)' : 'rgba(255,107,53,.22)'} `
                     + `${pin(Math.max(at, band.from))} ${pin(band.to)}`);
                 at = Math.max(at, band.to);
             });
-            if (at < 1) paints.push(`transparent ${pin(at)} 100%`);
+            if (1 - at > 0.001) paints.push(`transparent ${pin(at)} 100%`);
 
             // All of it paid for reads as a full square with dark lettering.
             // Anything less keeps the lighter lettering, because half a square

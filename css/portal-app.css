@@ -3383,20 +3383,22 @@ li.none-yet {
    the subscription, so the shorthand is never used here: it would wipe the
    bands out along with everything else. */
 .month {
-    padding: 7px 0;
+    padding: 8px 0;
     font-size: .6rem;
     text-align: center;
     color: rgba(184, 186, 194, .32);
     background-color: rgba(255, 255, 255, .03);
-    border: 1px solid transparent;
     border-radius: 7px;
 }
 
 /* Something of it is covered, but not all of it paid for. */
 .month.is-part { color: #ffc4a4; }
 
-/* Something of it is charged and not settled. */
-.month.is-due { border-color: rgba(255, 107, 53, .55); }
+/* Something of it is charged and not settled. An inset shadow rather than a
+   border: a border is a millimetre of the box that the fill underneath has to
+   be drawn through, and at a rounded corner that leaves a hair of a line at
+   each end of the square. This sits on top of the fill and takes no width. */
+.month.is-due { box-shadow: inset 0 0 0 1px rgba(255, 107, 53, .55); }
 
 /* The whole of it, paid. */
 .month.is-full {
@@ -3404,7 +3406,7 @@ li.none-yet {
     font-weight: var(--fw-semibold);
 }
 
-.month.is-now { box-shadow: 0 0 0 1px rgba(255, 255, 255, .28); }
+.month.is-now { outline: 1px solid rgba(255, 255, 255, .28); outline-offset: -1px; }
 
 .months-how { margin-top: 10px; font-size: .72rem; color: rgba(184, 186, 194, .5); }
 
@@ -3487,7 +3489,7 @@ li.none-yet {
     .client-id { grid-template-columns: 46px minmax(0, 1fr) auto; gap: 12px; }
     .client-face { width: 46px; height: 46px; font-size: 1.1rem; }
     .client-who h2 { font-size: 1.08rem; }
-    .month { font-size: .54rem; padding: 6px 0; border-radius: 5px; }
+    .month { font-size: .54rem; padding: 7px 0; border-radius: 5px; }
     .sub-top {
         grid-template-columns: minmax(0, 1fr) auto;
         grid-template-areas: "name gear" "price price";
