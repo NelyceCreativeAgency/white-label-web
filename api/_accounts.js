@@ -25,7 +25,7 @@ exports.SLOTS = SLOTS;
 
 exports.newId = (prefix) => `${prefix}_${crypto.randomBytes(8).toString('hex')}`;
 
-const EMPTY = () => ({ users: [], grids: [], clients: [], updatedAt: null });
+const EMPTY = () => ({ users: [], grids: [], clients: [], projects: [], updatedAt: null });
 
 exports.readAccounts = async () => {
     const doc = await store.readJson(ACCOUNTS_KEY);
@@ -36,6 +36,11 @@ exports.readAccounts = async () => {
         // Added after the portal had been in use for a while, so a document
         // written before clients existed reads as a portal with none.
         clients: Array.isArray(doc.clients) ? doc.clients : [],
+        // The same, and for the same reason. A project is small — a name, a
+        // picture and who is on it — and it is wanted on every request that
+        // asks what somebody may open, so it lives here beside the grids
+        // rather than in a document of its own that would have to be fetched.
+        projects: Array.isArray(doc.projects) ? doc.projects : [],
         updatedAt: doc.updatedAt || null
     };
 };
@@ -104,6 +109,34 @@ exports.canEdit = canEdit;
 
 exports.gridsFor = (doc, user) =>
     doc.grids.filter(grid => canView(user, grid));
+
+// --- projects ---------------------------------------------------------------
+// A project is the team's own room: where the work between us is arranged,
+// which is not the same thing as the work itself. A grid is what a client is
+// shown; a project is how it got made, and a client has no place in one.
+//
+// Anybody who is not a client may start one and put whoever they work with on
+// it. What they may not do is reach into somebody else's: being on it is the
+// whole of the permission, and the person who started it is the one who may
+// change who else is.
+exports.findProject = (doc, id) => doc.projects.find(one => one.id === id) || null;
+
+exports.mayHaveProjects = (user) => user.role === 'admin' || user.role === 'partner';
+
+const onProject = (user, project) =>
+    Array.isArray(project.memberIds) && project.memberIds.includes(user.id);
+
+exports.canViewProject = (user, project) =>
+    Boolean(project) && exports.mayHaveProjects(user)
+    && (user.role === 'admin' || onProject(user, project));
+
+// Renaming it, changing its picture, saying who is on it and taking it away.
+// The admin, and whoever started it — not everybody who was invited into it.
+exports.canRunProject = (user, project) =>
+    Boolean(project) && (user.role === 'admin' || project.by === user.id);
+
+exports.projectsFor = (doc, user) =>
+    doc.projects.filter(project => exports.canViewProject(user, project));
 
 // Which password an account is on. It goes up by one every time the password
 // is changed, and a cookie is only good for the count it was handed out under.

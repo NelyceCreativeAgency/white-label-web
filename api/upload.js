@@ -191,13 +191,20 @@ module.exports = async (req, res) => {
         // Three things a picture can belong to, and each one decides for itself
         // who may add to it. The folder it lands in is decided here too, so a
         // request can never talk its way into somebody else's.
-        const kind = body.kind === 'me' ? 'me' : body.kind === 'client' ? 'client' : 'grid';
+        const kind = ['me', 'client', 'project'].includes(body.kind) ? body.kind : 'grid';
         let holds;
 
         if (kind === 'me') {
             // A picture of yourself hangs off no grid: everybody has one
             // account and may put a face on it, client and partner alike.
             holds = `people/${me.id}`;
+        } else if (kind === 'project') {
+            // A project's picture is chosen before the project exists, so there
+            // is no project yet to ask permission of. What is asked instead is
+            // whether this account is one that may have projects at all, and
+            // the picture is filed under whoever chose it.
+            if (!accounts.mayHaveProjects(me)) return res.status(403).json({ error: 'not-allowed' });
+            holds = `projects/${me.id}`;
         } else if (kind === 'client') {
             // A client has no picture of its own: this is the photograph on the
             // account they sign in with, which the admin may set from their

@@ -187,6 +187,14 @@
 .app-chat-nav,
 .app-admin-nav { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, .07); }
 
+/* Starting a room is not opening one, so the line that does it is quieter than
+   the rooms above it and says what it is rather than naming a thing. */
+.app-nav-new { margin-top: 2px; color: var(--text-secondary); }
+.app-nav-new strong { font-weight: var(--fw-regular); }
+.app-nav-new svg { width: 17px; height: 17px; flex: 0 0 auto;
+    fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.app-nav-new:hover { color: var(--text-primary); }
+
 .app-me {
     position: relative;
     margin-top: 16px;

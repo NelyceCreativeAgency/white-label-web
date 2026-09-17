@@ -349,6 +349,7 @@
 
         await loadGrids();
         await loadClients();
+        await loadProjects();
         loadFeed();
         loadChats();
 
@@ -363,6 +364,10 @@
         }
 
         if (view === 'accounts' && state.me.role === 'admin') { openAccounts(); return; }
+        if (view === 'project' && kind && rooms.list.some(one => one.id === kind)) {
+            openProject(kind);
+            return;
+        }
         // Somebody's column of charges: one of the clients in the list, or —
         // for the admin, who has no list of partners to check against — an
         // account, which says what it is in its own prefix.
@@ -399,6 +404,251 @@
         }
         renderSidebar();
     };
+
+    // --- projects ----------------------------------------------------------
+    // The team's own rooms. A client has none and is not shown the category at
+    // all; everybody else may start one and put whoever they work with on it.
+    const rooms = { list: [], people: [], open: null };
+
+    const loadProjects = async () => {
+        if (!state.me || state.me.role === 'client') { rooms.list = []; renderProjectNav(); return; }
+
+        try {
+            const data = await api('/api/projects');
+            rooms.list = data.projects || [];
+            rooms.people = data.people || [];
+        } catch {
+            rooms.list = [];
+        }
+        renderProjectNav();
+    };
+
+    const renderProjectNav = () => {
+        const wrap = $('app-projects-nav');
+        const list = $('app-projects');
+
+        wrap.hidden = Boolean(!state.me || state.me.role === 'client');
+        if (wrap.hidden) return;
+
+        list.innerHTML = rooms.list.length
+            ? rooms.list.map(one => `
+                <li>
+                    <button class="app-nav-item${rooms.open && rooms.open.id === one.id ? ' is-on' : ''}"
+                            type="button" data-project="${esc(one.id)}">
+                        ${faceOf({ id: one.id, name: one.name, icon: one.icon }, 'app-nav-dot')}
+                        <span class="app-nav-text">
+                            <strong>${esc(one.name)}</strong>
+                            <small>${one.members.length === 1
+                                ? '1 άτομο' : `${one.members.length} άτομα`}</small>
+                        </span>
+                    </button>
+                </li>`).join('')
+            : '<li class="app-grids-empty">Κανένα ακόμα</li>';
+    };
+
+    const openProject = async (id) => {
+        const room = rooms.list.find(one => one.id === id);
+        if (!room) { await loadProjects(); }
+
+        const found = rooms.list.find(one => one.id === id);
+        if (!found) { toast('Το project δεν βρέθηκε.', 'bad'); return; }
+
+        rooms.open = found;
+        $('app-title').textContent = found.name;
+        renderProject();
+        showView('project');
+        where.write('project', found.id);
+        renderProjectNav();
+    };
+
+    const renderProject = () => {
+        const room = rooms.open;
+        if (!room) return;
+
+        $('view-project').innerHTML = `
+            <section class="panel client-card">
+                <div class="client-id">
+                    ${faceOf({ id: room.id, name: room.name, icon: room.icon }, 'client-face')}
+                    <div class="client-who">
+                        <h2>${esc(room.name)}</h2>
+                        <p>${room.members.map(one => esc(one.name)).join(' · ')}</p>
+                    </div>
+                    ${room.mine ? `<button class="lister-gear" type="button" id="prj-open"
+                                           aria-label="Ρυθμίσεις project">${GEAR}</button>` : ''}
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Αιτήματα</h2>
+                    <p>Εδώ θα μπαίνει ό,τι ζητάει ο ένας από τον άλλον μέσα σε αυτό το project, με τον σύνδεσμό του και την απάντησή του, ώστε να μη χάνεται σε αλληλογραφία.</p>
+                </div>
+                <p class="none-yet">Έρχονται.</p>
+            </section>
+        `;
+    };
+
+    $('view-project').addEventListener('click', (event) => {
+        if (event.target.closest('#prj-open')) openProjectPanel(rooms.open);
+    });
+
+    // The room's own settings: what it is called, what it looks like, and who
+    // is in it. The same panel starts one and changes one, because there is
+    // nothing different to say the first time.
+    const roomEdit = { id: null, icon: null, picked: false };
+
+    const sayPrj = (message) => {
+        $('prj-error').textContent = message || '';
+        $('prj-error').hidden = !message;
+    };
+
+    const shutPrj = () => {
+        roomEdit.id = null;
+        $('prj-modal').hidden = true;
+        unlock();
+    };
+
+    const openProjectPanel = (room) => {
+        roomEdit.id = room ? room.id : null;
+        roomEdit.icon = room ? (room.icon || null) : null;
+        roomEdit.picked = false;
+        sayPrj('');
+        closeSidebar();
+
+        const inside = room ? room.memberIds : [state.me.id];
+        // Whoever started it cannot be taken off it, so their box is ticked and
+        // cannot be unticked. A room you made and cannot enter is a bug wearing
+        // the clothes of a permission.
+        const owner = room ? room.by : state.me.id;
+
+        $('prj-title').textContent = room ? room.name : 'Νέο project';
+        $('prj-sub').textContent = room
+            ? 'Το όνομα, η εικόνα, και ποιοι δουλεύουν πάνω σε αυτό.'
+            : 'Ένα όνομα, μια εικόνα αν θες, και ποιοι δουλεύουν πάνω σε αυτό. Εσύ μπαίνεις μόνος σου.';
+
+        $('prj-body').innerHTML = `
+            <div class="row-fields">
+                <label>Όνομα<input data-f="name" value="${esc(room ? room.name : '')}"
+                                   maxlength="60" placeholder="π.χ. Ανακατασκευή site"></label>
+            </div>
+
+            <label class="edit-label pw-head">Εικόνα</label>
+            <div class="face-edit">
+                <span class="face-big" id="prj-face"></span>
+                <span class="face-acts">
+                    <button class="app-ghost" type="button" data-do="pick-prj">Διάλεξε εικόνα</button>
+                    <button class="app-ghost app-danger" type="button" data-do="clear-prj"${
+                        roomEdit.icon ? '' : ' hidden'}>Αφαίρεση</button>
+                </span>
+            </div>
+
+            <fieldset class="row-members">
+                <legend>Ποιοι δουλεύουν πάνω σε αυτό</legend>
+                ${rooms.people.length ? rooms.people.map(one => `
+                    <label class="member">
+                        <input type="checkbox" data-member="${esc(one.id)}"${
+                            inside.includes(one.id) ? ' checked' : ''}${
+                            one.id === owner ? ' disabled' : ''}>
+                        <span>${esc(one.name)} <small>@${esc(one.username)}</small></span>
+                    </label>`).join('')
+                    : '<p class="row-none">Δεν υπάρχει άλλος λογαριασμός ακόμα.</p>'}
+            </fieldset>`;
+
+        paintFace($('prj-face'),
+                  { id: roomEdit.id || state.me.id, name: room ? room.name : 'Νέο', icon: roomEdit.icon },
+                  'face-big');
+
+        $('prj-delete').hidden = !room;
+        $('prj-modal').hidden = false;
+        document.body.classList.add('is-locked');
+    };
+
+    $('project-new').addEventListener('click', () => openProjectPanel(null));
+
+    $('prj-body').addEventListener('click', (event) => {
+        const button = event.target.closest('[data-do]');
+        if (!button) return;
+
+        if (button.dataset.do === 'clear-prj') {
+            roomEdit.icon = null;
+            roomEdit.picked = true;
+            paintFace($('prj-face'), { id: roomEdit.id || state.me.id, name: $('prj-title').textContent }, 'face-big');
+            button.hidden = true;
+            return;
+        }
+
+        if (button.dataset.do !== 'pick-prj') return;
+
+        pickFiles(false, async (files) => {
+            sayPrj('');
+            busy('Ανέβασμα…');
+            try {
+                const { url } = await acquire(files[0], SMALL_SIDE, 'project');
+                roomEdit.icon = url;
+                roomEdit.picked = true;
+                paintFace($('prj-face'),
+                          { id: roomEdit.id || state.me.id, name: $('prj-title').textContent, icon: url },
+                          'face-big');
+                $('prj-body').querySelector('[data-do="clear-prj"]').hidden = false;
+            } catch (err) {
+                sayPrj(explain(err));
+            } finally {
+                busy('');
+            }
+        });
+    });
+
+    $('prj-save').addEventListener('click', async () => {
+        const body = $('prj-body');
+        const name = body.querySelector('[data-f="name"]').value.trim();
+        if (!name) { sayPrj('Χρειάζεται όνομα.'); return; }
+
+        const memberIds = Array.from(body.querySelectorAll('[data-member]'))
+            .filter(box => box.checked)
+            .map(box => box.getAttribute('data-member'));
+
+        sayPrj('');
+        busy('Αποθήκευση…');
+        try {
+            const sent = { name, memberIds };
+            // An untouched picture is not sent at all, so saving a name can
+            // never quietly take a picture away.
+            if (roomEdit.picked || !roomEdit.id) sent.icon = roomEdit.icon;
+
+            const back = roomEdit.id
+                ? await api('/api/projects', { method: 'PATCH', body: { id: roomEdit.id, ...sent } })
+                : await api('/api/projects', { method: 'POST', body: sent });
+
+            shutPrj();
+            await loadProjects();
+            toast(back.project ? 'Αποθηκεύτηκε.' : 'Αποθηκεύτηκε.');
+            if (back.project) await openProject(back.project.id);
+        } catch (err) {
+            sayPrj(explain(err));
+        } finally {
+            busy('');
+        }
+    });
+
+    $('prj-delete').addEventListener('click', async () => {
+        if (!roomEdit.id) return;
+        if (!confirm('Να διαγραφεί αυτό το project; Ό,τι έχει ειπωθεί μέσα του φεύγει μαζί του.')) return;
+
+        busy('Διαγραφή…');
+        try {
+            await api(`/api/projects?id=${encodeURIComponent(roomEdit.id)}`, { method: 'DELETE' });
+            shutPrj();
+            rooms.open = null;
+            await loadProjects();
+            toast('Διαγράφηκε.');
+            if (rooms.list.length) await openProject(rooms.list[0].id);
+            else showView('blank');
+        } catch (err) {
+            sayPrj(explain(err));
+        } finally {
+            busy('');
+        }
+    });
 
     // --- sidebar -----------------------------------------------------------
     const renderSidebar = () => {
@@ -606,7 +856,7 @@
     };
 
     const showView = (name) => {
-        ['grid', 'accounts', 'chat', 'client', 'blank'].forEach(view => {
+        ['grid', 'accounts', 'chat', 'client', 'project', 'blank'].forEach(view => {
             $(`view-${view}`).hidden = view !== name;
         });
 
@@ -1164,7 +1414,8 @@
 
     // The page stays still while any of the three panels is open.
     const unlock = () => {
-        const open = ['post-modal', 'edit-modal', 'hl-modal', 'acct-modal', 'me-modal', 'money-modal']
+        const open = ['post-modal', 'edit-modal', 'hl-modal', 'acct-modal', 'me-modal',
+                      'money-modal', 'prj-modal']
             .some(id => !$(id).hidden);
         if (!open) document.body.classList.remove('is-locked');
     };
@@ -4427,6 +4678,7 @@
         if (!item) return;
 
         if (item.dataset.grid) openGrid(item.dataset.grid);
+        else if (item.dataset.project) openProject(item.dataset.project);
         else if (item.dataset.client) openClient(item.dataset.client);
         else if (item.dataset.view === 'chat') openChat();
         else if (item.dataset.view === 'accounts') openAccounts();
