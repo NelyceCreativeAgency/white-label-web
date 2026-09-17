@@ -256,7 +256,7 @@
         // of the other person for a private one, which is the only difference
         // between the two as far as this file is concerned.
         chat: { gridId: null, gridName: '', picked: null, people: [],
-                messages: [], unread: 0, onlineCount: 0 }
+                messages: [], unread: 0, more: false, onlineCount: 0 }
     };
 
     const canEdit = () => Boolean(state.grid && state.grid.canEdit);
@@ -2793,7 +2793,7 @@
                     <strong>Όλη η ομάδα</strong>
                     <small>${c.last ? esc(lastLine(c.last)) : `Το διαβάζουν όλοι στο ${esc(c.gridName)}`}</small>
                 </span>
-                ${c.unread ? `<span class="chat-count">${c.unread}</span>` : ''}
+                ${c.unread ? `<span class="chat-count">${c.unread}${c.more ? '+' : ''}</span>` : ''}
             </button>`;
 
         $('chat-people').innerHTML = c.people.length
@@ -2805,7 +2805,7 @@
                         <strong>${esc(one.name)}</strong>
                         <small>${one.last ? esc(lastLine(one.last)) : `Μόνο εσύ και ${esc(one.name)}`}</small>
                     </span>
-                    ${one.unread ? `<span class="chat-count">${one.unread}</span>` : ''}
+                    ${one.unread ? `<span class="chat-count">${one.unread}${one.more ? '+' : ''}</span>` : ''}
                 </button>`).join('')
             : '<p class="chat-none">Δεν υπάρχει άλλος πάνω σε αυτό το project ακόμα.</p>';
 
@@ -2948,6 +2948,7 @@
             if (!picked) {
                 c.people = data.people || [];
                 c.last = data.last || null;
+                c.more = false;
                 c.gridName = (data.grid && data.grid.name) || c.gridName;
                 c.onlineCount = data.onlineCount || 0;
                 c.unread = 0;
@@ -2980,20 +2981,25 @@
     };
 
     // The list, without opening anything: what the badge in the sidebar counts.
+    // With the messages screen shut there is nothing on it to draw, so it asks
+    // for the numbers and none of the words behind them.
     const loadChats = async () => {
         const gridId = chatGridId();
         if (!gridId) { state.chat.people = []; state.chat.unread = 0; renderChatBadge(); return; }
 
+        const shut = $('view-chat').hidden;
+
         try {
-            const data = await api(`/api/chat?grid=${encodeURIComponent(gridId)}`);
+            const data = await api(`/api/chat?grid=${encodeURIComponent(gridId)}${shut ? '&only=counts' : ''}`);
             const c = state.chat;
             c.gridId = gridId;
             c.gridName = (data.grid && data.grid.name) || '';
             c.people = data.people || [];
             c.last = data.last || null;
+            c.more = Boolean(data.more);
             c.unread = data.unread || 0;
             c.onlineCount = data.onlineCount || 0;
-            if (c.picked === null && !$('view-chat').hidden) c.messages = data.messages || [];
+            if (c.picked === null && !shut) c.messages = data.messages || [];
         } catch {
             return;
         }
@@ -3112,13 +3118,17 @@
     // often, and the counts in the sidebar ask at the same pace as the bell.
     // A private thread's own request says nothing about anybody else, so every
     // third turn the list is fetched as well and the rest of the dots catch up.
+    // Fifteen seconds is the pace of somebody waiting for an answer, and it is
+    // only that while the conversation is on the screen. Behind the grid the
+    // same question was being asked four times a minute to move a number nobody
+    // was watching, so there it is asked once.
     let ticks = 0;
     setInterval(() => {
         if (document.hidden) return;
-
-        if ($('view-chat').hidden) { loadChats(); return; }
-
         ticks += 1;
+
+        if ($('view-chat').hidden) { if (ticks % 4 === 0) loadChats(); return; }
+
         openThread(state.chat.picked, { quiet: true });
         if (state.chat.picked && ticks % 3 === 0) loadChats();
     }, 15000);

@@ -49,10 +49,12 @@ exports.oldKey = (key) => key.replace(/^portal:dms:/, 'portal:dm:').replace(/^po
 exports.privateMark = (a, b) => `dm:${[a, b].sort().join('__')}`;
 exports.projectMark = (gridId) => `grid:${gridId}`;
 
-// What was said before this key was a list, if anything was.
+// What was said before this key was a list, if anything was. Found once and
+// folded into the list, so that a thread is one thing from then on.
 const before = async (key) => {
     const doc = await store.readJson(exports.oldKey(key));
-    return doc && Array.isArray(doc.messages) ? doc.messages : [];
+    const older = doc && Array.isArray(doc.messages) ? doc.messages : [];
+    return older;
 };
 
 // Anything past its month goes on the way past. A thread is in order, so what
@@ -85,6 +87,34 @@ exports.read = async (key) => {
 // doing it this way.
 exports.append = async (key, message) => {
     await store.listAdd(key, message, MAX_MESSAGES);
+};
+
+// --- a glance rather than a reading -----------------------------------------
+// The line beside somebody's name and the number next to it: what was said last
+// and how much of it has not been read. Neither needs the conversation, and
+// reading the whole of one to work them out was most of what this portal asked
+// its store for. Five people on a project meant five conversations read from
+// end to end, four times a minute, to draw five lines of text.
+//
+// The end of a list is where both answers are. Anybody with more than this many
+// unread has more than a number's worth, and is told so rather than counted.
+const GLANCE = 60;
+
+exports.glance = async (key, me, since) => {
+    let tail = await store.listTail(key, GLANCE);
+
+    // A conversation that has not been written in since it was a document is
+    // still a conversation, and this is the only time it is read for.
+    if (!tail.length) tail = (await before(key)).slice(-GLANCE);
+
+    const unread = exports.unreadIn(tail, me, since);
+
+    return {
+        last: exports.tail(tail),
+        unread,
+        // Every one of them unread means there may be more behind them.
+        more: unread >= GLANCE
+    };
 };
 
 // Only for taking something out of the middle, which is rare enough to afford

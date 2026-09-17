@@ -59,6 +59,12 @@ const listOut = (raw) => (Array.isArray(raw) ? raw : []).reduce((out, one) => {
 
 exports.listRead = async (key) => listOut(await command('LRANGE', key, '0', '-1'));
 
+// The last few, for anything that only needs to know how a list ends. Reading
+// four hundred messages to find out what the last one said is the sort of thing
+// a store bills for.
+exports.listTail = async (key, count) =>
+    listOut(await command('LRANGE', key, String(-count), '-1'));
+
 // Onto the end, and then the oldest trimmed off the front. The trim is a second
 // command rather than part of the first, which is fine: between the two the
 // list is one item over its length and nobody can tell.

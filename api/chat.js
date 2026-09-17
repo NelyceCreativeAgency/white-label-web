@@ -2,6 +2,7 @@
 //
 // GET  ?grid=<id>              -> the project thread, and who you can write to
 // GET  ?grid=<id>&with=<user>  -> the private thread between you and that one
+// GET  ?grid=<id>&only=counts  -> the same, without a word of any of them
 // POST { grid, with?, text }   -> say something
 // POST { grid, with?, action } -> 'seen' marks a conversation read, 'delete'
 //                                 takes back one of your own messages
@@ -45,7 +46,11 @@ module.exports = async (req, res) => {
         await presence.touch(me.id);
 
         if (req.method === 'GET') {
-            const messages = await chat.read(key);
+            // The sidebar wants a number and a line, not a conversation. Asked
+            // this way, nothing reads a thread from end to end.
+            const counting = (req.query && req.query.only) === 'counts';
+
+            const messages = counting ? [] : await chat.read(key);
 
             // A named thread is asked for on its own. The list that goes beside
             // it, and the markers that say how far each of them has been read,
@@ -71,24 +76,32 @@ module.exports = async (req, res) => {
 
             const people = [];
             for (const user of others) {
-                const theirs = await chat.read(chat.privateKey(me.id, user.id));
+                const look = await chat.glance(
+                    chat.privateKey(me.id, user.id), me,
+                    seen[chat.privateMark(me.id, user.id)]
+                );
+
                 people.push({
                     id: user.id,
                     name: user.name || user.username,
                     role: user.role,
                     avatar: user.avatar || null,
                     ...here[user.id],
-                    unread: chat.unreadIn(theirs, me, seen[chat.privateMark(me.id, user.id)]),
-                    last: chat.tail(theirs)
+                    ...look
                 });
             }
+
+            // Already in hand when the thread itself was asked for, and worth a
+            // glance of its own when it was not.
+            const mine = counting
+                ? await chat.glance(key, me, seen[mark])
+                : { unread: chat.unreadIn(messages, me, seen[mark]), last: chat.tail(messages), more: false };
 
             return res.status(200).json({
                 kind: 'project',
                 grid: { id: grid.id, name: grid.name },
                 messages,
-                unread: chat.unreadIn(messages, me, seen[mark]),
-                last: chat.tail(messages),
+                ...mine,
                 people,
                 // Everybody else on the project who is at their screen. You are
                 // not counted: you can see that you are here.
