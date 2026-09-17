@@ -127,7 +127,8 @@ module.exports = async (req, res) => {
         if (!said) return res.status(400).json({ error: 'empty-message' });
 
         const message = chat.newMessage(me, said);
-        const messages = await chat.append(key, message);
+        await chat.append(key, message);
+        const messages = await chat.read(key);
 
         // The bell. A private message is addressed, so only the person it was
         // written to is ever told about it.

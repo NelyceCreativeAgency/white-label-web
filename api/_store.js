@@ -73,6 +73,11 @@ exports.listAddFirst = async (key, value, keep) => {
     await command('LTRIM', key, '0', String(keep - 1));
 };
 
+// Everything from this position on, and the rest dropped. A list in order has
+// its oldest at the front, so taking the front off is how the old is forgotten
+// without reading, rewriting or even knowing what is in it.
+exports.listTrim = async (key, from) => { await command('LTRIM', key, String(from), '-1'); };
+
 // Writing a whole list out again, which only happens when something is taken
 // out of the middle of one.
 exports.listWrite = async (key, values) => {

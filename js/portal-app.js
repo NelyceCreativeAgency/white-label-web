@@ -2842,9 +2842,13 @@
         // as the conversation does, because forgetting which of the two you are
         // in is the one mistake this screen exists to prevent.
         $('chat-banner').className = `chat-banner ${team ? 'is-team' : 'is-private'}`;
+        // What is kept and for how long is said where it is written, not in a
+        // policy somewhere nobody opens.
+        const KEPT = 'Τα μηνύματα σβήνονται μετά από έναν μήνα.';
+
         $('chat-banner').innerHTML = team
-            ? `${TEAM_ICON}<span>Το διαβάζουν <strong>όλοι</strong> όσοι δουλεύουν στο ${esc(c.gridName)}.</span>`
-            : `${LOCK_ICON}<span>Ιδιωτικό. Το βλέπετε <strong>μόνο εσύ και ${esc(name)}</strong>.</span>`;
+            ? `${TEAM_ICON}<span>Το διαβάζουν <strong>όλοι</strong> όσοι δουλεύουν στο ${esc(c.gridName)}. ${KEPT}</span>`
+            : `${LOCK_ICON}<span>Ιδιωτικό. Το βλέπετε <strong>μόνο εσύ και ${esc(name)}</strong>. ${KEPT}</span>`;
 
         $('chat-text').placeholder = team
             ? 'Γράψε σε όλη την ομάδα'

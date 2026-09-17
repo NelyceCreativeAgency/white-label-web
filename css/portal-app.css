@@ -709,7 +709,7 @@
    one mistake this whole screen exists to prevent. */
 .chat-banner {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 9px;
     flex: 0 0 auto;
     margin: 0;

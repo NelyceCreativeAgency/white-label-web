@@ -13,6 +13,22 @@ const accounts = require('./_accounts');
 const MAX_TEXT = 2000;
 const MAX_MESSAGES = 400;   // the oldest fall off the end
 
+// How long a conversation keeps what was said in it, the project's and a
+// private one alike. This is a place to work out loud about pictures, and a
+// month is longer than anything said here is still about.
+//
+// It is also the answer to a question nobody asked out loud: a portal that kept
+// every word forever would be holding years of other people's talk on somebody
+// else's disk, for no reason anybody could give if asked.
+const KEEP_DAYS = 30;
+
+const past = (at) => {
+    const when = new Date(at).getTime();
+    return Number.isFinite(when) && Date.now() - when > KEEP_DAYS * 24 * 60 * 60 * 1000;
+};
+
+exports.KEEP_DAYS = KEEP_DAYS;
+
 exports.MAX_TEXT = MAX_TEXT;
 
 // A private thread is named by both people, in a fixed order, so that whoever
@@ -39,14 +55,36 @@ const before = async (key) => {
     return doc && Array.isArray(doc.messages) ? doc.messages : [];
 };
 
-exports.read = async (key) => (await before(key)).concat(await store.listRead(key));
+// Anything past its month goes on the way past. A thread is in order, so what
+// is too old is a run at the front of it, and dropping that run is a count
+// rather than a rewrite: nothing is read back, compared or written out again.
+//
+// Swept when it is read rather than on a timer. A conversation nobody opens is
+// a conversation nobody is being shown anything out of, and the day somebody
+// does open it is the day it matters that it is current.
+exports.read = async (key) => {
+    const older = await before(key);
+    const list = await store.listRead(key);
+
+    const keptOlder = older.filter(one => !past(one.at));
+    if (keptOlder.length !== older.length) {
+        if (keptOlder.length) await store.writeJson(exports.oldKey(key), { messages: keptOlder });
+        else await store.deleteKey(exports.oldKey(key));
+    }
+
+    const from = list.findIndex(one => !past(one.at));
+
+    if (from < 0 && list.length) { await store.deleteKey(key); return keptOlder; }
+    if (from > 0) await store.listTrim(key, from);
+
+    return keptOlder.concat(from < 0 ? [] : list.slice(from));
+};
 
 // One command, and nothing read back first. Two people writing in the same
 // second each get their own message on the end, which is the whole point of
 // doing it this way.
 exports.append = async (key, message) => {
     await store.listAdd(key, message, MAX_MESSAGES);
-    return exports.read(key);
 };
 
 // Only for taking something out of the middle, which is rare enough to afford
