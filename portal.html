@@ -45,11 +45,16 @@
         </a>
 
         <nav class="app-nav" aria-label="Περιήγηση">
+            <div class="app-clients-wrap" id="app-clients-wrap" hidden>
+                <p class="app-nav-label" id="app-clients-label">Πελάτες</p>
+                <input class="app-find" id="app-find" type="search" hidden
+                       placeholder="Αναζήτηση πελάτη" aria-label="Αναζήτηση πελάτη"
+                       autocomplete="off" autocapitalize="none" spellcheck="false">
+                <ul class="app-grids app-clients" id="app-clients"></ul>
+            </div>
+
             <p class="app-nav-label">Grids</p>
             <ul class="app-grids" id="app-grids"></ul>
-
-            <p class="app-nav-label" id="app-clients-label" hidden>Πελάτες</p>
-            <ul class="app-grids" id="app-clients" hidden></ul>
 
             <button class="app-nav-item app-nav-chat" type="button" data-view="chat" id="nav-chat" hidden>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.8-.9L3 20.5l1.5-4.6A8.4 8.4 0 0 1 3.6 12a8.4 8.4 0 0 1 8.4-8.5h.5a8.4 8.4 0 0 1 8.5 8z"/></svg>

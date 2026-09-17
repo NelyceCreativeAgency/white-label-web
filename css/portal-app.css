@@ -59,6 +59,39 @@
 
 .app-grids { list-style: none; margin: 0 0 8px; padding: 0; }
 
+/* The clients sit above the grids and are a different kind of thing: one is
+   the business, the other is the day's work. A faint line and a little air is
+   all that takes, and is quieter than a box around either of them. */
+.app-clients-wrap {
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+
+.app-find {
+    width: 100%;
+    margin: 0 0 10px;
+    padding: 8px 12px;
+    font: inherit;
+    font-size: .8rem;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 11px;
+}
+
+.app-find:focus { outline: none; border-color: var(--accent-orange); }
+.app-find::placeholder { color: rgba(184, 186, 194, .5); }
+
+/* Enough clients that the grids underneath would be pushed off the screen.
+   The list keeps its own scroll so that what is below it stays where it was. */
+.app-clients.is-long {
+    max-height: 272px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    overscroll-behavior: contain;
+}
+
 .app-grids-empty {
     padding: 10px 12px;
     font-size: .82rem;
@@ -2191,7 +2224,7 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     .chat-send { width: 40px; height: 40px; }
 
     /* Same reason as the message box: sixteen pixels or the page jumps. */
-    .ink, #note-text, .link-new input, .idea-bits input, .me-name-field { font-size: 16px; }
+    .ink, #note-text, .link-new input, .idea-bits input, .me-name-field, .app-find { font-size: 16px; }
 
     .room-open {
         display: inline-flex;

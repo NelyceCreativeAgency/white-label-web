@@ -4811,9 +4811,21 @@
     const MONTHS = ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μάι', 'Ιούν',
                     'Ιούλ', 'Αύγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'];
 
+    // Past a handful the list stops being something you read and becomes
+    // something you look through, and only then is it worth a box to look with.
+    const LONG_LIST = 5;
+    let hunt = '';
+
+    // Lower case and without its accents, so that a search for melina finds
+    // Μελίνα. Typing the tonos is not something anybody does in a hurry.
+    const plain = (said) => String(said || '').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
     const renderClientNav = () => {
+        const wrap = $('app-clients-wrap');
         const list = $('app-clients');
         const label = $('app-clients-label');
+        const box = $('app-find');
 
         // A category that hides itself until something is in it is a category
         // nobody ever finds, so for the admin the heading stays and says so,
@@ -4822,22 +4834,37 @@
         const boss = state.me && state.me.role === 'admin';
 
         if (!purse.list.length) {
-            label.hidden = !boss;
-            list.hidden = !boss;
+            wrap.hidden = !boss;
+            box.hidden = true;
             label.textContent = 'Πελάτες';
+            list.classList.remove('is-long');
             list.innerHTML = boss ? '<li class="app-grids-empty">Κανένας ακόμα</li>' : '';
             return;
         }
 
-        label.hidden = false;
-        list.hidden = false;
+        wrap.hidden = false;
         // The same list, and two entirely different things to the two people
         // reading it. One of them is looking at their clients; the other is
         // looking at themselves, and should never be shown a heading that
         // suggests there are others.
         label.textContent = boss ? 'Πελάτες' : 'Ο λογαριασμός μου';
 
-        list.innerHTML = purse.list.map(one => `
+        const many = boss && purse.list.length > LONG_LIST;
+        box.hidden = !many;
+        list.classList.toggle('is-long', many);
+        // A search box that has just gone away should not still be filtering.
+        if (!many) hunt = '';
+
+        const wanted = hunt
+            ? purse.list.filter(one => plain(one.name).includes(hunt) || plain(one.company).includes(hunt))
+            : purse.list;
+
+        if (!wanted.length) {
+            list.innerHTML = '<li class="app-grids-empty">Κανένα αποτέλεσμα</li>';
+            return;
+        }
+
+        list.innerHTML = wanted.map(one => `
             <li>
                 <button class="app-nav-item${purse.id === one.id ? ' is-on' : ''}"
                         type="button" data-client="${esc(one.id)}">
@@ -4852,6 +4879,13 @@
                 </button>
             </li>`).join('');
     };
+
+    // The box is outside the list it filters, so redrawing the list under it
+    // never takes the cursor away from what somebody is still typing.
+    $('app-find').addEventListener('input', (event) => {
+        hunt = plain(event.target.value.trim());
+        renderClientNav();
+    });
 
     const loadClients = async () => {
         // A partner is here to do the work. What the work was charged for is
