@@ -499,6 +499,8 @@
             : '<p class="ask-thread is-empty">Καμία απάντηση ακόμα.</p>';
     };
 
+    const TICK = '<svg class="tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>';
+
     const askCard = (ask) => {
         const forMe = ask.toId === state.me.id;
         const mine = ask.mine;
@@ -509,7 +511,12 @@
             : forMe ? 'προς εσένα' : `προς ${esc(ask.toName)}`;
 
         const noted = ask.gotIt.some(one => one.id === state.me.id);
+        const seen = ask.gotIt.filter(one => one.id !== state.me.id);
         const answers = ask.replies.length + ask.gotIt.length;
+
+        // Taking note is for whoever was asked. On a request to the room that
+        // is anybody in it; on one put to a person, that person.
+        const canNote = !shut && !mine && (!ask.toId || forMe);
 
         return `
             <li class="ask is-${esc(ask.face)}"
@@ -527,6 +534,10 @@
                 ${ask.shots.length ? `<div class="ask-shots">${ask.shots.map(url =>
                     `<img src="${esc(url)}" alt="" loading="lazy">`).join('')}</div>` : ''}
 
+                ${mine && seen.length ? `<p class="ask-seen">${TICK}${seen.length === 1
+                    ? `Το έλαβε ${esc(seen[0].name)} · ${esc(ago(seen[0].at))}`
+                    : `Το έλαβαν ${seen.length} άτομα · ${esc(ago(seen[seen.length - 1].at))}`}</p>` : ''}
+
                 <div class="ask-do">
                     <span class="ask-when">${esc(ago(ask.at))}${
                         answers ? ` · ${answers === 1 ? '1 απάντηση' : `${answers} απαντήσεις`}` : ''}</span>
@@ -537,8 +548,11 @@
                     <button class="${shut ? 'app-ghost' : 'btn btn-primary'}" type="button"
                             data-say="${esc(ask.id)}">${shut ? 'Δες το ιστορικό' : 'Άφησε feedback'}</button>
 
-                    ${!shut && !mine && !ask.toId && !noted
-                        ? `<button class="app-ghost" type="button" data-got="${esc(ask.id)}">Το έλαβα</button>` : ''}
+                    ${canNote && !noted
+                        ? `<button class="app-ghost ask-note" type="button" data-got="${esc(ask.id)}">${TICK}Το έλαβα</button>`
+                        : ''}
+
+                    ${canNote && noted ? `<span class="ask-noted">${TICK}Το έλαβες</span>` : ''}
 
                     ${mine && !shut ? `<button class="app-ghost" type="button"
                                               data-fix="${esc(ask.id)}">Επεξεργασία</button>` : ''}
@@ -3612,7 +3626,7 @@
         bill:   'σου καταχώρισε τιμολόγιο',
         ask:    'σου ζητάει κάτι',
         'ask-back': 'απάντησε σε ένα αίτημα',
-        'ask-got':  'έλαβε υπόψη ένα αίτημα'
+        'ask-got':  'έλαβε το αίτημά σου'
     };
 
     // A deleted post has no picture left to show, so its line gets the same

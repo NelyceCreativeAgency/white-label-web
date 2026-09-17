@@ -206,13 +206,18 @@ exports.reply = (ask, body, me) => {
     return line;
 };
 
-// Taking note of one that went to the room. Not an answer and not pretending to
-// be: it says somebody has seen it and is not going to write anything, which is
-// the honest end of most requests to everybody.
+// Taking note. Not an answer and not pretending to be: it says somebody has
+// seen it and has it, which is the honest end of most requests to a room and
+// the decent first word on one put to a person. Whoever asked hears about it,
+// because the thing they are actually waiting for is to know it arrived.
+//
+// Anybody in the room may take note of a request to the room. A request put to
+// one person may only be taken note of by that person. Nobody takes note of
+// their own: saying you have seen what you wrote means nothing.
 exports.got = (ask, me) => {
     if (ask.closedAt) throw new Error('ask-closed');
-    if (ask.toId) throw new Error('not-allowed');
     if (ask.by === me.id) throw new Error('not-allowed');
+    if (ask.toId && ask.toId !== me.id) throw new Error('not-allowed');
 
     ask.gotIt = (ask.gotIt || []).filter(one => one.id !== me.id);
     ask.gotIt.push({ id: me.id, at: new Date().toISOString() });
