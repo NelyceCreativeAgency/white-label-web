@@ -102,11 +102,26 @@ const EMPTY_MONEY = () => ({ subs: [], entries: [], updatedAt: null });
 const readMoney = async (clientId) => {
     const doc = await store.readJson(moneyKey(clientId));
     if (!doc) return EMPTY_MONEY();
-    return {
+
+    const money = {
         subs: Array.isArray(doc.subs) ? doc.subs : [],
         entries: Array.isArray(doc.entries) ? doc.entries : [],
         updatedAt: doc.updatedAt || null
     };
+
+    // Rows written before a turn took its start from the day it was paid still
+    // carry a start of their own. A row that disagrees with the rule is worse
+    // than one that is merely old, so it is brought into line the first time
+    // the document is read and written back once. After that nothing changes
+    // and nothing is written.
+    const mended = money.entries.filter(entry => {
+        const was = `${entry.on}|${entry.to}`;
+        settle(money, entry);
+        return `${entry.on}|${entry.to}` !== was;
+    });
+
+    if (mended.length) await writeMoney(clientId, money);
+    return money;
 };
 
 const writeMoney = async (clientId, doc) => {
@@ -200,7 +215,8 @@ const moneyOut = (money, mine) => ({
     subs: money.subs.map(sub => subOut(sub, money.entries, mine)),
     // Newest first: a ledger is read from the top, and the top is now.
     entries: money.entries.slice()
-        .sort((a, b) => String(b.on).localeCompare(String(a.on)) || String(b.at).localeCompare(String(a.at)))
+        .sort((a, b) => String(b.paidAt || b.on).localeCompare(String(a.paidAt || a.on))
+                     || String(b.at).localeCompare(String(a.at)))
         .map(entry => entryOut(entry, mine)),
     owed: sumOf(money.entries, 'due'),
     // What they have paid you altogether is a figure for you. They can see

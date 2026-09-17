@@ -5048,8 +5048,12 @@
         const sub = entry.subId && purse.money.subs.find(one => one.id === entry.subId);
         const under = [];
         if (entry.to) under.push(`Καλύπτει ως ${onDay(entry.to)}`);
+        // The date in the margin is the day the money came in, because that is
+        // what somebody reading down this column is looking for. Where the
+        // charge was made on another day, that day is said here rather than
+        // lost: an invoice from November settled in September is both.
         if (entry.status === 'paid' && entry.paidAt && entry.paidAt !== entry.on) {
-            under.push(`Πληρώθηκε ${onDay(entry.paidAt)}`);
+            under.push(`Χρεώθηκε ${onDay(entry.on)}`);
         }
         if (entry.invoiceNo) under.push(`Τιμολόγιο ${esc(entry.invoiceNo)}`);
         if (sub && sub.title !== entry.title) under.push(esc(sub.title));
@@ -5067,7 +5071,7 @@
 
         return `
             <li class="led" data-entry="${esc(entry.id)}">
-                <span class="led-when">${onDay(entry.on)}</span>
+                <span class="led-when">${onDay(entry.status === 'paid' && entry.paidAt ? entry.paidAt : entry.on)}</span>
                 <span class="led-what">
                     <strong>${esc(entry.title)}</strong>
                     ${under.length ? `<small>${under.join(' · ')}</small>` : ''}
