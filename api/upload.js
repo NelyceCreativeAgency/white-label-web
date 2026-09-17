@@ -1,5 +1,6 @@
-// POST { grid, type, data }          -> { url }
-// POST { kind: 'me', type, data }    -> { url }, a picture of yourself
+// POST { grid, type, data }                    -> { url }
+// POST { kind: 'me', type, data }              -> { url }, a picture of yourself
+// POST { kind: 'client', client, type, data }  -> { url }, the square a client is known by
 //
 // One picture at a time. The browser has already shrunk it before it gets here
 // (see js/portal-app.js): what arrives is a screen-sized JPEG, base64 in a JSON
@@ -35,14 +36,27 @@ module.exports = async (req, res) => {
 
         const body = readBody(req);
 
-        // A picture of yourself hangs off no grid: everybody has one account
-        // and may put a face on it, client and partner alike.
-        const own = body.kind === 'me';
-        const grid = own ? null : accounts.findGrid(doc, body.grid);
+        // Three things a picture can belong to, and each one decides for itself
+        // who may add to it. The folder it lands in is decided here too, so a
+        // request can never talk its way into somebody else's.
+        const kind = body.kind === 'me' ? 'me' : body.kind === 'client' ? 'client' : 'grid';
+        let holds;
 
-        if (!own) {
+        if (kind === 'me') {
+            // A picture of yourself hangs off no grid: everybody has one
+            // account and may put a face on it, client and partner alike.
+            holds = `people/${me.id}`;
+        } else if (kind === 'client') {
+            // The square a client is known by, which only the admin sets.
+            if (me.role !== 'admin') return res.status(403).json({ error: 'not-allowed' });
+            const client = doc.clients.find(one => one.id === body.client);
+            if (!client) return res.status(404).json({ error: 'no-such-client' });
+            holds = `clients/${client.id}`;
+        } else {
+            const grid = accounts.findGrid(doc, body.grid);
             if (!grid || !accounts.canView(me, grid)) return res.status(404).json({ error: 'no-such-grid' });
             if (!accounts.canEdit(me, grid)) return res.status(403).json({ error: 'not-allowed' });
+            holds = `grids/${grid.id}`;
         }
 
         const type = String(body.type || '');
@@ -56,8 +70,7 @@ module.exports = async (req, res) => {
         if (!bytes.length) return res.status(400).json({ error: 'empty-image' });
         if (bytes.length > MAX_BYTES) return res.status(413).json({ error: 'too-large' });
 
-        const where = own ? `people/${me.id}` : `grids/${grid.id}`;
-        const { url } = await blob.client(req).put(`${where}/${Date.now()}.${extension}`, bytes, type);
+        const { url } = await blob.client(req).put(`${holds}/${Date.now()}.${extension}`, bytes, type);
         return res.status(200).json({ url });
     } catch (err) {
         return res.status(500).json({ error: err.message });

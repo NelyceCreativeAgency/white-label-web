@@ -2286,10 +2286,12 @@
         const { blob, w, h } = await shrink(source, maxSide);
         const data = await asBase64(blob);
 
-        // A picture of a person hangs off no grid; everything else does, and
-        // says which one, because an admin may be looking at any of them.
-        const belongs = where === 'me'
-            ? { kind: 'me' }
+        // A picture of a person hangs off no grid, and a client's square hangs
+        // off no grid either. Everything else does and says which one, because
+        // an admin may be looking at any of them. An id carries what it is in
+        // its own prefix, which is where this reads it from.
+        const belongs = where === 'me' ? { kind: 'me' }
+            : String(where || '').startsWith('cli_') ? { kind: 'client', client: where }
             : { grid: where || (state.grid && state.grid.id) };
 
         const res = await api('/api/upload', {

@@ -480,6 +480,12 @@ module.exports = async (req, res) => {
                 // belonging to anybody, because deleting a client should never
                 // be a way of deleting a year of work by accident.
                 await store.deleteKey(moneyKey(client.id));
+                // Their square goes too. A file nobody can reach any more is
+                // storage being paid for, and if the store cannot be reached
+                // the client still disappears: litter is not a failure.
+                if (client.icon) {
+                    try { await blob.client(req).del([client.icon]); } catch { /* litter */ }
+                }
                 doc.users.forEach(user => { if (user.clientId === client.id) user.clientId = null; });
                 doc.grids.forEach(grid => { if (grid.clientId === client.id) grid.clientId = null; });
                 doc.clients = doc.clients.filter(one => one.id !== client.id);
