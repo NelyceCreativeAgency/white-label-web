@@ -531,8 +531,11 @@
 
                 ${ask.said ? `<p class="ask-said">${esc(ask.said)}</p>` : ''}
 
-                ${ask.shots.length ? `<div class="ask-shots">${ask.shots.map(url =>
-                    `<img src="${esc(url)}" alt="" loading="lazy">`).join('')}</div>` : ''}
+                ${ask.shots.length ? `<div class="ask-shots">${ask.shots.map((url, at) =>
+                    `<button class="ask-shot-open" type="button" data-shot="${at}"
+                             aria-label="Δες τη ${at + 1}η εικόνα">
+                         <img src="${esc(url)}" alt="" loading="lazy">
+                     </button>`).join('')}</div>` : ''}
 
                 ${mine && seen.length ? `<p class="ask-seen">${TICK}${seen.length === 1
                     ? `Το έλαβε ${esc(seen[0].name)} · ${esc(ago(seen[0].at))}`
@@ -678,6 +681,15 @@
         const card = event.target.closest('.ask');
         if (!card) return;
         const room = card.dataset.room;
+
+        // A picture on a request opens at full size, before anything else on
+        // the card gets a chance to open the card itself.
+        const shot = event.target.closest('[data-shot]');
+        if (shot) {
+            const ask = rooms.asks.find(one => one.id === card.dataset.ask);
+            if (ask) openShots(ask.shots, Number(shot.dataset.shot));
+            return;
+        }
 
         const say = event.target.closest('[data-say]');
         if (say) { openSayPanel(say.dataset.say, room); return; }
@@ -1928,7 +1940,7 @@
         const post = state.posts[slot];
         if (!post) return;
 
-        state.viewing = { slot, index: index || 0 };
+        state.viewing = { slot, index: index || 0, shots: null };
         state.replyTo = null;
         state.editingNote = null;
         showReplying();
@@ -1948,34 +1960,61 @@
     const closeViewer = () => {
         state.viewing = null;
         $('post-modal').hidden = true;
+        $('post-modal').classList.remove('is-bare');
         unlock();
     };
 
+    // Pictures on their own: the ones hung on a request, opened the same way a
+    // carousel is, with the column beside them put away because there is
+    // nothing to say about them here.
+    const openShots = (urls, index) => {
+        if (!urls.length) return;
+
+        state.viewing = { slot: null, index: index || 0, shots: urls.map(url => ({ url })) };
+        state.replyTo = null;
+        state.editingNote = null;
+        showReplying();
+
+        $('post-modal').classList.add('is-bare');
+        $('post-modal').hidden = false;
+        document.body.classList.add('is-locked');
+        renderViewer();
+    };
+
     const renderViewer = () => {
-        const { slot, index } = state.viewing;
-        const post = state.posts[slot];
-        if (!post) { closeViewer(); return; }
+        const { slot, index, shots } = state.viewing;
+        const post = shots ? null : state.posts[slot];
+        if (!post && !shots) { closeViewer(); return; }
+
+        const images = post ? post.images : shots;
 
         // The strip is rebuilt only when what is on it has changed. Every note
         // written about a post comes back through here, and rebuilding it would
         // fetch every picture again to show the same ones.
         const track = $('post-track');
-        const key = `${post.id}:${post.updatedAt || ''}:${post.images.length}`;
+        const key = post
+            ? `${post.id}:${post.updatedAt || ''}:${post.images.length}`
+            : `shots:${images.map(one => one.url).join('|')}`;
 
         if (track.dataset.key !== key) {
             track.dataset.key = key;
-            track.innerHTML = post.images
+            track.innerHTML = images
                 .map(one => `<img src="${esc(one.url)}" alt="" draggable="false">`).join('');
         }
 
-        const many = post.images.length > 1;
+        const many = images.length > 1;
         $('post-prev').hidden = !many;
         $('post-next').hidden = !many;
         $('post-count').hidden = !many;
-        $('post-dots').innerHTML = many ? post.images.map(() => '<span></span>').join('') : '';
+        $('post-dots').innerHTML = many ? images.map(() => '<span></span>').join('') : '';
 
         markIndex();
         placeTrack(0, false);
+
+        // Everything below belongs to a post. Pictures on their own have none
+        // of it, and the column that holds it is put away rather than left
+        // standing empty beside them.
+        if (!post) return;
 
         $('post-caption').textContent = post.caption || '';
         $('post-caption').hidden = !post.caption;
@@ -2017,14 +2056,25 @@
         track.style.transform = `translateX(calc(${-100 * state.viewing.index}% + ${dx}px))`;
     };
 
+    // What the viewer is showing. A post's pictures, or the ones hung on a
+    // request, which have no caption, no heart and nothing said under them.
+    // Everything that only needs to know how many there are asks here, so the
+    // arrows, the dots, the keyboard and the finger all work either way.
+    const showing = () => {
+        if (!state.viewing) return [];
+        if (state.viewing.shots) return state.viewing.shots;
+        const post = state.posts[state.viewing.slot];
+        return post ? post.images : [];
+    };
+
     const markIndex = () => {
         if (!state.viewing) return;
 
-        const post = state.posts[state.viewing.slot];
-        if (!post) return;
+        const images = showing();
+        if (!images.length) return;
 
         const at = state.viewing.index;
-        $('post-count').textContent = `${at + 1}/${post.images.length}`;
+        $('post-count').textContent = `${at + 1}/${images.length}`;
 
         Array.from($('post-dots').children)
             .forEach((one, i) => one.classList.toggle('is-on', i === at));
@@ -2033,14 +2083,17 @@
     // Everything that changes which picture is showing goes through here: the
     // arrows, the keyboard and the finger all mean the same thing.
     const goTo = (want) => {
-        const post = state.posts[state.viewing.slot];
-        const count = post.images.length;
+        const images = showing();
+        const count = images.length;
+        if (!count) return;
 
         state.viewing.index = ((want % count) + count) % count;
 
         placeTrack(0, true);
         markIndex();
-        renderLike(post, post.images[state.viewing.index]);
+
+        const post = state.viewing.shots ? null : state.posts[state.viewing.slot];
+        if (post) renderLike(post, post.images[state.viewing.index]);
     };
 
     // --- the heart ----------------------------------------------------------
@@ -2353,8 +2406,10 @@
         if (swipe.id === event.pointerId) letGoOfSwipe(false);
     });
 
-    $('post-prev').addEventListener('click', () => goTo(state.viewing.index - 1));
-    $('post-next').addEventListener('click', () => goTo(state.viewing.index + 1));
+    // Guarded, because an arrow is a button on a page and a button on a page
+    // can be reached when the thing it pages through is not open.
+    $('post-prev').addEventListener('click', () => { if (state.viewing) goTo(state.viewing.index - 1); });
+    $('post-next').addEventListener('click', () => { if (state.viewing) goTo(state.viewing.index + 1); });
 
     // --- the post as one picture ---------------------------------------------
     // A sheet to send somebody who has no account here: the whole post at a
@@ -3477,8 +3532,7 @@
         }
 
         if (!$('post-modal').hidden && state.viewing) {
-            const post = state.posts[state.viewing.slot];
-            if (post && post.images.length > 1) {
+            if (showing().length > 1) {
                 if (event.key === 'ArrowLeft') goTo(state.viewing.index - 1);
                 if (event.key === 'ArrowRight') goTo(state.viewing.index + 1);
             }

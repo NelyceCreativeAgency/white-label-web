@@ -3211,6 +3211,8 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
        inch, so it stays where it was put. */
     .modal-post .modal-x { position: fixed; top: 10px; right: 12px; }
 
+    #post-modal.is-bare .modal-post { justify-content: center; }
+
     /* The same four by five frame as on a desktop, at its full size: there is
        nothing left to leave room for, since what follows it is below it rather
        than beside it. */
@@ -3524,6 +3526,38 @@ li.none-yet {
 }
 
 .ask-shots { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* A thumbnail is a way into the picture, so it is a button and says so under
+   the pointer, rather than a picture that happens to react. */
+.ask-shot-open {
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 10px;
+    cursor: zoom-in;
+    line-height: 0;
+    transition: var(--transition-smooth);
+}
+
+.ask-shot-open img { border-radius: 10px; }
+.ask-shot-open:hover { opacity: .82; transform: translateY(-1px); }
+.ask-shot-open:focus-visible { outline: 2px solid var(--accent-orange); outline-offset: 2px; }
+
+/* Pictures with nothing to say about them: no caption, no heart, no comments,
+   so the column that holds those is not there either and the stage has the box
+   to itself. */
+#post-modal.is-bare .post-side { display: none; }
+
+/* Above the fold the box is two columns and one of them has just gone, so the
+   box narrows to what is left rather than standing half empty. Kept to the
+   wide layout on purpose: below it the box is a column that scrolls, and
+   giving it a width here would take away the full screen it has there. */
+@media (min-width: 861px) {
+    #post-modal.is-bare .modal-post {
+        grid-template-columns: calc(var(--stage-h) * 4 / 5);
+        width: min(calc(var(--stage-h) * 4 / 5), 94vw);
+    }
+}
 
 .ask-shots img {
     width: 84px; height: 84px;
