@@ -2794,41 +2794,33 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
 /* --- accounts ------------------------------------------------------------ */
 /* The way back to the list a page was opened from. It sits above the card
    rather than on it, because it is about the page and not about the person. */
-/* The way back, on the bar. One of it, beside the name of wherever you are. */
+/* The way back, on the bar. An arrow and nothing else: what it does is the
+   arrow, and where it goes is the page it goes back to, which is one press
+   away from being seen anyway. */
 .app-top-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+    display: grid;
+    place-items: center;
     flex: 0 0 auto;
-    padding: 6px 12px 6px 8px;
-    font: inherit;
-    font-size: .78rem;
-    color: var(--text-secondary);
-    background: none;
-    border: 1px solid rgba(255, 255, 255, .09);
-    border-radius: 999px;
+    width: 36px; height: 36px;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: 50%;
     cursor: pointer;
     transition: var(--transition-smooth);
 }
 
 .app-top-back svg {
-    width: 15px; height: 15px;
-    fill: none; stroke: currentColor; stroke-width: 2;
+    width: 19px; height: 19px;
+    margin-left: -1px;            /* a chevron sits right of its own centre */
+    fill: none; stroke: currentColor; stroke-width: 2.2;
     stroke-linecap: round; stroke-linejoin: round;
 }
 
 .app-top-back:hover {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, .06);
+    background: rgba(255, 255, 255, .12);
     border-color: var(--border-hover);
-}
-
-/* On a narrow bar the name of the page is what matters; the arrow stays and
-   the word it carries goes, since its label says the same thing to anything
-   that reads labels. */
-@media (max-width: 600px) {
-    .app-top-back span { display: none; }
-    .app-top-back { padding: 6px 8px; }
+    transform: translateX(-2px);
 }
 
 .panel {

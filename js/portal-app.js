@@ -1300,8 +1300,10 @@
     const showBack = (whither, name) => {
         goingBack = state.me && state.me.role === 'admin' ? whither : null;
         $('app-back').hidden = !goingBack;
-        $('app-back-name').textContent = goingBack ? name : '';
-        $('app-back').setAttribute('aria-label', goingBack ? `Πίσω: ${name}` : '');
+        // The arrow says what it does. Where it goes is said to whatever reads
+        // labels out loud, and to whoever holds the pointer still over it.
+        $('app-back').setAttribute('aria-label', goingBack ? `Πίσω στους ${name}` : '');
+        $('app-back').setAttribute('title', goingBack ? name : '');
     };
 
     $('app-back').addEventListener('click', () => {
