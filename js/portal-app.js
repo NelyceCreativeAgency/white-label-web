@@ -3166,8 +3166,12 @@
         <button type="button" data-ink="insertOrderedList" title="Αρίθμηση">1.</button>
         <span class="ink-sep" aria-hidden="true"></span>
         ${picker_of('fontSize', 'Μέγεθος', INK_SIZES)}
-        ${picker_of('foreColor', 'Χρώμα', INK_COLOURS)}
         ${picker_of('fontName', 'Γραμματοσειρά', INK_FACES)}
+        <span class="ink-sep" aria-hidden="true"></span>
+        ${INK_COLOURS.map(([value, name]) => `
+            <button class="ink-dab" type="button" data-ink="foreColor" data-value="${value}"
+                    title="${name}" aria-label="Χρώμα ${name}"
+                    style="--dab: ${value}"></button>`).join('')}
         <button type="button" data-ink="removeFormat" title="Καθάρισμα μορφοποίησης">✕</button>`;
 
     // Where the caret was the last time it was in a writing box. A toolbar
@@ -3215,7 +3219,7 @@
     // appears inside a note being edited.
     document.addEventListener('click', (event) => {
         const button = event.target.closest('.ink-bar button[data-ink]');
-        if (button) { event.preventDefault(); ink(button.dataset.ink); }
+        if (button) { event.preventDefault(); ink(button.dataset.ink, button.dataset.value); }
     });
 
     document.addEventListener('change', (event) => {

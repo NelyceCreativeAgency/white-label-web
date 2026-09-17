@@ -1067,6 +1067,23 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
     cursor: pointer;
 }
 
+/* A colour has to be seen to be chosen. A menu cannot show one on a Mac,
+   where the list is drawn by the system and ignores what the page asks for, so
+   the colours are the buttons. */
+.ink-dab {
+    width: 19px; height: 19px;
+    padding: 0;
+    background: var(--dab);
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform .15s;
+}
+
+.ink-dab:hover { transform: scale(1.18); border-color: rgba(255, 255, 255, .7); }
+
+.ink-bar .ink-dab { min-width: 0; height: 19px; }
+
 .ink-sep {
     width: 1px;
     height: 17px;
