@@ -43,12 +43,13 @@
     <script>
         try {
             var glow = localStorage.getItem('nelyce-glow');
-            if (glow !== null) {
-                document.documentElement.style.setProperty('--glow', glow || '255, 107, 53');
-                if (glow === '') {
-                    document.documentElement.style.setProperty('--glow-a', '0');
-                    document.documentElement.classList.add('is-dark');
-                }
+            if (glow === '') {
+                document.documentElement.style.setProperty('--glow-a', '0');
+                document.documentElement.classList.add('is-dark');
+            } else if (glow) {
+                var pair = glow.split('|');
+                document.documentElement.style.setProperty('--glow', pair[0]);
+                if (pair[1]) document.documentElement.style.setProperty('--glow-2', pair[1]);
             }
         } catch (e) { /* nothing to remember with */ }
     </script>
@@ -155,19 +156,24 @@
                     <div class="me-tint-dots">
                         <button class="me-tint-dot" type="button" role="menuitemradio"
                                 aria-checked="false" aria-label="Πορτοκαλί" title="Πορτοκαλί"
-                                data-glow="255, 107, 53" style="--dot: 255, 107, 53"></button>
+                                data-glow="255, 107, 53" data-glow-two="236, 72, 153"
+                                style="--dot: 255, 107, 53; --dot-2: 236, 72, 153"></button>
                         <button class="me-tint-dot" type="button" role="menuitemradio"
                                 aria-checked="false" aria-label="Ροζ" title="Ροζ"
-                                data-glow="236, 72, 153" style="--dot: 236, 72, 153"></button>
+                                data-glow="236, 72, 153" data-glow-two="139, 92, 246"
+                                style="--dot: 236, 72, 153; --dot-2: 139, 92, 246"></button>
                         <button class="me-tint-dot" type="button" role="menuitemradio"
                                 aria-checked="false" aria-label="Μωβ" title="Μωβ"
-                                data-glow="139, 92, 246" style="--dot: 139, 92, 246"></button>
+                                data-glow="139, 92, 246" data-glow-two="56, 130, 246"
+                                style="--dot: 139, 92, 246; --dot-2: 56, 130, 246"></button>
                         <button class="me-tint-dot" type="button" role="menuitemradio"
                                 aria-checked="false" aria-label="Μπλε" title="Μπλε"
-                                data-glow="56, 130, 246" style="--dot: 56, 130, 246"></button>
+                                data-glow="56, 130, 246" data-glow-two="34, 211, 238"
+                                style="--dot: 56, 130, 246; --dot-2: 34, 211, 238"></button>
                         <button class="me-tint-dot" type="button" role="menuitemradio"
                                 aria-checked="false" aria-label="Πράσινο" title="Πράσινο"
-                                data-glow="34, 197, 94" style="--dot: 34, 197, 94"></button>
+                                data-glow="34, 197, 94" data-glow-two="56, 130, 246"
+                                style="--dot: 34, 197, 94; --dot-2: 56, 130, 246"></button>
                         <button class="me-tint-dot is-off" type="button" role="menuitemradio"
                                 aria-checked="false" aria-label="Σβηστό" title="Σβηστό"
                                 data-glow=""></button>

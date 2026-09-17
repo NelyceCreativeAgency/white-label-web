@@ -2,12 +2,20 @@
    Tokens, reset and .btn come from style.css. Nothing here belongs to the
    marketing pages, and nothing there is asked to carry a workspace. */
 
-/* The colour of the light the portal is lit by — the brand's own, until
-   somebody picks another one under the gear. Three numbers, so that every
-   place below can decide its own alpha on them. How bright it all is lives in
-   --glow-a, set only when somebody has turned the light off, so that one
-   number takes every pool of it out at once. */
-:root { --glow: 255, 107, 53; }
+/* The two colours the portal is lit by — the brand's own and the one that goes
+   with it, until somebody picks another pair under the gear. Two, because one
+   light of one colour is a tint over the page; two that drift through each
+   other mix where they overlap and the mix is never quite the same twice.
+   Neighbours on the wheel, always, so what comes out of the overlap is a
+   colour somebody could have chosen on purpose.
+
+   Three numbers each, so every place below can decide its own alpha on them.
+   How bright it all is lives in --glow-a, set only when somebody has turned
+   the light off, so that one number takes every part of it out at once. */
+:root {
+    --glow: 255, 107, 53;
+    --glow-2: 236, 72, 153;
+}
 
 /* No background of its own, deliberately: the dark comes from the root (see
    style.css) and the light below is painted behind this element. Give the body
@@ -17,89 +25,118 @@
     color: var(--text-primary);
 }
 
-/* The light the page sits in. One source hung high above the top edge and
-   wide enough that what reaches the screen is the spread of it rather than the
-   lamp, a second one low and colourless that lifts the middle of the page out
-   of the dark, a third far fainter opposite it, and corners that fall away so
-   the light in the middle has somewhere to fall away to.
+/* The light the page sits in. Three of them wandering and a frame that does
+   not: the colour somebody chose, the colour that goes with it, and a
+   colourless one low down that lifts the middle of the page out of the dark.
+   Each is a soft blob inside its own box, well clear of that box's edges, so
+   it can be carried anywhere without an edge ever coming into view.
 
-   Fixed to the screen and not to the page. Laid on the page it would have to
-   know how long the page is — a grid of eight hundred pixels and a
-   conversation of three thousand would get the same light spread over wildly
-   different distances — and it would slide away the moment anybody scrolled.
-   Fixed, it is simply the room: every screen of every view is lit the same.
+   They are separate layers because that is the whole point: three lights on
+   one layer can only move together, which is a picture being dragged about.
+   Moving apart, they cross, and where two of them lie over each other the
+   colour is the pair mixed — which is a colour the page has for a minute and
+   then does not.
 
-   The colourless ones are what make it read as light. A colour over a
-   background this dark only ever goes brown however much of it there is, so
-   the white does the lighting and the colour only says what the light is.
-   Every alpha here, the dark in the corners included, is a share of one
-   number, so the swatch that turns it off turns all of it off.
+   Fixed to the screen and not to the page. Laid on the page they would have to
+   know how long the page is, and they would slide away the moment anybody
+   scrolled. Fixed, they are simply the room: every screen of every view is lit
+   the same.
 
-   Two layers rather than one so that they can wander at different speeds:
-   overhead on one, the low light and the corners over it on the other. One
-   layer drifting is a picture being dragged about; two at different rates is
-   light moving in a room. */
+   The colourless one is what makes the other two read as light. A colour over
+   a background this dark only ever goes brown however much of it there is: the
+   white does the lighting, the colours only say what the light is. Every alpha
+   here, the dark in the corners included, is a share of one number, so the
+   swatch that turns it off turns all of it out. */
+html::before,
+html::after,
 .app-body::before,
 .app-body::after {
     content: '';
     position: fixed;
-    inset: 0;
     pointer-events: none;
 }
 
-/* The one overhead. */
+/* The colour somebody chose. It starts over the top edge, which is where the
+   light used to stay. */
+html::before {
+    z-index: -4;
+    left: -6vw; top: -34vh;
+    width: 106vw; height: 90vh;
+    background: radial-gradient(ellipse 46% 46% at 50% 50%,
+        rgba(var(--glow), var(--glow-a, .44)) 0%,
+        rgba(var(--glow), calc(var(--glow-a, .44) * .45)) 45%,
+        transparent 72%);
+    animation: wander-one 31s ease-in-out infinite;
+}
+
+/* The one that goes with it, coming the other way. */
+html::after {
+    z-index: -3;
+    right: -14vw; top: 0;
+    width: 90vw; height: 80vh;
+    background: radial-gradient(ellipse 46% 46% at 50% 50%,
+        rgba(var(--glow-2), calc(var(--glow-a, .44) * .82)) 0%,
+        rgba(var(--glow-2), calc(var(--glow-a, .44) * .34)) 45%,
+        transparent 72%);
+    animation: wander-two 43s ease-in-out infinite;
+}
+
+/* The colourless one. */
 .app-body::before {
     z-index: -2;
-    background:
-        radial-gradient(ellipse 58vw 26vh at 54% -8%,
-            rgba(255, 255, 255, calc(var(--glow-a, .44) * .21)), transparent 70%),
-        radial-gradient(ellipse 100vw 80vh at 54% -16%,
-            rgba(var(--glow), var(--glow-a, .44)) 0%,
-            rgba(var(--glow), calc(var(--glow-a, .44) * .41)) 45%,
-            transparent 78%);
-    animation: drift-high 53s ease-in-out infinite;
+    left: 5vw; top: 38vh;
+    width: 80vw; height: 72vh;
+    background: radial-gradient(ellipse 46% 46% at 50% 50%,
+        rgba(255, 255, 255, calc(var(--glow-a, .44) * .2)), transparent 70%);
+    animation: wander-three 37s ease-in-out infinite;
 }
 
-/* The low light, the faint one opposite it, and the corners over both. */
+/* The corners, which stay where they are: they belong to the screen, not to
+   anything moving across it. */
 .app-body::after {
     z-index: -1;
-    background:
-        radial-gradient(ellipse 130% 125% at 50% 38%,
-            transparent 30%, rgba(0, 0, 0, calc(var(--glow-a, .44) * 1.25)) 100%),
-        radial-gradient(ellipse 54vw 50vh at 70% 60%,
-            rgba(255, 255, 255, calc(var(--glow-a, .44) * .23)), transparent 70%),
-        radial-gradient(ellipse 42vw 38vh at 14% 86%,
-            rgba(255, 255, 255, calc(var(--glow-a, .44) * .11)), transparent 70%);
-    animation: drift-low 71s ease-in-out infinite;
+    inset: 0;
+    background: radial-gradient(ellipse 120% 115% at 50% 38%,
+        transparent 30%, rgba(0, 0, 0, calc(var(--glow-a, .44) * 1.25)) 100%);
 }
 
-/* The drift. Transform and nothing else, which is the whole reason this is
-   affordable: it is the one thing a browser can animate by moving what it has
-   already drawn instead of drawing it again, so each layer is rasterised once
-   and the card carries it from there — no filter, no blur, no canvas, no
-   script, nothing repainted on any frame of it.
+/* The wandering. Transform and nothing else, which is the whole reason three
+   moving lights can be afforded at all: it is the one thing a browser animates
+   by moving what it has already drawn rather than drawing it again, so each
+   blob is rasterised once and the card carries it from there. No filter, no
+   blur, no canvas, no script, nothing repainted on any frame of any of it.
 
-   Under four percent of travel and never scaled below its own size, so no edge
-   can ever come into view. Fifty-three seconds against seventy-one, which do
-   not divide into each other, so the two never fall into the same loop and it
-   takes an hour to repeat itself exactly. Slow enough that nothing appears to
-   be moving while you look at it, and only the room having changed when you
-   look up. */
-@keyframes drift-high {
+   Thirty-one seconds against forty-three against thirty-seven, none of which
+   divide into each other, so the three never fall into step and the same
+   arrangement does not come round again for something like five hours. Each
+   one leaves where it started, goes down and across, and comes back a
+   different way. */
+@keyframes wander-one {
     0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-    35%      { transform: translate3d(-3%, 1.5%, 0) scale(1.05); }
-    70%      { transform: translate3d(2.5%, -1%, 0) scale(1.02); }
+    25%      { transform: translate3d(12%, 38%, 0) scale(1.18); }
+    50%      { transform: translate3d(-8%, 64%, 0) scale(1.06); }
+    75%      { transform: translate3d(-20%, 26%, 0) scale(1.22); }
 }
 
-@keyframes drift-low {
-    0%, 100% { transform: translate3d(0, 0, 0) scale(1.02); }
-    30%      { transform: translate3d(3%, -2%, 0) scale(1.06); }
-    65%      { transform: translate3d(-2%, 2.5%, 0) scale(1); }
+@keyframes wander-two {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+    30%      { transform: translate3d(-26%, 30%, 0) scale(1.2); }
+    55%      { transform: translate3d(-10%, 62%, 0) scale(1); }
+    80%      { transform: translate3d(16%, 24%, 0) scale(1.12); }
 }
 
-/* Off is off. Every alpha going to nought would leave two invisible layers
-   still being carried about, which is work for a room nobody asked to be lit:
-   these are not made at all. */
+@keyframes wander-three {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1.1); }
+    28%      { transform: translate3d(20%, -26%, 0) scale(1); }
+    60%      { transform: translate3d(-18%, -8%, 0) scale(1.24); }
+    84%      { transform: translate3d(8%, 18%, 0) scale(1.08); }
+}
+
+/* Off is off. Every alpha going to nought would leave four layers still being
+   carried about, invisible, for a room nobody asked to have lit: they are not
+   made at all. */
+html.is-dark::before,
+html.is-dark::after,
 html.is-dark .app-body::before,
 html.is-dark .app-body::after { content: none; }
 
@@ -503,7 +540,8 @@ html.is-dark .app-body::after { content: none; }
     flex: 0 0 auto;
     width: 20px; height: 20px;
     padding: 0;
-    background: rgb(var(--dot, 255, 255, 255));
+    background: linear-gradient(135deg,
+        rgb(var(--dot, 255, 255, 255)) 32%, rgb(var(--dot-2, var(--dot, 255, 255, 255))));
     border: none;
     border-radius: 50%;
     outline: 2px solid transparent;
@@ -2323,8 +2361,9 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
     :root { --fold-ms: 0s; }
 
     /* And the light stops where it stands, rather than wandering. */
-    .app-body::before,
-    .app-body::after { animation: none; }
+    html::before,
+    html::after,
+    .app-body::before { animation: none; }
 }
 
 .cell.is-over {

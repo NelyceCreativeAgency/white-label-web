@@ -3668,7 +3668,12 @@
     // browser looks to whoever is at it, and a round trip to be told the
     // colour of your own background is a round trip too many. Which does mean
     // it does not follow anybody to another machine.
+    // A choice is two colours, kept as one string with a bar between them so
+    // that what was written last time is one thing to read and one thing to put
+    // back. A value saved before there were two is a single colour, and still
+    // reads: the swatch it came from is asked what goes with it.
     const WARM = '255, 107, 53';
+    const WARM_2 = '236, 72, 153';
 
     const glow = {
         read() { try { return localStorage.getItem('nelyce-glow'); } catch { return null; } },
@@ -3678,25 +3683,41 @@
         }
     };
 
+    const dots = () => document.querySelectorAll('.me-tint-dot');
+
+    const pairOf = (hue) => {
+        const dot = [...dots()].find(one => one.dataset.glow === hue);
+        return (dot && dot.dataset.glowTwo) || hue;
+    };
+
     // Nothing chosen and chosen to have none are different answers, so null and
     // an empty string stay apart the whole way through.
     const lightUp = (value) => {
         const root = document.documentElement;
-        root.style.setProperty('--glow', value || WARM);
-        root.style.setProperty('--glow-a', value === '' ? '0' : '');
-        root.classList.toggle('is-dark', value === '');
+        const off = value === '';
+        const [one, two] = String(value == null ? '' : value).split('|');
+        const hue = off || !one ? WARM : one;
 
-        document.querySelectorAll('.me-tint-dot').forEach(dot => {
+        root.style.setProperty('--glow', hue);
+        root.style.setProperty('--glow-2',
+            off || !one ? WARM_2 : (two || pairOf(hue)));
+        root.style.setProperty('--glow-a', off ? '0' : '');
+        root.classList.toggle('is-dark', off);
+
+        dots().forEach(dot => {
             dot.setAttribute('aria-checked',
-                dot.dataset.glow === (value === null ? WARM : value) ? 'true' : 'false');
+                dot.dataset.glow === (value === null ? WARM : hue) && !off
+                    || (off && dot.dataset.glow === '') ? 'true' : 'false');
         });
     };
 
     $('me-tint').addEventListener('click', (event) => {
         const dot = event.target.closest('.me-tint-dot');
         if (!dot) return;
-        lightUp(dot.dataset.glow);
-        glow.write(dot.dataset.glow);
+        const chosen = dot.dataset.glow
+            ? `${dot.dataset.glow}|${dot.dataset.glowTwo}` : '';
+        lightUp(chosen);
+        glow.write(chosen);
     });
 
     // The colour itself is already on the document — the head put it there
