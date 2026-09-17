@@ -12,6 +12,12 @@
 
 .app-body.is-locked { overflow: hidden; }
 
+/* Folding is one movement made of six: the sidebar narrows, the page widens
+   into it, the rows lose their gap and their padding, the headings close up
+   and the words fade. One curve and one length for all of them, or they arrive
+   at different times and it reads as several things happening at once. */
+:root { --fold-ms: .34s; --fold-ease: cubic-bezier(.4, 0, .2, 1); }
+
 /* Several things on this page are shown and hidden through the hidden
    attribute, and a rule that gives one of them a display of its own would
    quietly outrank it. This keeps the attribute the last word. */
@@ -41,11 +47,26 @@
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border-right: 1px solid rgba(255, 255, 255, .07);
-    transition: transform .35s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: transform .35s cubic-bezier(0.25, 1, 0.5, 1),
+                width var(--fold-ms) var(--fold-ease),
+                padding var(--fold-ms) var(--fold-ease);
 }
 
-.app-head { display: flex; align-items: center; gap: 8px; margin: 0 8px 28px; }
-.app-brand { display: block; flex: 1; min-width: 0; }
+.app-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 8px 28px;
+    overflow: hidden;
+    transition: margin var(--fold-ms) var(--fold-ease);
+}
+
+.app-brand {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    transition: opacity .18s var(--fold-ease);
+}
 .app-brand-logo { width: 132px; height: auto; }
 
 /* Folding the sidebar away. The icon is a panel with a rail down one side,
@@ -86,11 +107,15 @@
     .app-body.is-folded .app-main { margin-left: 76px; }
 
     .app-body.is-folded .app-head { margin: 0 0 24px; justify-content: center; }
+
+    /* Faded and clipped rather than taken away, so the width they were taking
+       up goes with the sidebar instead of an instant before it. */
     .app-body.is-folded .app-brand,
-    .app-body.is-folded .app-nav-label,
     .app-body.is-folded .app-nav-text,
-    .app-body.is-folded .app-me-text,
-    .app-body.is-folded .app-me-gear { display: none; }
+    .app-body.is-folded .app-me-text { opacity: 0; pointer-events: none; }
+
+    .app-body.is-folded .app-nav-label { max-height: 0; margin-bottom: 0; opacity: 0; }
+    .app-body.is-folded .app-me-gear { opacity: 0; }
 
     .app-body.is-folded .app-nav-item,
     .app-body.is-folded .app-me-who { position: relative; justify-content: center; gap: 0; padding: 10px 0; }
@@ -107,6 +132,13 @@
         border-radius: 50%;
     }
 
+    .app-nav-badge,
+    .app-nav-count { transition: width var(--fold-ms) var(--fold-ease),
+                                 height var(--fold-ms) var(--fold-ease),
+                                 min-width var(--fold-ms) var(--fold-ease),
+                                 padding var(--fold-ms) var(--fold-ease),
+                                 font-size .14s var(--fold-ease); }
+
     /* Wider than the rail it hangs off, or it would be a menu of one letter. */
     .app-body.is-folded .me-menu { left: 0; right: auto; min-width: 176px; }
 }
@@ -115,10 +147,16 @@
 
 .app-nav-label {
     margin: 0 10px 10px;
+    max-height: 30px;
+    overflow: hidden;
     font-size: .68rem;
     letter-spacing: .14em;
     text-transform: uppercase;
+    white-space: nowrap;
     color: rgba(184, 186, 194, .6);
+    transition: max-height var(--fold-ms) var(--fold-ease),
+                margin var(--fold-ms) var(--fold-ease),
+                opacity .16s var(--fold-ease);
 }
 
 .app-grids { list-style: none; margin: 0 0 8px; padding: 0; }
@@ -148,6 +186,7 @@
     width: 100%;
     margin-bottom: 4px;
     padding: 10px 12px;
+    overflow: hidden;
     font: inherit;
     text-align: left;
     color: var(--text-secondary);
@@ -155,7 +194,9 @@
     border: 1px solid transparent;
     border-radius: 13px;
     cursor: pointer;
-    transition: background .25s, color .25s, border-color .25s;
+    transition: background .25s, color .25s, border-color .25s,
+                gap var(--fold-ms) var(--fold-ease),
+                padding var(--fold-ms) var(--fold-ease);
 }
 
 .app-nav-item:hover { background: rgba(255, 255, 255, .05); color: var(--text-primary); }
@@ -184,7 +225,12 @@
     stroke-linecap: round; stroke-linejoin: round;
 }
 
-.app-nav-text { flex: 1; min-width: 0; }
+.app-nav-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    transition: opacity .18s var(--fold-ease);
+}
 .app-nav-text strong {
     display: block;
     overflow: hidden;
@@ -250,7 +296,7 @@
     color: rgba(184, 186, 194, .5);
     fill: none; stroke: currentColor; stroke-width: 1.7;
     stroke-linecap: round; stroke-linejoin: round;
-    transition: color .2s;
+    transition: color .2s, opacity .18s var(--fold-ease);
 }
 
 .app-me-who:hover .app-me-gear,
@@ -327,6 +373,9 @@
     min-width: 0;
     margin: 0;
     padding: 0;
+    overflow: hidden;
+    transition: gap var(--fold-ms) var(--fold-ease),
+                padding var(--fold-ms) var(--fold-ease);
     font: inherit;
     text-align: left;
     color: inherit;
@@ -346,7 +395,7 @@
     border-radius: 50%;
 }
 
-.app-me-text { flex: 1; min-width: 0; }
+.app-me-text { flex: 1; min-width: 0; overflow: hidden; transition: opacity .18s var(--fold-ease); }
 .app-me-text strong { display: block; font-size: .85rem; font-weight: var(--fw-medium); }
 .app-me-text small { display: block; font-size: .7rem; color: rgba(184, 186, 194, .65); }
 
@@ -373,6 +422,7 @@
 /* --- main --------------------------------------------------------------- */
 .app-main {
     margin-left: 268px;
+    transition: margin-left var(--fold-ms) var(--fold-ease);
     /* dvh, so that the messages view ends where the phone's screen does rather
        than under its address bar, taking the box you type in with it. */
     min-height: 100vh;
@@ -2065,6 +2115,9 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
     .cell.is-landed,
     .strip-tile.is-landed,
     .link-list li.is-landed { animation: none; }
+
+    /* Folding still happens; it just happens at once. */
+    :root { --fold-ms: 0s; }
 }
 
 .cell.is-over {
