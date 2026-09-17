@@ -5052,7 +5052,7 @@
                     ${owned.owed
                         ? `<span class="sum-due"><strong>${esc(euro(owned.owed))}</strong> εκκρεμεί</span>`
                         : '<span><strong>Τακτοποιημένα</strong> όλα</span>'}
-                    <span><strong>${esc(euro(owned.paid))}</strong> πληρωμένα ως τώρα</span>
+                    ${boss ? `<span><strong>${esc(euro(owned.paid))}</strong> πληρωμένα ως τώρα</span>` : ''}
                     ${until ? `<span>Ενεργό μέχρι <strong>${onDay(until)}</strong></span>` : ''}
                 </div>
 

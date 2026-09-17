@@ -185,7 +185,11 @@ const moneyOut = (money, mine) => ({
         .sort((a, b) => String(b.on).localeCompare(String(a.on)) || String(b.at).localeCompare(String(a.at)))
         .map(entry => entryOut(entry, mine)),
     owed: sumOf(money.entries, 'due'),
-    paid: sumOf(money.entries, 'paid')
+    // What they have paid you altogether is a figure for you. They can see
+    // every invoice they have had, which is what they are entitled to; a
+    // running total of years of them is a different thing to put in front of
+    // somebody, and it is not sent rather than merely not drawn.
+    ...(mine ? {} : { paid: sumOf(money.entries, 'paid') })
 });
 
 // --- making and changing ----------------------------------------------------
