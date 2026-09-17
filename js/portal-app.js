@@ -4965,10 +4965,11 @@
     };
 
     // Twelve squares for the year, and nothing but a reading of the charges
-    // underneath: filled where the month has been paid for, outlined where it
-    // has been invoiced and not paid yet, and faint where nothing covers it.
-    // None of them can be pressed, because a month is not where money is
-    // recorded and two places to record it is one too many.
+    // underneath. Each one is filled as far as it has been paid for, so a turn
+    // that runs from the middle of one month to the middle of the next leaves
+    // both of them half lit rather than claiming or disowning either. None can
+    // be pressed: a month is not where money is recorded, and two places to
+    // record it is one too many.
     //
     // The year is the one we are in, and anything older is in the ledger, which
     // is where a year-old month belongs.
@@ -4983,24 +4984,46 @@
         const cells = MONTHS.map((name, month) => {
             const days = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
             const opens = Date.UTC(year, month, 1);
-            const shuts = Date.UTC(year, month, days);
 
-            // A turn that begins on the twenty-eighth buys four days of that
-            // month and the whole of the next, and it is the next one it paid
-            // for. So a month counts as covered when most of its days fall
-            // inside the turn, which lights one square per monthly turn and
-            // three per quarterly one without being told how long either is.
-            const covering = ours.filter(entry => {
-                const from = Math.max(opens, Date.parse(`${entry.on}T00:00:00Z`));
-                const to = Math.min(shuts, Date.parse(`${entry.to}T00:00:00Z`));
-                return (to - from) / 86400000 + 1 > days / 2;
+            // Where inside the month each turn sits, as a share of it. A turn
+            // that runs to the fifteenth fills the left half of August, and one
+            // that begins on the twenty-eighth fills the last few days of it:
+            // the square is a little timeline of the month, read left to right.
+            const bands = ours.map(entry => {
+                const from = Math.max(0, (Date.parse(`${entry.on}T00:00:00Z`) - opens) / 86400000);
+                const to = Math.min(days, (Date.parse(`${entry.to}T00:00:00Z`) - opens) / 86400000 + 1);
+                return { from: from / days, to: to / days, paid: entry.status === 'paid' };
+            }).filter(band => band.to > band.from).sort((one, two) => one.from - two.from);
+
+            const share = (paid) => bands
+                .filter(band => !paid || band.paid)
+                .reduce((total, band) => total + (band.to - band.from), 0);
+
+            const pin = (n) => `${(Math.min(1, Math.max(0, n)) * 100).toFixed(1)}%`;
+            const paints = [];
+            let at = 0;
+
+            bands.forEach(band => {
+                if (band.from > at) paints.push(`transparent ${pin(at)} ${pin(band.from)}`);
+                paints.push(`${band.paid ? 'rgba(255,107,53,.85)' : 'rgba(255,107,53,.22)'} `
+                    + `${pin(Math.max(at, band.from))} ${pin(band.to)}`);
+                at = Math.max(at, band.to);
             });
+            if (at < 1) paints.push(`transparent ${pin(at)} 100%`);
 
-            const how = covering.some(entry => entry.status === 'paid') ? ' is-paid'
-                : covering.length ? ' is-due' : '';
-            const said = how === ' is-paid' ? 'πληρωμένος' : how === ' is-due' ? 'εκκρεμεί' : 'χωρίς χρέωση';
+            // All of it paid for reads as a full square with dark lettering.
+            // Anything less keeps the lighter lettering, because half a square
+            // of orange is no background to put dark text on.
+            const how = share(true) >= 0.99 ? ' is-full' : share(false) > 0 ? ' is-part' : '';
+            const owing = bands.some(band => !band.paid) ? ' is-due' : '';
 
-            return `<span class="month${how}${month === now.getMonth() ? ' is-now' : ''}"
+            const covered = Math.round(share(false) * days);
+            const said = covered === 0 ? 'χωρίς χρέωση'
+                : covered >= days ? (share(true) >= 0.99 ? 'πληρωμένος' : 'χρεωμένος, εκκρεμεί')
+                : `καλυμμένες ${covered} από ${days} μέρες`;
+
+            return `<span class="month${how}${owing}${month === now.getMonth() ? ' is-now' : ''}"
+                          style="background-image: linear-gradient(to right, ${paints.join(', ')})"
                           title="${name} ${year}: ${said}">${name}</span>`;
         }).join('');
 
@@ -5041,7 +5064,7 @@
                 </div>
                 <p class="sub-when">${said}${paid}${owing}</p>
                 ${monthsOf(sub)}
-                ${boss ? `<p class="months-how">Ένας μήνας ανάβει όταν τον καλύπτει κάποια χρέωση από κάτω. Για να πληρωθεί ένας μήνας, πρόσθεσε τη χρέωση στο ιστορικό και βάλ' την πάνω σε αυτή τη συνδρομή.</p>` : ''}
+                ${boss ? `<p class="months-how">Κάθε μήνας γεμίζει όσο τον καλύπτουν οι χρεώσεις από κάτω, οπότε μια περίοδος που πιάνει δύο μήνες τους αφήνει και τους δύο μισογεμάτους. Για να πληρωθεί ένας μήνας, πρόσθεσε τη χρέωση στο ιστορικό και βάλ' την πάνω σε αυτή τη συνδρομή.</p>` : ''}
             </li>`;
     };
 

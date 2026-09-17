@@ -3379,22 +3379,29 @@ li.none-yet {
     color: rgba(184, 186, 194, .45);
 }
 
+/* The colour under a square is painted on in a gradient, one band per turn of
+   the subscription, so the shorthand is never used here: it would wipe the
+   bands out along with everything else. */
 .month {
     padding: 7px 0;
     font-size: .6rem;
     text-align: center;
     color: rgba(184, 186, 194, .32);
-    background: rgba(255, 255, 255, .03);
+    background-color: rgba(255, 255, 255, .03);
     border: 1px solid transparent;
     border-radius: 7px;
 }
 
-.month.is-due { color: #ffc4a4; border-color: rgba(255, 107, 53, .55); }
+/* Something of it is covered, but not all of it paid for. */
+.month.is-part { color: #ffc4a4; }
 
-.month.is-paid {
+/* Something of it is charged and not settled. */
+.month.is-due { border-color: rgba(255, 107, 53, .55); }
+
+/* The whole of it, paid. */
+.month.is-full {
     color: var(--bg-dark);
     font-weight: var(--fw-semibold);
-    background: rgba(255, 107, 53, .85);
 }
 
 .month.is-now { box-shadow: 0 0 0 1px rgba(255, 255, 255, .28); }
