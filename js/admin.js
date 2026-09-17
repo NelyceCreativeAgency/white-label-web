@@ -515,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gateError.hidden = true;
 
         try {
-            const res = await fetch('/api/login', {
+            const res = await fetch('/api/session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'same-origin',
@@ -534,13 +534,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     logout.addEventListener('click', async () => {
         if (isDirty() && !confirm('Υπάρχουν αλλαγές που δεν αποθηκεύτηκαν. Αποσύνδεση;')) return;
-        await fetch('/api/login', { method: 'DELETE', credentials: 'same-origin' }).catch(() => {});
+        await fetch('/api/session', { method: 'DELETE', credentials: 'same-origin' }).catch(() => {});
         showGate();
     });
 
     // The cookie is HttpOnly, so only the server can say whether it is still
     // valid — and the editor stays hidden until it does.
-    fetch('/api/login', { credentials: 'same-origin' })
+    fetch('/api/session', { credentials: 'same-origin' })
         .then(r => r.json())
         .then(body => (body.authenticated ? showEditor() : showGate()))
         .catch(() => showGate());

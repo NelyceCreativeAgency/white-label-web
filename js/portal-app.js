@@ -363,7 +363,15 @@
         }
 
         if (view === 'accounts' && state.me.role === 'admin') { openAccounts(); return; }
-        if (view === 'client' && kind && purse.list.some(one => one.id === kind)) { openClient(kind); return; }
+        // Somebody's column of charges: one of the clients in the list, or —
+        // for the admin, who has no list of partners to check against — an
+        // account, which says what it is in its own prefix.
+        if (view === 'client' && kind
+            && (purse.list.some(one => one.id === kind)
+                || (state.me.role === 'admin' && kind.startsWith('usr_')))) {
+            openClient(kind);
+            return;
+        }
 
         // A grid address has two parts, so the id of the grid is the second of
         // them. It was being read as the third, which meant a link somebody
@@ -4484,13 +4492,17 @@
 
     const people = (count) => (count === 1 ? '1 άτομο' : `${count} άτομα`);
 
-    const line = (id, what, name, under, person) => `
+    const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
+
+    const line = (id, what, name, under, person, go) => `
         <li>
             ${faceOf(person || { id, name }, 'lister-face', dot(person))}
             <span class="lister-who">
                 <span class="lister-name">${esc(name)}</span>
                 <span class="lister-sub">${under}</span>
             </span>
+            ${go ? `<button class="lister-gear" type="button" data-go="${esc(id)}"
+                            aria-label="Τιμολόγια: ${esc(name)}">${ARROW}</button>` : ''}
             <button class="lister-gear" type="button" data-open="${what}" data-id="${esc(id)}"
                     aria-label="Ρυθμίσεις: ${esc(name)}">${GEAR}</button>
         </li>`;
@@ -4503,7 +4515,11 @@
 
         const userLines = admin.users
             .map(user => line(user.id, 'user', user.name,
-                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}${named(user.clientId)} · ${esc(here(user))}`, user))
+                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}${named(user.clientId)} · ${esc(here(user))}`,
+                // A partner keeps their own column of charges, and the arrow
+                // opens it. A client's is opened from the client, which is who
+                // is invoiced, and not from the account that signs in.
+                user, user.role === 'partner'))
             .join('');
 
         const gridLines = admin.grids
@@ -4853,8 +4869,8 @@
     // after an invoice had already been issued somewhere else, and the link on a
     // row goes to that invoice. What the page adds is that it is in one place
     // and that the client can read it without having to ask.
-    const purse = { list: [], id: null, client: null, money: null, files: [],
-                    seesGrids: false, people: [], grids: [] };
+    const purse = { list: [], id: null, kind: 'client', client: null, partner: null,
+                    money: null, files: [], seesGrids: false, people: [], grids: [] };
 
     // How long a link is the client's. The server decides it; this is only the
     // same number, for the sentence that explains it.
@@ -4985,28 +5001,77 @@
     });
 
     const loadClients = async () => {
-        // A partner is here to do the work. What the work was charged for is
-        // not part of it, and the server refuses them either way.
-        if (!state.me || state.me.role === 'partner') { purse.list = []; renderClientNav(); return; }
+        if (!state.me) { purse.list = []; renderClientNav(); return; }
 
         try {
             const data = await api('/api/clients');
+            // Three different answers to the same question, because three
+            // different people are asking it: every client, the one client
+            // this account belongs to, or the partner themselves.
             if (data.clients) purse.list = data.clients;
-            else if (data.client) purse.list = [{ ...data.client, owed: (data.money || {}).owed || 0 }];
-            else purse.list = [];
+            else if (data.partner) {
+                purse.list = [{ ...data.partner, faceOf: data.partner.id, partner: true,
+                                owed: owedOneWay(data.money, 'in') }];
+            } else if (data.client) {
+                purse.list = [{ ...data.client, owed: (data.money || {}).owed || 0 }];
+            } else purse.list = [];
         } catch {
             purse.list = [];
         }
         renderClientNav();
     };
 
+    // What is still unpaid in one direction. A partner's column runs both ways
+    // and the two must never be added together: one of them is money you are
+    // waiting for and the other is money somebody is waiting for from you.
+    // Whose column is open, in the shape the server asks for it. Said in one
+    // place so that a form, a panel and a deletion can never disagree.
+    const purseRef = () => (purse.kind === 'partner'
+        ? { partnerId: purse.id }
+        : { clientId: purse.id });
+
+    const owedOneWay = (money, way) => ((money && money.entries) || [])
+        .filter(entry => entry.way === way && entry.status !== 'paid')
+        .reduce((total, entry) => total + entry.cents, 0);
+
     const openClient = async (id) => {
         const mine = state.me.role !== 'admin';
+        // A partner's column is the one under their own account. They only ever
+        // ask for their own; the admin asks by name, and an account id says so
+        // in its own prefix.
+        const asPartner = state.me.role === 'partner' || String(id || '').startsWith('usr_');
+
         busy('Φόρτωση…');
         try {
-            const data = await api(mine ? '/api/clients' : `/api/clients?id=${encodeURIComponent(id)}`);
+            const data = await api(asPartner
+                ? (mine ? '/api/clients' : `/api/clients?partner=${encodeURIComponent(id)}`)
+                : (mine ? '/api/clients' : `/api/clients?id=${encodeURIComponent(id)}`));
+
+            if (asPartner) {
+                if (!data.partner) { toast('Δεν βρέθηκε ο λογαριασμός.', 'bad'); return; }
+
+                purse.kind = 'partner';
+                purse.id = data.partner.id;
+                purse.partner = data.partner;
+                purse.client = null;
+                purse.files = [];
+                purse.money = data.money || { subs: [], entries: [], owed: 0 };
+
+                $('app-title').textContent = mine ? 'Ο λογαριασμός μου' : data.partner.name;
+                renderClient();
+                showView('client');
+                where.write('client', purse.id);
+
+                document.querySelectorAll('.app-nav-item').forEach(item => {
+                    item.classList.toggle('is-on', item.dataset.client === purse.id);
+                });
+                return;
+            }
+
             if (!data.client) { toast('Δεν υπάρχει ακόμα λογαριασμός για σένα.', 'bad'); return; }
 
+            purse.kind = 'client';
+            purse.partner = null;
             purse.id = data.client.id;
             purse.client = data.client;
             purse.money = data.money || { subs: [], entries: [], owed: 0, paid: 0 };
@@ -5223,7 +5288,93 @@
             </details>` : ''}
         </li>`;
 
+    // A partner's page. The same column of charges as a client's, read twice:
+    // once for what they have invoiced us and once for what we have invoiced
+    // them. The two are never added together — one is money somebody is
+    // waiting for, the other is money somebody owes — so they are two lists
+    // and two figures and never a single total.
+    const billsForm = (way) => `
+        <form class="new-row" data-way="${way}">
+            <input type="hidden" name="way" value="${way}">
+            <input name="title" placeholder="Τι αφορά, π.χ. Σχεδιασμός banner" maxlength="80" required>
+            <input name="amount" placeholder="Ποσό" inputmode="decimal" required>
+            <input name="on" type="date" aria-label="Ημερομηνία">
+            <select name="status" aria-label="Κατάσταση">
+                <option value="due">Εκκρεμεί</option>
+                <option value="paid">Πληρώθηκε</option>
+            </select>
+            <button class="btn btn-primary" type="submit">Προσθήκη</button>
+        </form>`;
+
+    const billsPanel = (way, title, why, rows, boss, openBy) => `
+        <details class="panel panel-fold" data-fold="${way === 'in' ? 'bills-in' : 'bills-out'}"${
+            folded.open(way === 'in' ? 'bills-in' : 'bills-out', openBy) ? ' open' : ''}>
+            <summary class="panel-head">
+                <h2>${title}</h2>
+                ${CARET}
+            </summary>
+            <p class="panel-why">${why}</p>
+
+            ${boss ? billsForm(way) : ''}
+
+            <p class="panel-error" role="alert" hidden></p>
+            <ul class="ledger${boss ? ' is-live' : ''}">${rows.length
+                ? rows.map(entry => ledgerRow(entry, boss)).join('')
+                : '<li class="none-yet">Κανένα ακόμα</li>'}</ul>
+        </details>`;
+
+    const renderPartner = () => {
+        const boss = state.me.role === 'admin';
+        const who = purse.partner;
+        const all = purse.money.entries || [];
+
+        const theirs = all.filter(entry => entry.way === 'in');
+        const ours = all.filter(entry => entry.way === 'out');
+
+        const waiting = owedOneWay(purse.money, 'in');
+        const owing = owedOneWay(purse.money, 'out');
+
+        $('view-client').innerHTML = `
+            <section class="panel client-card">
+                <div class="client-id">
+                    ${faceOf(faceFor({ ...who, faceOf: who.id }), 'client-face')}
+                    <div class="client-who">
+                        <h2>${esc(who.name)}</h2>
+                        <p>@${esc(who.username)} · Συνεργάτης</p>
+                    </div>
+                </div>
+
+                <div class="client-sums">
+                    ${waiting
+                        ? `<span class="sum-due"><strong>${esc(euro(waiting))}</strong> ${
+                            boss ? 'προς πληρωμή σε αυτόν' : 'περιμένεις να λάβεις'}</span>`
+                        : `<span><strong>Τακτοποιημένα</strong> ${
+                            boss ? 'προς αυτόν' : 'προς εσένα'}</span>`}
+                    ${owing ? `<span><strong>${esc(euro(owing))}</strong> ${
+                        boss ? 'σου οφείλει' : 'οφείλεις'}</span>` : ''}
+                </div>
+            </section>
+
+            ${billsPanel('in', 'Τιμολόγια προς Nelyce',
+                boss
+                    ? 'Ό,τι σου έχει τιμολογήσει αυτός ο συνεργάτης. Τα καταχωρεί ο ίδιος και ο ίδιος λέει αν πληρώθηκαν· εσύ μπορείς να διορθώσεις μια γραμμή που δεν βγάζει νόημα.'
+                    : 'Ό,τι έχεις τιμολογήσει στη Nelyce, με τον σύνδεσμο προς το δικό σου παραστατικό.',
+                theirs, boss, true)}
+
+            ${billsPanel('out', 'Τιμολόγια από Nelyce',
+                boss
+                    ? 'Ό,τι του έχεις τιμολογήσει εσύ. Σπάνιο, αλλά υπάρχει, και έχει τη θέση του εδώ ώστε η μία σελίδα να λέει όλη την ιστορία.'
+                    : 'Ό,τι σου έχει τιμολογήσει η Nelyce, με τον σύνδεσμο για να το κατεβάσεις.',
+                ours, boss, false)}
+        `;
+    };
+
     const renderClient = () => {
+        // The two pages share a shell, a ledger and every handler underneath
+        // them. What they do not share is what a column of charges means, so
+        // the partner's is drawn by its own hand.
+        if (purse.kind === 'partner') return renderPartner();
+
         const boss = state.me.role === 'admin';
         const client = purse.client;
         const owned = purse.money;
@@ -5403,7 +5554,7 @@
 
             const back = await api('/api/clients', {
                 method: 'POST',
-                body: { kind, clientId: purse.id, ...said }
+                body: { kind, ...purseRef(), ...said }
             });
             form.reset();
             await afterMoney(back, kind === 'sub' ? 'Η συνδρομή μπήκε.' : 'Η χρέωση μπήκε.');
@@ -5754,7 +5905,7 @@
                     : {};
                 await api('/api/clients', {
                     method: 'PATCH',
-                    body: { kind: tray.kind, clientId: purse.id, id: tray.id, ...fields(body), ...extra }
+                    body: { kind: tray.kind, ...purseRef(), id: tray.id, ...fields(body), ...extra }
                 });
             }
 
@@ -5782,9 +5933,11 @@
         sayMoney('');
         busy('Διαγραφή…');
         try {
+            const whose = purse.kind === 'partner' ? 'partnerId' : 'clientId';
             const tail = tray.kind === 'client'
                 ? `kind=client&id=${encodeURIComponent(tray.id)}`
-                : `kind=${tray.kind}&id=${encodeURIComponent(tray.id)}&clientId=${encodeURIComponent(purse.id)}`;
+                : `kind=${tray.kind}&id=${encodeURIComponent(tray.id)}`
+                  + `&${whose}=${encodeURIComponent(purse.id)}`;
             await api(`/api/clients?${tail}`, { method: 'DELETE' });
 
             const gone = tray.kind === 'client';

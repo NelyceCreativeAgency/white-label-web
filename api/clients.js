@@ -1,4 +1,12 @@
-// A client, what they have been charged, and what is still running.
+// A client, what they have been charged, and what is still running — and a
+// partner, and what has been invoiced between the two of you.
+//
+// A partner is not a client and never becomes one. What they have in common is
+// a column of charges, so they keep one each, under the same kind of key: a
+// client's under the client, a partner's under their own account. A charge now
+// says which way it goes — out of here towards whoever is reading it, or in
+// from them towards us — because a partner's page has both and a client's has
+// only ever had the one.
 //
 // The portal does not make invoices and must never look as though it does. An
 // invoice comes out of the accounting software and lands in a cloud folder;
@@ -11,8 +19,10 @@
 // one per client, because portal:accounts is read on every request and
 // rewritten whole and a column of charges has no business in there.
 //
-// GET                   -> every client in short (admin), or your own in full
+// GET                   -> every client in short (admin), or your own in full;
+//                          a partner always gets their own and nothing else
 // GET    ?id=           -> one client in full, admin only
+// GET    ?partner=      -> one partner's column of charges, admin only
 // POST   { kind, ... }  -> a client, a subscription, a charge, or a file
 // PATCH  { kind, id }   -> changes one
 // DELETE ?kind=&id=     -> removes one
@@ -174,9 +184,15 @@ const clientOut = (client, mine, doc) => {
     };
 };
 
+// Which direction a charge points. Everything written before a partner could
+// be invoiced at all went one way, out of here, so that is what nothing said
+// still means.
+const wayOf = (entry) => (entry.way === 'in' ? 'in' : 'out');
+
 const entryOut = (entry, mine) => ({
     id: entry.id,
     subId: entry.subId || null,
+    way: wayOf(entry),
     title: entry.title,
     cents: entry.cents,
     on: entry.on,
@@ -390,6 +406,9 @@ const createEntry = (money, body, me) => {
     const entry = {
         id: accounts.newId('chg'),
         subId,
+        // Out of here unless it is said otherwise, which is what every charge
+        // against a client is and what most of a partner's are not.
+        way: body.way === 'in' ? 'in' : 'out',
         title,
         cents: toCents(body.amount),
         on,
@@ -462,6 +481,15 @@ const patchEntry = (money, body) => {
 };
 
 // --- the request ------------------------------------------------------------
+// A partner's own column, which is theirs and nobody else's to ask for. Their
+// account is the key, because there is no client record standing in for them
+// and there should not be: they are not being invoiced by anybody here, they
+// are invoicing.
+const partnerMoney = async (user) => ({
+    partner: { ...accounts.publicUser(user) },
+    money: moneyOut(await readMoney(user.id), true)
+});
+
 const mineOnly = (doc, me) => {
     if (!me.clientId) return null;
     return doc.clients.find(one => one.id === me.clientId) || null;
@@ -479,8 +507,15 @@ module.exports = async (req, res) => {
 
         const boss = me.role === 'admin';
 
-        // A client reads their own page and nothing else. A partner is here to
-        // do the work, and what the work was charged for is not part of it.
+        // A partner reads their own column and nothing else at all: not the
+        // clients, not what any of them was charged, not even the shape of the
+        // question. It is answered here and the request goes no further.
+        if (me.role === 'partner') {
+            if (req.method !== 'GET') return res.status(403).json({ error: 'not-allowed' });
+            return res.status(200).json(await partnerMoney(me));
+        }
+
+        // A client reads their own page and nothing else.
         if (!boss && me.role !== 'client') return res.status(403).json({ error: 'not-allowed' });
 
         if (req.method === 'GET') {
@@ -492,6 +527,16 @@ module.exports = async (req, res) => {
                     client: clientOut(client, true, doc),
                     money: moneyOut(money, true),
                     files: files.listOut(await files.read(client.id), true)
+                });
+            }
+
+            const asked = text(req.query && req.query.partner, 40);
+            if (asked) {
+                const user = doc.users.find(one => one.id === asked && one.role === 'partner');
+                if (!user) return res.status(404).json({ error: 'no-such-partner' });
+                return res.status(200).json({
+                    partner: accounts.publicUser(user),
+                    money: moneyOut(await readMoney(user.id), false)
                 });
             }
 
@@ -577,6 +622,21 @@ module.exports = async (req, res) => {
                 return res.status(200).json({ client: clientOut(made, false, doc) });
             }
 
+            // A partner's column holds charges and nothing else: there is no
+            // subscription to a partner and no file to hand them.
+            const partnerId = text(body.partnerId, 40);
+            if (partnerId) {
+                if (!doc.users.some(one => one.id === partnerId && one.role === 'partner')) {
+                    throw new Error('no-such-partner');
+                }
+                if (body.kind !== 'entry') throw new Error('bad-kind');
+
+                const ledger = await readMoney(partnerId);
+                req.method === 'POST' ? createEntry(ledger, body, me) : patchEntry(ledger, body);
+                await writeMoney(partnerId, ledger);
+                return res.status(200).json({ money: moneyOut(ledger, false) });
+            }
+
             const clientId = text(body.clientId, 40);
             if (!doc.clients.some(one => one.id === clientId)) throw new Error('no-such-client');
 
@@ -605,7 +665,21 @@ module.exports = async (req, res) => {
         }
 
         if (req.method === 'DELETE') {
-            const { kind, id, clientId } = req.query || {};
+            const { kind, id, clientId, partnerId } = req.query || {};
+
+            if (partnerId) {
+                if (kind !== 'entry') return res.status(400).json({ error: 'bad-kind' });
+                if (!doc.users.some(one => one.id === partnerId && one.role === 'partner')) {
+                    return res.status(404).json({ error: 'no-such-partner' });
+                }
+
+                const ledger = await readMoney(partnerId);
+                if (!ledger.entries.some(one => one.id === id)) throw new Error('no-such-entry');
+                ledger.entries = ledger.entries.filter(one => one.id !== id);
+                await writeMoney(partnerId, ledger);
+                return res.status(200).json({ money: moneyOut(ledger, false) });
+            }
+
 
             if (kind === 'client') {
                 const client = doc.clients.find(one => one.id === id);
@@ -661,7 +735,8 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: 'Method not allowed.' });
     } catch (err) {
         const known = ['bad-name', 'bad-amount', 'bad-link', 'bad-date', 'bad-kind', 'bad-image',
-                       'no-such-client', 'no-such-sub', 'no-such-entry', 'no-such-file',
+                       'no-such-client', 'no-such-partner', 'no-such-sub', 'no-such-entry',
+                       'no-such-file',
                        'no-account', 'not-expired',
                        'too-many-clients', 'too-many-subs', 'too-many-entries', 'too-many-files'];
         const status = known.includes(err.message) ? 400 : 500;

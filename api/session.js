@@ -1,7 +1,17 @@
 // POST   { username, password, role } -> signs in and sets the session cookie
-// GET                                 -> { user } so a page knows who is here
+// POST   { password }                 -> the same, for the price editor's door,
+//                                        which asks for a password and nothing
+//                                        else and is only ever the admin's
+// GET                                 -> { user } so a page knows who is here,
+//                                        and { authenticated } for the door
+//                                        that only cares whether it is you
 // PATCH  { avatar, name }             -> what you may change about yourself
 // DELETE                              -> signs out
+//
+// Two doors, one session. admin.html asks for a password alone because there
+// is only one person it could be; the portal asks for a username as well
+// because there are many. Both hand out the same cookie, and that is on
+// purpose: it is the same person either way.
 //
 // Everything about the account you are signed in as lives here, which is also
 // why the portal's heartbeat is a GET to this address: it says who is here,
@@ -61,7 +71,12 @@ module.exports = async (req, res) => {
             const user = await accounts.currentUser(req);
             // Loading the portal at all is arriving at it.
             if (user) await presence.touch(user.id);
-            return res.status(200).json({ user: user ? accounts.publicUser(user) : null });
+            return res.status(200).json({
+                user: user ? accounts.publicUser(user) : null,
+                // What the price editor asks. It has no use for who you are,
+                // only for whether the door is yours.
+                authenticated: Boolean(user && user.role === 'admin')
+            });
         }
 
         // How you appear: your picture and the name everybody reads beside it.
@@ -110,7 +125,7 @@ module.exports = async (req, res) => {
 
         if (req.method === 'DELETE') {
             res.setHeader('Set-Cookie', auth.clearCookie());
-            return res.status(200).json({ user: null });
+            return res.status(200).json({ user: null, authenticated: false });
         }
 
         if (req.method !== 'POST') {
@@ -125,6 +140,27 @@ module.exports = async (req, res) => {
 
         const body = readBody(req);
         const doc = await accounts.readAccounts();
+
+        // A password with no username is the price editor asking, and the only
+        // account it can mean is the admin. The deployment's own password is
+        // what opens it, and on a store that has never had an admin it makes
+        // one, exactly as the first sign-in to the portal does.
+        if (!String(body.username || '').trim()) {
+            let envOk = false;
+            try { envOk = auth.checkEnvPassword(body.password); } catch { envOk = false; }
+
+            if (!envOk) {
+                await store.recordFailure(ip, LOCKOUT_S);
+                await new Promise(r => setTimeout(r, 600));
+                return res.status(401).json({ error: 'wrong-password' });
+            }
+
+            await store.clearFailures(ip);
+
+            const boss = doc.users.find(one => one.role === 'admin') || await bootstrap(doc, 'admin');
+            res.setHeader('Set-Cookie', auth.issueCookie(boss.id, accounts.passwordVersion(boss)));
+            return res.status(200).json({ authenticated: true, user: accounts.publicUser(boss) });
+        }
 
         let user = accounts.findByUsername(doc, body.username);
 
