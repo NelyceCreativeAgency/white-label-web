@@ -364,6 +364,7 @@
         }
 
         if (view === 'accounts' && state.me.role === 'admin') { openAccounts(); return; }
+        if (view === 'clients' && state.me.role === 'admin') { openClients(); return; }
         if (view === 'project' && kind && rooms.list.some(one => one.id === kind)) {
             openProject(kind);
             return;
@@ -1291,7 +1292,7 @@
     };
 
     const showView = (name) => {
-        ['grid', 'accounts', 'chat', 'client', 'project', 'blank'].forEach(view => {
+        ['grid', 'accounts', 'clients', 'chat', 'client', 'project', 'blank'].forEach(view => {
             $(`view-${view}`).hidden = view !== name;
         });
 
@@ -5136,6 +5137,7 @@
         else if (item.dataset.client) openClient(item.dataset.client);
         else if (item.dataset.view === 'chat') openChat();
         else if (item.dataset.view === 'accounts') openAccounts();
+        else if (item.dataset.view === 'clients') openClients();
     });
 
     $('logout').addEventListener('click', async () => {
@@ -5258,24 +5260,6 @@
                 grid))
             .join('');
 
-        // A client is the company or the person being invoiced, which is not
-        // the same thing as the account somebody signs in with: one client can
-        // have two people, and both of them read the same page of invoices.
-        const clientLines = purse.list.map(one => `
-            <li>
-                ${faceOf(faceFor(one), 'lister-face')}
-                <span class="lister-who">
-                    <span class="lister-name">${esc(one.name)}</span>
-                    <span class="lister-sub">${one.owed
-                        ? `${esc(euro(one.owed))} εκκρεμεί`
-                        : esc(one.company || 'Τακτοποιημένα')}</span>
-                </span>
-                <button class="lister-gear" type="button" data-go="${esc(one.id)}"
-                        aria-label="Άνοιγμα: ${esc(one.name)}">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
-            </li>`).join('');
-
         $('view-accounts').innerHTML = `
             <section class="panel">
                 <div class="panel-head">
@@ -5314,10 +5298,26 @@
                 <ul class="lister">${gridLines}</ul>
             </section>
 
+        `;
+    };
+
+    // --- the clients, on a page of their own -------------------------------
+    // Every client in the sidebar was every client in the sidebar: fine with
+    // four, unreadable with forty, and in the way of the work either way. They
+    // are a place you go to, like the accounts, not a list you live beside.
+    const renderClients = () => {
+        const many = purse.list.length > LONG_LIST;
+
+        const wanted = hunt
+            ? purse.list.filter(one => plain(one.name).includes(hunt)
+                                    || plain(one.company).includes(hunt))
+            : purse.list;
+
+        $('view-clients').innerHTML = `
             <section class="panel">
                 <div class="panel-head">
                     <h2>Πελάτες</h2>
-                    <p>Ο πελάτης είναι αυτός που τιμολογείς, και δεν είναι το ίδιο πράγμα με τον λογαριασμό που κάνει είσοδο: μια εταιρεία μπορεί να έχει δύο ανθρώπους και να διαβάζουν και οι δύο το ίδιο ιστορικό. Πάτα το βελάκι για να ανοίξεις τη σελίδα του, όπου είναι τα τιμολόγια, οι συνδρομές και το τι του ανήκει.</p>
+                    <p>Ο πελάτης είναι αυτός που τιμολογείς, και δεν είναι το ίδιο πράγμα με τον λογαριασμό που κάνει είσοδο: μια εταιρεία μπορεί να έχει δύο ανθρώπους και να διαβάζουν και οι δύο το ίδιο ιστορικό. Πάτα έναν για να ανοίξεις τη σελίδα του, όπου είναι τα τιμολόγια, οι συνδρομές και τα αρχεία του.</p>
                 </div>
 
                 <form class="new-row" id="new-client">
@@ -5326,11 +5326,95 @@
                     <button class="btn btn-primary" type="submit">Νέος πελάτης</button>
                 </form>
 
+                ${many ? `
+                    <input class="me-name-field" id="client-hunt" type="search" value="${esc(hunt)}"
+                           placeholder="Αναζήτηση πελάτη" aria-label="Αναζήτηση πελάτη"
+                           autocomplete="off" autocapitalize="none" spellcheck="false">` : ''}
+
                 <p class="panel-error" id="client-error" role="alert" hidden></p>
-                <ul class="lister">${clientLines || '<li class="none-yet">Κανένας πελάτης ακόμα</li>'}</ul>
-            </section>
-        `;
+                <ul class="lister">${wanted.length
+                    ? wanted.map(one => `
+                        <li>
+                            ${faceOf(faceFor(one), 'lister-face')}
+                            <span class="lister-who">
+                                <span class="lister-name">${esc(one.name)}</span>
+                                <span class="lister-sub">${one.owed
+                                    ? `<span class="is-due">${esc(euro(one.owed))} εκκρεμεί</span>`
+                                    : esc(one.company || 'Τακτοποιημένα')}</span>
+                            </span>
+                            <span class="lister-acts">
+                                <button class="lister-gear" type="button" data-go="${esc(one.id)}"
+                                        aria-label="Άνοιγμα: ${esc(one.name)}">${ARROW}</button>
+                            </span>
+                        </li>`).join('')
+                    : `<li class="none-yet">${purse.list.length
+                        ? 'Κανένα αποτέλεσμα' : 'Κανένας πελάτης ακόμα'}</li>`}</ul>
+            </section>`;
     };
+
+    const openClients = async () => {
+        await loadClients();
+        $('app-title').textContent = 'Πελάτες';
+        renderClients();
+        showView('clients');
+        where.write('clients');
+        document.querySelectorAll('.app-nav-item').forEach(item => {
+            item.classList.toggle('is-on', item.dataset.view === 'clients');
+        });
+    };
+
+    $('view-clients').addEventListener('input', (event) => {
+        if (event.target.id !== 'client-hunt') return;
+        hunt = plain(event.target.value.trim());
+        const box = $('view-clients').querySelector('.lister');
+        const wanted = hunt
+            ? purse.list.filter(one => plain(one.name).includes(hunt)
+                                    || plain(one.company).includes(hunt))
+            : purse.list;
+        // Only the list is redrawn, so the cursor stays where somebody is
+        // still typing.
+        box.innerHTML = wanted.length
+            ? wanted.map(one => `
+                <li>
+                    ${faceOf(faceFor(one), 'lister-face')}
+                    <span class="lister-who">
+                        <span class="lister-name">${esc(one.name)}</span>
+                        <span class="lister-sub">${one.owed
+                            ? `<span class="is-due">${esc(euro(one.owed))} εκκρεμεί</span>`
+                            : esc(one.company || 'Τακτοποιημένα')}</span>
+                    </span>
+                    <span class="lister-acts">
+                        <button class="lister-gear" type="button" data-go="${esc(one.id)}"
+                                aria-label="Άνοιγμα: ${esc(one.name)}">${ARROW}</button>
+                    </span>
+                </li>`).join('')
+            : '<li class="none-yet">Κανένα αποτέλεσμα</li>';
+    });
+
+    $('view-clients').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+
+        try {
+            await api('/api/clients', {
+                method: 'POST',
+                body: { kind: 'client', ...Object.fromEntries(new FormData(form).entries()) }
+            });
+            form.reset();
+            hunt = '';
+            await loadClients();
+            renderClients();
+            toast('Ο πελάτης δημιουργήθηκε.');
+        } catch (err) {
+            complain(form, explain(err));
+        }
+    });
+
+    $('view-clients').addEventListener('click', (event) => {
+        const row = event.target.closest('li');
+        const go = row && row.querySelector('[data-go]');
+        if (go) openClient(go.dataset.go);
+    });
 
     // A toast is gone in three seconds, which is no way to be told that a
     // username had a character it could not take. Anything that goes wrong in
@@ -5358,10 +5442,6 @@
             if (form.id === 'new-user') {
                 await api('/api/accounts', { method: 'POST', body: { kind: 'user', ...data } });
                 toast('Ο λογαριασμός δημιουργήθηκε.');
-            } else if (form.id === 'new-client') {
-                await api('/api/clients', { method: 'POST', body: { kind: 'client', ...data } });
-                toast('Ο πελάτης δημιουργήθηκε.');
-                await loadClients();
             } else {
                 await api('/api/accounts', { method: 'POST', body: { kind: 'grid', ...data } });
                 toast('Το grid δημιουργήθηκε.');
@@ -5669,46 +5749,20 @@
         const wrap = $('app-clients-wrap');
         const list = $('app-clients');
         const label = $('app-clients-label');
-        const box = $('app-find');
 
-        // A category that hides itself until something is in it is a category
-        // nobody ever finds, so for the admin the heading stays and says so,
-        // the same way the grids do. For somebody who is not the admin and has
-        // no account of their own there is genuinely nothing to point at.
+        // The sidebar holds what is somebody's own: their account, and nothing
+        // else. Every client the admin has was every client the admin has,
+        // standing beside the work all day; they have a page of their own now,
+        // under Διαχείριση, which is where you go to look somebody up rather
+        // than where you are made to look at everybody.
         const boss = state.me && state.me.role === 'admin';
 
-        if (!purse.list.length) {
-            wrap.hidden = !boss;
-            box.hidden = true;
-            label.textContent = 'Πελάτες';
-            list.classList.remove('is-long');
-            list.innerHTML = boss ? '<li class="app-grids-empty">Κανένας ακόμα</li>' : '';
-            return;
-        }
+        if (boss || !purse.list.length) { wrap.hidden = true; return; }
 
         wrap.hidden = false;
-        // The same list, and two entirely different things to the two people
-        // reading it. One of them is looking at their clients; the other is
-        // looking at themselves, and should never be shown a heading that
-        // suggests there are others.
-        label.textContent = boss ? 'Πελάτες' : 'Ο λογαριασμός μου';
+        label.textContent = 'Ο λογαριασμός μου';
 
-        const many = boss && purse.list.length > LONG_LIST;
-        box.hidden = !many;
-        list.classList.toggle('is-long', many);
-        // A search box that has just gone away should not still be filtering.
-        if (!many) hunt = '';
-
-        const wanted = hunt
-            ? purse.list.filter(one => plain(one.name).includes(hunt) || plain(one.company).includes(hunt))
-            : purse.list;
-
-        if (!wanted.length) {
-            list.innerHTML = '<li class="app-grids-empty">Κανένα αποτέλεσμα</li>';
-            return;
-        }
-
-        list.innerHTML = wanted.map(one => `
+        list.innerHTML = purse.list.map(one => `
             <li>
                 <button class="app-nav-item${purse.id === one.id ? ' is-on' : ''}"
                         type="button" data-client="${esc(one.id)}">
@@ -5723,13 +5777,6 @@
                 </button>
             </li>`).join('');
     };
-
-    // The box is outside the list it filters, so redrawing the list under it
-    // never takes the cursor away from what somebody is still typing.
-    $('app-find').addEventListener('input', (event) => {
-        hunt = plain(event.target.value.trim());
-        renderClientNav();
-    });
 
     const loadClients = async () => {
         if (!state.me) { purse.list = []; renderClientNav(); return; }
@@ -6697,8 +6744,7 @@
             if (gone) {
                 purse.id = null;
                 await loadClients();
-                if (purse.list.length) await openClient(purse.list[0].id);
-                else openAccounts();
+                await openClients();
             } else {
                 await openClient(purse.id);
                 await loadClients();

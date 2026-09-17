@@ -47,9 +47,6 @@
         <nav class="app-nav" aria-label="Περιήγηση">
             <div class="app-clients-wrap" id="app-clients-wrap" hidden>
                 <p class="app-nav-label" id="app-clients-label">Πελάτες</p>
-                <input class="app-find" id="app-find" type="search" hidden
-                       placeholder="Αναζήτηση πελάτη" aria-label="Αναζήτηση πελάτη"
-                       autocomplete="off" autocapitalize="none" spellcheck="false">
                 <ul class="app-grids app-clients" id="app-clients"></ul>
             </div>
 
@@ -90,6 +87,11 @@
                 <button class="app-nav-item" type="button" data-view="accounts">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     <span>Λογαριασμοί και grids</span>
+                </button>
+                <button class="app-nav-item" type="button" data-view="clients">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"/>
+                        <path d="M9 21v-6h6v6"/></svg>
+                    <span>Πελάτες</span>
                 </button>
             </div>
         </nav>
@@ -175,6 +177,9 @@
 
         <!-- A project: the room, who is in it, and what is asked inside it. -->
         <section class="app-view" id="view-project" hidden></section>
+
+        <!-- Everybody who is invoiced, on a page of their own. -->
+        <section class="app-view" id="view-clients" hidden></section>
 
         <!-- Messages -------------------------------------------------------- -->
         <!-- Two conversations, kept visibly apart: the one the whole project
