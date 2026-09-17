@@ -15,6 +15,13 @@
 :root {
     --glow: 255, 107, 53;
     --glow-2: 236, 72, 153;
+
+    /* How much of it there is, as the number on the bar under the swatches
+       rather than as an alpha: fifty is what the light was when it had no
+       number, forty is where it now starts, and every alpha below is a share
+       of what that works out to. Nought is dark, and dark is nothing made. */
+    --glow-lvl: 40;
+    --glow-a: calc(var(--glow-lvl) * .0088);
 }
 
 /* No background of its own, deliberately: the dark comes from the root (see
@@ -81,14 +88,14 @@ html.is-lit::before {
     left: -6vw; top: -34vh;
     width: 106vw; height: 90vh;
     background: radial-gradient(ellipse 50% 50% at 50% 50%,
-        rgba(var(--glow), var(--glow-a, .44)) 0%,
-        rgba(var(--glow), calc(var(--glow-a, .44) * 0.88)) 12%,
-        rgba(var(--glow), calc(var(--glow-a, .44) * 0.68)) 25%,
-        rgba(var(--glow), calc(var(--glow-a, .44) * 0.48)) 38%,
-        rgba(var(--glow), calc(var(--glow-a, .44) * 0.31)) 50%,
-        rgba(var(--glow), calc(var(--glow-a, .44) * 0.18)) 62%,
-        rgba(var(--glow), calc(var(--glow-a, .44) * 0.09)) 74%,
-        rgba(var(--glow), calc(var(--glow-a, .44) * 0.03)) 86%,
+        rgba(var(--glow), var(--glow-a)) 0%,
+        rgba(var(--glow), calc(var(--glow-a) * 0.88)) 12%,
+        rgba(var(--glow), calc(var(--glow-a) * 0.68)) 25%,
+        rgba(var(--glow), calc(var(--glow-a) * 0.48)) 38%,
+        rgba(var(--glow), calc(var(--glow-a) * 0.31)) 50%,
+        rgba(var(--glow), calc(var(--glow-a) * 0.18)) 62%,
+        rgba(var(--glow), calc(var(--glow-a) * 0.09)) 74%,
+        rgba(var(--glow), calc(var(--glow-a) * 0.03)) 86%,
         rgba(var(--glow), 0) 100%);
     animation: wander-one 31s ease-in-out infinite;
 }
@@ -99,14 +106,14 @@ html.is-lit::after {
     right: -14vw; top: 0;
     width: 90vw; height: 80vh;
     background: radial-gradient(ellipse 50% 50% at 50% 50%,
-        rgba(var(--glow-2), calc(var(--glow-a, .44) * 0.82)) 0%,
-        rgba(var(--glow-2), calc(var(--glow-a, .44) * 0.7216)) 12%,
-        rgba(var(--glow-2), calc(var(--glow-a, .44) * 0.5576)) 25%,
-        rgba(var(--glow-2), calc(var(--glow-a, .44) * 0.3936)) 38%,
-        rgba(var(--glow-2), calc(var(--glow-a, .44) * 0.2542)) 50%,
-        rgba(var(--glow-2), calc(var(--glow-a, .44) * 0.1476)) 62%,
-        rgba(var(--glow-2), calc(var(--glow-a, .44) * 0.0738)) 74%,
-        rgba(var(--glow-2), calc(var(--glow-a, .44) * 0.0246)) 86%,
+        rgba(var(--glow-2), calc(var(--glow-a) * 0.82)) 0%,
+        rgba(var(--glow-2), calc(var(--glow-a) * 0.7216)) 12%,
+        rgba(var(--glow-2), calc(var(--glow-a) * 0.5576)) 25%,
+        rgba(var(--glow-2), calc(var(--glow-a) * 0.3936)) 38%,
+        rgba(var(--glow-2), calc(var(--glow-a) * 0.2542)) 50%,
+        rgba(var(--glow-2), calc(var(--glow-a) * 0.1476)) 62%,
+        rgba(var(--glow-2), calc(var(--glow-a) * 0.0738)) 74%,
+        rgba(var(--glow-2), calc(var(--glow-a) * 0.0246)) 86%,
         rgba(var(--glow-2), 0) 100%);
     animation: wander-two 43s ease-in-out infinite;
 }
@@ -117,14 +124,14 @@ html.is-lit .app-body::before {
     left: 5vw; top: 38vh;
     width: 80vw; height: 72vh;
     background: radial-gradient(ellipse 50% 50% at 50% 50%,
-        rgba(255, 255, 255, calc(var(--glow-a, .44) * 0.2)) 0%,
-        rgba(255, 255, 255, calc(var(--glow-a, .44) * 0.176)) 12%,
-        rgba(255, 255, 255, calc(var(--glow-a, .44) * 0.136)) 25%,
-        rgba(255, 255, 255, calc(var(--glow-a, .44) * 0.096)) 38%,
-        rgba(255, 255, 255, calc(var(--glow-a, .44) * 0.062)) 50%,
-        rgba(255, 255, 255, calc(var(--glow-a, .44) * 0.036)) 62%,
-        rgba(255, 255, 255, calc(var(--glow-a, .44) * 0.018)) 74%,
-        rgba(255, 255, 255, calc(var(--glow-a, .44) * 0.006)) 86%,
+        rgba(255, 255, 255, calc(var(--glow-a) * 0.2)) 0%,
+        rgba(255, 255, 255, calc(var(--glow-a) * 0.176)) 12%,
+        rgba(255, 255, 255, calc(var(--glow-a) * 0.136)) 25%,
+        rgba(255, 255, 255, calc(var(--glow-a) * 0.096)) 38%,
+        rgba(255, 255, 255, calc(var(--glow-a) * 0.062)) 50%,
+        rgba(255, 255, 255, calc(var(--glow-a) * 0.036)) 62%,
+        rgba(255, 255, 255, calc(var(--glow-a) * 0.018)) 74%,
+        rgba(255, 255, 255, calc(var(--glow-a) * 0.006)) 86%,
         rgba(255, 255, 255, 0) 100%);
     animation: wander-three 37s ease-in-out infinite;
 }
@@ -135,7 +142,7 @@ html.is-lit .app-body::after {
     z-index: -1;
     inset: 0;
     background: radial-gradient(ellipse 120% 115% at 50% 38%,
-        transparent 30%, rgba(0, 0, 0, calc(var(--glow-a, .44) * 1.25)) 100%);
+        transparent 30%, rgba(0, 0, 0, calc(var(--glow-a) * 1.25)) 100%);
 }
 
 /* The wandering. Transform and nothing else, which is the whole reason three
@@ -565,6 +572,65 @@ html.is-lit .app-body::after {
 }
 
 .me-tint-dots { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* How much of it there is. A native range, because a bar somebody drags is a
+   range whatever it is made of — and this way it takes a keyboard, a tap and a
+   screen reader without any of that being written here. What is written here
+   is only what it looks like: a hairline, a small round handle, and the part
+   already spent in the colour it is spending. */
+.me-tint-bar {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 16px;
+    margin: 13px 0 1px;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.me-tint-bar::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(to right,
+        rgb(var(--glow)) var(--fill, 40%), rgba(255, 255, 255, .13) var(--fill, 40%));
+}
+
+.me-tint-bar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 11px; height: 11px;
+    margin-top: -4px;
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+}
+
+.me-tint-bar::-moz-range-track {
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(to right,
+        rgb(var(--glow)) var(--fill, 40%), rgba(255, 255, 255, .13) var(--fill, 40%));
+}
+
+.me-tint-bar::-moz-range-thumb {
+    width: 11px; height: 11px;
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+}
+
+/* Nothing to be the strength of, with no light chosen. */
+.me-tint-bar:disabled { opacity: .35; cursor: default; }
+
+.me-tint-bar:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, .5);
+    outline-offset: 3px;
+    border-radius: 3px;
+}
 
 .me-tint-dot {
     flex: 0 0 auto;

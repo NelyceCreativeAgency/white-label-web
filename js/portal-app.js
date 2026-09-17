@@ -3673,10 +3673,32 @@
     // colour of your own background is a round trip too many. Which does mean
     // it does not follow anybody to another machine — and is why somebody
     // arriving on a new one is told where the switch is (see greet, below).
+    const LEVEL = 40;
+
     const glow = {
         read() { try { return localStorage.getItem('nelyce-glow'); } catch { return null; } },
         write(value) {
             try { localStorage.setItem('nelyce-glow', value); }
+            catch { /* nothing to remember with */ }
+        }
+    };
+
+    // How much of it, nought to a hundred. Nothing written yet is not nought:
+    // Number(null) is nought, and reading it that way would open the portal
+    // dark for everybody and call it their choice. Anything else that is not a
+    // number in range is somebody else's rubbish in our key, and is ignored.
+    const level = {
+        read() {
+            try {
+                const saved = localStorage.getItem('nelyce-level');
+                if (!saved) return LEVEL;
+                const asked = Number(saved);
+                return Number.isFinite(asked) && asked >= 0 && asked <= 100
+                    ? asked : LEVEL;
+            } catch { return LEVEL; }
+        },
+        write(value) {
+            try { localStorage.setItem('nelyce-level', String(value)); }
             catch { /* nothing to remember with */ }
         }
     };
@@ -3688,37 +3710,53 @@
         return (dot && dot.dataset.glowTwo) || hue;
     };
 
-    // Nothing chosen and chosen to have none come to the same thing now that
-    // the portal opens black: either way there is no light to make.
-    const lightUp = (value) => {
-        const root = document.documentElement;
-        const [one, two] = String(value || '').split('|');
-        const lit = Boolean(one);
+    // The two things anybody can say about the light — which colour and how
+    // much of it — and one place that puts both on. Either of them alone can
+    // mean darkness: no colour chosen, or none of it asked for.
+    let hue = glow.read();
+    let much = level.read();
 
-        if (lit) {
+    const relight = () => {
+        const root = document.documentElement;
+        const bar = $('me-tint-bar');
+        const [one, two] = String(hue || '').split('|');
+
+        if (one) {
             root.style.setProperty('--glow', one);
             root.style.setProperty('--glow-2', two || pairOf(one));
         }
-        root.classList.toggle('is-lit', lit);
+        root.style.setProperty('--glow-lvl', String(much));
+        root.classList.toggle('is-lit', Boolean(one) && much > 0);
+
+        bar.value = much;
+        bar.style.setProperty('--fill', `${much}%`);
+        bar.disabled = !one;
 
         dots().forEach(dot => {
             dot.setAttribute('aria-checked',
-                dot.dataset.glow === (lit ? one : '') ? 'true' : 'false');
+                dot.dataset.glow === (one || '') ? 'true' : 'false');
         });
     };
 
     $('me-tint').addEventListener('click', (event) => {
         const dot = event.target.closest('.me-tint-dot');
         if (!dot) return;
-        const chosen = dot.dataset.glow
-            ? `${dot.dataset.glow}|${dot.dataset.glowTwo}` : '';
-        lightUp(chosen);
-        glow.write(chosen);
+        hue = dot.dataset.glow ? `${dot.dataset.glow}|${dot.dataset.glowTwo}` : '';
+        glow.write(hue);
+        relight();
     });
 
-    // The colour itself is already on the document — the head put it there
-    // before the first frame. This is the tick under the one it came from.
-    lightUp(glow.read());
+    // On input rather than on change, so the page is what the bar says while
+    // it is still being dragged: the only way to set a light is to look at it.
+    $('me-tint-bar').addEventListener('input', () => {
+        much = Number($('me-tint-bar').value);
+        level.write(much);
+        relight();
+    });
+
+    // The colour and the level are already on the document — the head put them
+    // there before the first frame. This is the menu catching up with them.
+    relight();
 
     // --- said once ----------------------------------------------------------
     // Somebody opening the portal on a machine for the first time gets one

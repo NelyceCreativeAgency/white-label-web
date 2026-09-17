@@ -42,10 +42,13 @@
          somebody else's orange. -->
     <script>
         try {
+            var root = document.documentElement;
             var glow = localStorage.getItem('nelyce-glow');
-            if (glow) {
+            var level = localStorage.getItem('nelyce-level');
+
+            if (level !== null) root.style.setProperty('--glow-lvl', level);
+            if (glow && (level === null || Number(level) > 0)) {
                 var pair = glow.split('|');
-                var root = document.documentElement;
                 root.style.setProperty('--glow', pair[0]);
                 if (pair[1]) root.style.setProperty('--glow-2', pair[1]);
                 root.classList.add('is-lit');
@@ -177,6 +180,10 @@
                                 aria-checked="false" aria-label="Σβηστό" title="Σβηστό"
                                 data-glow=""></button>
                     </div>
+
+                    <input class="me-tint-bar" id="me-tint-bar" type="range"
+                           min="0" max="100" step="1" value="40"
+                           aria-label="Ένταση φωτισμού">
                 </div>
 
                 <button type="button" role="menuitem" id="logout">Έξοδος</button>
