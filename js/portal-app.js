@@ -4988,9 +4988,21 @@
             : sub.paidUntil ? `Πληρωμένο μέχρι ${onDay(sub.paidUntil)}`
             : 'Δεν έχει πληρωθεί ακόμα';
 
-        const owing = sub.due
-            ? ` · <span class="is-due">${sub.due === 1 ? 'μία χρέωση εκκρεμεί' : `${sub.due} χρεώσεις εκκρεμούν`}</span>`
+        // Everything on this line is read off the charges underneath. Nothing
+        // about a subscription is stored twice, so nothing can disagree.
+        const ours = purse.money.entries.filter(entry => entry.subId === sub.id);
+
+        const last = ours.filter(entry => entry.status === 'paid' && entry.paidAt)
+            .map(entry => entry.paidAt).sort().pop();
+
+        const owed = ours.filter(entry => entry.status === 'due')
+            .reduce((total, entry) => total + entry.cents, 0);
+
+        const owing = owed
+            ? ` · <span class="is-due">${esc(euro(owed))} εκκρεμεί</span>`
             : '';
+
+        const paid = last ? ` · Τελευταία πληρωμή ${onDay(last)}` : '';
 
         return `
             <li class="sub${stopped ? ' is-stopped' : ''}" data-sub="${esc(sub.id)}">
@@ -5000,7 +5012,7 @@
                     ${boss ? `<button class="lister-gear" type="button" data-open="sub"
                                       data-id="${esc(sub.id)}" aria-label="Ρυθμίσεις: ${esc(sub.title)}">${GEAR}</button>` : ''}
                 </div>
-                <p class="sub-when">${said}${owing}</p>
+                <p class="sub-when">${said}${paid}${owing}</p>
                 ${monthsOf(sub, boss)}
                 ${boss ? `
                     <p class="months-how">Πάτα έναν μήνα για να τον σημειώσεις πληρωμένο. Ξαναπάτησέ τον για να το πάρεις πίσω.</p>
@@ -5015,6 +5027,9 @@
         const sub = entry.subId && purse.money.subs.find(one => one.id === entry.subId);
         const under = [];
         if (entry.to) under.push(`Καλύπτει ως ${onDay(entry.to)}`);
+        if (entry.status === 'paid' && entry.paidAt && entry.paidAt !== entry.on) {
+            under.push(`Πληρώθηκε ${onDay(entry.paidAt)}`);
+        }
         if (entry.invoiceNo) under.push(`Τιμολόγιο ${esc(entry.invoiceNo)}`);
         if (sub && sub.title !== entry.title) under.push(esc(sub.title));
 
@@ -5108,7 +5123,7 @@
                 <div class="panel-head">
                     <h2>Ιστορικό και τιμολόγια</h2>
                     <p>${boss
-                        ? 'Κάθε χρέωση όπως εκδόθηκε, και αν έχει εξοφληθεί ή όχι. Ο σύνδεσμος πάει στο ίδιο το αρχείο του τιμολογίου, όπου κι αν το ανεβάζεις. Τα υπόλοιπα στοιχεία κάθε γραμμής είναι πίσω από το γρανάζι της.'
+                        ? 'Κάθε χρέωση όπως εκδόθηκε, και αν έχει εξοφληθεί ή όχι. Βάλε την πάνω σε μια συνδρομή και ανάβουν μόνοι τους οι μήνες της από πάνω. Ο σύνδεσμος πάει στο ίδιο το αρχείο του τιμολογίου, όπου κι αν το ανεβάζεις. Η ημερομηνία πληρωμής και τα υπόλοιπα στοιχεία κάθε γραμμής είναι πίσω από το γρανάζι της.'
                         : 'Ό,τι έχει τιμολογηθεί, με τον σύνδεσμο για να κατεβάσεις το κάθε τιμολόγιο.'}</p>
                 </div>
 
@@ -5117,6 +5132,11 @@
                     <input name="title" placeholder="Τι αφορά, π.χ. Λογότυπο" maxlength="80" required>
                     <input name="amount" placeholder="Ποσό" inputmode="decimal" required>
                     <input name="on" type="date" aria-label="Ημερομηνία">
+                    ${owned.subs.length ? `
+                        <select name="subId" aria-label="Ανήκει σε">
+                            <option value="">Μεμονωμένη χρέωση</option>
+                            ${owned.subs.map(sub => `<option value="${esc(sub.id)}">${esc(sub.title)}</option>`).join('')}
+                        </select>` : ''}
                     <select name="status" aria-label="Κατάσταση">
                         <option value="paid">Πληρώθηκε</option>
                         <option value="due">Εκκρεμεί</option>
@@ -5331,6 +5351,7 @@
                         <option value="due"${entry.status === 'due' ? ' selected' : ''}>Εκκρεμεί</option>
                         <option value="paid"${entry.status === 'paid' ? ' selected' : ''}>Πληρώθηκε</option>
                     </select></label>
+                    <label id="entry-paidat"${entry.status === 'paid' ? '' : ' hidden'}>Πληρώθηκε στις<input data-f="paidAt" type="date" value="${esc(entry.paidAt || '')}"></label>
                 </div>
 
                 <div class="row-fields">
@@ -5396,14 +5417,20 @@
         });
     });
 
-    // A period is a thing a subscription has. A one-off invoice is dated; it
-    // does not run until a date, so the box for one is not there to be filled.
+    // Two boxes that are only there when they mean something. A period is a
+    // thing a subscription has, so a one-off is not asked how long it runs; and
+    // a charge nobody has paid has no day on which it was paid.
     $('money-body').addEventListener('change', (changed) => {
-        if (tray.kind !== 'entry' || changed.target.dataset.f !== 'subId') return;
+        if (tray.kind !== 'entry') return;
+        const what = changed.target.dataset.f;
 
-        const covers = $('entry-covers');
-        covers.hidden = !changed.target.value;
-        if (covers.hidden) covers.querySelector('input').value = '';
+        if (what === 'subId') {
+            const covers = $('entry-covers');
+            covers.hidden = !changed.target.value;
+            if (covers.hidden) covers.querySelector('input').value = '';
+        }
+
+        if (what === 'status') $('entry-paidat').hidden = changed.target.value !== 'paid';
     });
 
     $('money-save').addEventListener('click', async () => {

@@ -323,7 +323,16 @@ const createEntry = (money, body, me) => {
     if (subId && !money.subs.some(sub => sub.id === subId)) throw new Error('no-such-sub');
 
     const on = toDay(body.on, today());
-    const to = toDay(body.to, '');
+    let to = toDay(body.to, '');
+
+    // A charge put down against a subscription is a turn of it, so where nobody
+    // has said how long it runs, it runs as long as that subscription's turns
+    // do. This is what makes a line typed into the ledger light the months up.
+    if (!to && subId) {
+        const sub = money.subs.find(one => one.id === subId);
+        to = shift(addMonths(on, CYCLES[sub.cycle] || 1), -1);
+    }
+
     if (to && to < on) throw new Error('bad-date');
 
     const entry = {
@@ -338,7 +347,10 @@ const createEntry = (money, body, me) => {
         invoiceUrl: toLink(body.invoiceUrl),
         payUrl: toLink(body.payUrl),
         note: text(body.note, MAX_NOTE),
-        paidAt: body.status === 'paid' ? today() : null,
+        // The day the money arrived, which is not today just because today is
+        // when it was typed in. Unsaid, it is the day the charge is dated,
+        // which is nearer the truth than the day somebody sat down to record it.
+        paidAt: body.status === 'paid' ? toDay(body.paidAt, on) : null,
         ...madeBy(me)
     };
     money.entries.push(entry);
@@ -457,7 +469,14 @@ const patchEntry = (money, body) => {
     if (body.status !== undefined) {
         const paid = body.status === 'paid';
         entry.status = paid ? 'paid' : 'due';
-        entry.paidAt = paid ? (entry.paidAt || toDay(body.paidAt, today())) : null;
+        if (!paid) entry.paidAt = null;
+        else if (!entry.paidAt) entry.paidAt = entry.on;
+    }
+
+    // Set on its own, because nobody pays on the day they are invoiced and the
+    // two dates have no business being the same field.
+    if (body.paidAt !== undefined && entry.status === 'paid') {
+        entry.paidAt = toDay(body.paidAt, entry.on);
     }
 
     if (body.invoiceNo !== undefined) entry.invoiceNo = text(body.invoiceNo, 40);
