@@ -17,10 +17,11 @@
     color: var(--text-primary);
 }
 
-/* The light the page sits in. One source, hung high above the top edge and
+/* The light the page sits in. One source hung high above the top edge and
    wide enough that what reaches the screen is the spread of it rather than the
-   lamp: it should read as a room lit from above, not as a glow behind the
-   header.
+   lamp, a second one low and colourless that lifts the middle of the page out
+   of the dark, and corners that fall away so the light in the middle has
+   somewhere to fall away to.
 
    Fixed to the screen and not to the page, which is the part that matters.
    Laid on the page it would have to know how long the page is — a grid of
@@ -31,13 +32,15 @@
 
    And it stays free. One layer, painted once, that never moves and never
    animates: the browser composites it and forgets about it. No filter, no
-   blur, no element anybody can hit — the softness is the gradient's own
-   falloff, which costs nothing, rather than a filter, which does not.
+   blur, no canvas, no element anybody can hit — the softness is the gradients'
+   own falloff, which costs nothing, where a blur filter would cost something
+   on every frame it is asked for.
 
-   Two gradients, because a colour over a background this dark only ever goes
-   brown however much of it there is. The white one is the light; the coloured
-   one is what the light is. Both alphas are shares of one number, so the
-   swatch that turns it off turns all of it off. */
+   The colourless ones are what make it read as light. A colour over a
+   background this dark only ever goes brown however much of it there is, so
+   the white does the lighting and the colour says what the light is. Every
+   alpha here, the dark in the corners included, is a share of one number, so
+   the swatch that turns it off turns all of it off. */
 .app-body::before {
     content: '';
     position: fixed;
@@ -45,12 +48,21 @@
     z-index: -1;
     pointer-events: none;
     background:
-        radial-gradient(ellipse 85vw 34vh at 50% -10%,
-            rgba(255, 255, 255, calc(var(--glow-a, .4) * .21)), transparent 70%),
-        radial-gradient(ellipse 155vw 100vh at 50% -20%,
-            rgba(var(--glow), var(--glow-a, .4)) 0%,
-            rgba(var(--glow), calc(var(--glow-a, .4) * .42)) 45%,
-            transparent 80%);
+        /* the corners */
+        radial-gradient(ellipse 120% 115% at 50% 38%,
+            transparent 30%, rgba(0, 0, 0, calc(var(--glow-a, .44) * 1.25)) 100%),
+        /* the low light, and a far fainter one opposite it */
+        radial-gradient(ellipse 54vw 50vh at 70% 60%,
+            rgba(255, 255, 255, calc(var(--glow-a, .44) * .23)), transparent 70%),
+        radial-gradient(ellipse 42vw 38vh at 14% 86%,
+            rgba(255, 255, 255, calc(var(--glow-a, .44) * .11)), transparent 70%),
+        /* the one overhead */
+        radial-gradient(ellipse 58vw 26vh at 54% -8%,
+            rgba(255, 255, 255, calc(var(--glow-a, .44) * .21)), transparent 70%),
+        radial-gradient(ellipse 100vw 80vh at 54% -16%,
+            rgba(var(--glow), var(--glow-a, .44)) 0%,
+            rgba(var(--glow), calc(var(--glow-a, .44) * .41)) 45%,
+            transparent 78%);
 }
 
 .app-body.is-locked { overflow: hidden; }
