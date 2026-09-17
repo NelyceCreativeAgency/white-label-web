@@ -3034,11 +3034,13 @@
         const { blob, w, h } = await shrink(source, maxSide);
         const data = await asBase64(blob);
 
-        // A picture of a person hangs off no grid, and a client's square hangs
-        // off no grid either. Everything else does and says which one, because
-        // an admin may be looking at any of them. An id carries what it is in
-        // its own prefix, which is where this reads it from.
+        // Four things a picture can be for, and only one of them is a grid.
+        // Each word here has to be answered by name: anything this does not
+        // recognise falls through to the grid, and a picture that was never
+        // meant for one then fails saying the grid could not be found, which
+        // sends whoever is reading it looking in the wrong place.
         const belongs = where === 'me' ? { kind: 'me' }
+            : where === 'project' ? { kind: 'project' }
             : String(where || '').startsWith('cli_') ? { kind: 'client', client: where }
             : { grid: where || (state.grid && state.grid.id) };
 
