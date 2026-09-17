@@ -18,6 +18,13 @@
    at different times and it reads as several things happening at once. */
 :root { --fold-ms: .34s; --fold-ease: cubic-bezier(.4, 0, .2, 1); }
 
+/* The sidebar is put back the way it was left before the page is drawn, and a
+   transition would turn that into the sidebar folding itself in front of
+   somebody who folded it days ago. Nothing moves until the first frame is up. */
+.app-body.is-still .app-side,
+.app-body.is-still .app-side *,
+.app-body.is-still .app-main { transition: none !important; }
+
 /* Several things on this page are shown and hidden through the hidden
    attribute, and a rule that gives one of them a display of its own would
    quietly outrank it. This keeps the attribute the last word. */
@@ -58,13 +65,15 @@
     gap: 8px;
     margin: 0 8px 28px;
     overflow: hidden;
-    transition: margin var(--fold-ms) var(--fold-ease);
+    transition: margin var(--fold-ms) var(--fold-ease),
+                gap var(--fold-ms) var(--fold-ease);
 }
 
 .app-brand {
     display: block;
     flex: 1;
     min-width: 0;
+    overflow: hidden;
     transition: opacity .18s var(--fold-ease);
 }
 .app-brand-logo { width: 132px; height: auto; }
@@ -98,38 +107,71 @@
 }
 
 /* --- folded --------------------------------------------------------------- */
-/* A rail of icons. Everything that was words goes, and everything that was a
-   picture stays and moves to the middle, so the sidebar reads as the same
-   sidebar rather than as a different screen. Only above the fold: below it the
-   sidebar is already a drawer that is either over the page or off it. */
+/* A rail of icons. Everything that was words goes and everything that was a
+   picture stays — and stays exactly where it was. The rail is as wide as it
+   has to be for the column of icons the sidebar already had to be its middle,
+   so folding is the panel's edge coming in and the words shrinking to nothing
+   under a fade, and the icons are not part of the movement at all.
+
+   Which is where the numbers come from: 18px of sidebar, a 1px row border and
+   12px of row, a 32px icon, then 12 + 1 + 17 back out to the far edge is 94,
+   and the middle of that is the 47 the icons were already sitting on. Change
+   any one of them and the column steps sideways as it folds. Only above the
+   fold: below it the sidebar is already a drawer that is either over the page
+   or off it. */
 @media (min-width: 901px) {
-    .app-body.is-folded .app-side { width: 76px; padding-left: 14px; padding-right: 14px; }
-    .app-body.is-folded .app-main { margin-left: 76px; }
+    .app-body.is-folded .app-side { width: 94px; padding-right: 17px; }
+    .app-body.is-folded .app-main { margin-left: 94px; }
 
-    .app-body.is-folded .app-head { margin: 0 0 24px; justify-content: center; }
+    /* The button is the one thing that has to move, because it was at the far
+       end of a line that is no longer there. It lands on the column of icons
+       rather than somewhere near it. */
+    .app-body.is-folded .app-head { margin-right: 13px; gap: 0; }
 
-    /* Faded and clipped rather than taken away, so the width they were taking
-       up goes with the sidebar instead of an instant before it. */
+    /* Faded and squeezed to nothing rather than taken away, so the room they
+       were taking goes with the sidebar instead of an instant before it. */
     .app-body.is-folded .app-brand,
     .app-body.is-folded .app-nav-text,
     .app-body.is-folded .app-me-text { opacity: 0; pointer-events: none; }
 
-    .app-body.is-folded .app-nav-label { max-height: 0; margin-bottom: 0; opacity: 0; }
+    .app-body.is-folded .app-nav-label,
+    .app-body.is-folded .app-grids-empty {
+        max-height: 0;
+        margin-bottom: 0;
+        padding-top: 0; padding-bottom: 0;
+        opacity: 0;
+    }
     .app-body.is-folded .app-me-gear { opacity: 0; }
 
+    /* Nothing is centred here. The icon is first in the row and the row keeps
+       the padding it had, so it cannot go anywhere; anything that will not
+       shrink runs off the end and is clipped, rather than shoving the icon off
+       the other one — which is what the three admin rows used to do. */
     .app-body.is-folded .app-nav-item,
-    .app-body.is-folded .app-me-who { position: relative; justify-content: center; gap: 0; padding: 10px 0; }
+    .app-body.is-folded .app-me-who { position: relative; gap: 0; }
 
     /* The count of what is waiting has nowhere to be a number, and a number
-       nobody can read is worse than a dot that says the same thing. */
+       nobody can read is worse than a dot that says the same thing. It sits on
+       the corner of the icon, the way a phone puts one on an app. */
     .app-body.is-folded .app-nav-badge,
     .app-body.is-folded .app-nav-count {
         position: absolute;
-        top: 7px; right: 14px;
+        top: 50%; right: 8px;
+        transform: translateY(-16px);
         min-width: 9px; width: 9px; height: 9px;
         padding: 0;
         font-size: 0;
         border-radius: 50%;
+    }
+
+    /* An icon drawn as a line is smaller than one drawn as a tile, so the
+       corner it has to hang off is not in the same place. Told apart by what
+       the row was built from rather than by a class somebody has to remember
+       to put there. */
+    .app-body.is-folded .app-nav-item > svg ~ .app-nav-badge,
+    .app-body.is-folded .app-nav-item > svg ~ .app-nav-count {
+        right: 14px;
+        transform: translateY(-14px);
     }
 
     .app-nav-badge,
@@ -174,9 +216,15 @@
 
 
 .app-grids-empty {
+    max-height: 44px;
     padding: 10px 12px;
+    overflow: hidden;
     font-size: .82rem;
+    white-space: nowrap;
     color: rgba(184, 186, 194, .6);
+    transition: max-height var(--fold-ms) var(--fold-ease),
+                padding var(--fold-ms) var(--fold-ease),
+                opacity .16s var(--fold-ease);
 }
 
 .app-nav-item {
@@ -195,8 +243,7 @@
     border-radius: 13px;
     cursor: pointer;
     transition: background .25s, color .25s, border-color .25s,
-                gap var(--fold-ms) var(--fold-ease),
-                padding var(--fold-ms) var(--fold-ease);
+                gap var(--fold-ms) var(--fold-ease);
 }
 
 .app-nav-item:hover { background: rgba(255, 255, 255, .05); color: var(--text-primary); }
@@ -229,6 +276,7 @@
     flex: 1;
     min-width: 0;
     overflow: hidden;
+    white-space: nowrap;
     transition: opacity .18s var(--fold-ease);
 }
 .app-nav-text strong {
@@ -239,7 +287,13 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.app-nav-text small { display: block; font-size: .72rem; color: rgba(184, 186, 194, .65); }
+.app-nav-text small {
+    display: block;
+    overflow: hidden;
+    font-size: .72rem;
+    text-overflow: ellipsis;
+    color: rgba(184, 186, 194, .65);
+}
 
 /* The count of posts a client has written on and nobody has answered yet. */
 .app-nav-badge {
@@ -372,10 +426,9 @@
     width: 100%;
     min-width: 0;
     margin: 0;
-    padding: 0;
+    padding: 0 12px;
     overflow: hidden;
-    transition: gap var(--fold-ms) var(--fold-ease),
-                padding var(--fold-ms) var(--fold-ease);
+    transition: gap var(--fold-ms) var(--fold-ease);
     font: inherit;
     text-align: left;
     color: inherit;
@@ -395,9 +448,17 @@
     border-radius: 50%;
 }
 
-.app-me-text { flex: 1; min-width: 0; overflow: hidden; transition: opacity .18s var(--fold-ease); }
-.app-me-text strong { display: block; font-size: .85rem; font-weight: var(--fw-medium); }
-.app-me-text small { display: block; font-size: .7rem; color: rgba(184, 186, 194, .65); }
+.app-me-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity .18s var(--fold-ease);
+}
+.app-me-text strong { display: block; overflow: hidden; font-size: .85rem;
+    font-weight: var(--fw-medium); text-overflow: ellipsis; }
+.app-me-text small { display: block; overflow: hidden; font-size: .7rem;
+    text-overflow: ellipsis; color: rgba(184, 186, 194, .65); }
 
 .app-ghost {
     padding: 8px 14px;

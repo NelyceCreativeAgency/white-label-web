@@ -1399,7 +1399,14 @@
         attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true
     });
 
+    // Put back the way it was left, without the putting back being something
+    // anybody watches happen: the class goes on, the first frame is drawn with
+    // it, and only then is the sidebar allowed to move again.
+    document.body.classList.add('is-still');
     fold(railed.read());
+    requestAnimationFrame(() => requestAnimationFrame(
+        () => document.body.classList.remove('is-still')));
+
     freshenNav();
 
     const showView = (name) => {
