@@ -257,7 +257,8 @@
         // between the two as far as this file is concerned.
         // Every conversation this account has, and which one is open. None of
         // it depends on which grid is being looked at.
-        chat: { kind: 'teams', teams: [], people: [], open: null, gridId: null, messages: [] }
+        chat: { kind: 'teams', teams: [], people: [], open: null, gridId: null,
+                messages: [], loading: false }
     };
 
     const canEdit = () => Boolean(state.grid && state.grid.canEdit);
@@ -2957,6 +2958,14 @@
 
         const log = $('chat-log');
 
+        // On its way. Whatever was in here belonged to the conversation before
+        // this one, and the line about nobody having written yet belongs to no
+        // conversation at all until the answer says so.
+        if (c.loading) {
+            log.innerHTML = '<li class="chat-wait"><span></span><span></span><span></span></li>';
+            return;
+        }
+
         // Somebody who has scrolled up to read yesterday stays there. Somebody
         // already at the bottom is carried down to whatever just arrived, and
         // an empty log counts as at the bottom, which is how a conversation
@@ -3023,20 +3032,25 @@
         return row ? Boolean(row.online) : null;
     };
 
-    const openThread = async (open, { quiet = false } = {}) => {
+    const openThread = async (open, { quiet = false, reveal = true } = {}) => {
         if (!open) return;
 
         const c = state.chat;
         const before = lastId(c.messages);
         const wasLive = shown(open);
+        const swapped = !sameThread(c.open, open);
 
         c.open = open;
         c.gridId = chatGridId();
 
+        // Another conversation's messages are not this one's, so they go the
+        // moment it is asked for rather than when the answer arrives.
+        if (swapped && !quiet) { c.messages = []; c.loading = true; }
+
         // A quiet refresh never moves the screen. Somebody scrolled up reading
         // yesterday, or back on the list on a phone, stays where they are.
         if (!quiet) {
-            $('view-chat').classList.add('is-open');
+            if (reveal) $('view-chat').classList.add('is-open');
             renderChatList();
             renderRoom();
         }
@@ -3045,10 +3059,12 @@
         try {
             data = await api(`/api/chat?${asks(open)}`);
         } catch (err) {
-            if (!quiet) toast(explain(err), 'bad');
+            c.loading = false;
+            if (!quiet) { toast(explain(err), 'bad'); renderRoom(); }
             return;
         }
 
+        c.loading = false;
         c.messages = data.messages || [];
 
         // What the list says about this one is now known first hand.
@@ -3071,7 +3087,7 @@
         if (!quiet || changed) await markRead(open);
 
         renderChatList();
-        if (!quiet || changed) renderRoom();
+        if (!quiet || changed || swapped) renderRoom();
     };
 
     // Every conversation this account has, which is what the list is made of.
@@ -3103,28 +3119,29 @@
 
         // On a phone the list comes first and a conversation covers it, so
         // arriving here without one named shows the list.
+        const phone = matchMedia('(max-width: 900px)').matches;
         $('view-chat').classList.toggle('is-open', Boolean(open));
 
         busy('Φόρτωση…');
         try {
             await loadChats();
 
-            // Arriving with nothing named opens the first conversation there
-            // is, so a wide screen is never half empty. On a phone the list is
-            // still what shows, and this is what waits behind it.
+            // A wide screen shows both at once, so the first conversation is
+            // opened behind the list rather than leaving half of it blank. A
+            // phone shows one thing at a time and the thing asked for was the
+            // list, so nothing is opened and nothing flashes past.
             const first = open
-                || (state.chat.teams[0] && { kind: 'team', id: state.chat.teams[0].id })
-                || (state.chat.people[0] && { kind: 'dm', id: state.chat.people[0].id })
+                || (phone ? null
+                    : (state.chat.teams[0] && { kind: 'team', id: state.chat.teams[0].id })
+                      || (state.chat.people[0] && { kind: 'dm', id: state.chat.people[0].id }))
                 || null;
 
             if (!first) { state.chat.open = null; state.chat.gridId = null; renderChatList(); return; }
 
             state.chat.kind = first.kind === 'team' ? 'teams' : 'people';
-            await openThread(first);
 
-            // openThread puts a conversation in front of the list, which is not
-            // what somebody who named none of them asked for on a phone.
-            if (!open) $('view-chat').classList.remove('is-open');
+            // Revealed only when this is the conversation somebody asked for.
+            await openThread(first, { reveal: Boolean(open) });
         } finally {
             busy('');
         }

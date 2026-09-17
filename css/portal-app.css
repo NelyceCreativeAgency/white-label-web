@@ -1383,6 +1383,31 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
 
 .chat-foot button:hover { color: #ff8b6b; }
 
+/* Three dots while a conversation is on its way. Without them the room shows
+   either the last conversation's messages or the line that says nobody has
+   written yet, and both of those are a lie for as long as they are up. */
+.chat-wait {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: auto;
+}
+
+.chat-wait span {
+    width: 7px; height: 7px;
+    background: rgba(255, 255, 255, .28);
+    border-radius: 50%;
+    animation: chat-wait 1.1s ease-in-out infinite;
+}
+
+.chat-wait span:nth-child(2) { animation-delay: .16s; }
+.chat-wait span:nth-child(3) { animation-delay: .32s; }
+
+@keyframes chat-wait {
+    0%, 70%, 100% { opacity: .25; transform: translateY(0); }
+    35%           { opacity: .9;  transform: translateY(-4px); }
+}
+
 .chat-empty {
     margin: auto;
     max-width: 330px;
@@ -1950,14 +1975,17 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
         position: fixed;
         top: 0; left: 0;
         width: 100%;
-        /* Not inset: 0. The page is as tall as the screen the keyboard has
-           left, which is the whole trick, and the min-height further up this
-           file would otherwise make it taller than that and push the box
-           somebody is writing in straight back under the keys. */
-        height: var(--vvh);
+        /* The screen, and no more: the min-height further up this file would
+           otherwise make the page taller than what is showing. */
+        height: 100dvh;
         min-height: 0;
         overflow: hidden;
     }
+
+    /* Only while somebody is typing is the measured height worth anything.
+       With the keyboard down, 100dvh is what the browser already says the
+       screen is, and second-guessing it is how a gap appears at the bottom. */
+    body.is-chatting.is-typing { height: var(--vvh, 100dvh); }
 
     body.is-chatting .app-main { height: 100%; min-height: 0; }
     body.is-chatting .app-chat { min-height: 0; }
@@ -1983,7 +2011,10 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
        three lines below it, and one of the two is saying it twice. */
     body.is-typing .app-top { display: none; }
 
-    .chat-form { padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
+    /* No safe-area padding. The height above already stops short of the home
+       indicator, and adding the same inset a second time is the black band
+       that was sitting between the box and the bottom of the screen. */
+    .chat-form { padding: 10px 12px; }
     .chat-send { width: 40px; height: 40px; }
 
     /* Same reason as the message box: sixteen pixels or the page jumps. */
