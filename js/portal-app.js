@@ -4981,11 +4981,21 @@
         const ours = purse.money.entries.filter(entry => entry.subId === sub.id && entry.to);
 
         const cells = MONTHS.map((name, month) => {
-            const mm = String(month + 1).padStart(2, '0');
-            // Compared as text, never parsed: every date here is already
-            // zero-padded, so the thirty-first stands in for the end of any
-            // month without having to know how long February is.
-            const covering = ours.filter(entry => entry.on <= `${year}-${mm}-31` && entry.to >= `${year}-${mm}-01`);
+            const days = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+            const opens = Date.UTC(year, month, 1);
+            const shuts = Date.UTC(year, month, days);
+
+            // A turn that begins on the twenty-eighth buys four days of that
+            // month and the whole of the next, and it is the next one it paid
+            // for. So a month counts as covered when most of its days fall
+            // inside the turn, which lights one square per monthly turn and
+            // three per quarterly one without being told how long either is.
+            const covering = ours.filter(entry => {
+                const from = Math.max(opens, Date.parse(`${entry.on}T00:00:00Z`));
+                const to = Math.min(shuts, Date.parse(`${entry.to}T00:00:00Z`));
+                return (to - from) / 86400000 + 1 > days / 2;
+            });
+
             const how = covering.some(entry => entry.status === 'paid') ? ' is-paid'
                 : covering.length ? ' is-due' : '';
             const said = how === ' is-paid' ? 'πληρωμένος' : how === ' is-due' ? 'εκκρεμεί' : 'χωρίς χρέωση';
@@ -5031,12 +5041,7 @@
                 </div>
                 <p class="sub-when">${said}${paid}${owing}</p>
                 ${monthsOf(sub)}
-                ${boss ? `
-                    <p class="months-how">Οι μήνες δείχνουν τι λένε οι χρεώσεις πιο κάτω και δεν αλλάζουν από εδώ. Για να πληρωθεί ένας μήνας, πρόσθεσε τη χρέωση στο ιστορικό και βάλ' την πάνω σε αυτή τη συνδρομή.</p>
-                    ${stopped ? '' : `
-                        <button class="app-ghost sub-renew" type="button" data-do="renew" data-id="${esc(sub.id)}">
-                            Χρέωσε τον επόμενο ${cycle} χωρίς πληρωμή
-                        </button>`}` : ''}
+                ${boss ? `<p class="months-how">Ένας μήνας ανάβει όταν τον καλύπτει κάποια χρέωση από κάτω. Για να πληρωθεί ένας μήνας, πρόσθεσε τη χρέωση στο ιστορικό και βάλ' την πάνω σε αυτή τη συνδρομή.</p>` : ''}
             </li>`;
     };
 
@@ -5202,23 +5207,6 @@
     });
 
     $('view-client').addEventListener('click', async (event) => {
-        const renewing = event.target.closest('[data-do="renew"]');
-        if (renewing) {
-            busy('Ανανέωση…');
-            try {
-                const back = await api('/api/clients', {
-                    method: 'POST',
-                    body: { kind: 'renew', clientId: purse.id, subId: renewing.dataset.id }
-                });
-                await afterMoney(back, 'Μπήκε η επόμενη περίοδος και περιμένει πληρωμή.');
-            } catch (err) {
-                toast(explain(err), 'bad');
-            } finally {
-                busy('');
-            }
-            return;
-        }
-
         const gear = event.target.closest('[data-open]');
         if (gear) { openMoney(gear.dataset.open, gear.dataset.id); return; }
 

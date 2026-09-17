@@ -3401,7 +3401,6 @@ li.none-yet {
 
 .months-how { margin-top: 10px; font-size: .72rem; color: rgba(184, 186, 194, .5); }
 
-.sub-renew { margin-top: 12px; }
 
 /* --- the ledger ----------------------------------------------------------- */
 .led {
@@ -3491,5 +3490,4 @@ li.none-yet {
     .sub-name { grid-area: name; }
     .sub-price { grid-area: price; font-size: .8rem; }
     .sub-top .lister-gear { grid-area: gear; }
-    .sub-renew { width: 100%; }
 }

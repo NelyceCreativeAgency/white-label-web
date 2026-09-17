@@ -13,7 +13,7 @@
 //
 // GET                   -> every client in short (admin), or your own in full
 // GET    ?id=           -> one client in full, admin only
-// POST   { kind, ... }  -> a client, a subscription, a charge, or a renewal
+// POST   { kind, ... }  -> a client, a subscription, or a charge
 // PATCH  { kind, id }   -> changes one
 // DELETE ?kind=&id=     -> removes one
 const accounts = require('./_accounts');
@@ -198,10 +198,10 @@ const subOut = (sub, entries, mine) => {
         payUrl: sub.payUrl || '',
         startedAt: sub.startedAt || null,
         endedAt: sub.endedAt || null,
-        // Paid up to here, and booked up to here. The second is where the next
-        // turn starts, so renewing twice in a row does not bill September twice.
+        // How far its charges have carried it, which is not stored anywhere:
+        // it is read off them, so it cannot say a month is covered that nobody
+        // has paid for.
         paidUntil: ends('paid'),
-        coveredUntil: ends(null),
         due: ours.filter(entry => entry.status === 'due').length,
         ...(mine ? {} : { note: sub.note || '' })
     };
@@ -396,27 +396,6 @@ const createEntry = (money, body, me) => {
     return entry;
 };
 
-// The next turn of a subscription, worked out here rather than in the browser so
-// that a renewal is one button and lands on the day after the last one ended.
-const renew = (money, body, me) => {
-    const sub = money.subs.find(one => one.id === body.subId);
-    if (!sub) throw new Error('no-such-sub');
-
-    const covered = subOut(sub, money.entries, false).coveredUntil;
-    const on = toDay(body.on, covered ? shift(covered, 1) : (sub.startedAt || today()));
-    const to = shift(addMonths(on, CYCLES[sub.cycle] || 1), -1);
-
-    return createEntry(money, {
-        subId: sub.id,
-        title: sub.title,
-        amount: sub.cents / 100,
-        on,
-        to,
-        status: 'due',
-        payUrl: sub.payUrl
-    }, me);
-};
-
 const patchEntry = (money, body) => {
     const entry = money.entries.find(one => one.id === body.id);
     if (!entry) throw new Error('no-such-entry');
@@ -552,8 +531,6 @@ module.exports = async (req, res) => {
                 req.method === 'POST' ? createSub(money, body) : patchSub(money, body);
             } else if (body.kind === 'entry') {
                 req.method === 'POST' ? createEntry(money, body, me) : patchEntry(money, body);
-            } else if (body.kind === 'renew' && req.method === 'POST') {
-                renew(money, body, me);
             } else {
                 throw new Error('bad-kind');
             }
