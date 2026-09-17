@@ -3515,6 +3515,17 @@ li.none-yet {
 
 #say-text { min-height: 120px; resize: vertical; }
 
+/* Which half of the room's requests is which. */
+.asks-head {
+    margin: 22px 0 -4px;
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(184, 186, 194, .55);
+}
+
+.asks-head.is-first { margin-top: 18px; }
+
 #ask-new { margin-top: 2px; }
 #ask-add { margin-top: 10px; }
 

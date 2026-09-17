@@ -86,30 +86,6 @@ module.exports = async (req, res) => {
             });
         }
 
-        // Everything anybody has asked of me, from every room at once. Five
-        // projects is five places to look and a morning spent looking; this is
-        // the one place that answers "what is waiting for me".
-        if (req.method === 'GET' && (req.query || {}).mine) {
-            const rooms = accounts.projectsFor(doc, me);
-            const each = await Promise.all(rooms.map(one => asks.read(one.id)));
-
-            const waiting = [];
-            rooms.forEach((room, at) => {
-                each[at].asks
-                    .filter(one => asks.mayRead(one, me))
-                    .forEach(one => waiting.push({
-                        ...asks.out(one, doc, me),
-                        projectId: room.id,
-                        projectName: room.name
-                    }));
-            });
-
-            // Newest first across all of them, which is the only order that
-            // means anything once they have left their rooms behind.
-            waiting.sort((a, b) => String(b.at).localeCompare(String(a.at)));
-            return res.status(200).json({ asks: waiting });
-        }
-
         if (req.method === 'GET') {
             const rooms = accounts.projectsFor(doc, me);
             const each = await Promise.all(rooms.map(one => asks.read(one.id)));

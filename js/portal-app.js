@@ -368,7 +368,6 @@
             openProject(kind);
             return;
         }
-        if (view === 'asks' && state.me.role !== 'client') { openAsks(); return; }
         // Somebody's column of charges: one of the clients in the list, or —
         // for the admin, who has no list of partners to check against — an
         // account, which says what it is in its own prefix.
@@ -409,7 +408,7 @@
     // --- projects ----------------------------------------------------------
     // The team's own rooms. A client has none and is not shown the category at
     // all; everybody else may start one and put whoever they work with on it.
-    const rooms = { list: [], people: [], open: null, asks: [], reading: new Set(), all: false };
+    const rooms = { list: [], people: [], open: null, asks: [], reading: new Set() };
 
     const loadProjects = async () => {
         if (!state.me || state.me.role === 'client') { rooms.list = []; renderProjectNav(); return; }
@@ -447,21 +446,12 @@
                     </button>
                 </li>`).join('')
             : '<li class="app-grids-empty">Κανένα ακόμα</li>';
-
-        // The same number, added up: what is waiting for you altogether.
-        const waiting = rooms.list.reduce((total, one) => total + (one.lit || 0), 0);
-        $('asks-mine').classList.toggle('is-on', rooms.all);
-        $('asks-badge').hidden = !waiting;
-        $('asks-badge').textContent = waiting > 99 ? '99+' : String(waiting || '');
     };
-
-    $('asks-mine').addEventListener('click', () => openAsks());
 
     const openProject = async (id) => {
         busy('Φόρτωση…');
         try {
             const data = await api(`/api/projects?project=${encodeURIComponent(id)}`);
-            rooms.all = false;
             rooms.open = data.project;
             rooms.asks = data.asks || [];
 
@@ -518,11 +508,10 @@
 
         return `
             <li class="ask is-${esc(ask.face)}${open ? ' is-open' : ''}"
-                data-ask="${esc(ask.id)}" data-room="${esc(ask.projectId || (rooms.open && rooms.open.id) || '')}">
+                data-ask="${esc(ask.id)}" data-room="${esc((rooms.open && rooms.open.id) || '')}">
                 <div class="ask-head">
                     <strong class="ask-title">${esc(ask.title)}</strong>
                     <span class="ask-who">${mine ? 'Εσύ' : esc(ask.byName)} · ${whose}${
-                        ask.projectName ? ` · ${esc(ask.projectName)}` : ''}${
                         shut ? ' · ολοκληρωμένο' : ''}</span>
                 </div>
 
@@ -556,47 +545,18 @@
             </li>`;
     };
 
-    const askList = () => `<ul class="asks">${rooms.asks.length
-        ? rooms.asks.map(askCard).join('')
-        : '<li class="none-yet">Κανένα αίτημα ακόμα</li>'}</ul>`;
-
-    // Everything anybody has asked of me, from every room at once, on a page
-    // of its own. The cards are the same cards and know which room they came
-    // from, so every button on them works from here too.
-    const renderAsks = () => {
-        $('view-project').innerHTML = `
-            <section class="panel">
-                <div class="panel-head">
-                    <h2>Τα αιτήματά μου</h2>
-                    <p>Ό,τι σου έχει ζητηθεί και ό,τι έχεις ζητήσει, από όλα τα projects μαζί. Αναμμένο σημαίνει ότι κάτι περιμένει εσένα.</p>
-                </div>
-                ${askList()}
-            </section>`;
-    };
-
-    const openAsks = async () => {
-        busy('Φόρτωση…');
-        try {
-            const data = await api('/api/projects?mine=1');
-            rooms.all = true;
-            rooms.open = null;
-            rooms.asks = data.asks || [];
-
-            $('app-title').textContent = 'Τα αιτήματά μου';
-            renderAsks();
-            showView('project');
-            where.write('asks');
-            renderProjectNav();
-        } catch (err) {
-            toast(explain(err), 'bad');
-        } finally {
-            busy('');
-        }
-    };
+    // Two lists, not one. What is waiting on you is what you came here to
+    // find, and a request that has already been answered is history: useful,
+    // but not the thing you opened the room for. So the room says both, in
+    // that order, and says nothing at all about a half that is empty.
+    const askList = (rows) => `<ul class="asks">${rows.map(askCard).join('')}</ul>`;
 
     const renderProject = () => {
         const room = rooms.open;
         if (!room) return;
+
+        const waiting = rooms.asks.filter(one => one.face === 'lit');
+        const rest = rooms.asks.filter(one => one.face !== 'lit');
 
         $('view-project').innerHTML = `
             <section class="panel client-card">
@@ -619,12 +579,21 @@
 
                 <button class="btn btn-primary" type="button" id="ask-new">Νέο αίτημα</button>
 
-                ${askList()}
+                ${waiting.length ? `
+                    <p class="asks-head">Περιμένουν εσένα</p>
+                    ${askList(waiting)}` : ''}
+
+                ${rest.length ? `
+                    <p class="asks-head${waiting.length ? '' : ' is-first'}">${
+                        waiting.length ? 'Τα υπόλοιπα' : 'Όλα τα αιτήματα'}</p>
+                    ${askList(rest)}` : ''}
+
+                ${rooms.asks.length ? '' : '<ul class="asks"><li class="none-yet">Κανένα αίτημα ακόμα</li></ul>'}
             </section>
         `;
     };
 
-    const redrawAsks = () => (rooms.all ? renderAsks() : renderProject());
+    const redrawAsks = () => renderProject();
 
     // Everything a card can be asked to do, in one place, because the cards are
     // the same cards on both pages and each one says which room it belongs to.
@@ -634,9 +603,7 @@
             const back = await api('/api/projects', {
                 method: 'PATCH', body: { kind: 'ask', project: room, id, ...body }
             });
-            rooms.asks = rooms.asks.map(one => (one.id === id
-                ? { ...back.ask, projectId: one.projectId, projectName: one.projectName }
-                : one));
+            rooms.asks = rooms.asks.map(one => (one.id === id ? back.ask : one));
             redrawAsks();
             if (done) toast(done);
             // The count on the room in the sidebar is read off the same facts
