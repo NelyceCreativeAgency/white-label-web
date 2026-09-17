@@ -1991,11 +1991,13 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     body.is-chatting .app-chat { min-height: 0; }
     body.is-chatting .chat-log { overscroll-behavior: contain; }
 
-    /* Only when a phone has actually lifted the view. A transform that is
-       always there, even by nothing, makes this the frame that everything
-       fixed inside it is measured from, which is not a thing to take on for
-       an offset of zero. */
-    body.is-chatting.is-lifted { transform: translateY(var(--vvtop)); }
+    /* Where the showing part of the page starts, when a browser has decided
+       that is not the top. Set on top rather than as a transform, so nothing
+       inside changes what it is measured from. */
+    body.is-chatting.is-typing { top: var(--vvtop, 0px); }
+
+    /* Nothing between the box and the bottom of what is showing. */
+    body.is-chatting .chat-form { margin-bottom: 0; padding-bottom: 10px; }
 
     /* While somebody is writing, three things hold still: the name at the top,
        the box they are writing in, and the keyboard under it. Everything else

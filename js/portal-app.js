@@ -320,7 +320,19 @@
         loadFeed();
         loadChats();
 
-        // The grid that was open last time, if it is still there.
+        // What the address bar says, if it still says anything this account can
+        // be shown. Otherwise the grid that was open last time, which is what
+        // the portal opened on before any of it had a name.
+        const [view, kind, id] = where.read();
+
+        if (view === 'chat') {
+            openChat(kind && id ? { kind, id } : null);
+            return;
+        }
+
+        if (view === 'accounts' && state.me.role === 'admin') { openAccounts(); return; }
+        if (view === 'grid' && id && state.grids.some(g => g.id === id)) { openGrid(id); return; }
+
         const remembered = remember.read();
         const first = state.grids.find(g => g.id === remembered) || state.grids[0];
 
@@ -396,6 +408,11 @@
         }
 
         const view = window.visualViewport;
+
+        // The height the browser says is showing, and where that showing part
+        // starts. Both are asked of it rather than worked out from pixels here,
+        // because a keyboard, an accessory bar above it and a browser's own
+        // toolbars are three things this end cannot see and it can.
         const tall = String(Math.round(view ? view.height : window.innerHeight));
         const lift = String(Math.round(view ? Math.max(0, view.offsetTop) : 0));
 
@@ -409,7 +426,6 @@
         if (root.dataset.vvtop !== lift) {
             root.dataset.vvtop = lift;
             root.style.setProperty('--vvtop', `${lift}px`);
-            document.body.classList.toggle('is-lifted', Number(lift) > 1);
         }
 
         document.body.classList.add('is-chatting');
@@ -421,12 +437,41 @@
     };
 
     if (window.visualViewport) {
-        // resize only. scroll fires continuously while a keyboard moves and
-        // while somebody types, and answering it was half the shaking.
+        // Both. A keyboard sliding up is a resize, and a browser moving the
+        // showing part of the page under it is a scroll, and the accessory bar
+        // over the keys arrives after both. Coalescing to one frame is what
+        // keeps answering all of them from turning into a shake.
         window.visualViewport.addEventListener('resize', fitToKeyboard);
+        window.visualViewport.addEventListener('scroll', fitToKeyboard);
     }
 
     window.addEventListener('orientationchange', fitToKeyboard);
+
+    // A keyboard takes about a third of a second to arrive and its accessory
+    // bar lands after it, so the answer is asked for again as they settle.
+    const settle = () => [60, 180, 340, 600].forEach(ms => setTimeout(fitToKeyboard, ms));
+
+    // --- where you were ------------------------------------------------------
+    // Every screen in here has a name in the address bar, so a refresh comes
+    // back to the screen it was on rather than to the front door. Reloading a
+    // conversation because a phone put the page to sleep and gave up on it, and
+    // finding the grid instead, is the sort of thing that makes somebody stop
+    // trusting a tab.
+    //
+    // A hash rather than a path: the site is files on a static host, and a path
+    // it has no file for is a page that does not exist. A hash never leaves the
+    // browser.
+    const where = {
+        write(...parts) {
+            const said = `#${parts.filter(Boolean).map(encodeURIComponent).join('/')}`;
+            if (said !== location.hash) history.replaceState(null, '', said);
+        },
+
+        read() {
+            return (location.hash || '').replace(/^#/, '').split('/')
+                .filter(Boolean).map(decodeURIComponent);
+        }
+    };
 
     const showView = (name) => {
         ['grid', 'accounts', 'chat', 'blank'].forEach(view => {
@@ -453,6 +498,7 @@
             $('app-title').textContent = state.grid.name;
             renderGrid();
             showView('grid');
+            where.write('grid', id);
         } catch (err) {
             toast(explain(err), 'bad');
         } finally {
@@ -3042,6 +3088,7 @@
 
         c.open = open;
         c.gridId = chatGridId();
+        if (!quiet) where.write('chat', open.kind, open.id);
 
         // Another conversation's messages are not this one's, so they go the
         // moment it is asked for rather than when the answer arrives.
@@ -3122,6 +3169,10 @@
         const phone = matchMedia('(max-width: 900px)').matches;
         $('view-chat').classList.toggle('is-open', Boolean(open));
 
+        // The list on its own is a screen of its own; a conversation names
+        // itself as well, so a refresh comes back inside it.
+        where.write('chat', open && open.kind, open && open.id);
+
         busy('Φόρτωση…');
         try {
             await loadChats();
@@ -3161,6 +3212,7 @@
 
     $('chat-back').addEventListener('click', () => {
         $('view-chat').classList.remove('is-open');
+        where.write('chat');
     });
 
     const say = async () => {
@@ -3222,19 +3274,17 @@
     // stylesheet folds away everything between the name and them.
     $('chat-text').addEventListener('focus', () => {
         document.body.classList.add('is-typing');
+        settle();
 
-        // The keyboard takes a moment to arrive and the measurements are only
-        // worth anything once it has.
         setTimeout(() => {
-            fitToKeyboard();
             const log = $('chat-log');
             log.scrollTop = log.scrollHeight;
-        }, 260);
+        }, 340);
     });
 
     $('chat-text').addEventListener('blur', () => {
         document.body.classList.remove('is-typing');
-        setTimeout(fitToKeyboard, 120);
+        settle();
     });
 
     $('chat-log').addEventListener('click', async (clicked) => {
@@ -4039,6 +4089,7 @@
             $('app-title').textContent = 'Λογαριασμοί και grids';
             renderAccounts();
             showView('accounts');
+            where.write('accounts');
             document.querySelectorAll('.app-nav-item').forEach(item => {
                 item.classList.toggle('is-on', item.dataset.view === 'accounts');
             });
