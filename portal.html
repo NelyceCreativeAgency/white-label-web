@@ -45,7 +45,10 @@
             var glow = localStorage.getItem('nelyce-glow');
             if (glow !== null) {
                 document.documentElement.style.setProperty('--glow', glow || '255, 107, 53');
-                if (glow === '') document.documentElement.style.setProperty('--glow-a', '0');
+                if (glow === '') {
+                    document.documentElement.style.setProperty('--glow-a', '0');
+                    document.documentElement.classList.add('is-dark');
+                }
             }
         } catch (e) { /* nothing to remember with */ }
     </script>

@@ -20,50 +20,88 @@
 /* The light the page sits in. One source hung high above the top edge and
    wide enough that what reaches the screen is the spread of it rather than the
    lamp, a second one low and colourless that lifts the middle of the page out
-   of the dark, and corners that fall away so the light in the middle has
-   somewhere to fall away to.
+   of the dark, a third far fainter opposite it, and corners that fall away so
+   the light in the middle has somewhere to fall away to.
 
-   Fixed to the screen and not to the page, which is the part that matters.
-   Laid on the page it would have to know how long the page is — a grid of
-   eight hundred pixels and a conversation of three thousand would get the same
-   light spread over wildly different distances — and it would slide away the
-   moment anybody scrolled. Fixed, it is simply the room: every screen of every
-   view is lit the same.
-
-   And it stays free. One layer, painted once, that never moves and never
-   animates: the browser composites it and forgets about it. No filter, no
-   blur, no canvas, no element anybody can hit — the softness is the gradients'
-   own falloff, which costs nothing, where a blur filter would cost something
-   on every frame it is asked for.
+   Fixed to the screen and not to the page. Laid on the page it would have to
+   know how long the page is — a grid of eight hundred pixels and a
+   conversation of three thousand would get the same light spread over wildly
+   different distances — and it would slide away the moment anybody scrolled.
+   Fixed, it is simply the room: every screen of every view is lit the same.
 
    The colourless ones are what make it read as light. A colour over a
    background this dark only ever goes brown however much of it there is, so
-   the white does the lighting and the colour says what the light is. Every
-   alpha here, the dark in the corners included, is a share of one number, so
-   the swatch that turns it off turns all of it off. */
-.app-body::before {
+   the white does the lighting and the colour only says what the light is.
+   Every alpha here, the dark in the corners included, is a share of one
+   number, so the swatch that turns it off turns all of it off.
+
+   Two layers rather than one so that they can wander at different speeds:
+   overhead on one, the low light and the corners over it on the other. One
+   layer drifting is a picture being dragged about; two at different rates is
+   light moving in a room. */
+.app-body::before,
+.app-body::after {
     content: '';
     position: fixed;
     inset: 0;
-    z-index: -1;
     pointer-events: none;
+}
+
+/* The one overhead. */
+.app-body::before {
+    z-index: -2;
     background:
-        /* the corners */
-        radial-gradient(ellipse 120% 115% at 50% 38%,
-            transparent 30%, rgba(0, 0, 0, calc(var(--glow-a, .44) * 1.25)) 100%),
-        /* the low light, and a far fainter one opposite it */
-        radial-gradient(ellipse 54vw 50vh at 70% 60%,
-            rgba(255, 255, 255, calc(var(--glow-a, .44) * .23)), transparent 70%),
-        radial-gradient(ellipse 42vw 38vh at 14% 86%,
-            rgba(255, 255, 255, calc(var(--glow-a, .44) * .11)), transparent 70%),
-        /* the one overhead */
         radial-gradient(ellipse 58vw 26vh at 54% -8%,
             rgba(255, 255, 255, calc(var(--glow-a, .44) * .21)), transparent 70%),
         radial-gradient(ellipse 100vw 80vh at 54% -16%,
             rgba(var(--glow), var(--glow-a, .44)) 0%,
             rgba(var(--glow), calc(var(--glow-a, .44) * .41)) 45%,
             transparent 78%);
+    animation: drift-high 53s ease-in-out infinite;
 }
+
+/* The low light, the faint one opposite it, and the corners over both. */
+.app-body::after {
+    z-index: -1;
+    background:
+        radial-gradient(ellipse 130% 125% at 50% 38%,
+            transparent 30%, rgba(0, 0, 0, calc(var(--glow-a, .44) * 1.25)) 100%),
+        radial-gradient(ellipse 54vw 50vh at 70% 60%,
+            rgba(255, 255, 255, calc(var(--glow-a, .44) * .23)), transparent 70%),
+        radial-gradient(ellipse 42vw 38vh at 14% 86%,
+            rgba(255, 255, 255, calc(var(--glow-a, .44) * .11)), transparent 70%);
+    animation: drift-low 71s ease-in-out infinite;
+}
+
+/* The drift. Transform and nothing else, which is the whole reason this is
+   affordable: it is the one thing a browser can animate by moving what it has
+   already drawn instead of drawing it again, so each layer is rasterised once
+   and the card carries it from there — no filter, no blur, no canvas, no
+   script, nothing repainted on any frame of it.
+
+   Under four percent of travel and never scaled below its own size, so no edge
+   can ever come into view. Fifty-three seconds against seventy-one, which do
+   not divide into each other, so the two never fall into the same loop and it
+   takes an hour to repeat itself exactly. Slow enough that nothing appears to
+   be moving while you look at it, and only the room having changed when you
+   look up. */
+@keyframes drift-high {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    35%      { transform: translate3d(-3%, 1.5%, 0) scale(1.05); }
+    70%      { transform: translate3d(2.5%, -1%, 0) scale(1.02); }
+}
+
+@keyframes drift-low {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1.02); }
+    30%      { transform: translate3d(3%, -2%, 0) scale(1.06); }
+    65%      { transform: translate3d(-2%, 2.5%, 0) scale(1); }
+}
+
+/* Off is off. Every alpha going to nought would leave two invisible layers
+   still being carried about, which is work for a room nobody asked to be lit:
+   these are not made at all. */
+html.is-dark .app-body::before,
+html.is-dark .app-body::after { content: none; }
 
 .app-body.is-locked { overflow: hidden; }
 
@@ -2283,6 +2321,10 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
 
     /* Folding still happens; it just happens at once. */
     :root { --fold-ms: 0s; }
+
+    /* And the light stops where it stands, rather than wandering. */
+    .app-body::before,
+    .app-body::after { animation: none; }
 }
 
 .cell.is-over {

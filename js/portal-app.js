@@ -3684,6 +3684,7 @@
         const root = document.documentElement;
         root.style.setProperty('--glow', value || WARM);
         root.style.setProperty('--glow-a', value === '' ? '0' : '');
+        root.classList.toggle('is-dark', value === '');
 
         document.querySelectorAll('.me-tint-dot').forEach(dot => {
             dot.setAttribute('aria-checked',
