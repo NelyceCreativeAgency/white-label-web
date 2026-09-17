@@ -3387,6 +3387,42 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
     border-radius: 999px;
 }
 
+/* A heading with something to press beside it, rather than above or below it
+   where it would read as belonging to the first row instead of the panel. */
+.panel-top { display: flex; align-items: flex-start; gap: 12px; }
+.panel-top .panel-head { flex: 1; min-width: 0; }
+.panel-top .lister-gear { flex: 0 0 auto; }
+
+.bill {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+}
+
+.bill li {
+    display: grid;
+    gap: 3px;
+    padding: 11px 13px;
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 12px;
+}
+
+.bill span {
+    font-size: .66rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(184, 186, 194, .6);
+}
+
+/* A VAT number has no spaces to break at, and an address is long. */
+.bill strong { font-size: .88rem; font-weight: var(--fw-medium); overflow-wrap: anywhere; }
+
+.bill-none { padding: 6px 2px 2px; font-size: .84rem; color: rgba(184, 186, 194, .6); }
+
 li.none-yet {
     display: block;
     grid-column: 1 / -1;

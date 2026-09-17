@@ -6279,6 +6279,44 @@
                 : '<li class="none-yet">Κανένα ακόμα</li>'}</ul>
         </details>`;
 
+    // What an invoice needs, in the order somebody reads it off one. The same
+    // list draws the panel and the form behind it, so neither can grow a field
+    // the other has never heard of.
+    const BILL_FIELDS = [
+        ['company', 'Επωνυμία'],
+        ['vat', 'ΑΦΜ'],
+        ['taxOffice', 'ΔΟΥ'],
+        ['email', 'Email'],
+        ['phone', 'Τηλέφωνο'],
+        ['address', 'Διεύθυνση']
+    ];
+
+    const billingPanel = (who, boss) => {
+        const bill = who.billing || {};
+        const said = BILL_FIELDS.filter(([key]) => bill[key]);
+
+        return `
+            <section class="panel">
+                <div class="panel-top">
+                    <div class="panel-head">
+                        <h2>Στοιχεία τιμολόγησης</h2>
+                        <p>${boss
+                            ? 'Ό,τι χρειάζεται για να κοπεί ή να ληφθεί παραστατικό. Τα συμπληρώνεις εσύ ή τα συμπληρώνει ο ίδιος από τη σελίδα του, και είναι ένα αντίγραφο για τους δυο σας.'
+                            : 'Τα στοιχεία σου για τα παραστατικά. Συμπλήρωσέ τα μια φορά και δεν θα χρειαστεί να τα ξαναστείλεις.'}</p>
+                    </div>
+                    <button class="lister-gear" type="button" data-open="partner" data-id="${esc(who.id)}"
+                            aria-label="Αλλαγή στοιχείων τιμολόγησης">${GEAR}</button>
+                </div>
+
+                ${said.length
+                    ? `<ul class="bill">${said.map(([key, label]) =>
+                        `<li><span>${label}</span><strong>${esc(bill[key])}</strong></li>`).join('')}</ul>`
+                    : `<p class="bill-none">${boss
+                        ? 'Δεν έχουν συμπληρωθεί ακόμα. Πάτα το γρανάζι για να τα βάλεις.'
+                        : 'Δεν τα έχεις συμπληρώσει ακόμα. Πάτα το γρανάζι.'}</p>`}
+            </section>`;
+    };
+
     const renderPartner = () => {
         const boss = state.me.role === 'admin';
         const who = purse.partner;
@@ -6310,6 +6348,8 @@
                         boss ? 'σου οφείλει' : 'οφείλεις'}</span>` : ''}
                 </div>
             </section>
+
+            ${billingPanel(who, boss)}
 
             ${billsPanel('in', 'Τιμολόγια προς Nelyce',
                 boss
@@ -6665,6 +6705,35 @@
             }
         }
 
+        if (kind === 'partner') {
+            const who = purse.partner;
+            if (!who) return;
+            const bill = who.billing || {};
+            const box = (key, label, extra = '') =>
+                `<label>${label}<input data-f="${key}" value="${esc(bill[key] || '')}"${extra}></label>`;
+
+            $('money-title').textContent = who.name;
+            $('money-sub').textContent = 'Τα στοιχεία που μπαίνουν στα παραστατικά. Τα βλέπετε και τα αλλάζετε και οι δύο, και είναι ένα αντίγραφο για τους δυο σας.';
+
+            body.innerHTML = `
+                <div class="row-fields">
+                    ${box('company', 'Επωνυμία', ' maxlength="90"')}
+                    ${box('vat', 'ΑΦΜ', ' maxlength="20" inputmode="numeric" spellcheck="false"')}
+                    ${box('taxOffice', 'ΔΟΥ', ' maxlength="60"')}
+                </div>
+
+                <div class="row-fields">
+                    ${box('email', 'Email', ' maxlength="140" inputmode="email" autocapitalize="none" spellcheck="false"')}
+                    ${box('phone', 'Τηλέφωνο', ' maxlength="40" inputmode="tel"')}
+                </div>
+
+                <label class="edit-label pw-head" for="bill-address">Διεύθυνση</label>
+                <input class="me-name-field" id="bill-address" data-f="address"
+                       value="${esc(bill.address || '')}" maxlength="160">
+                <p class="pw-note">Τίποτα από αυτά δεν ελέγχεται: ένα ΑΦΜ είναι εννιά ψηφία στην Ελλάδα και κάτι άλλο αλλού, και ένα κουτάκι που αρνείται ό,τι γράφεις είναι χειρότερο από ένα που το κρατάει.</p>
+            `;
+        }
+
         if (kind === 'sub') {
             const sub = purse.money.subs.find(one => one.id === id);
             if (!sub) return;
@@ -6756,6 +6825,11 @@
         }
 
         if (kind === 'entry') shapeEntry();
+
+        // There is nothing to delete about a set of details: emptying the boxes
+        // is how they go away, and a red button beside them would only ever be
+        // pressed by mistake.
+        $('money-delete').hidden = kind === 'partner';
 
         tray.kind = kind;
         tray.id = id;
@@ -6855,7 +6929,12 @@
         busy('Αποθήκευση…');
 
         try {
-            if (tray.kind === 'client') {
+            if (tray.kind === 'partner') {
+                await api('/api/clients', {
+                    method: 'PATCH',
+                    body: { kind: 'partner', id: tray.id, billing: fields(body) }
+                });
+            } else if (tray.kind === 'client') {
                 const pick = (what) => Array.from(body.querySelectorAll(`[${what}]`))
                     .filter(box => box.checked)
                     .map(box => box.getAttribute(what));

@@ -486,7 +486,7 @@ const patchEntry = (money, body) => {
 // and there should not be: they are not being invoiced by anybody here, they
 // are invoicing.
 const partnerMoney = async (user) => ({
-    partner: { ...accounts.publicUser(user) },
+    partner: { ...accounts.publicUser(user), billing: accounts.billingOf(user) },
     money: moneyOut(await readMoney(user.id), true)
 });
 
@@ -549,6 +549,21 @@ module.exports = async (req, res) => {
 
             if (req.method === 'POST' || req.method === 'PATCH') {
                 const body = readBody(req);
+
+                // Their own details, which are theirs to keep right. Anybody
+                // may be asked for a VAT number by the person invoicing them,
+                // and having to ask somebody else to type it in is a small
+                // indignity that costs a message each time.
+                if (body.kind === 'partner' && req.method === 'PATCH') {
+                    const doc = await accounts.readAccounts();
+                    const mine = accounts.findUser(doc, me.id);
+                    if (!mine) throw new Error('not-allowed');
+
+                    accounts.setBilling(mine, body.billing);
+                    await accounts.writeAccounts(doc);
+                    return res.status(200).json({ billing: accounts.billingOf(mine) });
+                }
+
                 if (body.kind !== 'entry') throw new Error('not-allowed');
 
                 if (req.method === 'POST') createEntry(ledger, theirsToSay(body), me);
@@ -603,7 +618,7 @@ module.exports = async (req, res) => {
                 const user = doc.users.find(one => one.id === asked && one.role === 'partner');
                 if (!user) return res.status(404).json({ error: 'no-such-partner' });
                 return res.status(200).json({
-                    partner: accounts.publicUser(user),
+                    partner: { ...accounts.publicUser(user), billing: accounts.billingOf(user) },
                     money: moneyOut(await readMoney(user.id), false)
                 });
             }
@@ -696,6 +711,15 @@ module.exports = async (req, res) => {
 
         if (req.method === 'POST' || req.method === 'PATCH') {
             const body = readBody(req);
+
+            if (body.kind === 'partner') {
+                const user = doc.users.find(one => one.id === text(body.id, 40) && one.role === 'partner');
+                if (!user) throw new Error('no-such-partner');
+
+                accounts.setBilling(user, body.billing);
+                await accounts.writeAccounts(doc);
+                return res.status(200).json({ billing: accounts.billingOf(user) });
+            }
 
             if (body.kind === 'client') {
                 const made = req.method === 'POST' ? createClient(doc, body) : patchClient(doc, body);

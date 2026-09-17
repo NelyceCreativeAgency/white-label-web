@@ -68,6 +68,36 @@ exports.findGrid = (doc, id) => doc.grids.find(g => g.id === id) || null;
 // the one they chose and the one they have been looking at all week.
 exports.faceOf = (grid) => grid.icon || grid.avatar || null;
 
+// --- the details an invoice needs -------------------------------------------
+// Kept on the account rather than in a record of its own, because they are the
+// account's: the person they belong to may change them, and so may the admin,
+// and there is one copy for the two of them rather than two to disagree.
+//
+// Nothing here is checked for being true. A VAT number is nine digits in Greece
+// and something else everywhere else, and a partner abroad with a refused box
+// is worse off than one with a box that took what they typed. This is a record
+// of what somebody said, not a gate.
+const BILLING = { company: 90, vat: 20, taxOffice: 60, email: 140, phone: 40, address: 160 };
+
+exports.billingOf = (user) => {
+    const was = (user && user.billing) || {};
+    const out = {};
+    Object.keys(BILLING).forEach(field => { out[field] = String(was[field] || ''); });
+    return out;
+};
+
+exports.setBilling = (user, given) => {
+    if (!given || typeof given !== 'object') return;
+
+    const out = exports.billingOf(user);
+    Object.keys(BILLING).forEach(field => {
+        if (given[field] === undefined) return;
+        out[field] = String(given[field] == null ? '' : given[field]).trim().slice(0, BILLING[field]);
+    });
+
+    user.billing = out;
+};
+
 // What may leave the server. The password hash never does.
 exports.publicUser = (user) => ({
     id: user.id,
