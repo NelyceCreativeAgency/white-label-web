@@ -5364,9 +5364,10 @@
                 </div>
 
                 <div class="row-fields">
-                    <label><span id="entry-on-name">${entry.subId ? 'Καλύπτει από' : 'Ημερομηνία'}</span><input data-f="on" type="date" value="${esc(entry.on || '')}"></label>
-                    <label id="entry-covers"${entry.subId ? '' : ' hidden'}>Καλύπτει ως<input data-f="to" type="date" value="${esc(entry.to || '')}"></label>
+                    <label><span id="entry-on-name">Ημερομηνία</span><input id="entry-on" data-f="on" type="date" value="${esc(entry.on || '')}"></label>
+                    <label id="entry-covers" hidden>Καλύπτει ως<input data-f="to" type="date" value="${esc(entry.to || '')}"></label>
                 </div>
+                <p class="pw-note" id="entry-on-note" hidden>Σε συνδρομή ο μήνας ξεκινάει τη μέρα που πληρώθηκε, οπότε το «καλύπτει από» ακολουθεί το «πληρώθηκε στις». Άλλαξε εκείνο και μετακινούνται μαζί.</p>
 
                 <label class="edit-label pw-head" for="entry-file">Σύνδεσμος τιμολογίου</label>
                 <input class="me-name-field" id="entry-file" data-f="invoiceUrl" value="${esc(entry.invoiceUrl)}"
@@ -5380,6 +5381,8 @@
                 <textarea class="me-name-field" id="entry-note" data-f="note" rows="2" maxlength="2000">${esc(entry.note || '')}</textarea>
             `;
         }
+
+        if (kind === 'entry') shapeEntry();
 
         tray.kind = kind;
         tray.id = id;
@@ -5420,28 +5423,37 @@
         });
     });
 
-    // Two boxes that are only there when they mean something. A period is a
-    // thing a subscription has, so a one-off is not asked how long it runs; and
-    // a charge nobody has paid has no day on which it was paid.
-    $('money-body').addEventListener('change', (changed) => {
-        if (tray.kind !== 'entry') return;
-        const what = changed.target.dataset.f;
+    // What a charge is decides which of its boxes mean anything, so one function
+    // settles the whole panel rather than each box knowing about the others.
+    //
+    // A one-off is dated and that is all. A turn of a subscription covers a
+    // period, and once it has been paid that period starts on the day of the
+    // payment, so its first date stops being something to type and becomes
+    // something to read.
+    const shapeEntry = () => {
+        const body = $('money-body');
+        const belongs = body.querySelector('[data-f="subId"]');
+        if (!belongs) return;
 
-        if (what === 'subId') {
-            const inside = Boolean(changed.target.value);
-            const covers = $('entry-covers');
+        const inside = Boolean(belongs.value);
+        const paid = body.querySelector('[data-f="status"]').value === 'paid';
+        const when = body.querySelector('[data-f="paidAt"]');
+        const from = $('entry-on');
 
-            covers.hidden = !inside;
-            if (!inside) covers.querySelector('input').value = '';
+        $('entry-paidat').hidden = !paid;
+        $('entry-covers').hidden = !inside;
+        if (!inside) $('entry-covers').querySelector('input').value = '';
 
-            // The same box, and two different things it is the date of. On a
-            // one-off it is when the charge was made; on a turn of a
-            // subscription it is where the period it covers begins, which is
-            // only readable as a pair with the date it ends.
-            $('entry-on-name').textContent = inside ? 'Καλύπτει από' : 'Ημερομηνία';
-        }
+        $('entry-on-name').textContent = inside ? 'Καλύπτει από' : 'Ημερομηνία';
 
-        if (what === 'status') $('entry-paidat').hidden = changed.target.value !== 'paid';
+        const fixed = inside && paid;
+        from.disabled = fixed;
+        $('entry-on-note').hidden = !fixed;
+        if (fixed && when.value) from.value = when.value;
+    };
+
+    $('money-body').addEventListener('change', () => {
+        if (tray.kind === 'entry') shapeEntry();
     });
 
     $('money-save').addEventListener('click', async () => {

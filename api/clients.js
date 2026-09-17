@@ -311,6 +311,23 @@ const patchSub = (money, body) => {
     return sub;
 };
 
+// A subscription's month does not begin on the day the invoice was written. It
+// begins on the day it was paid for, because until then nothing is covered. So
+// a turn that has been settled takes its start from the payment and runs a
+// cycle from there, and the two dates are not left free to disagree.
+//
+// A turn that has not been paid yet is left alone: there is no payment for its
+// start to come from, and what it says is a plan rather than a fact.
+const settle = (money, entry, toldTo) => {
+    if (!entry.subId || entry.status !== 'paid' || !entry.paidAt) return;
+
+    entry.on = entry.paidAt;
+    if (toldTo) return;
+
+    const sub = money.subs.find(one => one.id === entry.subId);
+    entry.to = shift(addMonths(entry.on, CYCLES[sub && sub.cycle] || 1), -1);
+};
+
 const madeBy = (me) => ({ at: new Date().toISOString(), by: me.id });
 
 const createEntry = (money, body, me) => {
@@ -353,6 +370,10 @@ const createEntry = (money, body, me) => {
         paidAt: body.status === 'paid' ? toDay(body.paidAt, on) : null,
         ...madeBy(me)
     };
+
+    settle(money, entry, Boolean(toDay(body.to, '')));
+    if (entry.to && entry.to < entry.on) throw new Error('bad-date');
+
     money.entries.push(entry);
     return entry;
 };
@@ -464,8 +485,6 @@ const patchEntry = (money, body) => {
         if (!wanted) entry.to = null;
     }
 
-    if (entry.to && entry.to < entry.on) throw new Error('bad-date');
-
     if (body.status !== undefined) {
         const paid = body.status === 'paid';
         entry.status = paid ? 'paid' : 'due';
@@ -478,6 +497,9 @@ const patchEntry = (money, body) => {
     if (body.paidAt !== undefined && entry.status === 'paid') {
         entry.paidAt = toDay(body.paidAt, entry.on);
     }
+
+    settle(money, entry, body.to !== undefined && Boolean(toDay(body.to, '')));
+    if (entry.to && entry.to < entry.on) throw new Error('bad-date');
 
     if (body.invoiceNo !== undefined) entry.invoiceNo = text(body.invoiceNo, 40);
     if (body.invoiceUrl !== undefined) entry.invoiceUrl = toLink(body.invoiceUrl);
