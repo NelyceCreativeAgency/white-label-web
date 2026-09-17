@@ -2837,7 +2837,8 @@
         dm:     'σου έστειλε προσωπικό μήνυμα',
         link:   'πρόσθεσε έναν χρήσιμο σύνδεσμο',
         idea:   'πρόσθεσε μια ιδέα στο brainstorming',
-        'file-ask': 'ζητάει ξανά τον σύνδεσμο ενός αρχείου'
+        'file-ask': 'ζητάει ξανά τον σύνδεσμο ενός αρχείου',
+        bill:   'σου καταχώρισε τιμολόγιο'
     };
 
     // A deleted post has no picture left to show, so its line gets the same
@@ -2858,9 +2859,14 @@
         + '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>'
         + '<path d="M14 3v5h5"/></svg>';
 
+    const BILL_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true">'
+        + '<path d="M5 3v18l2-1.4 2 1.4 2-1.4 2 1.4 2-1.4 2 1.4V3l-2 1.4L13 3l-2 1.4L9 3 7 4.4z"/>'
+        + '<path d="M9 8h6M9 12h6"/></svg>';
+
     const BELL_ICONS = {
         chat: SAID_ICON,
         'file-ask': FILE_ICON,
+        bill: BILL_ICON,
         dm: SAID_ICON,
         idea: IDEA_ICON,
         link: '<svg viewBox="0 0 24 24" aria-hidden="true">'
@@ -2941,6 +2947,12 @@
         const event = state.feed.find(one => one.id === item.dataset.event);
         if (!event) return;
         closeBell();
+
+        // A bill opens the page of whoever sent it, which is the page it is on.
+        if (event.kind === 'bill') {
+            if (event.actorId) await openClient(event.actorId);
+            return;
+        }
 
         // A request for a file opens the page it was asked from, where the row
         // that is waiting says so itself.
@@ -4513,9 +4525,19 @@
             return one ? ` · ${esc(one.name)}` : '';
         };
 
+        // What a partner is still waiting to be paid, said on the line their
+        // name is on. Without it, a bill from one of them would sit on a page
+        // there is no reason to open.
+        const waitingFor = (user) => {
+            if (user.role !== 'partner') return '';
+            const one = purse.partners.find(row => row.id === user.id);
+            return one && one.owed ? ` · <span class="is-due">${esc(euro(one.owed))} προς πληρωμή</span>` : '';
+        };
+
         const userLines = admin.users
             .map(user => line(user.id, 'user', user.name,
-                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}${named(user.clientId)} · ${esc(here(user))}`,
+                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}${named(user.clientId)}`
+                + `${waitingFor(user)} · ${esc(here(user))}`,
                 // A partner keeps their own column of charges, and the arrow
                 // opens it. A client's is opened from the client, which is who
                 // is invoiced, and not from the account that signs in.
@@ -4869,8 +4891,9 @@
     // after an invoice had already been issued somewhere else, and the link on a
     // row goes to that invoice. What the page adds is that it is in one place
     // and that the client can read it without having to ask.
-    const purse = { list: [], id: null, kind: 'client', client: null, partner: null,
-                    money: null, files: [], seesGrids: false, people: [], grids: [] };
+    const purse = { list: [], partners: [], id: null, kind: 'client', client: null,
+                    partner: null, money: null, files: [], seesGrids: false,
+                    people: [], grids: [] };
 
     // How long a link is the client's. The server decides it; this is only the
     // same number, for the sentence that explains it.
@@ -5008,6 +5031,7 @@
             // Three different answers to the same question, because three
             // different people are asking it: every client, the one client
             // this account belongs to, or the partner themselves.
+            if (data.partners) purse.partners = data.partners;
             if (data.clients) purse.list = data.clients;
             else if (data.partner) {
                 purse.list = [{ ...data.partner, faceOf: data.partner.id, partner: true,

@@ -555,6 +555,21 @@ module.exports = async (req, res) => {
                 else patchEntry(ledger, theirsToSay({ ...body, id: ours(body.id).id }));
 
                 await writeMoney(me.id, ledger);
+
+                // A new bill is news. Without this it would sit on a page
+                // nobody has a reason to open, which is the same as not having
+                // been sent at all.
+                if (req.method === 'POST') {
+                    await Promise.all(doc.users
+                        .filter(user => user.role === 'admin')
+                        .map(user => feed.push({
+                            kind: 'bill',
+                            actorId: me.id,
+                            toId: user.id,
+                            text: feed.excerpt(text(body.title, MAX_NAME))
+                        })));
+                }
+
                 return answer();
             }
 
@@ -600,11 +615,24 @@ module.exports = async (req, res) => {
                 // per client, on a screen that is opened rather than polled, so
                 // the sidebar can say which of them is waiting to pay.
                 const monies = await Promise.all(doc.clients.map(one => readMoney(one.id)));
+
+                // And what each partner is still waiting to be paid, so that a
+                // bill sent from one of them is visible without opening every
+                // one of them in turn.
+                const partners = doc.users.filter(user => user.role === 'partner');
+                const purses = await Promise.all(partners.map(user => readMoney(user.id)));
+
                 return res.status(200).json({
                     clients: doc.clients.map((client, at) => ({
                         ...clientOut(client, false, doc),
                         owed: sumOf(monies[at].entries, 'due'),
                         subs: monies[at].subs.filter(sub => !sub.endedAt).length
+                    })),
+                    partners: partners.map((user, at) => ({
+                        ...accounts.publicUser(user),
+                        owed: purses[at].entries
+                            .filter(entry => wayOf(entry) === 'in' && entry.status !== 'paid')
+                            .reduce((total, entry) => total + entry.cents, 0)
                     }))
                 });
             }
