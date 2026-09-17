@@ -4820,6 +4820,27 @@
     });
 
     const CYCLE_NAMES = { month: 'μήνα', quarter: 'τρίμηνο', year: 'χρόνο' };
+    const STEPS = { month: 1, quarter: 3, year: 12 };
+
+    // The same arithmetic the server does, counted in UTC for the same reason:
+    // a period that ends on the thirtieth should say the thirtieth wherever it
+    // is read. The server still decides; this is so that a box which is no
+    // longer typed into shows what is about to be saved rather than what was
+    // saved last time.
+    const dayShift = (iso, days) => {
+        const at = new Date(`${iso}T00:00:00Z`);
+        at.setUTCDate(at.getUTCDate() + days);
+        return at.toISOString().slice(0, 10);
+    };
+
+    const monthShift = (iso, months) => {
+        const from = new Date(`${iso}T00:00:00Z`);
+        const wanted = from.getUTCDate();
+        const start = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + months, 1));
+        const last = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 0)).getUTCDate();
+        start.setUTCDate(Math.min(wanted, last));
+        return start.toISOString().slice(0, 10);
+    };
     const MONTHS = ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μάι', 'Ιούν',
                     'Ιούλ', 'Αύγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'];
 
@@ -5367,7 +5388,7 @@
                     <label><span id="entry-on-name">Ημερομηνία</span><input id="entry-on" data-f="on" type="date" value="${esc(entry.on || '')}"></label>
                     <label id="entry-covers" hidden>Καλύπτει ως<input data-f="to" type="date" value="${esc(entry.to || '')}"></label>
                 </div>
-                <p class="pw-note" id="entry-on-note" hidden>Σε συνδρομή ο μήνας ξεκινάει τη μέρα που πληρώθηκε, οπότε το «καλύπτει από» ακολουθεί το «πληρώθηκε στις». Άλλαξε εκείνο και μετακινούνται μαζί.</p>
+                <p class="pw-note" id="entry-on-note" hidden>Σε συνδρομή οι δύο ημερομηνίες βγαίνουν μόνες τους: ο μήνας ξεκινάει τη μέρα που πληρώθηκε και τρέχει έναν κύκλο από εκεί. Άλλαξε το «πληρώθηκε στις» και μετακινούνται μαζί.</p>
 
                 <label class="edit-label pw-head" for="entry-file">Σύνδεσμος τιμολογίου</label>
                 <input class="me-name-field" id="entry-file" data-f="invoiceUrl" value="${esc(entry.invoiceUrl)}"
@@ -5439,17 +5460,30 @@
         const paid = body.querySelector('[data-f="status"]').value === 'paid';
         const when = body.querySelector('[data-f="paidAt"]');
         const from = $('entry-on');
+        const until = $('entry-covers').querySelector('input');
 
         $('entry-paidat').hidden = !paid;
         $('entry-covers').hidden = !inside;
-        if (!inside) $('entry-covers').querySelector('input').value = '';
-
         $('entry-on-name').textContent = inside ? 'Καλύπτει από' : 'Ημερομηνία';
+        $('entry-on-note').hidden = !inside;
 
-        const fixed = inside && paid;
+        if (!inside) {
+            from.disabled = false;
+            until.value = '';
+            return;
+        }
+
+        // Paid, so the turn has started and started when the money came in.
+        const fixed = paid && Boolean(when.value);
         from.disabled = fixed;
-        $('entry-on-note').hidden = !fixed;
-        if (fixed && when.value) from.value = when.value;
+        if (fixed) from.value = when.value;
+
+        // And it runs one cycle from there, whoever it was that set the start.
+        const sub = purse.money.subs.find(one => one.id === belongs.value);
+        until.disabled = true;
+        until.value = from.value
+            ? dayShift(monthShift(from.value, STEPS[sub && sub.cycle] || 1), -1)
+            : '';
     };
 
     $('money-body').addEventListener('change', () => {

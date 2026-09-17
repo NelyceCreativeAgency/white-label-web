@@ -311,18 +311,20 @@ const patchSub = (money, body) => {
     return sub;
 };
 
-// A subscription's month does not begin on the day the invoice was written. It
-// begins on the day it was paid for, because until then nothing is covered. So
-// a turn that has been settled takes its start from the payment and runs a
-// cycle from there, and the two dates are not left free to disagree.
+// Where a turn of a subscription begins and ends. Neither is anybody's to type:
+// it begins on the day it was paid for, because until then nothing is covered,
+// and it runs one cycle of that subscription from there. Three facts that could
+// disagree become one that cannot.
 //
-// A turn that has not been paid yet is left alone: there is no payment for its
-// start to come from, and what it says is a plan rather than a fact.
-const settle = (money, entry, toldTo) => {
-    if (!entry.subId || entry.status !== 'paid' || !entry.paidAt) return;
+// A turn nobody has paid yet keeps whatever start it was given, because there
+// is no payment for it to take one from and what it says is a plan. Its end
+// still follows its start.
+//
+// A charge that belongs to no subscription covers no period at all.
+const settle = (money, entry) => {
+    if (!entry.subId) { entry.to = null; return; }
 
-    entry.on = entry.paidAt;
-    if (toldTo) return;
+    if (entry.status === 'paid' && entry.paidAt) entry.on = entry.paidAt;
 
     const sub = money.subs.find(one => one.id === entry.subId);
     entry.to = shift(addMonths(entry.on, CYCLES[sub && sub.cycle] || 1), -1);
@@ -371,7 +373,7 @@ const createEntry = (money, body, me) => {
         ...madeBy(me)
     };
 
-    settle(money, entry, Boolean(toDay(body.to, '')));
+    settle(money, entry);
     if (entry.to && entry.to < entry.on) throw new Error('bad-date');
 
     money.entries.push(entry);
@@ -498,7 +500,7 @@ const patchEntry = (money, body) => {
         entry.paidAt = toDay(body.paidAt, entry.on);
     }
 
-    settle(money, entry, body.to !== undefined && Boolean(toDay(body.to, '')));
+    settle(money, entry);
     if (entry.to && entry.to < entry.on) throw new Error('bad-date');
 
     if (body.invoiceNo !== undefined) entry.invoiceNo = text(body.invoiceNo, 40);
