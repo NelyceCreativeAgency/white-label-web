@@ -368,6 +368,7 @@
             openProject(kind);
             return;
         }
+        if (view === 'asks' && state.me.role !== 'client') { openAsks(); return; }
         // Somebody's column of charges: one of the clients in the list, or —
         // for the admin, who has no list of partners to check against — an
         // account, which says what it is in its own prefix.
@@ -408,7 +409,7 @@
     // --- projects ----------------------------------------------------------
     // The team's own rooms. A client has none and is not shown the category at
     // all; everybody else may start one and put whoever they work with on it.
-    const rooms = { list: [], people: [], open: null, asks: [] };
+    const rooms = { list: [], people: [], open: null, asks: [], reading: new Set(), all: false };
 
     const loadProjects = async () => {
         if (!state.me || state.me.role === 'client') { rooms.list = []; renderProjectNav(); return; }
@@ -441,15 +442,26 @@
                             <small>${one.members.length === 1
                                 ? '1 άτομο' : `${one.members.length} άτομα`}</small>
                         </span>
+                        ${one.lit ? `<span class="app-nav-badge"
+                                           title="Αιτήματα που περιμένουν εσένα">${one.lit}</span>` : ''}
                     </button>
                 </li>`).join('')
             : '<li class="app-grids-empty">Κανένα ακόμα</li>';
+
+        // The same number, added up: what is waiting for you altogether.
+        const waiting = rooms.list.reduce((total, one) => total + (one.lit || 0), 0);
+        $('asks-mine').classList.toggle('is-on', rooms.all);
+        $('asks-badge').hidden = !waiting;
+        $('asks-badge').textContent = waiting > 99 ? '99+' : String(waiting || '');
     };
+
+    $('asks-mine').addEventListener('click', () => openAsks());
 
     const openProject = async (id) => {
         busy('Φόρτωση…');
         try {
             const data = await api(`/api/projects?project=${encodeURIComponent(id)}`);
+            rooms.all = false;
             rooms.open = data.project;
             rooms.asks = data.asks || [];
 
@@ -468,19 +480,50 @@
     // One request. Who asked, who it is for, what it says, and the one thing
     // there is to do about it. A request to the room says so rather than naming
     // somebody, because a name there would be a lie.
+    // The history of one request, in the order it happened: what was written
+    // back, and who simply took note. Not a conversation — a conversation is
+    // for talking, and this is the record of one thing being settled.
+    const askThread = (ask) => {
+        const lines = ask.replies.map(one => ({
+            at: one.at,
+            html: `<li class="say"><strong>${one.by === state.me.id ? 'Εσύ' : esc(one.byName)}</strong>
+                       <small>${esc(ago(one.at))}</small>
+                       <p>${esc(one.text)}</p></li>`
+        })).concat(ask.gotIt.map(one => ({
+            at: one.at,
+            html: `<li class="say is-note"><strong>${one.id === state.me.id ? 'Εσύ' : esc(one.name)}</strong>
+                       <small>${esc(ago(one.at))}</small>
+                       <p>Το έλαβε.</p></li>`
+        })));
+
+        lines.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+
+        return lines.length
+            ? `<ul class="ask-thread">${lines.map(one => one.html).join('')}</ul>`
+            : '<p class="ask-thread is-empty">Καμία απάντηση ακόμα.</p>';
+    };
+
     const askCard = (ask) => {
         const forMe = ask.toId === state.me.id;
-        const mine = ask.by === state.me.id;
+        const mine = ask.mine;
+        const shut = Boolean(ask.closedAt);
+        const open = rooms.reading.has(ask.id);
 
         const whose = !ask.toId
             ? 'προς όλους'
             : forMe ? 'προς εσένα' : `προς ${esc(ask.toName)}`;
 
+        const noted = ask.gotIt.some(one => one.id === state.me.id);
+        const answers = ask.replies.length + ask.gotIt.length;
+
         return `
-            <li class="ask" data-ask="${esc(ask.id)}">
+            <li class="ask is-${esc(ask.face)}${open ? ' is-open' : ''}"
+                data-ask="${esc(ask.id)}" data-room="${esc(ask.projectId || (rooms.open && rooms.open.id) || '')}">
                 <div class="ask-head">
                     <strong class="ask-title">${esc(ask.title)}</strong>
-                    <span class="ask-who">${mine ? 'Εσύ' : esc(ask.byName)} · ${whose}</span>
+                    <span class="ask-who">${mine ? 'Εσύ' : esc(ask.byName)} · ${whose}${
+                        ask.projectName ? ` · ${esc(ask.projectName)}` : ''}${
+                        shut ? ' · ολοκληρωμένο' : ''}</span>
                 </div>
 
                 ${ask.said ? `<p class="ask-said">${esc(ask.said)}</p>` : ''}
@@ -489,13 +532,66 @@
                     `<img src="${esc(url)}" alt="" loading="lazy">`).join('')}</div>` : ''}
 
                 <div class="ask-do">
-                    <span class="ask-when">${esc(ago(ask.at))}</span>
-                    ${ask.url ? `<a class="btn btn-primary" href="${esc(ask.url)}"
+                    <span class="ask-when">${esc(ago(ask.at))}${
+                        answers ? ` · ${answers === 1 ? '1 απάντηση' : `${answers} απαντήσεις`}` : ''}</span>
+
+                    ${ask.url ? `<a class="app-ghost" href="${esc(ask.url)}"
                                     target="_blank" rel="noopener noreferrer">Άνοιξέ το</a>` : ''}
+
+                    ${!shut ? `<button class="btn btn-primary" type="button"
+                                       data-say="${esc(ask.id)}">Άφησε feedback</button>` : ''}
+
+                    ${!shut && !mine && !ask.toId && !noted
+                        ? `<button class="app-ghost" type="button" data-got="${esc(ask.id)}">Το έλαβα</button>` : ''}
+
+                    ${mine ? `<button class="app-ghost" type="button" data-shut="${esc(ask.id)}"
+                                      data-to="${shut ? 'open' : 'close'}">${
+                        shut ? 'Επαναφορά' : 'Ολοκληρώθηκε'}</button>` : ''}
+
                     ${mine ? `<button class="file-drop" type="button" data-unask="${esc(ask.id)}"
                                       aria-label="Διαγραφή αιτήματος">&times;</button>` : ''}
                 </div>
+
+                ${open ? askThread(ask) : ''}
             </li>`;
+    };
+
+    const askList = () => `<ul class="asks">${rooms.asks.length
+        ? rooms.asks.map(askCard).join('')
+        : '<li class="none-yet">Κανένα αίτημα ακόμα</li>'}</ul>`;
+
+    // Everything anybody has asked of me, from every room at once, on a page
+    // of its own. The cards are the same cards and know which room they came
+    // from, so every button on them works from here too.
+    const renderAsks = () => {
+        $('view-project').innerHTML = `
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Τα αιτήματά μου</h2>
+                    <p>Ό,τι σου έχει ζητηθεί και ό,τι έχεις ζητήσει, από όλα τα projects μαζί. Αναμμένο σημαίνει ότι κάτι περιμένει εσένα.</p>
+                </div>
+                ${askList()}
+            </section>`;
+    };
+
+    const openAsks = async () => {
+        busy('Φόρτωση…');
+        try {
+            const data = await api('/api/projects?mine=1');
+            rooms.all = true;
+            rooms.open = null;
+            rooms.asks = data.asks || [];
+
+            $('app-title').textContent = 'Τα αιτήματά μου';
+            renderAsks();
+            showView('project');
+            where.write('asks');
+            renderProjectNav();
+        } catch (err) {
+            toast(explain(err), 'bad');
+        } finally {
+            busy('');
+        }
     };
 
     const renderProject = () => {
@@ -523,33 +619,135 @@
 
                 <button class="btn btn-primary" type="button" id="ask-new">Νέο αίτημα</button>
 
-                <ul class="asks">${rooms.asks.length
-                    ? rooms.asks.map(askCard).join('')
-                    : '<li class="none-yet">Κανένα αίτημα ακόμα</li>'}</ul>
+                ${askList()}
             </section>
         `;
+    };
+
+    const redrawAsks = () => (rooms.all ? renderAsks() : renderProject());
+
+    // Everything a card can be asked to do, in one place, because the cards are
+    // the same cards on both pages and each one says which room it belongs to.
+    const askDo = async (id, room, body, done) => {
+        busy('…');
+        try {
+            const back = await api('/api/projects', {
+                method: 'PATCH', body: { kind: 'ask', project: room, id, ...body }
+            });
+            rooms.asks = rooms.asks.map(one => (one.id === id
+                ? { ...back.ask, projectId: one.projectId, projectName: one.projectName }
+                : one));
+            redrawAsks();
+            if (done) toast(done);
+            // The count on the room in the sidebar is read off the same facts
+            // and has just changed with them.
+            await loadProjects();
+        } catch (err) {
+            toast(explain(err), 'bad');
+        } finally {
+            busy('');
+        }
     };
 
     $('view-project').addEventListener('click', async (event) => {
         if (event.target.closest('#prj-open')) { openProjectPanel(rooms.open); return; }
         if (event.target.closest('#ask-new')) { openAskPanel(); return; }
 
-        const unask = event.target.closest('[data-unask]');
-        if (!unask) return;
+        const card = event.target.closest('.ask');
+        if (!card) return;
+        const room = card.dataset.room;
 
-        if (!confirm('Να διαγραφεί αυτό το αίτημα; Ό,τι έχει ειπωθεί πάνω του φεύγει μαζί.')) return;
-        busy('Διαγραφή…');
-        try {
-            await api(`/api/projects?kind=ask&project=${encodeURIComponent(rooms.open.id)}`
-                      + `&id=${encodeURIComponent(unask.dataset.unask)}`, { method: 'DELETE' });
-            rooms.asks = rooms.asks.filter(one => one.id !== unask.dataset.unask);
-            renderProject();
-            toast('Διαγράφηκε.');
-        } catch (err) {
-            toast(explain(err), 'bad');
-        } finally {
-            busy('');
+        const say = event.target.closest('[data-say]');
+        if (say) { openSayPanel(say.dataset.say, room); return; }
+
+        const got = event.target.closest('[data-got]');
+        if (got) { await askDo(got.dataset.got, room, { action: 'got' }, 'Σημειώθηκε.'); return; }
+
+        const shut = event.target.closest('[data-shut]');
+        if (shut) {
+            const closing = shut.dataset.to === 'close';
+            if (closing && !confirm('Να κλειδώσει αυτό το αίτημα ως ολοκληρωμένο; Οι εικόνες του φεύγουν — αν το επαναφέρεις, θα χρειαστεί να ξαναμπούν.')) return;
+            await askDo(shut.dataset.shut, room, { action: shut.dataset.to },
+                        closing ? 'Ολοκληρώθηκε.' : 'Ξανάνοιξε.');
+            return;
         }
+
+        const unask = event.target.closest('[data-unask]');
+        if (unask) {
+            if (!confirm('Να διαγραφεί αυτό το αίτημα; Ό,τι έχει ειπωθεί πάνω του φεύγει μαζί.')) return;
+            busy('Διαγραφή…');
+            try {
+                await api(`/api/projects?kind=ask&project=${encodeURIComponent(room)}`
+                          + `&id=${encodeURIComponent(unask.dataset.unask)}`, { method: 'DELETE' });
+                rooms.asks = rooms.asks.filter(one => one.id !== unask.dataset.unask);
+                redrawAsks();
+                await loadProjects();
+                toast('Διαγράφηκε.');
+            } catch (err) {
+                toast(explain(err), 'bad');
+            } finally {
+                busy('');
+            }
+            return;
+        }
+
+        // Anywhere else on the card opens its history. Reading it is what turns
+        // it from lit back to quiet, which is the only honest moment to say so.
+        if (event.target.closest('a')) return;
+
+        const id = card.dataset.ask;
+        if (rooms.reading.has(id)) {
+            rooms.reading.delete(id);
+            redrawAsks();
+            return;
+        }
+
+        rooms.reading.add(id);
+        const one = rooms.asks.find(row => row.id === id);
+        if (one && one.face === 'lit') await askDo(id, room, { action: 'seen' });
+        else redrawAsks();
+    });
+
+    // --- answering one ------------------------------------------------------
+    const saying = { id: null, room: null };
+
+    const shutSay = () => {
+        saying.id = null;
+        $('say-modal').hidden = true;
+        unlock();
+    };
+
+    const openSayPanel = (id, room) => {
+        const ask = rooms.asks.find(one => one.id === id);
+        if (!ask) return;
+
+        saying.id = id;
+        saying.room = room;
+
+        $('say-title').textContent = ask.title;
+        $('say-sub').textContent = ask.by === state.me.id
+            ? 'Η απάντησή σου μπαίνει πάνω στο ίδιο το αίτημα.'
+            : `Απαντάς στον ${esc(ask.byName)}. Ό,τι γράψεις μένει πάνω στο αίτημα.`;
+        $('say-text').value = '';
+        $('say-error').hidden = true;
+
+        $('say-modal').hidden = false;
+        document.body.classList.add('is-locked');
+        $('say-text').focus();
+    };
+
+    $('say-send').addEventListener('click', async () => {
+        const said = $('say-text').value.trim();
+        if (!said) {
+            $('say-error').textContent = 'Γράψε κάτι πρώτα.';
+            $('say-error').hidden = false;
+            return;
+        }
+
+        const { id, room } = saying;
+        rooms.reading.add(id);
+        shutSay();
+        await askDo(id, room, { action: 'reply', text: said }, 'Στάλθηκε.');
     });
 
     // --- asking for something ----------------------------------------------
@@ -1597,7 +1795,7 @@
     // The page stays still while any of the three panels is open.
     const unlock = () => {
         const open = ['post-modal', 'edit-modal', 'hl-modal', 'acct-modal', 'me-modal',
-                      'money-modal', 'prj-modal', 'ask-modal']
+                      'money-modal', 'prj-modal', 'ask-modal', 'say-modal']
             .some(id => !$(id).hidden);
         if (!open) document.body.classList.remove('is-locked');
     };
@@ -3087,6 +3285,7 @@
             else if (button.closest('#money-modal')) closeMoney();
             else if (button.closest('#prj-modal')) shutPrj();
             else if (button.closest('#ask-modal')) shutAsk();
+            else if (button.closest('#say-modal')) shutSay();
             else closeViewer();
         });
     });
@@ -3116,6 +3315,7 @@
             else if (!$('bell-panel').hidden) closeBell();
             else if (!$('me-modal').hidden) closeMe();
             else if (!$('picker').hidden) picker.close();
+            else if (!$('say-modal').hidden) shutSay();
             else if (!$('ask-modal').hidden) shutAsk();
             else if (!$('prj-modal').hidden) shutPrj();
             else if (!$('money-modal').hidden) closeMoney();
@@ -3277,7 +3477,9 @@
         idea:   'πρόσθεσε μια ιδέα στο brainstorming',
         'file-ask': 'ζητάει ξανά τον σύνδεσμο ενός αρχείου',
         bill:   'σου καταχώρισε τιμολόγιο',
-        ask:    'σου ζητάει κάτι'
+        ask:    'σου ζητάει κάτι',
+        'ask-back': 'απάντησε σε ένα αίτημα',
+        'ask-got':  'έλαβε υπόψη ένα αίτημα'
     };
 
     // A deleted post has no picture left to show, so its line gets the same
@@ -3307,6 +3509,8 @@
         'file-ask': FILE_ICON,
         bill: BILL_ICON,
         ask: IDEA_ICON,
+        'ask-back': SAID_ICON,
+        'ask-got': SAID_ICON,
         dm: SAID_ICON,
         idea: IDEA_ICON,
         link: '<svg viewBox="0 0 24 24" aria-hidden="true">'
@@ -3389,7 +3593,7 @@
         closeBell();
 
         // A request opens the room it was asked in.
-        if (event.kind === 'ask') {
+        if (['ask', 'ask-back', 'ask-got'].includes(event.kind)) {
             if (event.projectId) await openProject(event.projectId);
             return;
         }

@@ -82,13 +82,46 @@ module.exports = async (req, res) => {
                 project: projectOut(project, doc, me),
                 asks: kept.asks
                     .filter(one => asks.mayRead(one, me))
-                    .map(one => asks.out(one, doc))
+                    .map(one => asks.out(one, doc, me))
             });
         }
 
+        // Everything anybody has asked of me, from every room at once. Five
+        // projects is five places to look and a morning spent looking; this is
+        // the one place that answers "what is waiting for me".
+        if (req.method === 'GET' && (req.query || {}).mine) {
+            const rooms = accounts.projectsFor(doc, me);
+            const each = await Promise.all(rooms.map(one => asks.read(one.id)));
+
+            const waiting = [];
+            rooms.forEach((room, at) => {
+                each[at].asks
+                    .filter(one => asks.mayRead(one, me))
+                    .forEach(one => waiting.push({
+                        ...asks.out(one, doc, me),
+                        projectId: room.id,
+                        projectName: room.name
+                    }));
+            });
+
+            // Newest first across all of them, which is the only order that
+            // means anything once they have left their rooms behind.
+            waiting.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+            return res.status(200).json({ asks: waiting });
+        }
+
         if (req.method === 'GET') {
+            const rooms = accounts.projectsFor(doc, me);
+            const each = await Promise.all(rooms.map(one => asks.read(one.id)));
+
             return res.status(200).json({
-                projects: accounts.projectsFor(doc, me).map(one => projectOut(one, doc, me)),
+                projects: rooms.map((one, at) => ({
+                    ...projectOut(one, doc, me),
+                    // How many requests in this room are waiting on this
+                    // reader, so the sidebar can say so without being opened.
+                    lit: each[at].asks.filter(ask =>
+                        asks.mayRead(ask, me) && asks.faceFor(ask, me.id) === 'lit').length
+                })),
                 // Everybody who could be put on one, so the panel can offer
                 // them without a second request.
                 people: doc.users
@@ -123,7 +156,7 @@ module.exports = async (req, res) => {
                 text: feed.excerpt(made.title)
             })));
 
-            return res.status(200).json({ ask: asks.out(made, doc) });
+            return res.status(200).json({ ask: asks.out(made, doc, me) });
         }
 
         if (req.method === 'POST') {
@@ -146,6 +179,56 @@ module.exports = async (req, res) => {
             doc.projects.push(project);
             await accounts.writeAccounts(doc);
             return res.status(200).json({ project: projectOut(project, doc, me) });
+        }
+
+        if (req.method === 'PATCH' && readBody(req).kind === 'ask') {
+            const body = readBody(req);
+            const project = accounts.findProject(doc, text(body.project, 40));
+            if (!accounts.canViewProject(me, project)) {
+                return res.status(404).json({ error: 'no-such-project' });
+            }
+
+            const kept = await asks.read(project.id);
+            const ask = kept.asks.find(one => one.id === text(body.id, 40));
+            if (!ask || !asks.mayRead(ask, me)) return res.status(404).json({ error: 'no-such-ask' });
+
+            const told = [];
+            const tell = (id) => { if (id && id !== me.id) told.push(id); };
+
+            if (body.action === 'seen') {
+                asks.looked(ask, me);
+            } else if (body.action === 'reply') {
+                asks.reply(ask, body, me);
+                // Whoever asked hears about every answer. On a request between
+                // two people the other one hears too, whichever of them wrote.
+                tell(ask.by);
+                tell(ask.toId);
+            } else if (body.action === 'got') {
+                asks.got(ask, me);
+                tell(ask.by);
+            } else if (body.action === 'close' || body.action === 'open') {
+                if (!asks.mine(ask, me)) return res.status(403).json({ error: 'not-allowed' });
+                const dropped = asks.shut(ask, body.action === 'close');
+                // Best effort: a picture left behind costs storage, a failed
+                // save costs the thing somebody asked for.
+                if (dropped.length) {
+                    try { await blob.client(req).del(dropped); } catch { /* litter */ }
+                }
+            } else {
+                return res.status(400).json({ error: 'bad-action' });
+            }
+
+            await asks.write(project.id, kept);
+
+            await Promise.all(Array.from(new Set(told)).map(id => feed.push({
+                kind: body.action === 'got' ? 'ask-got' : 'ask-back',
+                actorId: me.id,
+                toId: id,
+                projectId: project.id,
+                text: feed.excerpt(ask.title)
+            })));
+
+            return res.status(200).json({ ask: asks.out(ask, doc, me) });
         }
 
         if (req.method === 'PATCH') {
@@ -211,8 +294,9 @@ module.exports = async (req, res) => {
         res.setHeader('Allow', 'GET, POST, PATCH, DELETE');
         return res.status(405).json({ error: 'Method not allowed.' });
     } catch (err) {
-        const known = ['bad-name', 'bad-image', 'bad-link', 'no-such-project', 'no-such-ask',
-                       'not-a-member', 'not-allowed', 'too-many-projects', 'too-many-asks'];
+        const known = ['bad-name', 'bad-image', 'bad-link', 'bad-action', 'ask-closed',
+                       'no-such-project', 'no-such-ask', 'not-a-member', 'not-allowed',
+                       'too-many-projects', 'too-many-asks', 'too-many-replies'];
         const status = err.message === 'not-allowed' ? 403
             : known.includes(err.message) ? 400 : 500;
         return res.status(status).json({ error: err.message });

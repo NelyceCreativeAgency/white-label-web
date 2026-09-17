@@ -66,6 +66,12 @@
             <div class="app-chat-nav" id="app-projects-nav" hidden>
                 <p class="app-nav-label">Projects</p>
                 <ul class="app-grids" id="app-projects"></ul>
+                <button class="app-nav-item" type="button" id="asks-mine">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4"/>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    <span class="app-nav-text"><strong>Τα αιτήματά μου</strong></span>
+                    <span class="app-nav-badge" id="asks-badge" hidden></span>
+                </button>
                 <button class="app-nav-item app-nav-new" type="button" id="project-new">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
                     <span class="app-nav-text"><strong>Νέο project</strong></span>
@@ -515,6 +521,27 @@
             <div class="modal-foot">
                 <button class="app-ghost" type="button" data-close>Ακύρωση</button>
                 <button class="btn btn-primary" type="button" id="ask-save">Αποστολή</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Answering a request ----------------------------------------------- -->
+    <div class="modal" id="say-modal" hidden>
+        <div class="modal-scrim" data-close></div>
+        <div class="modal-box modal-acct" role="dialog" aria-modal="true" aria-labelledby="say-title">
+            <button class="modal-x" type="button" data-close aria-label="Κλείσιμο">&times;</button>
+
+            <h2 class="modal-title" id="say-title"></h2>
+            <p class="modal-sub" id="say-sub"></p>
+
+            <textarea class="me-name-field" id="say-text" rows="5" maxlength="4000"
+                      placeholder="Γράψε το feedback σου"></textarea>
+
+            <p class="edit-error" id="say-error" role="alert" hidden></p>
+
+            <div class="modal-foot">
+                <button class="app-ghost" type="button" data-close>Ακύρωση</button>
+                <button class="btn btn-primary" type="button" id="say-send">Αποστολή</button>
             </div>
         </div>
     </div>

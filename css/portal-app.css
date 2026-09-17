@@ -3428,6 +3428,31 @@ li.none-yet {
     border-radius: 14px;
 }
 
+/* The three faces of a request, which are faces of whoever is looking at it.
+   Lit: something happened and it was not yours. Quiet: you are up to date.
+   Closed: whoever asked has said it is finished, and it steps back. */
+.ask.is-lit {
+    border-color: rgba(255, 107, 53, .4);
+    background: rgba(255, 107, 53, .05);
+}
+
+.ask.is-lit .ask-title { color: var(--text-primary); }
+
+.ask.is-lit::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 14px; bottom: 14px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--accent-orange);
+}
+
+.ask.is-closed { opacity: .55; }
+.ask.is-closed .ask-title { text-decoration: line-through; text-decoration-thickness: 1px; }
+.ask { position: relative; cursor: pointer; }
+.ask.is-open { border-color: rgba(255, 255, 255, .16); }
+.ask-do, .ask-thread { cursor: auto; }
+
 .ask-head { display: grid; gap: 3px; }
 .ask-title { font-size: .95rem; font-weight: var(--fw-medium); }
 .ask-who { font-size: .74rem; color: rgba(184, 186, 194, .7); }
@@ -3457,6 +3482,38 @@ li.none-yet {
 .ask-do { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ask-when { font-size: .74rem; color: rgba(184, 186, 194, .55); margin-right: auto; }
 .ask-do .btn { padding: 8px 16px; font-size: .78rem; text-decoration: none; }
+
+/* What came back, under the thing it came back to. */
+.ask-thread {
+    list-style: none;
+    margin: 2px 0 0;
+    padding: 12px 0 0;
+    display: grid;
+    gap: 12px;
+    border-top: 1px solid rgba(255, 255, 255, .07);
+}
+
+.ask-thread.is-empty {
+    margin: 2px 0 0;
+    font-size: .78rem;
+    color: rgba(184, 186, 194, .55);
+}
+
+.say strong { font-size: .8rem; font-weight: var(--fw-medium); }
+.say small { margin-left: 8px; font-size: .7rem; color: rgba(184, 186, 194, .5); }
+
+.say p {
+    margin: 4px 0 0;
+    font-size: .84rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+}
+
+/* Taking note is not answering, and does not look like it. */
+.say.is-note p { font-style: italic; color: rgba(184, 186, 194, .55); }
+
+#say-text { min-height: 120px; resize: vertical; }
 
 #ask-new { margin-top: 2px; }
 #ask-add { margin-top: 10px; }
