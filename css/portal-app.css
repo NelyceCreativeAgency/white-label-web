@@ -3513,7 +3513,13 @@ li.none-yet {
 /* Taking note is not answering, and does not look like it. */
 .say.is-note p { font-style: italic; color: rgba(184, 186, 194, .55); }
 
-#say-text { min-height: 120px; resize: vertical; }
+/* The history inside the panel scrolls on its own, so a long argument never
+   pushes the box for answering it off the bottom of the screen. */
+#say-thread { max-height: 44vh; overflow-y: auto; margin-bottom: 4px; }
+#say-thread .ask-said { margin-bottom: 12px; }
+.say-link { margin: 12px 0 0; }
+
+#say-text { min-height: 96px; resize: vertical; }
 
 /* The three shelves of a room, read the way an inbox is read. Always all
    three, because a shelf that disappears when it empties is one you stop

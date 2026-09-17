@@ -408,7 +408,7 @@
     // --- projects ----------------------------------------------------------
     // The team's own rooms. A client has none and is not shown the category at
     // all; everybody else may start one and put whoever they work with on it.
-    const rooms = { list: [], people: [], open: null, asks: [], reading: new Set(), tab: 'me' };
+    const rooms = { list: [], people: [], open: null, asks: [], tab: 'me' };
 
     const loadProjects = async () => {
         if (!state.me || state.me.role === 'client') { rooms.list = []; renderProjectNav(); return; }
@@ -501,7 +501,6 @@
         const forMe = ask.toId === state.me.id;
         const mine = ask.mine;
         const shut = Boolean(ask.closedAt);
-        const open = rooms.reading.has(ask.id);
 
         const whose = !ask.toId
             ? 'προς όλους'
@@ -511,7 +510,7 @@
         const answers = ask.replies.length + ask.gotIt.length;
 
         return `
-            <li class="ask is-${esc(ask.face)}${open ? ' is-open' : ''}"
+            <li class="ask is-${esc(ask.face)}"
                 data-ask="${esc(ask.id)}" data-room="${esc((rooms.open && rooms.open.id) || '')}">
                 <div class="ask-head">
                     <strong class="ask-title">${esc(ask.title)}</strong>
@@ -531,8 +530,8 @@
                     ${ask.url ? `<a class="app-ghost" href="${esc(ask.url)}"
                                     target="_blank" rel="noopener noreferrer">Άνοιξέ το</a>` : ''}
 
-                    ${!shut ? `<button class="btn btn-primary" type="button"
-                                       data-say="${esc(ask.id)}">Άφησε feedback</button>` : ''}
+                    <button class="${shut ? 'app-ghost' : 'btn btn-primary'}" type="button"
+                            data-say="${esc(ask.id)}">${shut ? 'Δες το ιστορικό' : 'Άφησε feedback'}</button>
 
                     ${!shut && !mine && !ask.toId && !noted
                         ? `<button class="app-ghost" type="button" data-got="${esc(ask.id)}">Το έλαβα</button>` : ''}
@@ -548,7 +547,6 @@
                                       aria-label="Διαγραφή αιτήματος">&times;</button>` : ''}
                 </div>
 
-                ${open ? askThread(ask) : ''}
             </li>`;
     };
 
@@ -640,6 +638,7 @@
             });
             rooms.asks = rooms.asks.map(one => (one.id === id ? back.ask : one));
             redrawAsks();
+            if (!$('say-modal').hidden && saying.id === id) drawSaid();
             if (done) toast(done);
             // The count on the room in the sidebar is read off the same facts
             // and has just changed with them.
@@ -699,21 +698,9 @@
             return;
         }
 
-        // Anywhere else on the card opens its history. Reading it is what turns
-        // it from lit back to quiet, which is the only honest moment to say so.
+        // Anywhere else on the card opens the request itself.
         if (event.target.closest('a')) return;
-
-        const id = card.dataset.ask;
-        if (rooms.reading.has(id)) {
-            rooms.reading.delete(id);
-            redrawAsks();
-            return;
-        }
-
-        rooms.reading.add(id);
-        const one = rooms.asks.find(row => row.id === id);
-        if (one && one.face === 'lit') await askDo(id, room, { action: 'seen' });
-        else redrawAsks();
+        openSayPanel(card.dataset.ask, room);
     });
 
     // --- answering one ------------------------------------------------------
@@ -725,23 +712,52 @@
         unlock();
     };
 
-    const openSayPanel = (id, room) => {
+    // What a request looks like opened: everything said about it so far, and
+    // the box to say the next thing. In a panel rather than unfolded in place,
+    // because a room with four conversations unfolded inside it is a page
+    // nobody can find the bottom of.
+    const drawSaid = () => {
+        const ask = rooms.asks.find(one => one.id === saying.id);
+        if (!ask) return;
+
+        const shut = Boolean(ask.closedAt);
+
+        $('say-title').textContent = ask.title;
+        $('say-sub').textContent = `${ask.mine ? 'Εσύ' : ask.byName} · ${
+            !ask.toId ? 'προς όλους' : ask.toId === state.me.id ? 'προς εσένα' : `προς ${ask.toName}`}${
+            shut ? ' · ολοκληρωμένο' : ''}`;
+
+        $('say-thread').innerHTML = `
+            ${ask.said ? `<p class="ask-said">${esc(ask.said)}</p>` : ''}
+            ${ask.shots.length ? `<div class="ask-shots">${ask.shots.map(url =>
+                `<img src="${esc(url)}" alt="" loading="lazy">`).join('')}</div>` : ''}
+            ${ask.url ? `<p class="say-link"><a class="app-ghost" href="${esc(ask.url)}"
+                            target="_blank" rel="noopener noreferrer">Άνοιξέ το</a></p>` : ''}
+            ${askThread(ask)}`;
+
+        // A finished request is a record. It can be read and not added to.
+        $('say-text').hidden = shut;
+        $('say-send').hidden = shut;
+        $('say-modal').querySelector('label[for="say-text"]').hidden = shut;
+    };
+
+    const openSayPanel = async (id, room) => {
         const ask = rooms.asks.find(one => one.id === id);
         if (!ask) return;
 
         saying.id = id;
         saying.room = room;
 
-        $('say-title').textContent = ask.title;
-        $('say-sub').textContent = ask.by === state.me.id
-            ? 'Η απάντησή σου μπαίνει πάνω στο ίδιο το αίτημα.'
-            : `Απαντάς στον ${esc(ask.byName)}. Ό,τι γράψεις μένει πάνω στο αίτημα.`;
         $('say-text').value = '';
         $('say-error').hidden = true;
+        drawSaid();
 
         $('say-modal').hidden = false;
         document.body.classList.add('is-locked');
-        $('say-text').focus();
+        if (!ask.closedAt) $('say-text').focus();
+
+        // Opening it is reading it, and reading it is what settles it.
+        if (ask.face === 'lit') await askDo(id, room, { action: 'seen' });
     };
 
     $('say-send').addEventListener('click', async () => {
@@ -752,10 +768,10 @@
             return;
         }
 
-        const { id, room } = saying;
-        rooms.reading.add(id);
-        shutSay();
-        await askDo(id, room, { action: 'reply', text: said }, 'Στάλθηκε.');
+        $('say-text').value = '';
+        // The panel stays open and the answer appears in it, which is what
+        // anybody who has just written two sentences expects to see happen.
+        await askDo(saying.id, saying.room, { action: 'reply', text: said });
     });
 
     // --- asking for something ----------------------------------------------
