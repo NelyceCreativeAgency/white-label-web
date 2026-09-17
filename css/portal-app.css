@@ -13,8 +13,20 @@
 .app-body {
     min-height: 100vh;
     background:
-        radial-gradient(ellipse 80% 50% at 50% -10%,
-            rgba(var(--glow), var(--glow-a, .13)), transparent 70%),
+        /* The light. A colour on its own over a background this dark only ever
+           goes brown, however much of it there is; a little white at the top is
+           what makes the rest of it read as something lit rather than something
+           painted. It is a share of the same number, so it goes out with it. */
+        radial-gradient(ellipse 80vw 34vh at 50% -6%,
+            rgba(255, 255, 255, calc(var(--glow-a, .34) * .21)), transparent 70%),
+        /* The colour, brightest just off the top edge and carried a long way
+           down by the middle stop. Sized in the screen rather than in the page,
+           or a long conversation would spread the same light over three
+           thousand pixels and a short one over eight hundred. */
+        radial-gradient(ellipse 120vw 52vh at 50% -2%,
+            rgba(var(--glow), var(--glow-a, .34)) 0%,
+            rgba(var(--glow), calc(var(--glow-a, .34) * .4)) 45%,
+            transparent 76%),
         var(--bg-dark);
     color: var(--text-primary);
 }
