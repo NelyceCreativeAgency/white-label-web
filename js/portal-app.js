@@ -5016,7 +5016,7 @@
         const under = [];
         if (entry.to) under.push(`Καλύπτει ως ${onDay(entry.to)}`);
         if (entry.invoiceNo) under.push(`Τιμολόγιο ${esc(entry.invoiceNo)}`);
-        if (sub) under.push(esc(sub.title));
+        if (sub && sub.title !== entry.title) under.push(esc(sub.title));
 
         // Only what there is to offer. An empty row of buttons still takes a
         // line of its own once the layout stacks on a phone.
@@ -5108,7 +5108,7 @@
                 <div class="panel-head">
                     <h2>Ιστορικό και τιμολόγια</h2>
                     <p>${boss
-                        ? 'Κάθε χρέωση όπως εκδόθηκε. Ο σύνδεσμος πάει στο ίδιο το αρχείο του τιμολογίου, όπου κι αν το ανεβάζεις. Τα υπόλοιπα στοιχεία κάθε γραμμής είναι πίσω από το γρανάζι της.'
+                        ? 'Κάθε χρέωση όπως εκδόθηκε, και αν έχει εξοφληθεί ή όχι. Ο σύνδεσμος πάει στο ίδιο το αρχείο του τιμολογίου, όπου κι αν το ανεβάζεις. Τα υπόλοιπα στοιχεία κάθε γραμμής είναι πίσω από το γρανάζι της.'
                         : 'Ό,τι έχει τιμολογηθεί, με τον σύνδεσμο για να κατεβάσεις το κάθε τιμολόγιο.'}</p>
                 </div>
 
@@ -5117,6 +5117,10 @@
                     <input name="title" placeholder="Τι αφορά, π.χ. Λογότυπο" maxlength="80" required>
                     <input name="amount" placeholder="Ποσό" inputmode="decimal" required>
                     <input name="on" type="date" aria-label="Ημερομηνία">
+                    <select name="status" aria-label="Κατάσταση">
+                        <option value="paid">Πληρώθηκε</option>
+                        <option value="due">Εκκρεμεί</option>
+                    </select>
                     <button class="btn btn-primary" type="submit">Προσθήκη</button>
                 </form>` : ''}
 
