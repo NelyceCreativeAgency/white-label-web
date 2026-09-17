@@ -369,41 +369,60 @@
 
     // --- the screen a keyboard has left behind --------------------------------
     // A phone does not make room for its keyboard: it slides the page up from
-    // under itself, which on a conversation means the box being typed in ends
-    // up behind the keys and everything above it has wandered off the top.
+    // under itself, so the box being written in ends up behind the keys.
+    // visualViewport is the browser saying how much screen is actually left,
+    // and the page is given exactly that much to be.
     //
-    // visualViewport is the browser saying how much screen is actually left.
-    // Handed to the stylesheet, the conversation becomes exactly that tall, the
-    // box sits above the keys, and nothing moves because nothing had to.
-    const fitToKeyboard = () => {
-        const root = document.documentElement;
+    // Everything below is about not doing it too often. A phone fires these
+    // events all through the keyboard's animation and again on every keystroke,
+    // and a stylesheet rewritten on each of them is a page that shakes. So:
+    // once a frame at most, and only when the numbers have actually moved.
+    const root = document.documentElement;
+    let frame = null;
+
+    const measure = () => {
+        frame = null;
+
         const chatting = !$('view-chat').hidden && matchMedia('(max-width: 900px)').matches;
 
         if (!chatting) {
-            document.body.classList.remove('is-chatting', 'is-lifted');
+            document.body.classList.remove('is-chatting', 'is-lifted', 'is-typing');
+            delete root.dataset.vvh;
+            delete root.dataset.vvtop;
             root.style.removeProperty('--vvh');
             root.style.removeProperty('--vvtop');
             return;
         }
 
         const view = window.visualViewport;
+        const tall = String(Math.round(view ? view.height : window.innerHeight));
+        const lift = String(Math.round(view ? Math.max(0, view.offsetTop) : 0));
 
-        const lifted = view ? Math.max(0, view.offsetTop) : 0;
+        // Writing the same number again is a reflow for nothing, and a reflow
+        // in the middle of a keyboard animation is what shaking looks like.
+        if (root.dataset.vvh !== tall) {
+            root.dataset.vvh = tall;
+            root.style.setProperty('--vvh', `${tall}px`);
+        }
 
-        root.style.setProperty('--vvh', `${view ? view.height : window.innerHeight}px`);
-        root.style.setProperty('--vvtop', `${lifted}px`);
+        if (root.dataset.vvtop !== lift) {
+            root.dataset.vvtop = lift;
+            root.style.setProperty('--vvtop', `${lift}px`);
+            document.body.classList.toggle('is-lifted', Number(lift) > 1);
+        }
 
         document.body.classList.add('is-chatting');
-        document.body.classList.toggle('is-lifted', lifted > 1);
+    };
 
-        // With the page pinned there is nothing left to scroll, and this is
-        // what puts it back if something scrolled it before it was.
-        if (window.scrollY) window.scrollTo(0, 0);
+    const fitToKeyboard = () => {
+        if (frame) return;
+        frame = requestAnimationFrame(measure);
     };
 
     if (window.visualViewport) {
+        // resize only. scroll fires continuously while a keyboard moves and
+        // while somebody types, and answering it was half the shaking.
         window.visualViewport.addEventListener('resize', fitToKeyboard);
-        window.visualViewport.addEventListener('scroll', fitToKeyboard);
     }
 
     window.addEventListener('orientationchange', fitToKeyboard);
