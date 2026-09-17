@@ -482,6 +482,18 @@
 
 .app-blank { max-width: 520px; margin: 60px auto; text-align: center; }
 
+/* The messages screen holds still at every size: the name at the top and the
+   box at the bottom stay where they are, and the conversation between them is
+   the only thing that moves. A phone had this already; there is no reason a
+   desktop should be the one that scrolls its whole window. */
+body.is-messages { overflow: hidden; }
+
+body.is-messages .app-main {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+}
+
 /* --- messages ------------------------------------------------------------- */
 /* Two conversations that must never be mistaken for each other: the project
    thread, which everybody on the grid reads, and a private one, which two
@@ -1333,6 +1345,12 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
 .chat-msg { max-width: min(560px, 82%); align-self: flex-start; }
 .chat-msg.is-mine { align-self: flex-end; }
 
+/* The bubble hugs its words. Without this it was as wide as the line of small
+   print under it, so "Test" came out the width of "12:00 μμ · Απάντηση ·
+   Διαγραφή" and looked like a mistake. */
+.chat-bubble { width: fit-content; max-width: 100%; }
+.chat-msg.is-mine .chat-bubble { margin-left: auto; }
+
 .chat-name {
     margin: 10px 0 4px 13px;
     font-size: .72rem;
@@ -1359,6 +1377,86 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
     border-color: transparent;
     border-radius: 16px 16px 5px 16px;
 }
+
+/* Above the words, inside the bubble, and quieter than them: what is being
+   answered is context rather than the message. */
+.chat-quote {
+    display: block;
+    margin: -2px 0 7px;
+    padding: 5px 9px;
+    font-size: .78rem;
+    line-height: 1.4;
+    text-align: left;
+    color: inherit;
+    background: rgba(255, 255, 255, .1);
+    border: none;
+    border-left: 2px solid currentColor;
+    border-radius: 4px 8px 8px 4px;
+    cursor: pointer;
+    opacity: .75;
+}
+
+.chat-msg.is-mine .chat-quote { background: rgba(0, 0, 0, .14); }
+.chat-quote:hover { opacity: 1; }
+
+.chat-quote strong {
+    display: block;
+    font-size: .72rem;
+    font-weight: var(--fw-medium);
+}
+
+.chat-quote span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The one being answered, when its answer has been tapped. */
+.chat-msg.is-found .chat-bubble { animation: chat-found 1.6s ease-out; }
+
+@keyframes chat-found {
+    0%, 55% { box-shadow: 0 0 0 3px rgba(255, 107, 53, .55); }
+    100%    { box-shadow: 0 0 0 3px rgba(255, 107, 53, 0); }
+}
+
+/* What the next message will be answering, over the box it is typed in. */
+.chat-answering {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 9px 24px;
+    font-size: .78rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, .04);
+    border-top: 1px solid rgba(255, 255, 255, .07);
+}
+
+.chat-answering-who { flex: 0 0 auto; color: var(--accent-orange); }
+
+.chat-answering-said {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-answering button {
+    flex: 0 0 auto;
+    padding: 0 4px;
+    font: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.chat-answering button:hover { color: var(--text-primary); }
 
 .chat-foot {
     display: flex;

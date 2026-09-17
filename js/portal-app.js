@@ -258,7 +258,7 @@
         // Every conversation this account has, and which one is open. None of
         // it depends on which grid is being looked at.
         chat: { kind: 'teams', teams: [], people: [], open: null, gridId: null,
-                messages: [], loading: false }
+                messages: [], loading: false, answering: null }
     };
 
     const canEdit = () => Boolean(state.grid && state.grid.canEdit);
@@ -555,6 +555,12 @@
         ['grid', 'accounts', 'chat', 'blank'].forEach(view => {
             $(`view-${view}`).hidden = view !== name;
         });
+
+        // The conversation is the only screen where the window itself should
+        // not scroll: the name and the box hold still and the talk between them
+        // moves, at every size rather than only on a phone.
+        document.body.classList.toggle('is-messages', name === 'chat');
+
         closeSidebar();
         fitToKeyboard(true);
     };
@@ -3046,6 +3052,14 @@
     const openTeam = () => state.chat.teams.find(one => one.id === state.chat.open.id) || null;
     const openPerson = () => state.chat.people.find(one => one.id === state.chat.open.id) || null;
 
+    // Written on one line on purpose: a bubble keeps the spaces it is given, so
+    // the tidy indentation this would otherwise have would be a blank line
+    // above every answer.
+    const quoted = (message) => !message.replyTo ? ''
+        : `<button class="chat-quote" type="button" data-do="find" data-at="${esc(message.replyTo.id)}">`
+          + `<strong>${esc(message.replyTo.name)}</strong>`
+          + `<span>${esc(message.replyTo.text)}</span></button>`;
+
     const renderRoom = () => {
         const c = state.chat;
         if (!c.open) return;
@@ -3134,9 +3148,10 @@
                 ${newDay ? `<li class="chat-day">${esc(its)}</li>` : ''}
                 <li class="chat-msg${mine ? ' is-mine' : ''}" data-message="${esc(message.id)}">
                     ${signed ? `<p class="chat-name">${esc(message.name)}</p>` : ''}
-                    <div class="chat-bubble">${esc(message.text)}</div>
+                    <div class="chat-bubble">${quoted(message)}${esc(message.text)}</div>
                     <p class="chat-foot">
                         <span>${esc(clock(message.at))}</span>
+                        <button type="button" data-do="answer">Απάντηση</button>
                         ${mine ? '<button type="button" data-do="unsay">Διαγραφή</button>' : ''}
                     </p>
                 </li>`;
@@ -3144,6 +3159,45 @@
 
         if (atEnd) log.scrollTop = log.scrollHeight;
     };
+
+    // What the next message will be answering, said over the box it is typed
+    // in so that nobody sends one without seeing what it is attached to.
+    const renderAnswering = () => {
+        const one = state.chat.answering;
+
+        $('chat-answering').hidden = !one;
+        if (!one) return;
+
+        $('chat-answering-who').textContent = `Απάντηση σε ${one.name}`;
+        $('chat-answering-said').textContent = one.text;
+    };
+
+    const answer = (id) => {
+        const said = state.chat.messages.find(one => one.id === id);
+        if (!said) return;
+
+        state.chat.answering = { id, name: said.name, text: said.text };
+        renderAnswering();
+        $('chat-text').focus();
+    };
+
+    // Going to the one an answer is answering, and saying so when it arrives:
+    // a jump with nothing marked at the end of it looks like a mistake.
+    const findMessage = (id) => {
+        const row = $('chat-log').querySelector(`[data-message="${CSS.escape(id)}"]`);
+
+        if (!row) { toast('Το μήνυμα δεν υπάρχει πια.'); return; }
+
+        row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        row.classList.remove('is-found');
+        void row.offsetWidth;
+        row.classList.add('is-found');
+    };
+
+    $('chat-answering-drop').addEventListener('click', () => {
+        state.chat.answering = null;
+        renderAnswering();
+    });
 
     // What a conversation is asked for by.
     const asks = (open) => open.kind === 'team'
@@ -3183,7 +3237,12 @@
 
         // Another conversation's messages are not this one's, so they go the
         // moment it is asked for rather than when the answer arrives.
-        if (swapped && !quiet) { c.messages = []; c.loading = true; }
+        if (swapped && !quiet) {
+            c.messages = [];
+            c.loading = true;
+            c.answering = null;
+            renderAnswering();
+        }
 
         // A quiet refresh never moves the screen. Somebody scrolled up reading
         // yesterday, or back on the list on a phone, stays where they are.
@@ -3312,21 +3371,29 @@
         if (!said || !state.chat.open) return;
 
         const open = state.chat.open;
+        const answering = state.chat.answering;
+
         box.value = '';
         box.style.height = 'auto';
         $('chat-send').disabled = true;
+        state.chat.answering = null;
+        renderAnswering();
 
         try {
             const data = await api('/api/chat', {
                 method: 'POST',
-                body: open.kind === 'team'
-                    ? { grid: open.id, text: said }
-                    : { with: open.id, text: said }
+                body: {
+                    ...(open.kind === 'team' ? { grid: open.id } : { with: open.id }),
+                    text: said,
+                    replyTo: answering ? answering.id : undefined
+                }
             });
             state.chat.messages = data.messages || state.chat.messages.concat(data.message);
             renderRoom();
         } catch (err) {
             box.value = said;
+            state.chat.answering = answering;
+            renderAnswering();
             toast(explain(err), 'bad');
         } finally {
             $('chat-send').disabled = false;
@@ -3386,12 +3453,17 @@
     });
 
     $('chat-log').addEventListener('click', async (clicked) => {
-        const button = clicked.target.closest('button[data-do="unsay"]');
+        const button = clicked.target.closest('button[data-do]');
         if (!button) return;
+
+        if (button.dataset.do === 'find') { findMessage(button.dataset.at); return; }
+
+        const id = button.closest('.chat-msg').dataset.message;
+
+        if (button.dataset.do === 'answer') { answer(id); return; }
         if (!confirm('Να διαγραφεί το μήνυμα;')) return;
 
         const open = state.chat.open;
-        const id = button.closest('.chat-msg').dataset.message;
 
         try {
             const data = await api('/api/chat', {
@@ -4388,7 +4460,7 @@
             if (!grid) return;
             const members = admin.users.filter(u => u.role !== 'admin');
 
-            drawer.icon = grid.icon || null;
+            drawer.icon = grid.ownIcon || null;
             $('acct-title').textContent = grid.name;
             $('acct-sub').textContent = 'Όποιος μπει πάνω του μπορεί να το αλλάξει. Τα σχόλια των πελατών ξεχωρίζουν και σηκώνουν ένδειξη μέχρι να απαντηθούν.';
 
@@ -4419,7 +4491,9 @@
                 </fieldset>
             `;
 
-            paintFace($('grid-face'), { id: grid.id, name: grid.name, icon: drawer.icon }, 'face-big');
+            paintFace($('grid-face'),
+                      { id: grid.id, name: grid.name, icon: drawer.icon || grid.icon },
+                      'face-big');
             $('acct-body').querySelector('[data-do="clear-icon"]').hidden = !drawer.icon;
 
             $('acct-delete').hidden = false;

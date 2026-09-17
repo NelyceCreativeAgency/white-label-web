@@ -112,9 +112,10 @@ const summary = (grid, posts, user) => ({
     // many empty ones have been put after them to hold the place of what is
     // still to come.
     slots: planOf(grid, posts),
-    // The little square beside the name in the sidebar. Set by the admin, and
-    // nothing to do with the profile picture of the mockup itself.
-    icon: grid.icon || null,
+    // The little square beside the name in the sidebar: the admin's own if they
+    // set one, and otherwise the grid's profile picture, which is the face
+    // everybody working on it already knows the project by.
+    icon: accounts.faceOf(grid),
     filled: posts.filter(Boolean).length,
     openNotes: accounts.openNoteCount(posts),
     canEdit: accounts.canEdit(user, grid)

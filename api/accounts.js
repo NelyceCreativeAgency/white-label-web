@@ -27,10 +27,11 @@ const gridOut = (grid) => ({
     name: grid.name,
     handle: grid.handle || '',
     avatar: grid.avatar || null,
-    // The square beside the name in the sidebar. The admin's to set, and not
-    // the same thing as the profile picture of the mockup, which belongs to
-    // whoever is designing the grid.
-    icon: grid.icon || null,
+    // The square beside the name in the sidebar: the admin's own if they set
+    // one, and otherwise the grid's profile picture.
+    icon: accounts.faceOf(grid),
+    // What the admin actually set, for the panel that sets it.
+    ownIcon: grid.icon || null,
     highlights: Array.isArray(grid.highlights) ? grid.highlights : [],
     slots: Number(grid.slots) || 0,
     memberIds: Array.isArray(grid.memberIds) ? grid.memberIds : [],

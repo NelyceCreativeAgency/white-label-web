@@ -126,13 +126,32 @@ exports.write = async (key, messages) => {
     await store.deleteKey(exports.oldKey(key));
 };
 
-exports.newMessage = (me, said) => ({
+// What is quoted above an answer. The words are copied rather than pointed at,
+// so an answer still says what it was answering after the original has been
+// taken back or fallen off the end of its month.
+const QUOTE = 120;
+
+exports.quote = (messages, id) => {
+    const said = messages.find(one => one.id === id);
+    if (!said) return null;
+
+    const text = String(said.text || '').replace(/\s+/g, ' ').trim();
+
+    return {
+        id: said.id,
+        name: said.name,
+        text: text.length > QUOTE ? `${text.slice(0, QUOTE - 1)}…` : text
+    };
+};
+
+exports.newMessage = (me, said, answering) => ({
     id: accounts.newId('msg'),
     userId: me.id,
     name: me.name || me.username,
     role: me.role,
     text: String(said).trim().slice(0, MAX_TEXT),
-    at: new Date().toISOString()
+    at: new Date().toISOString(),
+    replyTo: answering || null
 });
 
 // Anything newer than the last time this account opened that conversation, and

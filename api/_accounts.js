@@ -53,6 +53,12 @@ exports.findByUsername = (doc, username) =>
 exports.findUser = (doc, id) => doc.users.find(u => u.id === id) || null;
 exports.findGrid = (doc, id) => doc.grids.find(g => g.id === id) || null;
 
+// The little square a project is known by. The admin can set one of its own,
+// and where they have not, the profile picture of the grid itself is the
+// picture of that project as far as anybody working on it is concerned: it is
+// the one they chose and the one they have been looking at all week.
+exports.faceOf = (grid) => grid.icon || grid.avatar || null;
+
 // What may leave the server. The password hash never does.
 exports.publicUser = (user) => ({
     id: user.id,

@@ -192,6 +192,12 @@
                 <div class="room-pane" id="pane-talk">
                     <ul class="chat-log" id="chat-log"></ul>
 
+                    <p class="chat-answering" id="chat-answering" hidden>
+                        <span class="chat-answering-who" id="chat-answering-who"></span>
+                        <span class="chat-answering-said" id="chat-answering-said"></span>
+                        <button type="button" id="chat-answering-drop" aria-label="Ακύρωση απάντησης">&times;</button>
+                    </p>
+
                     <form class="chat-form" id="chat-form">
                         <textarea id="chat-text" rows="1" maxlength="2000"
                                   placeholder="Γράψε μήνυμα"></textarea>

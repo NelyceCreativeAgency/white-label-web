@@ -82,7 +82,7 @@ module.exports = async (req, res) => {
 
                 return res.status(200).json({
                     kind: 'project',
-                    grid: { id: grid.id, name: grid.name, icon: grid.icon || null },
+                    grid: { id: grid.id, name: grid.name, icon: accounts.faceOf(grid) },
                     messages,
                     unread: chat.unreadIn(messages, me, seen[mark])
                 });
@@ -97,7 +97,7 @@ module.exports = async (req, res) => {
                 teams.push({
                     id: one.id,
                     name: one.name,
-                    icon: one.icon || null,
+                    icon: accounts.faceOf(one),
                     ...await chat.glance(chat.projectKey(one.id), me, seen[chat.projectMark(one.id)])
                 });
             }
@@ -152,7 +152,14 @@ module.exports = async (req, res) => {
         const said = String(body.text == null ? '' : body.text).trim();
         if (!said) return res.status(400).json({ error: 'empty-message' });
 
-        const message = chat.newMessage(me, said);
+        // An answer names what it is answering, and what it says about it is
+        // copied from the thread rather than taken from the request: nobody
+        // gets to put words in somebody else's message.
+        const answering = body.replyTo
+            ? chat.quote(await chat.read(key), String(body.replyTo))
+            : null;
+
+        const message = chat.newMessage(me, said, answering);
         await chat.append(key, message);
         const messages = await chat.read(key);
 
