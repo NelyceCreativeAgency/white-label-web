@@ -365,6 +365,7 @@
 
         if (view === 'accounts' && state.me.role === 'admin') { openAccounts(); return; }
         if (view === 'clients' && state.me.role === 'admin') { openClients(); return; }
+        if (view === 'partners' && state.me.role === 'admin') { openPartners(); return; }
         if (view === 'project' && kind && rooms.list.some(one => one.id === kind)) {
             openProject(kind);
             return;
@@ -1292,7 +1293,8 @@
     };
 
     const showView = (name) => {
-        ['grid', 'accounts', 'clients', 'chat', 'client', 'project', 'blank'].forEach(view => {
+        ['grid', 'accounts', 'clients', 'partners', 'chat', 'client', 'project', 'blank']
+            .forEach(view => {
             $(`view-${view}`).hidden = view !== name;
         });
 
@@ -5138,6 +5140,7 @@
         else if (item.dataset.view === 'chat') openChat();
         else if (item.dataset.view === 'accounts') openAccounts();
         else if (item.dataset.view === 'clients') openClients();
+        else if (item.dataset.view === 'partners') openPartners();
     });
 
     $('logout').addEventListener('click', async () => {
@@ -5158,7 +5161,7 @@
             const data = await api('/api/accounts');
             admin.users = data.users || [];
             admin.grids = data.grids || [];
-            $('app-title').textContent = 'Λογαριασμοί και grids';
+            $('app-title').textContent = 'Grids';
             renderAccounts();
             showView('accounts');
             where.write('accounts');
@@ -5229,12 +5232,14 @@
             </span>
         </li>`;
 
-    const renderAccounts = () => {
-        const named = (clientId) => {
-            const one = purse.list.find(client => client.id === clientId);
-            return one ? ` · ${esc(one.name)}` : '';
-        };
+    // Which client something belongs to, said by name. Used by every page that
+    // lists something a client can own.
+    const named = (clientId) => {
+        const one = purse.list.find(client => client.id === clientId);
+        return one ? ` · ${esc(one.name)}` : '';
+    };
 
+    const renderAccounts = () => {
         // What a partner is still waiting to be paid, said on the line their
         // name is on. Without it, a bill from one of them would sit on a page
         // there is no reason to open.
@@ -5243,16 +5248,6 @@
             const one = purse.partners.find(row => row.id === user.id);
             return one && one.owed ? ` · <span class="is-due">${esc(euro(one.owed))} προς πληρωμή</span>` : '';
         };
-
-        const userLines = admin.users
-            .map(user => line(user.id, 'user', user.name,
-                `@${esc(user.username)} · ${ROLE_NAMES[user.role]}${named(user.clientId)}`
-                + `${waitingFor(user)} · ${esc(here(user))}`,
-                // A partner keeps their own column of charges, and the arrow
-                // opens it. A client's is opened from the client, which is who
-                // is invoiced, and not from the account that signs in.
-                user, user.role === 'partner'))
-            .join('');
 
         const gridLines = admin.grids
             .map(grid => line(grid.id, 'grid', grid.name,
@@ -5263,29 +5258,8 @@
         $('view-accounts').innerHTML = `
             <section class="panel">
                 <div class="panel-head">
-                    <h2>Λογαριασμοί</h2>
-                    <p>Εσύ ανοίγεις και κλείνεις τους λογαριασμούς. Το όνομα είναι για τα μάτια σου και δέχεται ελληνικά. Το όνομα χρήστη είναι αυτό που πληκτρολογεί στην είσοδο, θέλει λατινικούς χαρακτήρες χωρίς κενά. Το γρανάζι δίπλα σε κάθε όνομα ανοίγει τα πάντα γι' αυτόν, κωδικό μαζί.</p>
-                </div>
-
-                <form class="new-row" id="new-user">
-                    <input name="name" placeholder="Όνομα" maxlength="60" required>
-                    <input name="username" placeholder="Όνομα χρήστη, λατινικά" maxlength="32" pattern="[A-Za-z0-9._\-]{3,32}" title="3 ως 32 λατινικοί χαρακτήρες, αριθμοί, τελεία, παύλα ή κάτω παύλα, χωρίς κενά" autocapitalize="none" spellcheck="false" required>
-                    <select name="role">${roleOptions('client')}</select>
-                    <span class="pw-field">
-                        <input name="password" type="password" placeholder="Κωδικός, 8+ χαρακτήρες" minlength="8" autocomplete="new-password" required>
-                        ${EYE}
-                    </span>
-                    <button class="btn btn-primary" type="submit">Προσθήκη</button>
-                </form>
-
-                <p class="panel-error" id="user-error" role="alert" hidden></p>
-                <ul class="lister">${userLines}</ul>
-            </section>
-
-            <section class="panel">
-                <div class="panel-head">
                     <h2>Grids</h2>
-                    <p>Ένα grid ανά σελίδα Instagram. Βάλε πάνω του όποιον δουλεύει σε αυτήν.</p>
+                    <p>Ένα grid ανά σελίδα Instagram. Το γρανάζι του λέει ποιος δουλεύει πάνω του και σε ποιον πελάτη ανήκει — τους συνεργάτες και τους πελάτες τους φτιάχνεις στις δικές τους σελίδες και τους αντιστοιχείς εδώ.</p>
                 </div>
 
                 <form class="new-row" id="new-grid">
@@ -5300,6 +5274,115 @@
 
         `;
     };
+
+    // --- the people who do the work, on a page of their own ----------------
+    // A partner is an account and nothing else: there is no record behind them
+    // the way there is behind a client, so the account is made here and that
+    // is the whole of it. The arrow opens what has been invoiced between us.
+    const userForm = (id, role, extra) => `
+        <form class="new-row" id="${id}">
+            <input name="name" placeholder="Όνομα" maxlength="60" required>
+            <input name="username" placeholder="Όνομα χρήστη, λατινικά" maxlength="32"
+                   pattern="[A-Za-z0-9._\-]{3,32}"
+                   title="3 ως 32 λατινικοί χαρακτήρες, αριθμοί, τελεία, παύλα ή κάτω παύλα, χωρίς κενά"
+                   autocapitalize="none" spellcheck="false" required>
+            ${extra || ''}
+            <input type="hidden" name="role" value="${role}">
+            <span class="pw-field">
+                <input name="password" type="password" placeholder="Κωδικός, 8+ χαρακτήρες"
+                       minlength="8" autocomplete="new-password" required>
+                ${EYE}
+            </span>
+            <button class="btn btn-primary" type="submit">Προσθήκη</button>
+        </form>`;
+
+    const renderPartners = () => {
+        const owed = (user) => {
+            const one = purse.partners.find(row => row.id === user.id);
+            return one && one.owed ? ` · <span class="is-due">${esc(euro(one.owed))} προς πληρωμή</span>` : '';
+        };
+
+        const partners = admin.users.filter(user => user.role === 'partner');
+        const bosses = admin.users.filter(user => user.role === 'admin');
+
+        $('view-partners').innerHTML = `
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Συνεργάτες</h2>
+                    <p>Όποιος δουλεύει μαζί σου. Ο λογαριασμός φτιάχνεται εδώ και από εδώ μπαίνει σε projects και σε grids. Το όνομα είναι για τα μάτια σας και δέχεται ελληνικά· το όνομα χρήστη είναι αυτό που πληκτρολογεί στην είσοδο. Το βελάκι ανοίγει τα τιμολόγια μεταξύ σας, το γρανάζι όλα τα υπόλοιπα.</p>
+                </div>
+
+                ${userForm('new-partner', 'partner')}
+
+                <p class="panel-error" id="user-error" role="alert" hidden></p>
+                <ul class="lister">${partners.length
+                    ? partners.map(user => line(user.id, 'user', user.name,
+                        `@${esc(user.username)}${owed(user)} · ${esc(here(user))}`, user, true)).join('')
+                    : '<li class="none-yet">Κανένας συνεργάτης ακόμα</li>'}</ul>
+            </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Διαχειριστές</h2>
+                    <p>Οι λογαριασμοί που τα βλέπουν όλα. Είναι εδώ για να μπορείς να αλλάξεις κωδικό ή όνομα, και για να μη γίνεται αυτό από πουθενά αλλού.</p>
+                </div>
+                <ul class="lister">${bosses.map(user => line(user.id, 'user', user.name,
+                    `@${esc(user.username)} · ${esc(here(user))}`, user)).join('')}</ul>
+            </section>`;
+    };
+
+    const openPartners = async () => {
+        busy('Φόρτωση…');
+        try {
+            const data = await api('/api/accounts');
+            admin.users = data.users || [];
+            admin.grids = data.grids || [];
+            await loadClients();
+            $('app-title').textContent = 'Συνεργάτες';
+            renderPartners();
+            showView('partners');
+            where.write('partners');
+            document.querySelectorAll('.app-nav-item').forEach(item => {
+                item.classList.toggle('is-on', item.dataset.view === 'partners');
+            });
+        } catch (err) {
+            toast(explain(err), 'bad');
+        } finally {
+            busy('');
+        }
+    };
+
+    $('view-partners').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        try {
+            await api('/api/accounts', {
+                method: 'POST',
+                body: { kind: 'user', ...Object.fromEntries(new FormData(form).entries()) }
+            });
+            form.reset();
+            toast('Ο συνεργάτης μπήκε.');
+            await openPartners();
+        } catch (err) {
+            complain(form, explain(err));
+        }
+    });
+
+    // After a change behind a gear, the page somebody is actually on is the one
+    // that should come back — not always the grids.
+    const refreshAdmin = async () => {
+        if (!$('view-partners').hidden) return openPartners();
+        if (!$('view-clients').hidden) return openClients();
+        return openAccounts();
+    };
+
+    $('view-partners').addEventListener('click', (event) => {
+        const go = event.target.closest('[data-go]');
+        if (go) { openClient(go.dataset.go); return; }
+
+        const gear = event.target.closest('[data-open]');
+        if (gear) openDrawer(gear.dataset.open, gear.dataset.id);
+    });
 
     // --- the clients, on a page of their own -------------------------------
     // Every client in the sidebar was every client in the sidebar: fine with
@@ -5332,7 +5415,7 @@
                            autocomplete="off" autocapitalize="none" spellcheck="false">` : ''}
 
                 <p class="panel-error" id="client-error" role="alert" hidden></p>
-                <ul class="lister">${wanted.length
+                <ul class="lister" id="client-list">${wanted.length
                     ? wanted.map(one => `
                         <li>
                             ${faceOf(faceFor(one), 'lister-face')}
@@ -5349,11 +5432,42 @@
                         </li>`).join('')
                     : `<li class="none-yet">${purse.list.length
                         ? 'Κανένα αποτέλεσμα' : 'Κανένας πελάτης ακόμα'}</li>`}</ul>
+            </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Λογαριασμοί πελατών</h2>
+                    <p>Ο λογαριασμός είναι ο άνθρωπος που κάνει είσοδο· ο πελάτης είναι αυτός που τιμολογείς. Μια εταιρεία μπορεί να έχει δύο ανθρώπους και να διαβάζουν και οι δύο το ίδιο ιστορικό, γι' αυτό λες εδώ σε ποιον πελάτη ανήκει ο καθένας.</p>
+                </div>
+
+                ${userForm('new-client-user', 'client',
+                    `<select name="clientId" aria-label="Σε ποιον πελάτη">
+                        <option value="">Χωρίς πελάτη ακόμα</option>
+                        ${purse.list.map(one =>
+                            `<option value="${esc(one.id)}">${esc(one.name)}</option>`).join('')}
+                    </select>`)}
+
+                <p class="panel-error" id="client-user-error" role="alert" hidden></p>
+                <ul class="lister">${(() => {
+                    const rows = admin.users.filter(user => user.role === 'client');
+                    return rows.length
+                        ? rows.map(user => line(user.id, 'user', user.name,
+                            `@${esc(user.username)}${named(user.clientId)} · ${esc(here(user))}`, user)).join('')
+                        : '<li class="none-yet">Κανένας λογαριασμός πελάτη ακόμα</li>';
+                })()}</ul>
             </section>`;
     };
 
     const openClients = async () => {
         await loadClients();
+        // The accounts are wanted here too, because the people who sign in on
+        // behalf of a client are made on this page.
+        try {
+            const data = await api('/api/accounts');
+            admin.users = data.users || [];
+            admin.grids = data.grids || [];
+        } catch { /* the list of clients is still worth drawing */ }
+
         $('app-title').textContent = 'Πελάτες';
         renderClients();
         showView('clients');
@@ -5366,7 +5480,7 @@
     $('view-clients').addEventListener('input', (event) => {
         if (event.target.id !== 'client-hunt') return;
         hunt = plain(event.target.value.trim());
-        const box = $('view-clients').querySelector('.lister');
+        const box = $('client-list');
         const wanted = hunt
             ? purse.list.filter(one => plain(one.name).includes(hunt)
                                     || plain(one.company).includes(hunt))
@@ -5394,23 +5508,28 @@
     $('view-clients').addEventListener('submit', async (event) => {
         event.preventDefault();
         const form = event.target;
+        const said = Object.fromEntries(new FormData(form).entries());
 
         try {
-            await api('/api/clients', {
-                method: 'POST',
-                body: { kind: 'client', ...Object.fromEntries(new FormData(form).entries()) }
-            });
+            if (form.id === 'new-client-user') {
+                await api('/api/accounts', { method: 'POST', body: { kind: 'user', ...said } });
+                toast('Ο λογαριασμός δημιουργήθηκε.');
+            } else {
+                await api('/api/clients', { method: 'POST', body: { kind: 'client', ...said } });
+                hunt = '';
+                toast('Ο πελάτης δημιουργήθηκε.');
+            }
             form.reset();
-            hunt = '';
-            await loadClients();
-            renderClients();
-            toast('Ο πελάτης δημιουργήθηκε.');
+            await openClients();
         } catch (err) {
             complain(form, explain(err));
         }
     });
 
     $('view-clients').addEventListener('click', (event) => {
+        const gear = event.target.closest('[data-open]');
+        if (gear) { openDrawer(gear.dataset.open, gear.dataset.id); return; }
+
         const row = event.target.closest('li');
         const go = row && row.querySelector('[data-go]');
         if (go) openClient(go.dataset.go);
@@ -5439,14 +5558,9 @@
         const data = Object.fromEntries(new FormData(form).entries());
 
         try {
-            if (form.id === 'new-user') {
-                await api('/api/accounts', { method: 'POST', body: { kind: 'user', ...data } });
-                toast('Ο λογαριασμός δημιουργήθηκε.');
-            } else {
-                await api('/api/accounts', { method: 'POST', body: { kind: 'grid', ...data } });
-                toast('Το grid δημιουργήθηκε.');
-                await loadGrids();
-            }
+            await api('/api/accounts', { method: 'POST', body: { kind: 'grid', ...data } });
+            toast('Το grid δημιουργήθηκε.');
+            await loadGrids();
             form.reset();
             await openAccounts();
         } catch (err) {
@@ -5633,7 +5747,7 @@
 
             closeDrawer();
             toast('Αποθηκεύτηκε.');
-            await openAccounts();
+            await refreshAdmin();
         } catch (err) {
             sayAcct(explain(err));
         } finally {
@@ -5664,7 +5778,7 @@
             closeDrawer();
             toast(isUser ? 'Ο λογαριασμός αφαιρέθηκε.' : 'Το grid διαγράφηκε.');
             if (!isUser) await loadGrids();
-            await openAccounts();
+            await refreshAdmin();
         } catch (err) {
             sayAcct(explain(err));
         } finally {

@@ -69,6 +69,17 @@ const createUser = (doc, body) => {
         createdAt: new Date().toISOString(),
         lastLoginAt: null
     };
+
+    // Whose account it is, said while it is being made. An account for a
+    // client is nearly always made from that client's page, and having to go
+    // back afterwards to say which client it was for is a detour through a
+    // screen nobody wanted to be on.
+    if (role === 'client' && body.clientId) {
+        const clientId = text(body.clientId, 40);
+        if (!(doc.clients || []).some(one => one.id === clientId)) throw new Error('no-such-client');
+        user.clientId = clientId;
+    }
+
     doc.users.push(user);
     return user;
 };
@@ -249,7 +260,7 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: 'Method not allowed.' });
     } catch (err) {
         const known = ['bad-username', 'username-taken', 'short-password', 'no-such-user',
-                       'no-such-grid', 'bad-name', 'last-admin', 'too-many-users',
+                       'no-such-grid', 'no-such-client', 'bad-name', 'last-admin', 'too-many-users',
                        'too-many-grids', 'not-yourself', 'bad-kind', 'bad-image'];
         const status = known.includes(err.message) ? 400 : 500;
         return res.status(status).json({ error: err.message });

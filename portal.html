@@ -84,14 +84,20 @@
 
             <div class="app-admin-nav" id="app-admin-nav" hidden>
                 <p class="app-nav-label">Διαχείριση</p>
-                <button class="app-nav-item" type="button" data-view="accounts">
+                <button class="app-nav-item" type="button" data-view="partners">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    <span>Λογαριασμοί και grids</span>
+                    <span>Συνεργάτες</span>
                 </button>
                 <button class="app-nav-item" type="button" data-view="clients">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"/>
                         <path d="M9 21v-6h6v6"/></svg>
                     <span>Πελάτες</span>
+                </button>
+                <button class="app-nav-item" type="button" data-view="accounts">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                    <span>Grids</span>
                 </button>
             </div>
         </nav>
@@ -180,6 +186,9 @@
 
         <!-- Everybody who is invoiced, on a page of their own. -->
         <section class="app-view" id="view-clients" hidden></section>
+
+        <!-- Everybody who does the work, on theirs. -->
+        <section class="app-view" id="view-partners" hidden></section>
 
         <!-- Messages -------------------------------------------------------- -->
         <!-- Two conversations, kept visibly apart: the one the whole project
