@@ -405,6 +405,31 @@
     const slack = { idle: 0, typing: 0 };
     const atKeys = () => document.body.classList.contains('is-typing');
 
+    // Kept between visits. The correction is a fact about this browser on this
+    // phone, and it does not change between one opening of the portal and the
+    // next; measuring it again from scratch every time is what made the box
+    // arrive in the wrong place and then hop into the right one.
+    //
+    // Filed under the height the browser was claiming when it was worked out,
+    // so a phone turned on its side, or one with its toolbars in another
+    // state, starts again rather than applying somebody else's number.
+    const FIT = 'nelyce-fit';
+
+    const rememberFit = () => {
+        try { localStorage.setItem(FIT, JSON.stringify({ ...slack, at: window.innerHeight })); }
+        catch { /* a browser in private mode, and a hop on every visit */ }
+    };
+
+    (() => {
+        try {
+            const kept = JSON.parse(localStorage.getItem(FIT) || 'null');
+            if (kept && kept.at === window.innerHeight) {
+                slack.idle = Number(kept.idle) || 0;
+                slack.typing = Number(kept.typing) || 0;
+            }
+        } catch { /* nothing remembered, and one hop to learn it again */ }
+    })();
+
     const measure = () => {
         frame = null;
 
@@ -444,7 +469,16 @@
         document.body.classList.add('is-chatting');
     };
 
-    const fitToKeyboard = () => {
+    // now: work it out before the next paint rather than after it, for the
+    // moments when something has just changed what is on the screen and a frame
+    // of the old size would be seen.
+    const fitToKeyboard = (now) => {
+        if (now) {
+            if (frame) { cancelAnimationFrame(frame); frame = null; }
+            measure();
+            return;
+        }
+
         if (frame) return;
         frame = requestAnimationFrame(measure);
     };
@@ -480,7 +514,9 @@
         // going on, and guessing harder at it would make a worse mess.
         const which = atKeys() ? 'typing' : 'idle';
         slack[which] = Math.max(-260, Math.min(260, slack[which] + out));
+
         measure();
+        rememberFit();
     };
 
     // A keyboard takes about a third of a second to arrive and its accessory
@@ -520,7 +556,7 @@
             $(`view-${view}`).hidden = view !== name;
         });
         closeSidebar();
-        fitToKeyboard();
+        fitToKeyboard(true);
     };
 
     // --- opening a grid ----------------------------------------------------
@@ -2948,9 +2984,9 @@
         document.body.classList.toggle('is-inroom',
             on && matchMedia('(max-width: 900px)').matches);
 
-        // Opening one changes what is on the screen above the box, so where the
-        // box lands is worth asking about again.
-        if (on) settle();
+        // Opening one changes what is on the screen above the box, so the size
+        // is worked out before this is painted and checked again once it is.
+        if (on) { fitToKeyboard(true); settle(); }
     };
 
     const renderChatList = () => {
