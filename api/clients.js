@@ -417,68 +417,6 @@ const renew = (money, body, me) => {
     }, me);
 };
 
-// Which turn of a subscription covers a given month. Subscriptions run on their
-// own schedule from the day they started, so the answer is not the first to the
-// last of that month: it is whichever of its own periods the month falls inside,
-// which for a quarterly one is three months long and starts where it starts.
-//
-// The periods tile the calendar end to end, each beginning the day after the
-// last ended, so exactly one of them holds any month and walking finds it.
-const periodFor = (sub, month) => {
-    const step = CYCLES[sub.cycle] || 1;
-    const first = `${month}-01`;
-    const last = `${month}-31`;
-
-    let on = sub.startedAt || first;
-    let to = shift(addMonths(on, step), -1);
-
-    for (let turn = 0; turn < 600 && to < first; turn += 1) {
-        on = shift(to, 1);
-        to = shift(addMonths(on, step), -1);
-    }
-    for (let turn = 0; turn < 600 && on > last; turn += 1) {
-        on = addMonths(on, -step);
-        to = shift(addMonths(on, step), -1);
-    }
-
-    return (on <= last && to >= first) ? { on, to } : null;
-};
-
-// Somebody pressed a month on the strip. A month is not a charge, so what that
-// turns into is worked out here: the charge covering it if there is one, and
-// otherwise a new one for the whole turn that month belongs to.
-const cover = (money, body, me) => {
-    const sub = money.subs.find(one => one.id === body.subId);
-    if (!sub) throw new Error('no-such-sub');
-
-    const month = text(body.month, 7);
-    if (!/^\d{4}-\d{2}$/.test(month)) throw new Error('bad-date');
-
-    const holding = money.entries.find(entry => entry.subId === sub.id && entry.to
-        && entry.on <= `${month}-31` && entry.to >= `${month}-01`);
-
-    // Already charged, so the press is about whether it has been paid.
-    if (holding) {
-        const paid = holding.status !== 'paid';
-        holding.status = paid ? 'paid' : 'due';
-        holding.paidAt = paid ? today() : null;
-        return holding;
-    }
-
-    const turn = periodFor(sub, month);
-    if (!turn) throw new Error('bad-date');
-
-    return createEntry(money, {
-        subId: sub.id,
-        title: sub.title,
-        amount: sub.cents / 100,
-        on: turn.on,
-        to: turn.to,
-        status: 'paid',
-        payUrl: sub.payUrl
-    }, me);
-};
-
 const patchEntry = (money, body) => {
     const entry = money.entries.find(one => one.id === body.id);
     if (!entry) throw new Error('no-such-entry');
@@ -616,8 +554,6 @@ module.exports = async (req, res) => {
                 req.method === 'POST' ? createEntry(money, body, me) : patchEntry(money, body);
             } else if (body.kind === 'renew' && req.method === 'POST') {
                 renew(money, body, me);
-            } else if (body.kind === 'cover' && req.method === 'POST') {
-                cover(money, body, me);
             } else {
                 throw new Error('bad-kind');
             }

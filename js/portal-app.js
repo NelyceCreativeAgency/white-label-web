@@ -4964,14 +4964,18 @@
         }
     };
 
-    // Twelve squares for the year: filled where the month has been paid for,
-    // outlined where it has been invoiced and not paid yet, and faint where
-    // nothing covers it. The year is the one we are in, and anything older is
-    // in the ledger underneath, which is where a year-old month belongs.
+    // Twelve squares for the year, and nothing but a reading of the charges
+    // underneath: filled where the month has been paid for, outlined where it
+    // has been invoiced and not paid yet, and faint where nothing covers it.
+    // None of them can be pressed, because a month is not where money is
+    // recorded and two places to record it is one too many.
+    //
+    // The year is the one we are in, and anything older is in the ledger, which
+    // is where a year-old month belongs.
     //
     // A quarter fills three of them and a year fills all twelve, without this
     // having to know which: it asks each month whether some period covers it.
-    const monthsOf = (sub, boss) => {
+    const monthsOf = (sub) => {
         const now = new Date();
         const year = now.getFullYear();
         const ours = purse.money.entries.filter(entry => entry.subId === sub.id && entry.to);
@@ -4985,17 +4989,9 @@
             const how = covering.some(entry => entry.status === 'paid') ? ' is-paid'
                 : covering.length ? ' is-due' : '';
             const said = how === ' is-paid' ? 'πληρωμένος' : how === ' is-due' ? 'εκκρεμεί' : 'χωρίς χρέωση';
-            const here = `${how}${month === now.getMonth() ? ' is-now' : ''}`;
 
-            if (!boss) return `<span class="month${here}" title="${name} ${year}: ${said}">${name}</span>`;
-
-            const tip = how === ' is-paid'
-                ? `${name} ${year}: πληρωμένος. Πάτα τον για να το πάρεις πίσω.`
-                : `${name} ${year}: ${said}. Πάτα τον για να τον σημειώσεις πληρωμένο.`;
-
-            return `<button class="month${here}" type="button" data-do="cover"
-                            data-id="${esc(sub.id)}" data-month="${year}-${mm}"
-                            title="${tip}">${name}</button>`;
+            return `<span class="month${how}${month === now.getMonth() ? ' is-now' : ''}"
+                          title="${name} ${year}: ${said}">${name}</span>`;
         }).join('');
 
         return `<div class="months"><span class="months-year">${year}</span>${cells}</div>`;
@@ -5034,9 +5030,9 @@
                                       data-id="${esc(sub.id)}" aria-label="Ρυθμίσεις: ${esc(sub.title)}">${GEAR}</button>` : ''}
                 </div>
                 <p class="sub-when">${said}${paid}${owing}</p>
-                ${monthsOf(sub, boss)}
+                ${monthsOf(sub)}
                 ${boss ? `
-                    <p class="months-how">Πάτα έναν μήνα για να τον σημειώσεις πληρωμένο. Ξαναπάτησέ τον για να το πάρεις πίσω.</p>
+                    <p class="months-how">Οι μήνες δείχνουν τι λένε οι χρεώσεις πιο κάτω και δεν αλλάζουν από εδώ. Για να πληρωθεί ένας μήνας, πρόσθεσε τη χρέωση στο ιστορικό και βάλ' την πάνω σε αυτή τη συνδρομή.</p>
                     ${stopped ? '' : `
                         <button class="app-ghost sub-renew" type="button" data-do="renew" data-id="${esc(sub.id)}">
                             Χρέωσε τον επόμενο ${cycle} χωρίς πληρωμή
@@ -5123,7 +5119,7 @@
             <section class="panel">
                 <div class="panel-head">
                     <h2>Συνδρομές</h2>
-                    <p>Τι τρέχει αυτή τη στιγμή. Οι μήνες από κάτω είναι η φετινή χρονιά: γεμάτος ο πληρωμένος, περιγραμμένος ο τιμολογημένος που δεν έχει πληρωθεί ακόμα, θαμπός αυτός που δεν έχει χρεωθεί καθόλου. Ό,τι παλιότερο είναι στο ιστορικό πιο κάτω.</p>
+                    <p>Τι τρέχει αυτή τη στιγμή, διαβασμένο από τις χρεώσεις πιο κάτω. Οι μήνες είναι η φετινή χρονιά: γεμάτος ο πληρωμένος, περιγραμμένος ο τιμολογημένος που δεν έχει πληρωθεί ακόμα, θαμπός αυτός που δεν έχει χρεωθεί καθόλου. Ό,τι παλιότερο είναι στο ιστορικό πιο κάτω.</p>
                 </div>
 
                 ${boss ? `
@@ -5206,23 +5202,6 @@
     });
 
     $('view-client').addEventListener('click', async (event) => {
-        const square = event.target.closest('[data-do="cover"]');
-        if (square) {
-            busy('Αποθήκευση…');
-            try {
-                const back = await api('/api/clients', {
-                    method: 'POST',
-                    body: { kind: 'cover', clientId: purse.id, subId: square.dataset.id, month: square.dataset.month }
-                });
-                await afterMoney(back, 'Καταχωρήθηκε.');
-            } catch (err) {
-                toast(explain(err), 'bad');
-            } finally {
-                busy('');
-            }
-            return;
-        }
-
         const renewing = event.target.closest('[data-do="renew"]');
         if (renewing) {
             busy('Ανανέωση…');

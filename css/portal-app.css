@@ -3399,12 +3399,6 @@ li.none-yet {
 
 .month.is-now { box-shadow: 0 0 0 1px rgba(255, 255, 255, .28); }
 
-/* For the admin a month is a control, not a report: pressing it is how a month
-   is marked paid, which is the thing they came to the page to do. */
-button.month { font-family: inherit; cursor: pointer; transition: var(--transition-smooth); }
-button.month:hover { color: var(--text-primary); border-color: rgba(255, 255, 255, .32); }
-button.month.is-paid:hover { color: var(--bg-dark); filter: brightness(1.12); }
-
 .months-how { margin-top: 10px; font-size: .72rem; color: rgba(184, 186, 194, .5); }
 
 .sub-renew { margin-top: 12px; }
@@ -3487,7 +3481,7 @@ button.month.is-paid:hover { color: var(--bg-dark); filter: brightness(1.12); }
     .client-id { grid-template-columns: 46px minmax(0, 1fr) auto; gap: 12px; }
     .client-face { width: 46px; height: 46px; font-size: 1.1rem; }
     .client-who h2 { font-size: 1.08rem; }
-    .month, button.month { font-size: .54rem; padding: 6px 0; border-radius: 5px; }
+    .month { font-size: .54rem; padding: 6px 0; border-radius: 5px; }
     .sub-top {
         grid-template-columns: minmax(0, 1fr) auto;
         grid-template-areas: "name gear" "price price";
