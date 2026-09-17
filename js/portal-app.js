@@ -1343,9 +1343,6 @@
 
     // Which sections of the sidebar are shown, and therefore which of them needs
     // a line above it. The first one shown never does; every one after it does.
-    //
-    // Watched rather than called from each of the five places that show or hide
-    // one, so that a sixth cannot be added and forgotten.
     const stripeNav = () => {
         let first = true;
 
@@ -1356,10 +1353,54 @@
         });
     };
 
-    new MutationObserver(stripeNav).observe($('app-nav'), {
-        attributes: true, attributeFilter: ['hidden'], subtree: true
+    // --- folding the sidebar away ---------------------------------------------
+    // Folded, a row is an icon and nothing else, so what it said has to be
+    // somewhere. It goes on the pointer, taken from the words that are no
+    // longer on screen, rather than written a second time in a list here that
+    // would go out of date the first time one of them was renamed.
+    const railed = {
+        read() { try { return localStorage.getItem('nelyce-rail') === '1'; } catch { return false; } },
+        write(on) {
+            try { on ? localStorage.setItem('nelyce-rail', '1') : localStorage.removeItem('nelyce-rail'); }
+            catch { /* nothing to remember with */ }
+        }
+    };
+
+    const nameRows = () => {
+        const on = document.body.classList.contains('is-folded');
+
+        document.querySelectorAll('.app-nav-item, .app-me-who').forEach(row => {
+            const said = row.querySelector('strong');
+            const name = said ? said.textContent.trim() : '';
+            if (on && name) row.setAttribute('title', name);
+            else row.removeAttribute('title');
+        });
+    };
+
+    const fold = (on) => {
+        document.body.classList.toggle('is-folded', on);
+        $('app-fold').setAttribute('aria-expanded', on ? 'false' : 'true');
+        $('app-fold').setAttribute('aria-label', on ? 'Άνοιγμα μενού' : 'Σύμπτυξη μενού');
+        $('app-fold').setAttribute('title', on ? 'Άνοιγμα μενού' : 'Σύμπτυξη μενού');
+        nameRows();
+        railed.write(on);
+    };
+
+    $('app-fold').addEventListener('click', () => {
+        fold(!document.body.classList.contains('is-folded'));
     });
-    stripeNav();
+
+    // Both of these answer a question about what the sidebar currently holds,
+    // so both are watched rather than called from each of the places that add
+    // a row or show a section, and a seventh cannot be added and forgotten.
+    const freshenNav = () => { stripeNav(); nameRows(); };
+
+    new MutationObserver(freshenNav).observe($('app-nav'), {
+        attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true
+    });
+
+    fold(railed.read());
+    freshenNav();
 
     const showView = (name) => {
         // Every view starts with no way back. The two that have one put it

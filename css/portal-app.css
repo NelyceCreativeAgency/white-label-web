@@ -44,8 +44,72 @@
     transition: transform .35s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.app-brand { display: block; margin: 0 8px 28px; }
+.app-head { display: flex; align-items: center; gap: 8px; margin: 0 8px 28px; }
+.app-brand { display: block; flex: 1; min-width: 0; }
 .app-brand-logo { width: 132px; height: auto; }
+
+/* Folding the sidebar away. The icon is a panel with a rail down one side,
+   which says the same thing whichever way it is about to go, so the button
+   does not have to turn around and mean the opposite of what it just meant. */
+.app-fold {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 32px; height: 32px;
+    color: rgba(184, 186, 194, .55);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.app-fold svg {
+    width: 17px; height: 17px;
+    fill: none; stroke: currentColor; stroke-width: 1.7;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+.app-fold:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .06);
+    border-color: rgba(255, 255, 255, .12);
+}
+
+/* --- folded --------------------------------------------------------------- */
+/* A rail of icons. Everything that was words goes, and everything that was a
+   picture stays and moves to the middle, so the sidebar reads as the same
+   sidebar rather than as a different screen. Only above the fold: below it the
+   sidebar is already a drawer that is either over the page or off it. */
+@media (min-width: 901px) {
+    .app-body.is-folded .app-side { width: 76px; padding-left: 14px; padding-right: 14px; }
+    .app-body.is-folded .app-main { margin-left: 76px; }
+
+    .app-body.is-folded .app-head { margin: 0 0 24px; justify-content: center; }
+    .app-body.is-folded .app-brand,
+    .app-body.is-folded .app-nav-label,
+    .app-body.is-folded .app-nav-text,
+    .app-body.is-folded .app-me-text,
+    .app-body.is-folded .app-me-gear { display: none; }
+
+    .app-body.is-folded .app-nav-item,
+    .app-body.is-folded .app-me-who { position: relative; justify-content: center; gap: 0; padding: 10px 0; }
+
+    /* The count of what is waiting has nowhere to be a number, and a number
+       nobody can read is worse than a dot that says the same thing. */
+    .app-body.is-folded .app-nav-badge,
+    .app-body.is-folded .app-nav-count {
+        position: absolute;
+        top: 7px; right: 14px;
+        min-width: 9px; width: 9px; height: 9px;
+        padding: 0;
+        font-size: 0;
+        border-radius: 50%;
+    }
+
+    /* Wider than the rail it hangs off, or it would be a menu of one letter. */
+    .app-body.is-folded .me-menu { left: 0; right: auto; min-width: 176px; }
+}
 
 .app-nav { flex: 1; overflow-y: auto; }
 
@@ -2117,6 +2181,8 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .cell-menu .is-danger { color: #ff8b6b; }
 
 @media (max-width: 900px) {
+    /* Nothing to fold: the sidebar is over the page or off it. */
+    .app-fold { display: none; }
     .app-side { transform: translateX(-100%); }
     body.side-open .app-side { transform: translateX(0); }
     .app-main { margin-left: 0; }
