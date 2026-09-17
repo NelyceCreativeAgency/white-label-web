@@ -5170,7 +5170,7 @@
                 </form>` : ''}
 
                 <p class="panel-error" role="alert" hidden></p>
-                <ul class="ledger">${owned.entries.length
+                <ul class="ledger${boss ? ' is-live' : ''}">${owned.entries.length
                     ? owned.entries.map(entry => ledgerRow(entry, boss)).join('')
                     : '<li class="none-yet">Καμία χρέωση ακόμα</li>'}</ul>
             </section>
@@ -5241,7 +5241,15 @@
         }
 
         const gear = event.target.closest('[data-open]');
-        if (gear) openMoney(gear.dataset.open, gear.dataset.id);
+        if (gear) { openMoney(gear.dataset.open, gear.dataset.id); return; }
+
+        // A gear is a small target for the thing this page is mostly used for,
+        // so the whole row opens it. Not the links inside it, which go where
+        // they say they go.
+        const row = event.target.closest('.led');
+        if (row && state.me.role === 'admin' && !event.target.closest('a')) {
+            openMoney('entry', row.dataset.entry);
+        }
     });
 
     // --- the panel behind a gear ---------------------------------------------

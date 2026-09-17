@@ -3422,6 +3422,8 @@ button.month.is-paid:hover { color: var(--bg-dark); filter: brightness(1.12); }
 }
 
 .led:hover { border-color: rgba(255, 255, 255, .14); }
+.ledger.is-live .led { cursor: pointer; }
+.ledger.is-live .led a { cursor: pointer; }
 
 .led-when { font-size: .78rem; color: rgba(184, 186, 194, .7); white-space: nowrap; }
 .led-what { min-width: 0; display: grid; gap: 2px; }
