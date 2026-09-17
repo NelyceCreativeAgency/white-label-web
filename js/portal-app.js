@@ -4798,10 +4798,17 @@
         const list = $('app-clients');
         const label = $('app-clients-label');
 
+        // A category that hides itself until something is in it is a category
+        // nobody ever finds, so for the admin the heading stays and says so,
+        // the same way the grids do. For somebody who is not the admin and has
+        // no account of their own there is genuinely nothing to point at.
+        const boss = state.me && state.me.role === 'admin';
+
         if (!purse.list.length) {
-            label.hidden = true;
-            list.hidden = true;
-            list.innerHTML = '';
+            label.hidden = !boss;
+            list.hidden = !boss;
+            label.textContent = 'Πελάτες';
+            list.innerHTML = boss ? '<li class="app-grids-empty">Κανένας ακόμα</li>' : '';
             return;
         }
 
@@ -4811,7 +4818,7 @@
         // reading it. One of them is looking at their clients; the other is
         // looking at themselves, and should never be shown a heading that
         // suggests there are others.
-        label.textContent = state.me.role === 'admin' ? 'Πελάτες' : 'Ο λογαριασμός μου';
+        label.textContent = boss ? 'Πελάτες' : 'Ο λογαριασμός μου';
 
         list.innerHTML = purse.list.map(one => `
             <li>
