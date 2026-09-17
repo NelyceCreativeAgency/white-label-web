@@ -345,6 +345,7 @@
         $('me-name').textContent = state.me.name;
         $('me-role').textContent = ROLE_NAMES[state.me.role] || '';
         renderMe();
+        greet();
         $('app-admin-nav').hidden = state.me.role !== 'admin';
 
         await loadGrids();
@@ -3565,7 +3566,8 @@
         }
 
         if (event.key === 'Escape') {
-            if (!$('me-menu').hidden) closeMeMenu();
+            if (!$('hello').hidden) hush();
+            else if (!$('me-menu').hidden) closeMeMenu();
             else if (!$('bell-panel').hidden) closeBell();
             else if (!$('me-modal').hidden) closeMe();
             else if (!$('picker').hidden) picker.close();
@@ -3657,24 +3659,20 @@
 
     $('me-settings').addEventListener('click', () => { closeMeMenu(); openMe(); });
 
-    // --- the colour of the light at the top of the page ----------------------
-    // The body was already painting that gradient; this only says what colour
-    // it is. So the whole feature is one custom property: nothing is added to
-    // the page, nothing listens while it is being used, and the cost of a
-    // different colour is a repaint of a background that was being painted
-    // anyway.
+    // --- the light the portal is lit by --------------------------------------
+    // Everything the lights are is in the stylesheet. This says two things to
+    // it: which pair of colours, and whether there is to be any light at all.
+    //
+    // A choice is those two colours, kept as one string with a bar between
+    // them, so what was written last time is one thing to read and one thing
+    // to put back. A value saved before there were two is a single colour and
+    // still reads: the swatch it came from is asked what goes with it.
     //
     // Remembered here rather than on the server, like the fold: it is how this
     // browser looks to whoever is at it, and a round trip to be told the
     // colour of your own background is a round trip too many. Which does mean
-    // it does not follow anybody to another machine.
-    // A choice is two colours, kept as one string with a bar between them so
-    // that what was written last time is one thing to read and one thing to put
-    // back. A value saved before there were two is a single colour, and still
-    // reads: the swatch it came from is asked what goes with it.
-    const WARM = '255, 107, 53';
-    const WARM_2 = '236, 72, 153';
-
+    // it does not follow anybody to another machine — and is why somebody
+    // arriving on a new one is told where the switch is (see greet, below).
     const glow = {
         read() { try { return localStorage.getItem('nelyce-glow'); } catch { return null; } },
         write(value) {
@@ -3690,24 +3688,22 @@
         return (dot && dot.dataset.glowTwo) || hue;
     };
 
-    // Nothing chosen and chosen to have none are different answers, so null and
-    // an empty string stay apart the whole way through.
+    // Nothing chosen and chosen to have none come to the same thing now that
+    // the portal opens black: either way there is no light to make.
     const lightUp = (value) => {
         const root = document.documentElement;
-        const off = value === '';
-        const [one, two] = String(value == null ? '' : value).split('|');
-        const hue = off || !one ? WARM : one;
+        const [one, two] = String(value || '').split('|');
+        const lit = Boolean(one);
 
-        root.style.setProperty('--glow', hue);
-        root.style.setProperty('--glow-2',
-            off || !one ? WARM_2 : (two || pairOf(hue)));
-        root.style.setProperty('--glow-a', off ? '0' : '');
-        root.classList.toggle('is-dark', off);
+        if (lit) {
+            root.style.setProperty('--glow', one);
+            root.style.setProperty('--glow-2', two || pairOf(one));
+        }
+        root.classList.toggle('is-lit', lit);
 
         dots().forEach(dot => {
             dot.setAttribute('aria-checked',
-                dot.dataset.glow === (value === null ? WARM : hue) && !off
-                    || (off && dot.dataset.glow === '') ? 'true' : 'false');
+                dot.dataset.glow === (lit ? one : '') ? 'true' : 'false');
         });
     };
 
@@ -3723,6 +3719,50 @@
     // The colour itself is already on the document — the head put it there
     // before the first frame. This is the tick under the one it came from.
     lightUp(glow.read());
+
+    // --- said once ----------------------------------------------------------
+    // Somebody opening the portal on a machine for the first time gets one
+    // line about where the light switch is, because a switch nobody finds is
+    // the same as no switch. Nobody who has already found it is told: having a
+    // colour saved is proof enough, so this does not go off in the face of
+    // anybody who has been using the portal for months.
+    //
+    // Remembered in the same place as the colour, which is to say per browser.
+    // That is the right unit for it: what it is explaining is where a thing is
+    // on the screen in front of them, and a new screen is a fair reason to be
+    // told again.
+    const greeted = {
+        read() {
+            try {
+                return localStorage.getItem('nelyce-hello') === '1'
+                    || Boolean(localStorage.getItem('nelyce-glow'));
+            } catch { return true; }
+        },
+        write() {
+            try { localStorage.setItem('nelyce-hello', '1'); }
+            catch { /* nothing to remember with */ }
+        }
+    };
+
+    const hush = () => {
+        if ($('hello').hidden) return;
+        $('hello').hidden = true;
+        greeted.write();
+    };
+
+    // A beat after the portal has finished arriving, so it is not one more
+    // thing landing in the middle of everything else landing.
+    const greet = () => {
+        if (greeted.read()) return;
+        setTimeout(() => { if (!greeted.read()) $('hello').hidden = false; }, 900);
+    };
+
+    $('hello-ok').addEventListener('click', hush);
+
+    // Going to the gear is the same answer as pressing the button, and a
+    // better one: they have done the thing it was asking for.
+    $('me-open').addEventListener('click', hush);
+    $('me-tint').addEventListener('click', hush);
 
     document.addEventListener('click', (event) => {
         if (!$('me-menu').hidden && !event.target.closest('.app-me')) closeMeMenu();

@@ -47,10 +47,15 @@
    white does the lighting, the colours only say what the light is. Every alpha
    here, the dark in the corners included, is a share of one number, so the
    swatch that turns it off turns all of it out. */
-html::before,
-html::after,
-.app-body::before,
-.app-body::after {
+/* Only once somebody has asked for them. The portal opens black — which is
+   the room as it is, rather than the room as we would like it — and the light
+   is a thing they turn on, not a thing they have to turn off. Nothing here is
+   made at all until then: no layer, nothing carried about, nothing to pay for
+   by anybody who never wanted it. */
+html.is-lit::before,
+html.is-lit::after,
+html.is-lit .app-body::before,
+html.is-lit .app-body::after {
     content: '';
     position: fixed;
     pointer-events: none;
@@ -71,7 +76,7 @@ html::after,
 
    The colour somebody chose. It starts over the top edge, which is where the
    light used to stay. */
-html::before {
+html.is-lit::before {
     z-index: -4;
     left: -6vw; top: -34vh;
     width: 106vw; height: 90vh;
@@ -89,7 +94,7 @@ html::before {
 }
 
 /* The one that goes with it, coming the other way. */
-html::after {
+html.is-lit::after {
     z-index: -3;
     right: -14vw; top: 0;
     width: 90vw; height: 80vh;
@@ -107,7 +112,7 @@ html::after {
 }
 
 /* The colourless one. */
-.app-body::before {
+html.is-lit .app-body::before {
     z-index: -2;
     left: 5vw; top: 38vh;
     width: 80vw; height: 72vh;
@@ -126,7 +131,7 @@ html::after {
 
 /* The corners, which stay where they are: they belong to the screen, not to
    anything moving across it. */
-.app-body::after {
+html.is-lit .app-body::after {
     z-index: -1;
     inset: 0;
     background: radial-gradient(ellipse 120% 115% at 50% 38%,
@@ -164,14 +169,6 @@ html::after {
     60%      { transform: translate3d(-18%, -8%, 0) scale(1.24); }
     84%      { transform: translate3d(8%, 18%, 0) scale(1.08); }
 }
-
-/* Off is off. Every alpha going to nought would leave four layers still being
-   carried about, invisible, for a room nobody asked to have lit: they are not
-   made at all. */
-html.is-dark::before,
-html.is-dark::after,
-html.is-dark .app-body::before,
-html.is-dark .app-body::after { content: none; }
 
 .app-body.is-locked { overflow: hidden; }
 
@@ -672,6 +669,64 @@ html.is-dark .app-body::after { content: none; }
     font-weight: var(--fw-medium); text-overflow: ellipsis; }
 .app-me-text small { display: block; overflow: hidden; font-size: .7rem;
     text-overflow: ellipsis; color: rgba(184, 186, 194, .65); }
+
+/* --- said once ------------------------------------------------------------ */
+/* The light is now something somebody turns on, which is only an improvement
+   if they can find the switch. This sits over the row that holds it, with a
+   corner pointing down at it, and is never seen again once it has been read.
+   On a phone the sidebar is a drawer and that row is not on screen, so there
+   is nothing to point at: it sits along the bottom and says where to look
+   instead. */
+.hello {
+    position: fixed;
+    left: 18px; bottom: 86px;
+    z-index: 60;
+    width: 246px;
+    padding: 15px 16px 13px;
+    background: rgba(24, 24, 30, .98);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, .13);
+    border-radius: 15px;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, .6);
+    animation: hello-in .42s var(--fold-ease) both;
+}
+
+/* The corner that does the pointing: a square of the same panel turned
+   forty-five degrees, so it is the card's own edge rather than a shape drawn
+   to look like one. */
+.hello::after {
+    content: '';
+    position: absolute;
+    left: 26px; bottom: -7px;
+    width: 12px; height: 12px;
+    background: rgba(24, 24, 30, .98);
+    border-right: 1px solid rgba(255, 255, 255, .13);
+    border-bottom: 1px solid rgba(255, 255, 255, .13);
+    transform: rotate(45deg);
+}
+
+.hello strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: .95rem;
+    font-weight: var(--fw-semibold);
+}
+
+.hello p {
+    margin: 0 0 13px;
+    font-size: .83rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.hello .hello-there { display: none; }
+.hello button { width: 100%; }
+
+@keyframes hello-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+}
 
 .app-ghost {
     padding: 8px 14px;
@@ -2393,10 +2448,12 @@ body.is-dragging-link .link-grip { cursor: grabbing; }
     /* Folding still happens; it just happens at once. */
     :root { --fold-ms: 0s; }
 
+    .hello { animation: none; }
+
     /* And the light stops where it stands, rather than wandering. */
-    html::before,
-    html::after,
-    .app-body::before { animation: none; }
+    html.is-lit::before,
+    html.is-lit::after,
+    html.is-lit .app-body::before { animation: none; }
 }
 
 .cell.is-over {
@@ -2515,6 +2572,13 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 @media (max-width: 900px) {
     /* Nothing to fold: the sidebar is over the page or off it. */
     .app-fold { display: none; }
+
+    /* And nothing to point at, with the row it would point at behind a
+       drawer. It says where to look instead. */
+    .hello { left: 16px; right: 16px; bottom: 16px; width: auto; }
+    .hello::after { display: none; }
+    .hello .hello-here { display: none; }
+    .hello .hello-there { display: inline; }
     .app-side { transform: translateX(-100%); }
     body.side-open .app-side { transform: translateX(0); }
     .app-main { margin-left: 0; }
