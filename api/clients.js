@@ -13,19 +13,23 @@
 //
 // GET                   -> every client in short (admin), or your own in full
 // GET    ?id=           -> one client in full, admin only
-// POST   { kind, ... }  -> a client, a subscription, or a charge
+// POST   { kind, ... }  -> a client, a subscription, a charge, or a file
 // PATCH  { kind, id }   -> changes one
 // DELETE ?kind=&id=     -> removes one
+//
+// POST { kind: 'file', action: 'ask', id } is the one thing on this page that
+// is not the admin's: a client asking for a link that has run out.
 const accounts = require('./_accounts');
 const store = require('./_store');
 const blob = require('./_blob');
-// What a client has been handed, which is read with their page and written
-// through api/files.js. It lives in its own document for the same reason the
-// money does: it is asked for in one place and has nothing to do with the rest.
+// What a client has been handed. It lives in a document of its own for the
+// same reason the money does: it is asked for in one place and has nothing to
+// do with the rest of what is kept about an account.
 const files = require('./_files');
 // What makes a subscription social media work, and therefore what decides
 // whether this client has any business seeing a grid.
 const social = require('./_social');
+const feed = require('./_feed');
 
 const MAX_CLIENTS = 300;
 const MAX_SUBS    = 24;
@@ -531,6 +535,37 @@ module.exports = async (req, res) => {
             });
         }
 
+        // Asking for an expired link back is not a change to what a client has.
+        // It is a message, and the row it is about is where the message waits
+        // until it is answered, so it is kept with the file rather than sent.
+        if (!boss && req.method === 'POST') {
+            const body = readBody(req);
+            if (body.kind !== 'file' || body.action !== 'ask') {
+                return res.status(403).json({ error: 'not-allowed' });
+            }
+
+            const client = mineOnly(doc, me);
+            if (!client) return res.status(403).json({ error: 'not-allowed' });
+
+            const kept = await files.read(client.id);
+            const asked = files.ask(kept, text(body.id, 40), me);
+            await files.write(client.id, kept);
+
+            // Every admin, because there may be more than one of you and the
+            // request is for whoever reads it first.
+            await Promise.all(doc.users
+                .filter(user => user.role === 'admin')
+                .map(user => feed.push({
+                    kind: 'file-ask',
+                    actorId: me.id,
+                    toId: user.id,
+                    clientId: client.id,
+                    text: feed.excerpt(asked.title)
+                })));
+
+            return res.status(200).json({ files: files.listOut(kept, true) });
+        }
+
         if (!boss) return res.status(403).json({ error: 'not-allowed' });
 
         if (req.method === 'POST' || req.method === 'PATCH') {
@@ -544,6 +579,16 @@ module.exports = async (req, res) => {
 
             const clientId = text(body.clientId, 40);
             if (!doc.clients.some(one => one.id === clientId)) throw new Error('no-such-client');
+
+            // Files are a document of their own, so they are answered before
+            // the ledger is read: there is no reason to fetch a year of charges
+            // in order to write down an address.
+            if (body.kind === 'file') {
+                const kept = await files.read(clientId);
+                req.method === 'POST' ? files.add(kept, body) : files.change(kept, body);
+                await files.write(clientId, kept);
+                return res.status(200).json({ files: files.listOut(kept, false) });
+            }
 
             const money = await readMoney(clientId);
 
@@ -580,9 +625,19 @@ module.exports = async (req, res) => {
                 return res.status(200).json({ removed: client.id });
             }
 
-            if (kind !== 'sub' && kind !== 'entry') return res.status(400).json({ error: 'bad-kind' });
+            if (kind !== 'sub' && kind !== 'entry' && kind !== 'file') {
+                return res.status(400).json({ error: 'bad-kind' });
+            }
             if (!doc.clients.some(one => one.id === clientId)) {
                 return res.status(404).json({ error: 'no-such-client' });
+            }
+
+            if (kind === 'file') {
+                const kept = await files.read(clientId);
+                if (!kept.files.some(one => one.id === id)) throw new Error('no-such-file');
+                kept.files = kept.files.filter(one => one.id !== id);
+                await files.write(clientId, kept);
+                return res.status(200).json({ files: files.listOut(kept, false) });
             }
 
             const money = await readMoney(clientId);
@@ -606,8 +661,9 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: 'Method not allowed.' });
     } catch (err) {
         const known = ['bad-name', 'bad-amount', 'bad-link', 'bad-date', 'bad-kind', 'bad-image',
-                       'no-such-client', 'no-such-sub', 'no-such-entry', 'no-account',
-                       'too-many-clients', 'too-many-subs', 'too-many-entries'];
+                       'no-such-client', 'no-such-sub', 'no-such-entry', 'no-such-file',
+                       'no-account', 'not-expired',
+                       'too-many-clients', 'too-many-subs', 'too-many-entries', 'too-many-files'];
         const status = known.includes(err.message) ? 400 : 500;
         return res.status(status).json({ error: err.message });
     }

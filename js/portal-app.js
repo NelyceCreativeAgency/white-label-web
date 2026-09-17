@@ -2333,11 +2333,11 @@
     // read back what it drew from another site, and because a Drive address is
     // a page with a viewer on it rather than a file.
     const download = async (url) => {
-        const res = await fetch('/api/link', {
+        const res = await fetch('/api/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
-            body: JSON.stringify({ grid: state.grid.id, url })
+            body: JSON.stringify({ kind: 'link', grid: state.grid.id, url })
         });
 
         if (res.status === 401) { location.replace(LOGIN); throw new Error('not-signed-in'); }
@@ -5371,9 +5371,10 @@
             const said = Object.fromEntries(new FormData(form).entries());
             busy('Αποθήκευση…');
             try {
-                const back = await api('/api/files', {
+                const back = await api('/api/clients', {
                     method: form.dataset.file ? 'PATCH' : 'POST',
-                    body: { clientId: purse.id, ...(form.dataset.file ? { id: form.dataset.file } : {}), ...said }
+                    body: { kind: 'file', clientId: purse.id,
+                            ...(form.dataset.file ? { id: form.dataset.file } : {}), ...said }
                 });
                 if (!form.dataset.file) form.reset();
                 afterFiles(back, form.dataset.file ? 'Ο σύνδεσμος ανανεώθηκε.' : 'Το αρχείο μπήκε.');
@@ -5423,8 +5424,8 @@
             ask.disabled = true;
             busy('Αποστολή…');
             try {
-                const back = await api('/api/files', {
-                    method: 'POST', body: { action: 'ask', id: ask.dataset.ask }
+                const back = await api('/api/clients', {
+                    method: 'POST', body: { kind: 'file', action: 'ask', id: ask.dataset.ask }
                 });
                 afterFiles(back, 'Το αίτημα στάλθηκε.');
             } catch (err) {
@@ -5443,7 +5444,8 @@
             busy('Διαγραφή…');
             try {
                 const back = await api(
-                    `/api/files?clientId=${encodeURIComponent(purse.id)}&id=${encodeURIComponent(drop.dataset.drop)}`,
+                    `/api/clients?kind=file&clientId=${encodeURIComponent(purse.id)}`
+                    + `&id=${encodeURIComponent(drop.dataset.drop)}`,
                     { method: 'DELETE' });
                 afterFiles(back, 'Η γραμμή έφυγε.');
             } catch (err) {
