@@ -67,8 +67,10 @@ exports.dress = (event, doc) => {
         at: event.at,
         kind: event.kind,
         gridId: event.gridId,
-        // What a request for a file is about is a client, not a grid.
+        // What a request for a file is about is a client, not a grid, and what
+        // a request inside a project is about is the project.
         clientId: event.clientId || null,
+        projectId: event.projectId || null,
         gridName: grid ? grid.name : event.gridName || '',
         actorName: actor ? (actor.name || actor.username) : event.actorName || '',
         actorRole: actor ? actor.role : event.actorRole || 'client',

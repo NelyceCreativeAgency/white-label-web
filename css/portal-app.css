@@ -3414,6 +3414,53 @@ li.none-yet {
 /* A tick box standing in a row of boxes to type in. */
 .row-mark { flex: 0 0 auto; align-self: center; white-space: nowrap; }
 
+/* --- what one person asks another ---------------------------------------- */
+/* A request is a card rather than a row: it carries a sentence, sometimes a
+   picture, and a thing to press, and none of that fits on a line. */
+.asks { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 10px; }
+
+.ask {
+    display: grid;
+    gap: 10px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 14px;
+}
+
+.ask-head { display: grid; gap: 3px; }
+.ask-title { font-size: .95rem; font-weight: var(--fw-medium); }
+.ask-who { font-size: .74rem; color: rgba(184, 186, 194, .7); }
+
+.ask-said {
+    margin: 0;
+    font-size: .84rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+}
+
+.ask-shots { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.ask-shots img {
+    width: 84px; height: 84px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, .08);
+}
+
+/* While one is being written, each picture carries the way to take it off. */
+.ask-shot { position: relative; display: inline-flex; }
+.ask-shot .file-drop { position: absolute; top: -6px; right: -6px; width: 24px; height: 24px;
+    background: var(--bg-dark); border-color: rgba(255, 255, 255, .18); }
+
+.ask-do { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ask-when { font-size: .74rem; color: rgba(184, 186, 194, .55); margin-right: auto; }
+.ask-do .btn { padding: 8px 16px; font-size: .78rem; text-decoration: none; }
+
+#ask-new { margin-top: 2px; }
+#ask-add { margin-top: 10px; }
+
 /* --- what a client has been handed --------------------------------------- */
 /* A name, how long the link is theirs, and the one thing there is to do about
    it. A row whose link has run out is not an error and does not shout; it is

@@ -1,13 +1,16 @@
 // A project: the team's own room, and who is in it.
 //
-// GET                          -> every project this account may open
+// GET                              -> every project this account may open
+// GET    ?project=                 -> one project and the requests in it
 // POST   { name, icon, memberIds } -> starts one
-// PATCH  { id, ... }           -> renames it, repictures it, changes who is on it
-// DELETE ?id=                  -> takes it away
+// POST   { kind: 'ask', project, ... } -> asks somebody in it for something
+// PATCH  { id, ... }               -> renames it, repictures it, changes who is on it
+// DELETE ?id=                      -> takes it away
+// DELETE ?kind=ask&project=&id=    -> takes a request away
 //
-// This is the room and not what is said in it. What gets asked and answered
-// inside a project is kept per project, under its own key, and is the next
-// thing along.
+// The room is kept with the accounts, because it is small and wanted on every
+// request that asks what somebody may open. What is asked inside it is kept per
+// project, under a key of its own, because that is the part that grows.
 //
 // A client never sees one. The portal a client signs into is their own account
 // and the grids they have paid for; how the work between us is arranged is
@@ -15,6 +18,8 @@
 // must then be careful in.
 const accounts = require('./_accounts');
 const blob = require('./_blob');
+const asks = require('./_asks');
+const feed = require('./_feed');
 
 const MAX_PROJECTS = 100;
 const MAX_NAME = 60;
@@ -63,6 +68,24 @@ module.exports = async (req, res) => {
 
         if (!accounts.mayHaveProjects(me)) return res.status(403).json({ error: 'not-allowed' });
 
+        // One room, and what is waiting in it. The list of requests is filtered
+        // as it is read rather than as it is written: a request addressed to
+        // one person never leaves the server for anybody else.
+        if (req.method === 'GET' && text(req.query && req.query.project, 40)) {
+            const project = accounts.findProject(doc, text(req.query.project, 40));
+            if (!accounts.canViewProject(me, project)) {
+                return res.status(404).json({ error: 'no-such-project' });
+            }
+
+            const kept = await asks.read(project.id);
+            return res.status(200).json({
+                project: projectOut(project, doc, me),
+                asks: kept.asks
+                    .filter(one => asks.mayRead(one, me))
+                    .map(one => asks.out(one, doc))
+            });
+        }
+
         if (req.method === 'GET') {
             return res.status(200).json({
                 projects: accounts.projectsFor(doc, me).map(one => projectOut(one, doc, me)),
@@ -72,6 +95,35 @@ module.exports = async (req, res) => {
                     .filter(user => accounts.mayHaveProjects(user))
                     .map(user => accounts.publicUser(user))
             });
+        }
+
+        if (req.method === 'POST' && readBody(req).kind === 'ask') {
+            const body = readBody(req);
+            const project = accounts.findProject(doc, text(body.project, 40));
+            if (!accounts.canViewProject(me, project)) {
+                return res.status(404).json({ error: 'no-such-project' });
+            }
+
+            const kept = await asks.read(project.id);
+            const made = asks.add(kept, body, me, project, blob);
+            await asks.write(project.id, kept);
+
+            // Whoever it is for. A request to the room is for everybody on it
+            // except the person who wrote it, and a request to one person is
+            // for that person: the bell is how they find out at all.
+            const told = made.toId
+                ? [made.toId]
+                : (project.memberIds || []).filter(id => id !== me.id);
+
+            await Promise.all(told.map(id => feed.push({
+                kind: 'ask',
+                actorId: me.id,
+                toId: id,
+                projectId: project.id,
+                text: feed.excerpt(made.title)
+            })));
+
+            return res.status(200).json({ ask: asks.out(made, doc) });
         }
 
         if (req.method === 'POST') {
@@ -122,6 +174,27 @@ module.exports = async (req, res) => {
             return res.status(200).json({ project: projectOut(project, doc, me) });
         }
 
+        if (req.method === 'DELETE' && (req.query || {}).kind === 'ask') {
+            const project = accounts.findProject(doc, text(req.query.project, 40));
+            if (!accounts.canViewProject(me, project)) {
+                return res.status(404).json({ error: 'no-such-project' });
+            }
+
+            const kept = await asks.read(project.id);
+            const gone = kept.asks.find(one => one.id === text(req.query.id, 40));
+            if (!gone) return res.status(404).json({ error: 'no-such-ask' });
+
+            // Whoever asked may unask. Not the person it was asked of: a
+            // request that its recipient can make disappear is not a request.
+            if (!asks.mine(gone, me) && me.role !== 'admin') {
+                return res.status(403).json({ error: 'not-allowed' });
+            }
+
+            kept.asks = kept.asks.filter(one => one.id !== gone.id);
+            await asks.write(project.id, kept);
+            return res.status(200).json({ removed: gone.id });
+        }
+
         if (req.method === 'DELETE') {
             const project = accounts.findProject(doc, text(req.query && req.query.id, 40));
             if (!project) return res.status(404).json({ error: 'no-such-project' });
@@ -129,13 +202,17 @@ module.exports = async (req, res) => {
 
             doc.projects = doc.projects.filter(one => one.id !== project.id);
             await accounts.writeAccounts(doc);
+            // The room goes and everything asked inside it goes with it. There
+            // is nowhere left for it to be read from.
+            await asks.forget(project.id);
             return res.status(200).json({ removed: project.id });
         }
 
         res.setHeader('Allow', 'GET, POST, PATCH, DELETE');
         return res.status(405).json({ error: 'Method not allowed.' });
     } catch (err) {
-        const known = ['bad-name', 'bad-image', 'no-such-project', 'not-allowed', 'too-many-projects'];
+        const known = ['bad-name', 'bad-image', 'bad-link', 'no-such-project', 'no-such-ask',
+                       'not-a-member', 'not-allowed', 'too-many-projects', 'too-many-asks'];
         const status = err.message === 'not-allowed' ? 403
             : known.includes(err.message) ? 400 : 500;
         return res.status(status).json({ error: err.message });

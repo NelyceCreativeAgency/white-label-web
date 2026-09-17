@@ -499,6 +499,26 @@
         </div>
     </div>
 
+    <!-- Asking somebody on a project for something ------------------------ -->
+    <div class="modal" id="ask-modal" hidden>
+        <div class="modal-scrim" data-close></div>
+        <div class="modal-box modal-acct" role="dialog" aria-modal="true" aria-labelledby="ask-title">
+            <button class="modal-x" type="button" data-close aria-label="Κλείσιμο">&times;</button>
+
+            <h2 class="modal-title" id="ask-title">Νέο αίτημα</h2>
+            <p class="modal-sub" id="ask-sub"></p>
+
+            <div id="ask-body"></div>
+
+            <p class="edit-error" id="ask-error" role="alert" hidden></p>
+
+            <div class="modal-foot">
+                <button class="app-ghost" type="button" data-close>Ακύρωση</button>
+                <button class="btn btn-primary" type="button" id="ask-save">Αποστολή</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Editing a client, a subscription or a charge ---------------------- -->
     <div class="modal" id="money-modal" hidden>
         <div class="modal-scrim" data-close></div>

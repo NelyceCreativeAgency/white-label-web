@@ -408,7 +408,7 @@
     // --- projects ----------------------------------------------------------
     // The team's own rooms. A client has none and is not shown the category at
     // all; everybody else may start one and put whoever they work with on it.
-    const rooms = { list: [], people: [], open: null };
+    const rooms = { list: [], people: [], open: null, asks: [] };
 
     const loadProjects = async () => {
         if (!state.me || state.me.role === 'client') { rooms.list = []; renderProjectNav(); return; }
@@ -447,18 +447,55 @@
     };
 
     const openProject = async (id) => {
-        const room = rooms.list.find(one => one.id === id);
-        if (!room) { await loadProjects(); }
+        busy('Φόρτωση…');
+        try {
+            const data = await api(`/api/projects?project=${encodeURIComponent(id)}`);
+            rooms.open = data.project;
+            rooms.asks = data.asks || [];
 
-        const found = rooms.list.find(one => one.id === id);
-        if (!found) { toast('Το project δεν βρέθηκε.', 'bad'); return; }
+            $('app-title').textContent = data.project.name;
+            renderProject();
+            showView('project');
+            where.write('project', data.project.id);
+            renderProjectNav();
+        } catch (err) {
+            toast(explain(err), 'bad');
+        } finally {
+            busy('');
+        }
+    };
 
-        rooms.open = found;
-        $('app-title').textContent = found.name;
-        renderProject();
-        showView('project');
-        where.write('project', found.id);
-        renderProjectNav();
+    // One request. Who asked, who it is for, what it says, and the one thing
+    // there is to do about it. A request to the room says so rather than naming
+    // somebody, because a name there would be a lie.
+    const askCard = (ask) => {
+        const forMe = ask.toId === state.me.id;
+        const mine = ask.by === state.me.id;
+
+        const whose = !ask.toId
+            ? 'προς όλους'
+            : forMe ? 'προς εσένα' : `προς ${esc(ask.toName)}`;
+
+        return `
+            <li class="ask" data-ask="${esc(ask.id)}">
+                <div class="ask-head">
+                    <strong class="ask-title">${esc(ask.title)}</strong>
+                    <span class="ask-who">${mine ? 'Εσύ' : esc(ask.byName)} · ${whose}</span>
+                </div>
+
+                ${ask.said ? `<p class="ask-said">${esc(ask.said)}</p>` : ''}
+
+                ${ask.shots.length ? `<div class="ask-shots">${ask.shots.map(url =>
+                    `<img src="${esc(url)}" alt="" loading="lazy">`).join('')}</div>` : ''}
+
+                <div class="ask-do">
+                    <span class="ask-when">${esc(ago(ask.at))}</span>
+                    ${ask.url ? `<a class="btn btn-primary" href="${esc(ask.url)}"
+                                    target="_blank" rel="noopener noreferrer">Άνοιξέ το</a>` : ''}
+                    ${mine ? `<button class="file-drop" type="button" data-unask="${esc(ask.id)}"
+                                      aria-label="Διαγραφή αιτήματος">&times;</button>` : ''}
+                </div>
+            </li>`;
     };
 
     const renderProject = () => {
@@ -481,15 +518,160 @@
             <section class="panel">
                 <div class="panel-head">
                     <h2>Αιτήματα</h2>
-                    <p>Εδώ θα μπαίνει ό,τι ζητάει ο ένας από τον άλλον μέσα σε αυτό το project, με τον σύνδεσμό του και την απάντησή του, ώστε να μη χάνεται σε αλληλογραφία.</p>
+                    <p>Ό,τι ζητάει ο ένας από τον άλλον μέσα σε αυτό το project, ώστε να μη χάνεται σε αλληλογραφία. Ένα αίτημα προς έναν συγκεκριμένο άνθρωπο το βλέπει μόνο εκείνος· ένα αίτημα προς όλους το βλέπει η ομάδα.</p>
                 </div>
-                <p class="none-yet">Έρχονται.</p>
+
+                <button class="btn btn-primary" type="button" id="ask-new">Νέο αίτημα</button>
+
+                <ul class="asks">${rooms.asks.length
+                    ? rooms.asks.map(askCard).join('')
+                    : '<li class="none-yet">Κανένα αίτημα ακόμα</li>'}</ul>
             </section>
         `;
     };
 
-    $('view-project').addEventListener('click', (event) => {
-        if (event.target.closest('#prj-open')) openProjectPanel(rooms.open);
+    $('view-project').addEventListener('click', async (event) => {
+        if (event.target.closest('#prj-open')) { openProjectPanel(rooms.open); return; }
+        if (event.target.closest('#ask-new')) { openAskPanel(); return; }
+
+        const unask = event.target.closest('[data-unask]');
+        if (!unask) return;
+
+        if (!confirm('Να διαγραφεί αυτό το αίτημα; Ό,τι έχει ειπωθεί πάνω του φεύγει μαζί.')) return;
+        busy('Διαγραφή…');
+        try {
+            await api(`/api/projects?kind=ask&project=${encodeURIComponent(rooms.open.id)}`
+                      + `&id=${encodeURIComponent(unask.dataset.unask)}`, { method: 'DELETE' });
+            rooms.asks = rooms.asks.filter(one => one.id !== unask.dataset.unask);
+            renderProject();
+            toast('Διαγράφηκε.');
+        } catch (err) {
+            toast(explain(err), 'bad');
+        } finally {
+            busy('');
+        }
+    });
+
+    // --- asking for something ----------------------------------------------
+    // Everything a request carries is written in one panel and sent once. The
+    // pictures are uploaded as they are chosen, because an upload that waits
+    // for a Send button is an upload that happens while somebody watches a
+    // spinner wondering whether it worked.
+    const asking = { shots: [] };
+
+    const sayAsk = (message) => {
+        $('ask-error').textContent = message || '';
+        $('ask-error').hidden = !message;
+    };
+
+    const shutAsk = () => {
+        asking.shots = [];
+        $('ask-modal').hidden = true;
+        unlock();
+    };
+
+    const ASK_SHOTS = 5;
+
+    const drawShots = () => {
+        const box = $('ask-shots');
+        if (!box) return;
+        box.innerHTML = asking.shots.map((url, at) => `
+            <span class="ask-shot">
+                <img src="${esc(url)}" alt="">
+                <button class="file-drop" type="button" data-drop-shot="${at}"
+                        aria-label="Αφαίρεση εικόνας">&times;</button>
+            </span>`).join('');
+        $('ask-add').hidden = asking.shots.length >= ASK_SHOTS;
+    };
+
+    const openAskPanel = () => {
+        const room = rooms.open;
+        if (!room) return;
+
+        asking.shots = [];
+        sayAsk('');
+
+        const others = room.members.filter(one => one.id !== state.me.id);
+
+        $('ask-sub').textContent = 'Διάλεξε σε ποιον πάει. Ό,τι στέλνεις σε έναν άνθρωπο το βλέπει μόνο εκείνος.';
+        $('ask-body').innerHTML = `
+            <div class="row-fields">
+                <label>Σε ποιον<select data-f="toId">
+                    <option value="">Σε όλη την ομάδα</option>
+                    ${others.map(one =>
+                        `<option value="${esc(one.id)}">${esc(one.name)}</option>`).join('')}
+                </select></label>
+            </div>
+
+            <label class="edit-label pw-head" for="ask-what">Τι ζητάς</label>
+            <input class="me-name-field" id="ask-what" data-f="title" maxlength="120"
+                   placeholder="π.χ. Τσέκαρε το νέο layout στο Figma">
+
+            <label class="edit-label pw-head" for="ask-more">Λεπτομέρειες, αν χρειάζονται</label>
+            <textarea class="me-name-field" id="ask-more" data-f="said" rows="3" maxlength="4000"></textarea>
+
+            <label class="edit-label pw-head" for="ask-url">Σύνδεσμος, αν υπάρχει</label>
+            <input class="me-name-field" id="ask-url" data-f="url" placeholder="https://…" spellcheck="false">
+
+            <label class="edit-label pw-head">Εικόνες, ως ${ASK_SHOTS}</label>
+            <div class="ask-shots is-editing" id="ask-shots"></div>
+            <button class="app-ghost" type="button" id="ask-add">Πρόσθεσε εικόνα</button>`;
+
+        drawShots();
+        $('ask-modal').hidden = false;
+        document.body.classList.add('is-locked');
+    };
+
+    $('ask-body').addEventListener('click', (event) => {
+        const drop = event.target.closest('[data-drop-shot]');
+        if (drop) {
+            asking.shots.splice(Number(drop.dataset.dropShot), 1);
+            drawShots();
+            return;
+        }
+
+        if (!event.target.closest('#ask-add')) return;
+
+        pickFiles(true, async (files) => {
+            sayAsk('');
+            busy('Ανέβασμα…');
+            try {
+                for (const file of files.slice(0, ASK_SHOTS - asking.shots.length)) {
+                    const { url } = await acquire(file, SMALL_SIDE, 'project');
+                    asking.shots.push(url);
+                    drawShots();
+                }
+            } catch (err) {
+                sayAsk(explain(err));
+            } finally {
+                busy('');
+            }
+        });
+    });
+
+    $('ask-save').addEventListener('click', async () => {
+        const body = $('ask-body');
+        const said = {};
+        body.querySelectorAll('[data-f]').forEach(field => { said[field.dataset.f] = field.value; });
+
+        if (!said.title.trim()) { sayAsk('Πες τι ζητάς.'); return; }
+
+        sayAsk('');
+        busy('Αποστολή…');
+        try {
+            const back = await api('/api/projects', {
+                method: 'POST',
+                body: { kind: 'ask', project: rooms.open.id, ...said, shots: asking.shots }
+            });
+            rooms.asks.unshift(back.ask);
+            shutAsk();
+            renderProject();
+            toast('Στάλθηκε.');
+        } catch (err) {
+            sayAsk(explain(err));
+        } finally {
+            busy('');
+        }
     });
 
     // The room's own settings: what it is called, what it looks like, and who
@@ -1415,7 +1597,7 @@
     // The page stays still while any of the three panels is open.
     const unlock = () => {
         const open = ['post-modal', 'edit-modal', 'hl-modal', 'acct-modal', 'me-modal',
-                      'money-modal', 'prj-modal']
+                      'money-modal', 'prj-modal', 'ask-modal']
             .some(id => !$(id).hidden);
         if (!open) document.body.classList.remove('is-locked');
     };
@@ -2904,6 +3086,7 @@
             else if (button.closest('#me-modal')) closeMe();
             else if (button.closest('#money-modal')) closeMoney();
             else if (button.closest('#prj-modal')) shutPrj();
+            else if (button.closest('#ask-modal')) shutAsk();
             else closeViewer();
         });
     });
@@ -2933,6 +3116,7 @@
             else if (!$('bell-panel').hidden) closeBell();
             else if (!$('me-modal').hidden) closeMe();
             else if (!$('picker').hidden) picker.close();
+            else if (!$('ask-modal').hidden) shutAsk();
             else if (!$('prj-modal').hidden) shutPrj();
             else if (!$('money-modal').hidden) closeMoney();
             else if (!$('acct-modal').hidden) closeDrawer();
@@ -3092,7 +3276,8 @@
         link:   'πρόσθεσε έναν χρήσιμο σύνδεσμο',
         idea:   'πρόσθεσε μια ιδέα στο brainstorming',
         'file-ask': 'ζητάει ξανά τον σύνδεσμο ενός αρχείου',
-        bill:   'σου καταχώρισε τιμολόγιο'
+        bill:   'σου καταχώρισε τιμολόγιο',
+        ask:    'σου ζητάει κάτι'
     };
 
     // A deleted post has no picture left to show, so its line gets the same
@@ -3121,6 +3306,7 @@
         chat: SAID_ICON,
         'file-ask': FILE_ICON,
         bill: BILL_ICON,
+        ask: IDEA_ICON,
         dm: SAID_ICON,
         idea: IDEA_ICON,
         link: '<svg viewBox="0 0 24 24" aria-hidden="true">'
@@ -3201,6 +3387,12 @@
         const event = state.feed.find(one => one.id === item.dataset.event);
         if (!event) return;
         closeBell();
+
+        // A request opens the room it was asked in.
+        if (event.kind === 'ask') {
+            if (event.projectId) await openProject(event.projectId);
+            return;
+        }
 
         // A bill opens the page of whoever sent it, which is the page it is on.
         if (event.kind === 'bill') {
