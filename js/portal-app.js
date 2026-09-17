@@ -198,6 +198,7 @@
         'not-allowed': 'Δεν έχεις δικαίωμα για αυτή την αλλαγή.',
         'no-such-grid': 'Το grid δεν βρέθηκε.',
         'no-such-client': 'Ο πελάτης δεν βρέθηκε.',
+        'no-account': 'Σύνδεσε πρώτα έναν λογαριασμό με τον πελάτη: η φωτογραφία είναι του λογαριασμού.',
         'no-such-sub': 'Η συνδρομή δεν βρέθηκε.',
         'no-such-entry': 'Η χρέωση δεν βρέθηκε.',
         'bad-amount': 'Γράψε ένα ποσό, π.χ. 150 ή 150,50.',
@@ -4457,7 +4458,7 @@
         // have two people, and both of them read the same page of invoices.
         const clientLines = purse.list.map(one => `
             <li>
-                ${faceOf(one, 'lister-face')}
+                ${faceOf(faceFor(one), 'lister-face')}
                 <span class="lister-who">
                     <span class="lister-name">${esc(one.name)}</span>
                     <span class="lister-sub">${one.owed
@@ -4809,6 +4810,15 @@
         return day ? `${day}/${month}/${year}` : '';
     };
 
+    // A client wears their account's face: the same photograph, and where there
+    // is none, the same colour behind the same letter. Nothing here keeps a
+    // picture of its own that could fall out of step with it.
+    const faceFor = (client) => ({
+        id: client.faceOf || client.id,
+        name: client.name,
+        avatar: client.avatar || null
+    });
+
     const CYCLE_NAMES = { month: 'μήνα', quarter: 'τρίμηνο', year: 'χρόνο' };
     const MONTHS = ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μάι', 'Ιούν',
                     'Ιούλ', 'Αύγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'];
@@ -4870,7 +4880,7 @@
             <li>
                 <button class="app-nav-item${purse.id === one.id ? ' is-on' : ''}"
                         type="button" data-client="${esc(one.id)}">
-                    ${faceOf(one, 'app-nav-dot')}
+                    ${faceOf(faceFor(one), 'app-nav-dot')}
                     <span class="app-nav-text">
                         <strong>${esc(one.name)}</strong>
                         <small>${one.owed
@@ -5039,7 +5049,7 @@
         $('view-client').innerHTML = `
             <section class="panel client-card">
                 <div class="client-id">
-                    ${faceOf(client, 'client-face')}
+                    ${faceOf(faceFor(client), 'client-face')}
                     <div class="client-who">
                         <h2>${esc(client.name)}</h2>
                         <p>${said || 'Χωρίς στοιχεία επικοινωνίας'}</p>
@@ -5159,7 +5169,7 @@
     });
 
     // --- the panel behind a gear ---------------------------------------------
-    const tray = { kind: null, id: null, icon: null };
+    const tray = { kind: null, id: null, icon: null, picked: false };
 
     const sayMoney = (message) => {
         $('money-error').textContent = message || '';
@@ -5182,7 +5192,8 @@
 
         if (kind === 'client') {
             const client = purse.client;
-            tray.icon = client.icon || null;
+            tray.icon = client.avatar || null;
+            tray.picked = false;
 
             $('money-title').textContent = client.name;
             $('money-sub').textContent = 'Τα στοιχεία του, τι του ανήκει, και οι σημειώσεις σου. Τις σημειώσεις δεν τις βλέπει ποτέ ο ίδιος.';
@@ -5198,14 +5209,17 @@
                     <label>Τηλέφωνο<input data-f="phone" value="${esc(client.phone)}" maxlength="40"></label>
                 </div>
 
-                <label class="edit-label pw-head">Εικονίδιο στη λίστα</label>
-                <div class="face-edit">
-                    <span class="face-big" id="client-face"></span>
-                    <span class="face-acts">
-                        <button class="app-ghost" type="button" data-do="pick-icon">Διάλεξε εικόνα</button>
-                        <button class="app-ghost app-danger" type="button" data-do="clear-icon">Αφαίρεση</button>
-                    </span>
-                </div>
+                <label class="edit-label pw-head">Φωτογραφία</label>
+                ${client.account ? `
+                    <div class="face-edit">
+                        <span class="face-big" id="client-face"></span>
+                        <span class="face-acts">
+                            <button class="app-ghost" type="button" data-do="pick-icon">Διάλεξε εικόνα</button>
+                            <button class="app-ghost app-danger" type="button" data-do="clear-icon">Αφαίρεση</button>
+                        </span>
+                    </div>
+                    <p class="pw-note">Είναι η φωτογραφία του λογαριασμού ${esc(client.account.name)}: η ίδια που βλέπει κι εκείνος κάτω αριστερά στη δική του οθόνη. Την αλλάζετε και οι δύο και μένει πάντα μία.</p>`
+                : `<p class="pw-note">Η φωτογραφία ενός πελάτη είναι η φωτογραφία του λογαριασμού του. Σύνδεσε έναν λογαριασμό από κάτω, αποθήκευσε, και μετά θα την αλλάζεις από εδώ.</p>`}
 
                 <label class="edit-label pw-head" for="client-note">Σημειώσεις, μόνο για σένα</label>
                 <textarea class="me-name-field" id="client-note" data-f="note" rows="3" maxlength="2000"
@@ -5232,8 +5246,10 @@
                 </fieldset>
             `;
 
-            paintFace($('client-face'), { id: client.id, name: client.name, icon: tray.icon }, 'face-big');
-            body.querySelector('[data-do="clear-icon"]').hidden = !tray.icon;
+            if (client.account) {
+                paintFace($('client-face'), { ...faceFor(client), avatar: tray.icon }, 'face-big');
+                body.querySelector('[data-do="clear-icon"]').hidden = !tray.icon;
+            }
         }
 
         if (kind === 'sub') {
@@ -5319,7 +5335,8 @@
 
         if (button.dataset.do === 'clear-icon') {
             tray.icon = null;
-            paintFace($('client-face'), purse.client, 'face-big');
+            tray.picked = true;
+            paintFace($('client-face'), { ...faceFor(purse.client), avatar: null }, 'face-big');
             button.hidden = true;
             return;
         }
@@ -5332,7 +5349,8 @@
             try {
                 const { url } = await acquire(files[0], SMALL_SIDE, purse.id);
                 tray.icon = url;
-                paintFace($('client-face'), { ...purse.client, icon: url }, 'face-big');
+                tray.picked = true;
+                paintFace($('client-face'), { ...faceFor(purse.client), avatar: url }, 'face-big');
                 $('money-body').querySelector('[data-do="clear-icon"]').hidden = false;
             } catch (err) {
                 sayMoney(explain(err));
@@ -5354,13 +5372,13 @@
                     .filter(box => box.checked)
                     .map(box => box.getAttribute(what));
 
-                await api('/api/clients', {
-                    method: 'PATCH',
-                    body: {
-                        kind: 'client', id: tray.id, ...fields(body), icon: tray.icon,
-                        userIds: pick('data-member'), gridIds: pick('data-gridlink')
-                    }
-                });
+                const sent = {
+                    kind: 'client', id: tray.id, ...fields(body),
+                    userIds: pick('data-member'), gridIds: pick('data-gridlink')
+                };
+                if (tray.picked) sent.avatar = tray.icon;
+
+                await api('/api/clients', { method: 'PATCH', body: sent });
             } else {
                 const extra = tray.kind === 'sub' ? { ended: $('sub-ended').checked } : {};
                 await api('/api/clients', {

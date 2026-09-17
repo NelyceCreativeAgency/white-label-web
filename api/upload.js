@@ -1,6 +1,7 @@
 // POST { grid, type, data }                    -> { url }
 // POST { kind: 'me', type, data }              -> { url }, a picture of yourself
-// POST { kind: 'client', client, type, data }  -> { url }, the square a client is known by
+// POST { kind: 'client', client, type, data }  -> { url }, a client's face, which
+//                                                 is the face of their account
 //
 // One picture at a time. The browser has already shrunk it before it gets here
 // (see js/portal-app.js): what arrives is a screen-sized JPEG, base64 in a JSON
@@ -47,11 +48,17 @@ module.exports = async (req, res) => {
             // account and may put a face on it, client and partner alike.
             holds = `people/${me.id}`;
         } else if (kind === 'client') {
-            // The square a client is known by, which only the admin sets.
+            // A client has no picture of its own: this is the photograph on the
+            // account they sign in with, which the admin may set from their
+            // card and they may set from their own settings. It goes where
+            // that account's pictures go, because that is whose it is.
             if (me.role !== 'admin') return res.status(403).json({ error: 'not-allowed' });
             const client = doc.clients.find(one => one.id === body.client);
             if (!client) return res.status(404).json({ error: 'no-such-client' });
-            holds = `clients/${client.id}`;
+
+            const face = doc.users.find(user => user.clientId === client.id && user.role === 'client');
+            if (!face) return res.status(400).json({ error: 'no-account' });
+            holds = `people/${face.id}`;
         } else {
             const grid = accounts.findGrid(doc, body.grid);
             if (!grid || !accounts.canView(me, grid)) return res.status(404).json({ error: 'no-such-grid' });

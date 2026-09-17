@@ -116,19 +116,37 @@ const writeMoney = async (clientId, doc) => {
 };
 
 // --- what goes out ----------------------------------------------------------
+// The account a client signs in with, and whose photograph is therefore the
+// client's. Where two accounts belong to one client it is the first of them,
+// because a card shows one face and somebody has to be it.
+const faceUser = (doc, client) =>
+    doc.users.find(user => user.clientId === client.id && user.role === 'client') || null;
+
 // One rule, kept everywhere so that it can be remembered: a field called note
 // is yours and never leaves for the client. Everything else on a charge is the
 // charge itself, and they are entitled to read what they are being asked to pay.
-const clientOut = (client, mine) => ({
-    id: client.id,
-    name: client.name,
-    company: client.company || '',
-    email: client.email || '',
-    phone: client.phone || '',
-    icon: client.icon || null,
-    createdAt: client.createdAt || null,
-    ...(mine ? {} : { note: client.note || '' })
-});
+//
+// A client has no picture of its own. It wears its account's, read from where
+// that lives, so that changing it from either side changes it in both and there
+// is no second copy to fall out of step.
+const clientOut = (client, mine, doc) => {
+    const face = faceUser(doc, client);
+
+    return {
+        id: client.id,
+        name: client.name,
+        company: client.company || '',
+        email: client.email || '',
+        phone: client.phone || '',
+        createdAt: client.createdAt || null,
+        avatar: (face && face.avatar) || null,
+        // Whose colour the standing-in letter takes, so the same person is the
+        // same colour on this card as at the bottom of their own sidebar.
+        faceOf: (face && face.id) || client.id,
+        account: face ? { id: face.id, name: face.name } : null,
+        ...(mine ? {} : { note: client.note || '' })
+    };
+};
 
 const entryOut = (entry, mine) => ({
     id: entry.id,
@@ -205,7 +223,6 @@ const createClient = (doc, body) => {
         company: text(body.company, MAX_NAME),
         email: text(body.email, MAX_LINE),
         phone: text(body.phone, 40),
-        icon: null,
         note: '',
         createdAt: new Date().toISOString()
     };
@@ -240,13 +257,15 @@ const patchClient = (doc, body) => {
     if (body.phone !== undefined) client.phone = text(body.phone, 40);
     if (body.note !== undefined) client.note = text(body.note, MAX_NOTE);
 
-    if (body.icon !== undefined) {
-        if (body.icon && !blob.isOurImage(body.icon)) throw new Error('bad-image');
-        client.icon = body.icon || null;
-    }
-
     attach(doc, client, 'users', body.userIds, (user) => user.role === 'client');
     attach(doc, client, 'grids', body.gridIds, () => true);
+
+    if (body.avatar !== undefined) {
+        const face = faceUser(doc, client);
+        if (!face) throw new Error('no-account');
+        if (body.avatar && !blob.isOurImage(body.avatar)) throw new Error('bad-image');
+        face.avatar = body.avatar || null;
+    }
 
     return client;
 };
@@ -403,7 +422,7 @@ module.exports = async (req, res) => {
                 if (!client) return res.status(200).json({ client: null });
                 const money = await readMoney(client.id);
                 return res.status(200).json({
-                    client: clientOut(client, true),
+                    client: clientOut(client, true, doc),
                     money: moneyOut(money, true)
                 });
             }
@@ -417,7 +436,7 @@ module.exports = async (req, res) => {
                 const monies = await Promise.all(doc.clients.map(one => readMoney(one.id)));
                 return res.status(200).json({
                     clients: doc.clients.map((client, at) => ({
-                        ...clientOut(client, false),
+                        ...clientOut(client, false, doc),
                         owed: sumOf(monies[at].entries, 'due'),
                         subs: monies[at].subs.filter(sub => !sub.endedAt).length
                     }))
@@ -429,7 +448,7 @@ module.exports = async (req, res) => {
 
             const money = await readMoney(client.id);
             return res.status(200).json({
-                client: clientOut(client, false),
+                client: clientOut(client, false, doc),
                 money: moneyOut(money, false),
                 // Everybody who could be put on this client, and every grid that
                 // could belong to it, so the panel can offer them.
@@ -450,7 +469,7 @@ module.exports = async (req, res) => {
             if (body.kind === 'client') {
                 const made = req.method === 'POST' ? createClient(doc, body) : patchClient(doc, body);
                 await accounts.writeAccounts(doc);
-                return res.status(200).json({ client: clientOut(made, false) });
+                return res.status(200).json({ client: clientOut(made, false, doc) });
             }
 
             const clientId = text(body.clientId, 40);
@@ -484,12 +503,6 @@ module.exports = async (req, res) => {
                 // belonging to anybody, because deleting a client should never
                 // be a way of deleting a year of work by accident.
                 await store.deleteKey(moneyKey(client.id));
-                // Their square goes too. A file nobody can reach any more is
-                // storage being paid for, and if the store cannot be reached
-                // the client still disappears: litter is not a failure.
-                if (client.icon) {
-                    try { await blob.client(req).del([client.icon]); } catch { /* litter */ }
-                }
                 doc.users.forEach(user => { if (user.clientId === client.id) user.clientId = null; });
                 doc.grids.forEach(grid => { if (grid.clientId === client.id) grid.clientId = null; });
                 doc.clients = doc.clients.filter(one => one.id !== client.id);
@@ -524,7 +537,7 @@ module.exports = async (req, res) => {
         return res.status(405).json({ error: 'Method not allowed.' });
     } catch (err) {
         const known = ['bad-name', 'bad-amount', 'bad-link', 'bad-date', 'bad-kind', 'bad-image',
-                       'no-such-client', 'no-such-sub', 'no-such-entry',
+                       'no-such-client', 'no-such-sub', 'no-such-entry', 'no-account',
                        'too-many-clients', 'too-many-subs', 'too-many-entries'];
         const status = known.includes(err.message) ? 400 : 500;
         return res.status(status).json({ error: err.message });
