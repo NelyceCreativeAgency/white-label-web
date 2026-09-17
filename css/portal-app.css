@@ -59,13 +59,15 @@
 
 .app-grids { list-style: none; margin: 0 0 8px; padding: 0; }
 
-/* The clients sit above the grids and are a different kind of thing: one is
-   the business, the other is the day's work. A faint line and a little air is
-   all that takes, and is quieter than a box around either of them. */
-.app-clients-wrap {
-    margin-bottom: 18px;
-    padding-bottom: 18px;
-    border-bottom: 1px solid rgba(255, 255, 255, .07);
+/* The sections of the sidebar are different kinds of thing, and a faint line
+   with a little air is all it takes to say so. The line belongs to whatever
+   comes after it and only when something came before, so a section that is not
+   shown leaves no line behind and two of them never stack up with nothing in
+   between. Which is what a new account with no grid was looking at. */
+.app-nav > .is-cut {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, .07);
 }
 
 
@@ -160,9 +162,6 @@
     background: var(--accent-orange);
     border-radius: 999px;
 }
-
-.app-chat-nav,
-.app-admin-nav { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, .07); }
 
 /* Starting a room is not opening one, so the line that does it is quieter than
    the rooms above it and says what it is rather than naming a thing. */

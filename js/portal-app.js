@@ -1311,6 +1311,26 @@
         else if (goingBack === 'clients') openClients();
     });
 
+    // Which sections of the sidebar are shown, and therefore which of them needs
+    // a line above it. The first one shown never does; every one after it does.
+    //
+    // Watched rather than called from each of the five places that show or hide
+    // one, so that a sixth cannot be added and forgotten.
+    const stripeNav = () => {
+        let first = true;
+
+        Array.from($('app-nav').children).forEach(part => {
+            const shown = !part.hidden;
+            part.classList.toggle('is-cut', shown && !first);
+            if (shown) first = false;
+        });
+    };
+
+    new MutationObserver(stripeNav).observe($('app-nav'), {
+        attributes: true, attributeFilter: ['hidden'], subtree: true
+    });
+    stripeNav();
+
     const showView = (name) => {
         // Every view starts with no way back. The two that have one put it
         // there themselves, after this has run.
