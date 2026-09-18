@@ -296,10 +296,22 @@ html.is-lit .app-body::after {
     .app-body.is-folded .app-head { margin-right: 13px; gap: 0; }
 
     /* Faded and squeezed to nothing rather than taken away, so the room they
-       were taking goes with the sidebar instead of an instant before it. */
-    .app-body.is-folded .app-brand,
+       were taking goes with the sidebar instead of an instant before it.
+       Squeezed for real, though: fading a flex child that still holds flex: 1
+       leaves the room exactly where it was, and the icon beside it stays shoved
+       to one end of a box that is meant to have it in the middle. That is what
+       made the rail look crooked — every icon sat left of centre, and the only
+       box you could see was the selected one, which did not. */
+    .app-body.is-folded .app-brand { opacity: 0; pointer-events: none; }
+
     .app-body.is-folded .app-nav-text,
-    .app-body.is-folded .app-me-text { opacity: 0; pointer-events: none; }
+    .app-body.is-folded .app-me-text {
+        flex: 0 0 0;
+        width: 0;
+        margin: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
 
     .app-body.is-folded .app-nav-label,
     .app-body.is-folded .app-grids-empty {
@@ -308,7 +320,19 @@ html.is-lit .app-body::after {
         padding-top: 0; padding-bottom: 0;
         opacity: 0;
     }
-    .app-body.is-folded .app-me-gear { opacity: 0; }
+    /* The gear is faded out but keeps its sixteen pixels, which would hold the
+       face off centre by half of them. It goes to nothing too, and the row
+       centres what is left: the same middle line as every square above it. */
+    .app-body.is-folded .app-me-gear {
+        opacity: 0;
+        width: 0;
+        margin: 0;
+    }
+
+    .app-body.is-folded .app-me-who {
+        justify-content: center;
+        padding: 0;
+    }
 
     /* Folded, every row becomes the same square, centred in the rail. A row
        that keeps a full-width box while only its icon is showing reads as a
@@ -478,7 +502,9 @@ html.is-lit .app-body::after {
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
-    transition: opacity .18s var(--fold-ease);
+    transition: opacity .18s var(--fold-ease),
+                width var(--fold-ms) var(--fold-ease),
+                flex-basis var(--fold-ms) var(--fold-ease);
 }
 .app-nav-text strong {
     display: block;
@@ -558,7 +584,8 @@ html.is-lit .app-body::after {
     color: rgba(184, 186, 194, .5);
     fill: none; stroke: currentColor; stroke-width: 1.7;
     stroke-linecap: round; stroke-linejoin: round;
-    transition: color .2s, opacity .18s var(--fold-ease);
+    transition: color .2s, opacity .18s var(--fold-ease),
+                width var(--fold-ms) var(--fold-ease);
 }
 
 .app-me-who:hover .app-me-gear,
@@ -745,7 +772,8 @@ html.is-lit .app-body::after {
     margin: 0;
     padding: 0 12px;
     overflow: hidden;
-    transition: gap var(--fold-ms) var(--fold-ease);
+    transition: gap var(--fold-ms) var(--fold-ease),
+                padding var(--fold-ms) var(--fold-ease);
     font: inherit;
     text-align: left;
     color: inherit;
@@ -770,7 +798,9 @@ html.is-lit .app-body::after {
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
-    transition: opacity .18s var(--fold-ease);
+    transition: opacity .18s var(--fold-ease),
+                width var(--fold-ms) var(--fold-ease),
+                flex-basis var(--fold-ms) var(--fold-ease);
 }
 .app-me-text strong { display: block; overflow: hidden; font-size: .85rem;
     font-weight: var(--fw-medium); text-overflow: ellipsis; }
