@@ -113,8 +113,10 @@ html[data-lang="el"] .hero-aside {
     max-width: none;
     margin: 0 0 28px;
     /* Lifted from the site-wide 0.72: the hero sits on a lighter ground than
-       the sections below it, and the paragraph needs the extra contrast. */
-    color: rgba(255, 255, 255, 0.9);
+       the sections below it, and the paragraph needs the extra contrast. Kept
+       a shade off full white so the headline above it still reads as the
+       brighter of the two. */
+    color: rgba(255, 255, 255, 0.97);
     font-size: 1rem;
     line-height: 1.65;
     text-align: left;
