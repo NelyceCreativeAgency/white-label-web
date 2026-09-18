@@ -4107,11 +4107,6 @@
         + '<rect x="3" y="11" width="18" height="11" rx="2"/>'
         + '<path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
 
-    const NOTES = {
-        teams: 'Τις διαβάζουν όλοι όσοι δουλεύουν στο project.',
-        people: 'Τα βλέπετε μόνο εσείς οι δύο.'
-    };
-
     // The grid of the project thread that is open, and nothing when the open
     // conversation is a private one. The links and the brainstorming hang off
     // it, and neither of those belongs to two people.
@@ -4176,8 +4171,6 @@
             button.setAttribute('aria-selected', on ? 'true' : 'false');
             button.querySelector('.chat-pip').hidden = !count(kind === 'teams' ? c.teams : c.people);
         });
-
-        $('chat-note').textContent = NOTES[c.kind];
 
         const rows = c.kind === 'teams'
             ? c.teams.map(one => ({

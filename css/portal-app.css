@@ -415,26 +415,19 @@ html.is-lit .app-body::after {
 
 .app-nav-item:hover { background: rgba(255, 255, 255, .05); color: var(--text-primary); }
 
-/* The one you are on. The red of the logo, run down into a near-black red so
-   the row is a filled object rather than a tinted one. The light end stops at
-   #e00434 rather than the logo's own #ff023c because white type on that is
-   under four to one, and the second line here is small type. */
+/* The one you are on: the same black, a few steps lighter. No colour of its
+   own, so the row that is lit is lit by being nearer the front, and the only
+   colour left in the column is the picture beside each name.
+   Hover is white at .05, so this has to clear that to read as chosen rather
+   than pointed at. */
 .app-nav-item.is-on {
-    color: #fff;
-    background: linear-gradient(145deg, #e00434 0%, #9b0022 48%, #4a0011 100%);
-    border-color: transparent;
-    box-shadow: 0 6px 18px rgba(74, 0, 17, .55);
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .11);
+    border-color: rgba(255, 255, 255, .1);
 }
 
-/* On a filled row the second line cannot stay grey against violet, and the
-   badge cannot stay orange. Both take their contrast from the fill instead. */
-.app-nav-item.is-on .app-nav-text small { color: rgba(255, 255, 255, .82); }
-.app-nav-item.is-on .app-nav-badge { color: #4a0011; background: #fff; }
-
-.app-nav-item.is-on:hover {
-    background: linear-gradient(145deg, #f51042 0%, #b3002a 48%, #5e0017 100%);
-    color: #fff;
-}
+.app-nav-item.is-on .app-nav-text small { color: rgba(184, 186, 194, .8); }
+.app-nav-item.is-on:hover { background: rgba(255, 255, 255, .14); }
 
 .app-nav-dot {
     display: grid;
@@ -497,15 +490,11 @@ html.is-lit .app-body::after {
 .app-nav-item.has-new:hover { background: rgba(255, 107, 53, .13); }
 
 /* Being on a row outranks the row having something waiting: the same weight of
-   selector, further down, so the fill wins and the peach title does not fight
-   it. Written here rather than up there because that is what makes it later. */
-.app-nav-item.is-on.has-new {
-    background: linear-gradient(145deg, #e00434 0%, #9b0022 48%, #4a0011 100%);
-}
-.app-nav-item.is-on.has-new:hover {
-    background: linear-gradient(145deg, #f51042 0%, #b3002a 48%, #5e0017 100%);
-}
-.app-nav-item.is-on .app-nav-text strong { color: #fff; }
+   selector, further down, so the lighter black wins. The peach title stays,
+   though — it is the thing that says something is waiting, and nothing here
+   competes with it any more. */
+.app-nav-item.is-on.has-new { background: rgba(255, 255, 255, .11); }
+.app-nav-item.is-on.has-new:hover { background: rgba(255, 255, 255, .14); }
 
 .app-nav-count {
     display: grid;
@@ -1148,14 +1137,6 @@ body.is-messages .app-main {
     border-radius: 50%;
 }
 
-.chat-note {
-    margin: 0 0 10px;
-    padding: 0 8px;
-    font-size: .73rem;
-    line-height: 1.45;
-    color: rgba(184, 186, 194, .6);
-}
-
 .chat-picks { display: grid; gap: 3px; }
 
 .chat-pick {
@@ -1177,8 +1158,8 @@ body.is-messages .app-main {
 .chat-pick:hover { background: rgba(255, 255, 255, .05); }
 
 .chat-pick.is-on {
-    background: rgba(255, 107, 53, .1);
-    border-color: rgba(255, 107, 53, .3);
+    background: rgba(255, 255, 255, .11);
+    border-color: rgba(255, 255, 255, .1);
 }
 
 .chat-pick.has-new .chat-pick-text strong { color: #ffc4a4; }
