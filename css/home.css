@@ -50,6 +50,9 @@
 .hero-home .hero-title {
     margin: 0;
     max-width: 15ch;
+    /* Pure white over the gradient rather than the page's off-white, so the
+       headline keeps its edge against the brightest part of the mesh. */
+    color: #ffffff;
     font-size: clamp(2.5rem, 6vw, 5.5rem);
     font-weight: var(--fw-regular);
     line-height: 1.03;
@@ -109,6 +112,9 @@ html[data-lang="el"] .hero-aside {
 .hero-home .hero-subtitle {
     max-width: none;
     margin: 0 0 28px;
+    /* Lifted from the site-wide 0.72: the hero sits on a lighter ground than
+       the sections below it, and the paragraph needs the extra contrast. */
+    color: rgba(255, 255, 255, 0.9);
     font-size: 1rem;
     line-height: 1.65;
     text-align: left;
