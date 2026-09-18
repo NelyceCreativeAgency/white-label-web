@@ -680,6 +680,10 @@ html.is-lit .app-body::after {
     padding: 0;
     background: none;
     cursor: pointer;
+    /* A finger dragging sideways on a page that can move sideways moves the
+       page, and the bar underneath never hears about it. This says the gesture
+       belongs to the bar: without it the light could only be set with a mouse. */
+    touch-action: none;
 }
 
 .me-tint-bar::-webkit-slider-runnable-track {
@@ -3625,13 +3629,26 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
     }
 }
 
-/* Near the left edge of a narrow screen the bubble would hang off it, so on a
-   phone it stops being centred on the i and spans the column instead. */
+/* On a phone it stops trying to hang off the i at all. Centring a bubble on a
+   letter works where there is room either side of it and nowhere else: written
+   this way it sat half off the left of the screen, unreadable, and wide enough
+   to give the page a sideways scroll it never had.
+   It becomes a card along the foot of the screen instead — always the same
+   place, always the full width it can have, and nothing to calculate. There is
+   no hover on a phone, so the tap that opens it is the only way in and the
+   bottom of the screen is where a thumb already is. */
 @media (max-width: 620px) {
     .why-more {
-        left: 0; transform: translateX(-50%) translateY(3px);
-        max-width: min(320px, 86vw);
+        position: fixed;
+        left: 16px; right: 16px; bottom: 16px;
+        top: auto;
+        z-index: 200;
+        width: auto; max-width: none;
+        padding: 14px 16px;
+        transform: translateY(8px);
     }
+
+    .why-tip.is-open .why-more { transform: translateY(0); }
 }
 
 /* A section that opens. Three of them one under the other would be a page
