@@ -1173,8 +1173,8 @@ html.is-lit .app-nav-item.is-on,
 html.is-lit .chat-pick.is-on,
 html.is-lit .app-nav-item.is-on.has-new {
     background: linear-gradient(135deg,
-        rgba(var(--glow), calc(var(--glow-a) * .36)) 0%,
-        rgba(var(--glow-2), calc(var(--glow-a) * .20)) 100%);
+        rgba(var(--glow), calc(var(--glow-a) * .55)) 0%,
+        rgba(var(--glow-2), calc(var(--glow-a) * .32)) 100%);
     border-color: transparent;
 }
 
@@ -1182,8 +1182,8 @@ html.is-lit .app-nav-item.is-on:hover,
 html.is-lit .chat-pick.is-on:hover,
 html.is-lit .app-nav-item.is-on.has-new:hover {
     background: linear-gradient(135deg,
-        rgba(var(--glow), calc(var(--glow-a) * .50)) 0%,
-        rgba(var(--glow-2), calc(var(--glow-a) * .30)) 100%);
+        rgba(var(--glow), calc(var(--glow-a) * .70)) 0%,
+        rgba(var(--glow-2), calc(var(--glow-a) * .44)) 100%);
 }
 
 /* --- the lines that divide things --------------------------------------
