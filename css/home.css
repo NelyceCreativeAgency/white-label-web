@@ -360,8 +360,9 @@ html[data-lang="el"] .hero-aside {
 }
 
 /* --- The panel ---
-   The projects and the partnership model ride on one dark card that runs edge
-   to edge and comes up over the held hero. It is what separates the hero from
+   Everything under the hero rides on one dark card that runs edge to edge and
+   comes up over the held hero: the projects, the partnership model and the
+   closing call to action. It is what separates the hero from
    the rest: not a rule, not a gap, but a surface arriving on top of another.
    It is clipped, so the project rows end where it does, and their own mask
    fades them out well before that. */
@@ -379,8 +380,8 @@ html[data-lang="el"] .hero-aside {
        to start below the fold too. */
     z-index: 1;
     margin-top: clamp(96px, 14vh, 160px);
-    /* Nothing at the foot: the partnership model, which is the last thing on
-       the card, brings its own 100px. */
+    /* Nothing at the foot: the closing call to action, which is the last thing
+       on the card, brings its own padding. */
     padding: clamp(40px, 5vw, 72px) 0 0;
     /* Rounded along the top only: the sides run off the screen, so the card
        has a lip and no corners at the bottom to explain. */
