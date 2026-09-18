@@ -41,7 +41,6 @@
                 <span class="logo-badge">PARTNERS</span>
             </div>
             <div class="nav-right">
-                <a href="social-calculator.html" class="nav-cta nav-cta-header" data-en="Social Calculator">Υπολογιστής Social Media</a>
                 <a href="faq.html" class="nav-cta nav-cta-header" data-en="FAQ">Συχνές Ερωτήσεις</a>
                 <div class="nav-meta">
                     <div class="lang-switcher">
@@ -64,7 +63,6 @@
         <button class="mobile-sidebar-close" id="mobile-sidebar-close" aria-label="Close menu">&times;</button>
         <nav class="mobile-sidebar-nav">
             <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="mobile-sidebar-link">Contact Hub</a>
-            <a href="social-calculator.html" class="mobile-sidebar-link" data-en="Social Media Calculator">Υπολογιστής Social Media</a>
             <a href="faq.html" class="mobile-sidebar-link" data-en="FAQ">Συχνές Ερωτήσεις</a>
         </nav>
     </div>
@@ -114,8 +112,17 @@
          (the second copy is cloned by js/home.js and hidden from assistive tech),
          so the loop can restart mid-animation without a visible seam. -->
     <section class="featured-section" id="featured">
-        <div class="container text-center">
-            <h2 class="featured-title scroll-reveal" data-en="Featured Projects">Επιλεγμένα Projects</h2>
+        <!-- The heading stands on the same left line as the logo and the
+             hero, with the supporting line held out to the right of it, so the
+             section opens the way the hero does instead of as a centred stack.
+             The title is split into two spans for the accent on the last word,
+             each carrying its own data-en, because the language switcher only
+             swaps an element's own text nodes. -->
+        <div class="home-bleed featured-head">
+            <h2 class="featured-title scroll-reveal">
+                <span data-en="Featured">Επιλεγμένα</span>
+                <span class="accent-text" data-en="Projects">Projects</span>
+            </h2>
             <p class="featured-subtitle scroll-reveal" data-en="A selection of recent projects across design, branding, websites and content.">
                 Μια επιλογή από πρόσφατα projects σε design, branding, websites και περιεχόμενο.
             </p>

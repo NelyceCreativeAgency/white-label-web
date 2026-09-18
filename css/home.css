@@ -336,13 +336,39 @@ html[data-lang="el"] .hero-aside {
     line-height: 1.7;
 }
 
+/* --- The section's opening line ---
+   Headline left on the logo's line, the sentence that explains it held out to
+   the right and sitting on the headline's own baseline. The hero's split,
+   smaller: it keeps the page reading down one edge instead of dropping into a
+   centred stack halfway through. */
+.featured-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: 48px;
+    margin-bottom: 44px;
+}
+
 .featured-title {
-    margin-bottom: 12px;
+    margin-bottom: 0;
+    text-align: left;
+    /* The same optical pull the hero's headline takes, so both start on the
+       logo's line by the ink rather than by the text box. Montserrat's F,
+       Geologica's E. */
+    margin-left: -0.038em;
+}
+
+html[data-lang="el"] .featured-title {
+    margin-left: -0.026em;
 }
 
 .featured-subtitle {
-    max-width: 620px;
-    margin: 0 auto 48px;
+    max-width: 440px;
+    margin: 0;
+    text-align: left;
+    /* Nudged off the last line's descender so the two sit on one line to the
+       eye rather than to the box. */
+    padding-bottom: 0.35em;
 }
 
 /* --- The rows ---
@@ -555,13 +581,28 @@ html[data-lang="el"] .hero-aside {
     }
 }
 
+/* Below the split, the sentence follows the headline down the left instead of
+   standing beside it, and is free to run the width it wants. */
+@media (max-width: 1024px) {
+    .featured-head {
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: 14px;
+        margin-bottom: 36px;
+    }
+
+    .featured-subtitle {
+        max-width: 620px;
+        padding-bottom: 0;
+    }
+}
+
 @media (max-width: 640px) {
     .featured-section {
         padding: 24px 0 40px;
     }
 
-    .featured-subtitle {
-        margin-bottom: 32px;
+    .featured-head {
+        margin-bottom: 28px;
     }
 
     .marquee {
