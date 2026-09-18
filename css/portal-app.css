@@ -420,18 +420,18 @@ html.is-lit .app-body::after {
    the column there is no question which it is. */
 .app-nav-item.is-on {
     color: #fff;
-    background: linear-gradient(145deg, #8b5cf6 0%, #6d3ae0 45%, #4c1d95 100%);
+    background: linear-gradient(145deg, #7c3aed 0%, #5b21b6 48%, #2e1065 100%);
     border-color: transparent;
-    box-shadow: 0 6px 18px rgba(76, 29, 149, .45);
+    box-shadow: 0 6px 18px rgba(46, 16, 101, .55);
 }
 
 /* On a filled row the second line cannot stay grey against violet, and the
    badge cannot stay orange. Both take their contrast from the fill instead. */
 .app-nav-item.is-on .app-nav-text small { color: rgba(255, 255, 255, .72); }
-.app-nav-item.is-on .app-nav-badge { color: #4c1d95; background: #fff; }
+.app-nav-item.is-on .app-nav-badge { color: #2e1065; background: #fff; }
 
 .app-nav-item.is-on:hover {
-    background: linear-gradient(145deg, #9670f7 0%, #7847e6 45%, #57219f 100%);
+    background: linear-gradient(145deg, #8b4ff5 0%, #6829cc 48%, #3b1580 100%);
     color: #fff;
 }
 
@@ -500,10 +500,10 @@ html.is-lit .app-body::after {
    fight it. Written here rather than up there because that is what makes it
    later. */
 .app-nav-item.is-on.has-new {
-    background: linear-gradient(145deg, #8b5cf6 0%, #6d3ae0 45%, #4c1d95 100%);
+    background: linear-gradient(145deg, #7c3aed 0%, #5b21b6 48%, #2e1065 100%);
 }
 .app-nav-item.is-on.has-new:hover {
-    background: linear-gradient(145deg, #9670f7 0%, #7847e6 45%, #57219f 100%);
+    background: linear-gradient(145deg, #8b4ff5 0%, #6829cc 48%, #3b1580 100%);
 }
 .app-nav-item.is-on .app-nav-text strong { color: #fff; }
 
