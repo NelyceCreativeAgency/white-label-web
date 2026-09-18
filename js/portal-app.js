@@ -363,6 +363,7 @@
         await loadGrids();
         await loadClients();
         await loadProjects();
+        fitTabs();
         loadFeed();
         loadChats();
 
@@ -1445,9 +1446,82 @@
         // moves, at every size rather than only on a phone.
         document.body.classList.toggle('is-messages', name === 'chat');
 
+        // Which section of the portal this screen belongs to, for the bar along
+        // the bottom of a phone. The admin's three pages are one section, and
+        // somebody else's own page is theirs.
+        const SECTION = {
+            grid: 'grids', project: 'projects', chat: 'chat',
+            accounts: 'admin', clients: 'admin', partners: 'admin',
+            client: state.me && state.me.role === 'admin' ? 'admin' : 'account'
+        };
+        paintTabs(SECTION[name] || null);
+
         closeSidebar();
         fitToKeyboard(true);
     };
+
+    // --- the bar along the bottom of a phone --------------------------------
+    // Which of the six it shows depends on who is looking. Never more than
+    // five, so every one of them stays wide enough to hit with a thumb.
+    const paintTabs = (which) => {
+        document.querySelectorAll('.app-tab').forEach(tab => {
+            tab.classList.toggle('is-on', tab.dataset.tab === which);
+            tab.setAttribute('aria-current', tab.dataset.tab === which ? 'page' : 'false');
+        });
+    };
+
+    const fitTabs = () => {
+        if (!state.me) return;
+        const boss = state.me.role === 'admin';
+        const show = {
+            grids: true,
+            projects: !$('app-projects-nav').hidden,
+            chat: !$('app-chat-nav').hidden,
+            admin: boss,
+            account: !boss && purse.list.length > 0,
+            me: true
+        };
+        document.querySelectorAll('.app-tab').forEach(tab => {
+            tab.hidden = !show[tab.dataset.tab];
+        });
+        $('app-tabs').hidden = false;
+    };
+
+    // A section with a list behind it opens the drawer at that list, because
+    // the list is what the sidebar already is and there is no second copy of it
+    // worth keeping in step. A section that is one place goes straight there.
+    const openSection = (which) => {
+        const drawerTo = (id) => {
+            document.body.classList.add('side-open');
+            $('app-scrim').hidden = false;
+            const block = $(id);
+            if (block) block.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        };
+
+        if (which === 'grids')    return drawerTo('app-grids-wrap');
+        if (which === 'projects') return drawerTo('app-projects-nav');
+        if (which === 'admin')    return drawerTo('app-admin-nav');
+        if (which === 'chat')     return openChat();
+
+        if (which === 'account') {
+            if (purse.list.length) openClient(purse.list[0].id);
+            return;
+        }
+
+        // The account menu lives at the foot of the sidebar, so the way to it
+        // is the sidebar, open, with the menu already up.
+        if (which === 'me') {
+            document.body.classList.add('side-open');
+            $('app-scrim').hidden = false;
+            $('me-menu').hidden = false;
+            $('me-open').setAttribute('aria-expanded', 'true');
+        }
+    };
+
+    $('app-tabs').addEventListener('click', (event) => {
+        const tab = event.target.closest('.app-tab');
+        if (tab) openSection(tab.dataset.tab);
+    });
 
     // --- opening a grid ----------------------------------------------------
     const openGrid = async (id) => {
@@ -3858,7 +3932,9 @@
     $('me-tint').addEventListener('click', hush);
 
     document.addEventListener('click', (event) => {
-        if (!$('me-menu').hidden && !event.target.closest('.app-me')) closeMeMenu();
+        // The Προφίλ tab opens this menu, and its click carries on up to here.
+        // Without it in the exception the menu would close on the way.
+        if (!$('me-menu').hidden && !event.target.closest('.app-me, .app-tab')) closeMeMenu();
     });
 
     // --- saving ---------------------------------------------------------------
@@ -4165,6 +4241,9 @@
         $('nav-chat').classList.toggle('has-new', Boolean(total));
         $('nav-chat-badge').hidden = !total;
         $('nav-chat-badge').textContent = total > 99 ? '99+' : String(total || '');
+        // The same news, in the one place a number has nowhere to go.
+        $('tab-chat-pip').hidden = !total;
+        fitTabs();
     };
 
     const sameThread = (a, b) => Boolean(a && b && a.kind === b.kind && a.id === b.id);

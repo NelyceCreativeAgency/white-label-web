@@ -2837,7 +2837,108 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .cell-menu button[disabled]:hover { background: none; }
 .cell-menu .is-danger { color: #ff8b6b; }
 
+/* --- the bar along the bottom of a phone ---------------------------------
+   The same rail the desktop folds down to, laid flat where a thumb is. A
+   drawer is a thing you have to remember to open; this is the sections of the
+   portal, always there, in the order the sidebar has them.
+   Hidden outright above a phone: there is a sidebar there and two navigations
+   saying the same thing is one too many. */
+.app-tabs { display: none; }
+
+.app-tab {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 4px;
+    padding: 7px 2px 6px;
+    font: inherit;
+    font-size: .63rem;
+    letter-spacing: .01em;
+    color: rgba(184, 186, 194, .7);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+}
+
+.app-tab svg {
+    width: 21px; height: 21px;
+    fill: none; stroke: currentColor; stroke-width: 1.7;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+.app-tab span:not(.app-tab-pip) {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-tab.is-on { color: var(--text-primary); background: rgba(255, 255, 255, .09); }
+
+/* The same dimmed pour as the selected row in the sidebar, so the two
+   navigations are lit by one light. */
+html.is-lit .app-tab.is-on {
+    background: linear-gradient(135deg,
+        rgba(var(--glow), min(calc(var(--glow-a) * .95), .46)) 0%,
+        rgba(var(--glow-2), min(calc(var(--glow-a) * .58), .28)) 100%);
+}
+
+html.is-lit .app-tab svg {
+    stroke: color-mix(in srgb, rgb(var(--glow)) 34%, currentColor);
+}
+html.is-lit .app-tab.is-on svg {
+    stroke: color-mix(in srgb, rgb(var(--glow)) 62%, currentColor);
+}
+
+/* Something waiting, in the one place a number would not fit. */
+.app-tab-pip {
+    position: absolute;
+    top: 6px; left: 50%;
+    margin-left: 7px;
+    width: 7px; height: 7px;
+    background: var(--accent-orange);
+    border-radius: 50%;
+}
+
 @media (max-width: 900px) {
+    .app-tabs {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        z-index: 45;
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: 2px;
+        padding: 6px 8px;
+        padding-bottom: calc(6px + env(safe-area-inset-bottom));
+        background: rgba(10, 10, 14, .9);
+        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(255, 255, 255, .07);
+    }
+
+    html.is-lit .app-tabs {
+        border-image: linear-gradient(90deg,
+            rgba(var(--glow), calc(var(--glow-a) * .40)) 0%,
+            rgba(var(--glow-2), calc(var(--glow-a) * .24)) 55%,
+            rgba(255, 255, 255, .035) 100%) 1;
+    }
+
+    /* Room for it under everything that scrolls, and above everything that was
+       already sitting on the bottom edge. */
+    .app-view { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+    .hello { bottom: calc(78px + env(safe-area-inset-bottom)); }
+    .toast { bottom: calc(78px + env(safe-area-inset-bottom)); }
+    .why-more { bottom: calc(78px + env(safe-area-inset-bottom)); }
+
+    /* A conversation takes the whole screen and puts its own box on the bottom
+       edge, with the keyboard under it. The bar would be over that box. It
+       goes, the same way the title bar above already does. */
+    body.is-inroom .app-tabs { display: none; }
+
     /* Nothing to fold: the sidebar is over the page or off it. What the head
        holds instead is the way out of the drawer. */
     .app-fold { display: none; }
@@ -4075,12 +4176,16 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
     }
 
     .modal-hl { width: 100%; padding: 26px 18px 20px; }
-    .toast { left: 16px; right: 16px; bottom: 16px; transform: none; text-align: center; }
+    .toast {
+        left: 16px; right: 16px;
+        bottom: calc(78px + env(safe-area-inset-bottom));
+        transform: none; text-align: center;
+    }
 }
 
 /* --- a phone -------------------------------------------------------------- */
 @media (max-width: 560px) {
-    .app-view { padding: 16px 12px 64px; }
+    .app-view { padding: 16px 12px calc(78px + env(safe-area-inset-bottom)); }
 
     /* Instagram's own gap, which is most of what makes a grid read as a grid. */
     .ig-grid { gap: 2px; }
