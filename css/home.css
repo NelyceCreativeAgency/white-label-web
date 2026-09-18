@@ -324,13 +324,17 @@ html[data-lang="el"] .hero-aside {
     padding: 0;
     position: relative;
     /* Over the hero, but starting below the fold: the card's lip has no
-       business showing while the hero is still the whole screen. The hero's
-       box already ends a little under the first screenful, since it is a
-       screen tall less the header; this holds it a further step down, so the
-       lip is clear of the fold on any viewport and arrives only once the page
-       has been scrolled a little. */
+       business showing while the hero is still the whole screen.
+
+       What was still showing at rest was not the lip but its shadow. The
+       panel throws one upwards to look lifted, and a 24px offset on a 60px
+       blur reaches some eighty pixels above the edge that casts it, which was
+       enough to haze the bottom of the hero. So the gap has to clear the
+       shadow's reach, not just the edge: the hero's box ends a little under
+       the first screenful already, and this holds the card far enough below
+       that for the shadow to start below the fold too. */
     z-index: 1;
-    margin-top: clamp(20px, 5vh, 56px);
+    margin-top: clamp(96px, 14vh, 160px);
 }
 
 /* One rule for both section headings on this page, so they cannot drift apart
@@ -387,7 +391,7 @@ html[data-lang="el"] .hero-aside {
     background: linear-gradient(180deg, #16161d 0%, #0e0e14 46%, #0a0a0e 100%);
     border-top: 1px solid rgba(255, 255, 255, 0.07);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09),
-                0 -24px 60px rgba(0, 0, 0, 0.55),
+                0 -18px 44px rgba(0, 0, 0, 0.5),
                 0 40px 90px rgba(0, 0, 0, 0.5);
     overflow: hidden;
 }
