@@ -3388,6 +3388,59 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
 .panel-head p,
 .panel-why { margin: 8px 0 20px; font-size: .84rem; line-height: 1.6; color: var(--text-secondary); }
 
+/* The i beside a line, and what it holds. The button sits on the baseline of
+   the sentence it belongs to, small enough to ignore and big enough to hit:
+   the tap target is padded out past the circle you can see. */
+.why-tip { position: relative; display: inline-block; vertical-align: baseline; }
+
+.why-i {
+    width: 15px; height: 15px; margin-left: 5px; padding: 0;
+    border: 1px solid rgba(255, 255, 255, .22); border-radius: 50%;
+    background: none; color: var(--text-secondary);
+    font: 600 10px/13px var(--font-sans);
+    cursor: pointer; transition: color .15s, border-color .15s;
+}
+.why-i::after { content: ''; position: absolute; inset: -9px; }
+.why-i:hover, .why-tip.is-open .why-i {
+    color: var(--text-primary); border-color: rgba(255, 255, 255, .55);
+}
+.why-i:focus-visible { outline: 2px solid var(--accent-orange); outline-offset: 2px; }
+
+.why-more {
+    position: absolute; left: 50%; bottom: calc(100% + 9px); z-index: 40;
+    width: max-content; max-width: min(320px, 74vw);
+    transform: translateX(-50%) translateY(3px);
+    padding: 11px 13px; border-radius: 11px;
+    background: rgba(24, 24, 30, .98);
+    border: 1px solid rgba(255, 255, 255, .12);
+    box-shadow: 0 20px 44px rgba(0, 0, 0, .55);
+    font-size: .82rem; line-height: 1.55; color: var(--text-secondary);
+    text-align: left; white-space: normal;
+    opacity: 0; visibility: hidden;
+    transition: opacity .16s, transform .16s, visibility .16s;
+}
+
+.why-tip.is-open .why-more {
+    opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0);
+}
+
+/* A mouse gets it for free. A finger has no hover, which is why the click
+   above is the real way in and this only ever adds to it. */
+@media (hover: hover) and (pointer: fine) {
+    .why-tip:hover .why-more {
+        opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Near the left edge of a narrow screen the bubble would hang off it, so on a
+   phone it stops being centred on the i and spans the column instead. */
+@media (max-width: 620px) {
+    .why-more {
+        left: 0; transform: translateX(-50%) translateY(3px);
+        max-width: min(320px, 86vw);
+    }
+}
+
 /* A section that opens. Three of them one under the other would be a page
    nobody can see the end of, so each one is a heading until it is asked for.
    The whole heading is the handle, which is what a thumb needs. */

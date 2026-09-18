@@ -5580,6 +5580,47 @@
 
     const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
 
+    // --- what a panel is, and the rules behind it ---------------------------
+    // A panel used to explain itself in a paragraph, which meant everybody read
+    // the rules of the house every time they came to look at one number. The
+    // line above a panel now says what it is, in one breath, and everything
+    // that is true but only needed once sits behind the i beside it.
+    //
+    // Opened by click, because half the people here are on a phone and a phone
+    // has no hover. On a mouse, hovering shows it too — that is the stylesheet
+    // being generous, not the way in.
+    const why = (line, more) => `
+        <p class="panel-why">${line}${more ? `
+            <span class="why-tip">
+                <button class="why-i" type="button" aria-expanded="false"
+                        aria-label="Περισσότερα">i</button>
+                <span class="why-more" role="note">${more}</span>
+            </span>` : ''}</p>`;
+
+    // One open at a time, and a click anywhere else closes it.
+    document.addEventListener('click', (event) => {
+        const asked = event.target.closest('.why-i');
+        const tip = asked && asked.parentElement;
+
+        document.querySelectorAll('.why-tip.is-open').forEach(one => {
+            if (one === tip) return;
+            one.classList.remove('is-open');
+            one.querySelector('.why-i').setAttribute('aria-expanded', 'false');
+        });
+
+        if (!tip) return;
+        const open = tip.classList.toggle('is-open');
+        asked.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        document.querySelectorAll('.why-tip.is-open').forEach(one => {
+            one.classList.remove('is-open');
+            one.querySelector('.why-i').setAttribute('aria-expanded', 'false');
+        });
+    });
+
     const line = (id, what, name, under, person, go) => `
         <li>
             ${faceOf(person || { id, name }, 'lister-face', dot(person))}
@@ -6720,7 +6761,8 @@
                     <h2>Συνδρομές</h2>
                     ${CARET}
                 </summary>
-                <p class="panel-why">Τι τρέχει αυτή τη στιγμή, διαβασμένο από τις χρεώσεις πιο κάτω. Οι μήνες είναι η φετινή χρονιά: γεμάτος ο πληρωμένος, περιγραμμένος ο τιμολογημένος που δεν έχει πληρωθεί ακόμα, θαμπός αυτός που δεν έχει χρεωθεί καθόλου. Ό,τι παλιότερο είναι στο ιστορικό πιο κάτω.</p>
+                ${why('Τι τρέχει αυτή τη στιγμή.',
+                    'Οι μήνες είναι η φετινή χρονιά. Γεμάτος ο πληρωμένος, περιγραμμένος ο τιμολογημένος που δεν πληρώθηκε ακόμα, θαμπός αυτός που δεν χρεώθηκε καθόλου. Ό,τι παλιότερο είναι στο ιστορικό, πιο κάτω.')}
 
                 ${boss ? `
                 <form class="new-row" id="new-sub">
@@ -6753,9 +6795,11 @@
                     <h2>${boss ? 'Αρχεία' : 'Τα αρχεία μου'}</h2>
                     ${CARET}
                 </summary>
-                <p class="panel-why">${boss
-                    ? `Η κάθε δουλειά με τον σύνδεσμό της στο cloud. Ο σύνδεσμος είναι του πελάτη για ${FILE_MONTHS} μήνες από τη μέρα που τον βάζεις εδώ· μετά μένει το όνομα της δουλειάς και ένα κουμπί που σου ζητάει καινούριον. Εσύ τον βλέπεις πάντα. Αν δώσεις καινούριο σύνδεσμο, οι ${FILE_MONTHS} μήνες ξεκινούν από την αρχή.`
-                    : `Οι δουλειές σου, με τον σύνδεσμο για να τις κατεβάσεις. Ο κάθε σύνδεσμος μένει ανοιχτός ${FILE_MONTHS} μήνες· όταν λήξει, ζήτα τον ξανά και θα τον ανεβάσουμε πάλι για σένα.`}</p>
+                ${boss
+                    ? why('Η κάθε δουλειά με τον σύνδεσμό της στο cloud.',
+                        `Ο πελάτης τον βλέπει για ${FILE_MONTHS} μήνες. Μετά του μένει το όνομα της δουλειάς και ένα κουμπί που σου ζητάει καινούριον. Εσύ τον βλέπεις πάντα, και κάθε νέος σύνδεσμος ξεκινά τους ${FILE_MONTHS} μήνες από την αρχή.`)
+                    : why('Οι δουλειές σου, με τον σύνδεσμο για να τις κατεβάσεις.',
+                        `Ο κάθε σύνδεσμος μένει ανοιχτός ${FILE_MONTHS} μήνες. Όταν λήξει, ζήτα τον ξανά και θα τον ανεβάσουμε πάλι.`)}
 
                 ${boss ? `
                 <form class="new-row" id="new-file">
@@ -6775,9 +6819,11 @@
                     <h2>Ιστορικό και τιμολόγια</h2>
                     ${CARET}
                 </summary>
-                <p class="panel-why">${boss
-                        ? 'Κάθε χρέωση όπως εκδόθηκε, και αν έχει εξοφληθεί ή όχι. Βάλε την πάνω σε μια συνδρομή και ανάβουν μόνοι τους οι μήνες της από πάνω. Η πληρωμή και το τιμολόγιο είναι δύο χωριστά πράγματα: μπορείς να καταχωρήσεις μια δουλειά που εκκρεμεί πριν καν εκδώσεις το παραστατικό, και όσο δεν έχεις βάλει σύνδεσμο η γραμμή γράφει «Εκκρεμεί έκδοση». Η ημερομηνία πληρωμής και τα υπόλοιπα στοιχεία κάθε γραμμής είναι πίσω από το γρανάζι της.'
-                        : 'Κάθε δουλειά που έχει χρεωθεί, με τον σύνδεσμο για να κατεβάσεις το τιμολόγιό της. Όπου γράφει «Εκκρεμεί έκδοση», το παραστατικό δεν έχει εκδοθεί ακόμα.'}</p>
+                ${boss
+                        ? why('Κάθε χρέωση όπως εκδόθηκε, και αν έχει εξοφληθεί.',
+                            'Βάλε μια χρέωση πάνω σε συνδρομή και ανάβουν μόνοι τους οι μήνες της. Η πληρωμή και το τιμολόγιο είναι χωριστά: μπορείς να καταχωρήσεις δουλειά που εκκρεμεί πριν εκδώσεις παραστατικό, και όσο δεν έχει σύνδεσμο η γραμμή γράφει «Εκκρεμεί έκδοση». Τα υπόλοιπα στοιχεία κάθε γραμμής είναι πίσω από το γρανάζι της.')
+                        : why('Κάθε δουλειά που έχει χρεωθεί, με το τιμολόγιό της.',
+                            'Όπου γράφει «Εκκρεμεί έκδοση», το παραστατικό δεν έχει βγει ακόμα.')}
 
                 ${boss ? `
                 <form class="new-row" id="new-entry">
