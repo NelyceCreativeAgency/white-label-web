@@ -172,7 +172,7 @@ html[data-lang="el"] .hero-aside {
 
 
 .featured-section {
-    padding: 40px 0 80px;
+    padding: 40px 0 56px;
     position: relative;
     z-index: 1;
 }
@@ -423,7 +423,7 @@ html[data-lang="el"] .hero-aside {
 
 @media (max-width: 640px) {
     .featured-section {
-        padding: 24px 0 56px;
+        padding: 24px 0 40px;
     }
 
     .featured-subtitle {
@@ -482,9 +482,11 @@ html[data-lang="el"] .hero-aside {
    a promise lights up as the last of its words comes clear. */
 
 /* A little more air than it had, the hero being a whole screen now, but only a
-   little: at 120 and 140 the section had stopped holding together. */
+   little: at 120 and 140 the section had stopped holding together. The top is
+   shorter than the bottom because the rows above end on a soft masked edge
+   rather than a hard one, and read as air of their own. */
 .partner-model-section {
-    padding: 80px 0 100px;
+    padding: 64px 0 100px;
     position: relative;
     z-index: 1;
 }
@@ -772,7 +774,7 @@ html[data-lang="el"] .pm-title {
 
 @media (max-width: 860px) {
     .partner-model-section {
-        padding: 72px 0 90px;
+        padding: 56px 0 90px;
     }
 
     .pm-sub {
@@ -845,8 +847,7 @@ html[data-lang="el"] .pm-title {
    These override style.css for the home page only, home.css being the only
    place they are loaded from; the price list, FAQ and calculator keep the
    square buttons they were built with. */
-.btn,
-.featured-cta {
+.btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -899,9 +900,7 @@ html[data-lang="el"] .pm-title {
 /* Hover warms the glass towards the accent and leaves it there. A flat tint,
    the same pane, nothing lit behind it. */
 .btn:hover,
-.btn:focus-visible,
-.featured-cta:hover,
-.featured-cta:focus-visible {
+.btn:focus-visible {
     border-color: rgba(255, 140, 95, 0.55);
     background: rgba(255, 107, 53, 0.18);
     box-shadow: none;
@@ -918,30 +917,22 @@ html[data-lang="el"] .pm-title {
     color: var(--bg-dark);
 }
 
-.btn:focus-visible,
-.featured-cta:focus-visible {
+.btn:focus-visible {
     outline: 2px solid var(--accent-orange);
     outline-offset: 4px;
 }
 
-.btn svg,
-.featured-cta svg {
+.btn svg {
     flex: 0 0 auto;
     transition: transform 0.3s ease;
 }
 
-.btn:hover svg,
-.featured-cta:hover svg {
+.btn:hover svg {
     transform: translateX(4px);
 }
 
-.featured-cta {
-    margin-top: 48px;
-}
-
 @media (max-width: 640px) {
-    .btn,
-    .featured-cta {
+    .btn {
         padding: 14px 20px;
     }
 
@@ -953,14 +944,11 @@ html[data-lang="el"] .pm-title {
 
 @media (prefers-reduced-motion: reduce) {
     .btn,
-    .featured-cta,
-    .btn svg,
-    .featured-cta svg {
+    .btn svg {
         transition: none;
     }
 
-    .btn:hover svg,
-    .featured-cta:hover svg {
+    .btn:hover svg {
         transform: none;
     }
 }
