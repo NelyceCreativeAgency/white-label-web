@@ -1204,6 +1204,24 @@ html.is-lit .app-top {
         rgba(255, 255, 255, .035) 100%) 1;
 }
 
+/* --- and a little of it on the icons -----------------------------------
+   Mixed into the colour the icon already has rather than replacing it, so a
+   row that is not selected stays as quiet as it was and only leans towards the
+   light. The row you are on leans further, because it is the one thing in the
+   column that is allowed to.
+   color-mix carries its own fallback: where it is not understood the whole
+   declaration is dropped and the icon keeps its currentColor stroke. */
+html.is-lit .app-nav-item svg,
+html.is-lit .app-nav-new svg,
+html.is-lit .chat-pick svg {
+    stroke: color-mix(in srgb, rgb(var(--glow)) 34%, currentColor);
+}
+
+html.is-lit .app-nav-item.is-on svg,
+html.is-lit .chat-pick.is-on svg {
+    stroke: color-mix(in srgb, rgb(var(--glow)) 62%, currentColor);
+}
+
 
 .chat-pick.has-new .chat-pick-text strong { color: #ffc4a4; }
 .chat-pick.has-new .chat-pick-text small { color: rgba(255, 196, 164, .75); }
