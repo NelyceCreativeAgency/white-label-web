@@ -3758,33 +3758,30 @@
     // there before the first frame. This is the menu catching up with them.
     relight();
 
-    // --- said once ----------------------------------------------------------
-    // Somebody opening the portal on a machine for the first time gets one
-    // line about where the light switch is, because a switch nobody finds is
-    // the same as no switch. Nobody who has already found it is told: having a
-    // colour saved is proof enough, so this does not go off in the face of
-    // anybody who has been using the portal for months.
+    // --- said once a day ----------------------------------------------------
+    // Somebody opening the portal gets one line about where the light switch
+    // is, the first time they open it on a given day. A switch nobody finds is
+    // the same as no switch, and once a day is often enough to be found
+    // without being in the way of anybody working: after the first hello the
+    // rest of the day is quiet, and tomorrow it says it again.
     //
-    // Remembered in the same place as the colour, which is to say per browser.
-    // That is the right unit for it: what it is explaining is where a thing is
-    // on the screen in front of them, and a new screen is a fair reason to be
-    // told again.
-    // TEMPORARY, while the wording is still being decided: the greeting is
-    // shown on every load, to whoever opens the portal, so it can be read
-    // without clearing a browser to see it. Set this to false and it goes back
-    // to being said once per machine, which is the whole of the change.
-    const GREET_EVERY_TIME = true;
+    // Remembered per browser, like the colour. That is the right unit for it:
+    // what it is explaining is where a thing is on the screen in front of
+    // them, and a new screen is a fair reason to be told again.
+    const today = () => {
+        const now = new Date();
+        const two = (n) => String(n).padStart(2, '0');
+        return `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
+    };
 
     const greeted = {
         read() {
-            if (GREET_EVERY_TIME) return false;
             try {
-                return localStorage.getItem('nelyce-hello') === '1'
-                    || Boolean(localStorage.getItem('nelyce-glow'));
+                return localStorage.getItem('nelyce-hello') === today();
             } catch { return true; }
         },
         write() {
-            try { localStorage.setItem('nelyce-hello', '1'); }
+            try { localStorage.setItem('nelyce-hello', today()); }
             catch { /* nothing to remember with */ }
         }
     };
@@ -3804,6 +3801,9 @@
             if (greeted.read()) return;
             $('hello').hidden = false;
             document.body.classList.add('is-greeting');
+            // Written the moment it is shown, not when it is dismissed: it has
+            // been said for today either way, and a reload is not a new day.
+            greeted.write();
         }, 900);
     };
 
