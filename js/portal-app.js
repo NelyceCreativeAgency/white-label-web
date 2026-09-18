@@ -1526,11 +1526,12 @@
     // rows, the same faces, the same order; a page rather than a drawer.
     const openMyGrids = () => {
         $('view-mygrids').innerHTML = `
+            <div class="view-head">
+                <h2>Τα grids μου</h2>
+                <p>Πάτα ένα για να το ανοίξεις.</p>
+            </div>
+
             <section class="panel">
-                <div class="panel-head">
-                    <h2>Τα grids μου</h2>
-                    <p>Πάτα ένα για να το ανοίξεις.</p>
-                </div>
                 <ul class="lister">${state.grids.length
                     ? state.grids.map(grid => `
                         <li>
@@ -1557,17 +1558,18 @@
         const mayStart = state.me && state.me.role !== 'client';
 
         $('view-myprojects').innerHTML = `
+            <div class="view-head">
+                <h2>Projects</h2>
+                <p>Οι ομάδες στις οποίες δουλεύεις.</p>
+            </div>
+
+            ${mayStart ? `
+            <button class="btn-glow view-do" type="button" id="myprojects-new">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="do-plus"><path d="M12 5v14M5 12h14"/></svg>
+                Νέο project
+            </button>` : ''}
+
             <section class="panel">
-                <div class="panel-head">
-                    <h2>Projects</h2>
-                    <p>Οι ομάδες στις οποίες δουλεύεις.</p>
-                </div>
-
-                ${mayStart ? `
-                <div class="new-row">
-                    <button class="btn btn-primary" type="button" id="myprojects-new">Νέο project</button>
-                </div>` : ''}
-
                 <ul class="lister">${rooms.list.length
                     ? rooms.list.map(one => `
                         <li>
@@ -1662,6 +1664,11 @@
         const said = BILL_FIELDS.filter(([key]) => card.fields[key]);
 
         $('view-profile').innerHTML = `
+            <div class="view-head">
+                <h2>Το προφίλ μου</h2>
+                <p>Ποιος είσαι μέσα στο portal, και τι βλέπουν οι άλλοι για σένα.</p>
+            </div>
+
             <section class="panel">
                 <div class="client-id">
                     <span class="client-face" id="profile-me"></span>

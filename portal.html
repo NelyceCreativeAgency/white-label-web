@@ -213,7 +213,18 @@
             <button class="app-top-back" id="app-back" type="button" hidden>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
+            <!-- The name of the page is written above the page itself now, so
+                 the bar saying it again was saying it twice. It stays here as
+                 the document's heading, for anything reading the page rather
+                 than looking at it, and is not drawn.
+                 On a phone, where there is no sidebar to hold it, the bar shows
+                 the logo in its place. -->
             <h1 class="app-top-title" id="app-title">Portal</h1>
+
+            <a class="app-top-brand" href="portal.html" aria-hidden="true" tabindex="-1">
+                <img src="https://www.nelycedesign.com/assets/img/logo.svg" alt=""
+                     width="273" height="58">
+            </a>
             <span class="app-top-status" id="app-status" aria-live="polite"></span>
 
             <!-- The light the portal is lit by. It used to live at the foot

@@ -953,18 +953,25 @@ html.is-lit #tint-open { color: rgb(var(--glow)); border-color: rgba(var(--glow)
     border-bottom: 1px solid rgba(255, 255, 255, .06);
 }
 
+/* Read, not seen. Clipped to a pixel rather than display: none, because a
+   heading that is not rendered at all is a heading a screen reader skips. */
 .app-top-title {
-    flex: 1;
-    min-width: 0;
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px;
+    padding: 0;
     overflow: hidden;
-    font-size: 1.12rem;
-    font-weight: var(--fw-semibold);
-    letter-spacing: -.01em;
-    text-overflow: ellipsis;
+    clip-path: inset(50%);
     white-space: nowrap;
 }
 
-.app-top-status { flex: 0 0 auto; font-size: .8rem; color: var(--text-secondary); }
+/* The logo in its place, and only where there is no sidebar holding one. */
+.app-top-brand { display: none; flex: 1; min-width: 0; }
+.app-top-brand img { width: 108px; height: auto; display: block; }
+
+/* The title used to be what held the two ends of the bar apart. With it out of
+   the way this does it instead, and says what it has to say in the space. */
+.app-top-status { flex: 1; min-width: 0; font-size: .8rem; color: var(--text-secondary); }
 
 /* --- the bell ------------------------------------------------------------ */
 /* What everybody else did on the grids you are on. Your own doing is not in
@@ -1109,6 +1116,71 @@ html.is-lit #tint-open { color: rgb(var(--glow)); border-color: rgba(var(--glow)
 .bell-none { padding: 4px 10px 14px; font-size: .82rem; color: rgba(184, 186, 194, .6); }
 
 .app-view { padding: 28px 32px 80px; }
+
+/* The name of a screen, above the screen. It used to be the head of the first
+   panel, which made every page open with a box whose first job was to repeat
+   the bar. Out here it reads as the title of everything below it rather than
+   of the one card it happened to be inside. */
+.view-head { margin: 0 4px 18px; }
+
+.view-head h2 {
+    font-size: 1.32rem;
+    font-weight: var(--fw-semibold);
+    letter-spacing: -.01em;
+}
+
+.view-head p {
+    margin-top: 6px;
+    font-size: .84rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+/* The one thing a page is chiefly for. White with square corners it belonged
+   to the marketing site rather than to this one; here it takes the light the
+   person chose, with the corners everything else in the portal has.
+   Unlit it is the same quiet fill as a selected row, so it still reads as the
+   button that matters without borrowing a colour nobody asked for. */
+.btn-glow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    font: inherit;
+    font-size: .9rem;
+    font-weight: var(--fw-medium);
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, .09);
+    border: 1px solid rgba(255, 255, 255, .13);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+}
+
+.btn-glow:hover { background: rgba(255, 255, 255, .14); }
+
+html.is-lit .btn-glow {
+    background: linear-gradient(135deg,
+        rgba(var(--glow), min(calc(var(--glow-a) * 1.15), .52)) 0%,
+        rgba(var(--glow-2), min(calc(var(--glow-a) * .72), .34)) 100%);
+    border-color: rgba(var(--glow), min(calc(var(--glow-a) * .9), .42));
+}
+
+html.is-lit .btn-glow:hover {
+    background: linear-gradient(135deg,
+        rgba(var(--glow), min(calc(var(--glow-a) * 1.4), .62)) 0%,
+        rgba(var(--glow-2), min(calc(var(--glow-a) * .9), .42)) 100%);
+}
+
+/* The action sits between the heading and the list, out in the open where the
+   heading is, rather than inside the box it is about to add a row to. */
+.view-do { margin-bottom: 18px; }
+.view-do .do-plus {
+    width: 17px; height: 17px;
+    fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round;
+}
 
 .profile-acts { display: flex; flex-wrap: wrap; gap: 10px; }
 .profile-acts .app-ghost { flex: 0 1 auto; }
@@ -2921,8 +2993,10 @@ html.is-lit .app-tab.is-on svg {
        goes, the same way the title bar above already does. */
     body.is-inroom .app-tabs { display: none; }
 
-    /* Nothing to fold: there is no sidebar here at all. */
+    /* Nothing to fold: there is no sidebar here at all, which is also why the
+       bar is the only place left that can say whose portal this is. */
     .app-fold { display: none; }
+    .app-top-brand { display: block; }
 
     /* The switch is on the bar here too, so the card can go on pointing at
        it. Only its width gives, so it never runs off the side. */
