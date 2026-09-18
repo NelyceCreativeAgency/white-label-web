@@ -415,26 +415,19 @@ html.is-lit .app-body::after {
 
 .app-nav-item:hover { background: rgba(255, 255, 255, .05); color: var(--text-primary); }
 
-/* The one you are on. The red of the logo, run down into a near-black red so
-   the row is a filled object rather than a tinted one. The light end stops at
-   #e00434 rather than the logo's own #ff023c because white type on that is
-   under four to one, and the second line here is small type. */
+/* The one you are on: drawn, not filled. An outline says which row is yours
+   without putting a block of colour in a column that is mostly faces, and it
+   leaves the row the same weight as the ones around it.
+   Grey until somebody lights the portal. From then on the outline is the
+   colour they chose, which is the same answer the whole page is already
+   giving — see html.is-lit, further down. */
 .app-nav-item.is-on {
-    color: #fff;
-    background: linear-gradient(145deg, #e00434 0%, #9b0022 48%, #4a0011 100%);
-    border-color: transparent;
-    box-shadow: 0 6px 18px rgba(74, 0, 17, .55);
+    color: var(--text-primary);
+    background: none;
+    border-color: rgba(255, 255, 255, .3);
 }
 
-/* On a filled row the second line cannot stay grey, and the badge cannot stay
-   orange. Both take their contrast from the fill instead. */
-.app-nav-item.is-on .app-nav-text small { color: rgba(255, 255, 255, .82); }
-.app-nav-item.is-on .app-nav-badge { color: #4a0011; background: #fff; }
-
-.app-nav-item.is-on:hover {
-    background: linear-gradient(145deg, #f51042 0%, #b3002a 48%, #5e0017 100%);
-    color: #fff;
-}
+.app-nav-item.is-on:hover { background: rgba(255, 255, 255, .05); }
 
 .app-nav-dot {
     display: grid;
@@ -496,16 +489,12 @@ html.is-lit .app-body::after {
 .app-nav-item.has-new .app-nav-text strong { color: #ffc4a4; }
 .app-nav-item.has-new:hover { background: rgba(255, 107, 53, .13); }
 
-/* Being on a row outranks the row having something waiting: the same weight of
-   selector, further down, so the fill wins and the peach title does not fight
-   it. Written here rather than up there because that is what makes it later. */
-.app-nav-item.is-on.has-new {
-    background: linear-gradient(145deg, #e00434 0%, #9b0022 48%, #4a0011 100%);
-}
-.app-nav-item.is-on.has-new:hover {
-    background: linear-gradient(145deg, #f51042 0%, #b3002a 48%, #5e0017 100%);
-}
-.app-nav-item.is-on .app-nav-text strong { color: #fff; }
+/* A row can be the one you are on and have something waiting on it at once.
+   The tint of has-new would fill a row that is meant to be drawn, so being on
+   it wins: the same weight of selector, further down. The peach title stays,
+   because that is the part that says something is waiting. */
+.app-nav-item.is-on.has-new { background: none; }
+.app-nav-item.is-on.has-new:hover { background: rgba(255, 255, 255, .05); }
 
 .app-nav-count {
     display: grid;
@@ -1169,8 +1158,41 @@ body.is-messages .app-main {
 .chat-pick:hover { background: rgba(255, 255, 255, .05); }
 
 .chat-pick.is-on {
-    background: rgba(255, 255, 255, .11);
-    border-color: transparent;
+    background: none;
+    border-color: rgba(255, 255, 255, .3);
+}
+
+/* --- the selection takes the colour of the light ---------------------------
+   Nothing here until somebody has lit the portal, so a first visit opens grey
+   and stays grey: the colour of a selection is not a decision anybody should
+   have to arrive at having already made.
+   Once they have chosen, the outline is that colour and carries a little of it
+   outwards, the way the light at the top of the page does. The second colour
+   of the pair sits on the title, so the row is drawn in both of them rather
+   than only the first. */
+html.is-lit .app-nav-item.is-on,
+html.is-lit .chat-pick.is-on {
+    border-color: rgba(var(--glow), .9);
+    box-shadow: 0 0 0 1px rgba(var(--glow), .25),
+                0 4px 18px rgba(var(--glow), .18);
+}
+
+html.is-lit .app-nav-item.is-on:hover,
+html.is-lit .chat-pick.is-on:hover {
+    background: rgba(var(--glow), .09);
+}
+
+html.is-lit .app-nav-item.is-on .app-nav-text strong,
+html.is-lit .chat-pick.is-on .chat-pick-text strong {
+    color: rgb(var(--glow-2));
+}
+
+/* Except when something is waiting on the row you are on. The peach is the
+   only thing in the column that means "answer me", and the outline has
+   already said which row is yours, so the peach outranks the light. */
+html.is-lit .app-nav-item.is-on.has-new .app-nav-text strong,
+html.is-lit .chat-pick.is-on.has-new .chat-pick-text strong {
+    color: #ffc4a4;
 }
 
 .chat-pick.has-new .chat-pick-text strong { color: #ffc4a4; }
