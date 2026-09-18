@@ -28,33 +28,38 @@
     padding: 0;
 }
 
-/* --- The wheel ---
-   A circle far bigger than the section, centred on the middle of the bottom
-   edge, carrying the project cards around its rim. Only the top of it is in
-   the section, so what shows is an arch that leaves the screen at both sides,
-   and the whole circle turns slowly anticlockwise: the cards drift left across
-   the top, the same way the first row of the marquee below drifts.
+/* --- The band of projects ---
+   A circle whose centre is far above the page, carrying the project cards on
+   its rim. Only a short piece of the bottom of it crosses the screen, so what
+   shows is a long shallow dip: lowest in the middle, lifting a little towards
+   both edges, and running off the sides rather than ending in view.
 
-   Each card sits tangent to the rim rather than upright, so the further one is
-   from the top of the arch the more it leans. That lean is the only reason the
-   ones near the edges look stretched — there is no distortion anywhere in
-   here, just a circle seen across its own width.
+   Everything here is set off one number. The radius is a fixed multiple of the
+   card, so the gap between one card and the next on the rim is the same
+   fraction of the card at every screen width, and the 4.2deg each card is
+   placed at in the markup keeps meaning what it meant. Change the multiple and
+   that spacing changes with it: at 16 the cards sit a sixth of their own width
+   apart.
 
-   The radius is given in vw so the arch always runs out past both edges: at
-   any width it is more than half the screen, which puts the ends of it off the
-   sides rather than in view.
+   What is held still as the radius moves is the floor of the dip, not the
+   centre of the circle, which is why the centre is put a whole radius above
+   the line the band is wanted on.
 
-   What is held still as the radius moves is the top of the arch, not the
-   centre of the circle. The centre is put a whole radius below the line the
-   arch is wanted on, so that line is where it peaks at every width — pin the
-   centre instead and a wide screen throws the top of the arch off the ceiling
-   while a narrow one drops it into the headline. */
+   The cards lie tangent to the rim rather than upright. Across a screen's
+   worth of a circle this size that is a lean of about ten degrees at the
+   edges — the tilt in the band is the curve of the circle and nothing else,
+   no card here is distorted. */
 .hero-orbit {
-    --orbit-r: clamp(330px, 62vw, 1060px);
-    --orbit-peak: clamp(88px, 15vh, 180px);
-    /* Narrower than the 12deg the cards are spaced at is wide on the rim, so
-       the band has a gap between one card and the next at every width. */
-    --orbit-w: clamp(84px, 10.5vw, 188px);
+    /* The one number everything else here is measured from. The floor is what
+       a phone gets: 17vw of a phone is a stamp, and a band of three cards is
+       already as much as that width holds. */
+    --orbit-w: clamp(96px, 17vw, 300px);
+    --orbit-r: calc(var(--orbit-w) * 16);
+    /* Where the floor of the dip sits, measured from the top of the section.
+       Mostly the screen's own height: the headline is pinned to the bottom of
+       the hero, so on a short screen it comes up to meet whatever is above it
+       and the band has to give way. */
+    --orbit-line: clamp(150px, 22vh, 280px);
     position: absolute;
     inset: 0;
     z-index: 0;
@@ -64,35 +69,38 @@
     /* Down at the level of the gradient behind it: present, not competing. */
     opacity: 0.4;
     /* Off under the header, and gone again well before the headline. The mask
-       is on this box and not on the wheel, so it stays where it is while the
-       wheel turns underneath it. */
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 11%, #000 44%, transparent 74%);
-            mask-image: linear-gradient(to bottom, transparent 0%, #000 11%, #000 44%, transparent 74%);
+       is on this box and not on the band, so it stays where it is while the
+       band moves underneath it. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 44%, transparent 66%);
+            mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 44%, transparent 66%);
     contain: paint;
 }
 
+/* One set of cards is 15 x 4.2deg of rim. Turning by exactly that and starting
+   over puts every card where its own repeat stood, so there is no seam to
+   see. */
 .hero-orbit-wheel {
     position: absolute;
     left: 50%;
-    top: calc(var(--orbit-peak) + var(--orbit-r));
+    top: calc(var(--orbit-line) - var(--orbit-r));
     width: 0;
     height: 0;
-    animation: orbit-turn 240s linear infinite;
+    animation: orbit-drift 78s linear infinite;
     will-change: transform;
 }
 
-/* Laid on the rim at its own angle: half its own size back to put its centre
-   on the wheel's, then turned to its place on the circle and pushed out to
-   the rim. No counter-turn after, which is what leaves it tangent. */
+/* Half its own size back to put its centre on the wheel's, then turned to its
+   place on the circle and pushed down to the rim. No counter-turn after, which
+   is what leaves it tangent. */
 .orbit-item {
     position: absolute;
     top: 0;
     left: 0;
     width: var(--orbit-w);
-    height: calc(var(--orbit-w) * 0.62);
+    height: calc(var(--orbit-w) * 0.6);
     margin-left: calc(var(--orbit-w) / -2);
-    margin-top: calc(var(--orbit-w) * -0.31);
-    border-radius: 12px;
+    margin-top: calc(var(--orbit-w) * -0.3);
+    border-radius: 14px;
     /* Half the work here is done by the rim rather than the picture. Most of
        these mockups are dark on a dark ground, and at the opacity this whole
        band is held to they would be a few bright patches with nothing between
@@ -101,7 +109,7 @@
     border: 1px solid rgba(255, 255, 255, 0.28);
     background: rgba(255, 255, 255, 0.05);
     overflow: hidden;
-    transform: rotate(var(--a)) translateY(calc(var(--orbit-r) * -1));
+    transform: rotate(var(--a)) translateY(var(--orbit-r));
 }
 
 .orbit-item img {
@@ -114,12 +122,13 @@
        the contrast pulls the picture towards its middle before the brightness
        lifts it, so what comes through is the work rather than only whichever
        corner of it happened to be lit. */
-    filter: contrast(0.78) brightness(1.55) saturate(1.15);
+    filter: contrast(0.7) brightness(1.8) saturate(1.2);
 }
 
-@keyframes orbit-turn {
+/* Leftwards, the way the first row of the marquee below drifts. */
+@keyframes orbit-drift {
     from { transform: rotate(0deg); }
-    to   { transform: rotate(-360deg); }
+    to   { transform: rotate(63deg); }
 }
 
 .hero-home-inner {
