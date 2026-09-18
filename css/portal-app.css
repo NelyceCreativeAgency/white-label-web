@@ -2983,13 +2983,8 @@ html.is-lit .app-tab.is-on svg {
     }
 
     /* Room for it under everything that scrolls, and above everything that was
-       already sitting on the bottom edge.
-       Not the conversation, though: it is an app-view like the others, but it
-       owns the bottom edge itself — the box you type in lives there, with the
-       keyboard under it — and the bar is not on screen while it is open. Room
-       left for a bar that is not there is a band of nothing between the box
-       and the keys. */
-    .app-view:not(.app-chat) { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+       already sitting on the bottom edge. */
+    .app-view { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
     .toast { bottom: calc(78px + env(safe-area-inset-bottom)); }
     .why-more { bottom: calc(78px + env(safe-area-inset-bottom)); }
 
@@ -3030,11 +3025,7 @@ html.is-lit .app-tab.is-on svg {
        to open and nothing to remember to close. */
     .app-side { display: none; }
     .app-main { margin-left: 0; }
-    /* The conversation is left out of this for the same reason: it ends at the
-       bottom of the screen, on purpose, and every pixel of padding under it is
-       a pixel between the box you type in and the keys. */
-    .app-view:not(.app-chat) { padding: 20px 16px 72px; }
-    .app-chat { padding: 0; }
+    .app-view { padding: 20px 16px 72px; }
     .app-top { padding: 14px 16px; }
     .profile-card { grid-template-columns: auto 1fr; gap: 16px; padding: 18px; }
     .profile-avatar { width: 64px; height: 64px; font-size: 1.4rem; }
@@ -3080,7 +3071,7 @@ html.is-lit .app-tab.is-on svg {
        some state: dvh does not shrink for a keyboard, svh and lvh are the two
        ends of a browser's toolbars rather than where they are now, and a
        keyboard's accessory bar is in none of them. */
-    body.is-chatting {
+    body.is-chatting:not(.is-blindkeys) {
         position: fixed;
         top: var(--vvtop, 0px);
         left: 0;
@@ -3090,12 +3081,26 @@ html.is-lit .app-tab.is-on svg {
         overflow: hidden;
     }
 
-    body.is-chatting .app-main { height: 100%; min-height: 0; }
-    body.is-chatting .app-chat { min-height: 0; }
-    body.is-chatting .chat-log { overscroll-behavior: contain; }
+    body.is-chatting:not(.is-blindkeys) .app-main { height: 100%; min-height: 0; }
+    body.is-chatting:not(.is-blindkeys) .app-chat { min-height: 0; }
+    body.is-chatting:not(.is-blindkeys) .chat-log { overscroll-behavior: contain; }
 
     /* Nothing between the box and the bottom of what is showing. */
-    body.is-chatting .chat-form { margin-bottom: 0; padding-bottom: 10px; }
+    body.is-chatting:not(.is-blindkeys) .chat-form { margin-bottom: 0; padding-bottom: 10px; }
+
+    /* --- browsers that never mention the keyboard --------------------------
+       Everything above rests on the browser saying how much screen is left
+       when a keyboard covers half of it. Some do not: the keyboard comes up,
+       the page is told nothing, and the box somebody is typing into is under
+       it. That is not a bug this end can measure its way out of, so when it is
+       caught happening the page stops being pinned at all and goes back to
+       being a page that scrolls, which is the one thing every browser will
+       still carry to a focused field. */
+    body.is-blindkeys .app-chat { height: auto; min-height: 0; }
+    body.is-blindkeys .chat-log { overflow: visible; max-height: none; }
+
+    /* Room under the box for a keyboard toolbar nobody can see the size of. */
+    body.is-blindkeys .chat-form { padding-bottom: 18px; scroll-margin-bottom: 18px; }
 
     /* Nothing moves when somebody taps the box.
 
@@ -4265,7 +4270,7 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
 
 /* --- a phone -------------------------------------------------------------- */
 @media (max-width: 560px) {
-    .app-view:not(.app-chat) { padding: 16px 12px calc(78px + env(safe-area-inset-bottom)); }
+    .app-view { padding: 16px 12px calc(78px + env(safe-area-inset-bottom)); }
 
     /* Instagram's own gap, which is most of what makes a grid read as a grid. */
     .ig-grid { gap: 2px; }
