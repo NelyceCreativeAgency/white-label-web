@@ -88,9 +88,24 @@
                 <p class="hero-subtitle animate-fade" data-en="Design, branding, websites and content, delivered ready to present to your own clients. Browse a selection of projects and the full partner price list.">
                     Design, branding, websites και content που παραδίδονται έτοιμα προς παρουσίαση στους πελάτες σου. Δες μια επιλογή από projects και τον πλήρη τιμοκατάλογο συνεργασίας.
                 </p>
+                <!-- One way on from the hero. The label is left in English in
+                     both languages on purpose: it is the same two words either
+                     way, and the switcher leaves alone what carries no data-en.
+
+                     The fill is its own element rather than a background on the
+                     link, because it grows from the disc at the right end and a
+                     background cannot be given an origin. Both arrows are in the
+                     markup: one leaves, the other arrives behind it, which is
+                     cheaper and steadier than animating one and resetting it. -->
                 <div class="hero-actions animate-fade">
-                    <a href="white-label.html" class="btn btn-primary" data-en="View the Price List">Δες τον Τιμοκατάλογο</a>
-                    <a href="mailto:info@nelycedesign.com?subject=White%20Label%20Partnership%20Quote" class="btn btn-secondary" data-en="Request a Custom Quote">Ζήτησε εξατομικευμένη προσφορά</a>
+                    <a href="mailto:info@nelycedesign.com?subject=White%20Label%20Partnership" class="lets-talk">
+                        <span class="lt-fill" aria-hidden="true"></span>
+                        <span class="lt-label">Let&rsquo;s Talk</span>
+                        <span class="lt-disc" aria-hidden="true">
+                            <svg class="lt-arrow" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 17L17 7M17 7H8M17 7v9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <svg class="lt-arrow lt-arrow-next" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 17L17 7M17 7H8M17 7v9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                    </a>
                 </div>
             </div>
         </div>

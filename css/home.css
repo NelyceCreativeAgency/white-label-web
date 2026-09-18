@@ -93,11 +93,10 @@ html[data-lang="el"] .hero-home .hero-title {
 
 /* Held over to the right, but off the gutter rather than against it.
 
-   The width is what a row of the two buttons needs, measured off the fonts:
-   445px of button in English, 525px in Greek, whose labels are half again as
-   long. Each language is given its own ceiling so neither has to carry the
-   other's slack, and so the paragraph above keeps a sane measure. Wrapping is
-   left on underneath as the safety valve. */
+   The width was measured off a row of two buttons the hero no longer has, and
+   it stays: with one short button left it is the paragraph's measure alone,
+   and the two ceilings are a sane one in each language, Greek running about
+   half again as long as English. */
 .hero-aside {
     justify-self: end;
     max-width: 480px;
@@ -122,6 +121,135 @@ html[data-lang="el"] .hero-aside {
     flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 0;
+}
+
+/* --- Let's Talk ---
+   The one thing the hero asks for. A dark pill with the label set wide and a
+   disc at the right end holding the arrow, and on hover the disc's colour
+   floods the whole pill from that end.
+
+   The flood is .lt-fill: a circle wider than the button is long, scaled to
+   nothing and parked over the disc, grown back to full size on hover. Scaling
+   a circle keeps the edge of the wash curved the whole way across, which a
+   width or a background-position cannot do. It is under the label and above
+   the pill's own background, so the label crosses from light to dark as the
+   colour passes beneath it.
+
+   Dark text on the orange, not white: white clears about three to one against
+   the orange end and the page's near-black clears seven, the same choice the
+   solid buttons on the other pages already make. */
+.lets-talk {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    /* Under 768px style.css turns the row of actions into a column and gives
+       every .btn in it the full width. This is not one of those: a pill that
+       runs the width of the screen would be all gap between the label and the
+       disc, so it keeps its own width there too. */
+    align-self: flex-start;
+    gap: 18px;
+    padding: 9px 9px 9px 28px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.45s ease, color 0.45s ease;
+}
+
+/* Square, so scale leaves it a circle; wider than the button is long, so the
+   far end is covered before the near end has finished arriving. At rest it is
+   scaled to nothing rather than to the size of the disc: anything left over
+   shows past the disc as a second, smaller mark at the end of the pill. */
+.lt-fill {
+    position: absolute;
+    z-index: -1;
+    top: 50%;
+    right: -6px;
+    width: 320px;
+    height: 320px;
+    margin-top: -160px;
+    border-radius: 50%;
+    background: linear-gradient(100deg, var(--accent-orange), var(--accent-amber));
+    transform: scale(0);
+    transform-origin: 100% 50%;
+    transition: transform 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.lt-label {
+    position: relative;
+    z-index: 1;
+    transition: color 0.35s ease;
+}
+
+/* At rest the disc is the only colour on the button. Under the flood it turns
+   dark, the one piece that inverts, so the arrow stays readable throughout. */
+.lt-disc {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(100deg, var(--accent-orange), var(--accent-amber));
+    color: var(--bg-dark);
+    overflow: hidden;
+    transition: background 0.45s ease, color 0.45s ease;
+}
+
+/* Both arrows sit in the same cell. The first leaves up and to the right along
+   its own diagonal, the second comes in from below left on the same line. */
+.lt-arrow {
+    grid-area: 1 / 1;
+    transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.lt-arrow-next {
+    transform: translate3d(-115%, 115%, 0);
+}
+
+.lets-talk:hover,
+.lets-talk:focus-visible {
+    border-color: transparent;
+    color: var(--bg-dark);
+}
+
+.lets-talk:hover .lt-fill,
+.lets-talk:focus-visible .lt-fill {
+    transform: scale(1);
+}
+
+.lets-talk:hover .lt-disc,
+.lets-talk:focus-visible .lt-disc {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+}
+
+.lets-talk:hover .lt-arrow,
+.lets-talk:focus-visible .lt-arrow {
+    transform: translate3d(115%, -115%, 0);
+}
+
+.lets-talk:hover .lt-arrow-next,
+.lets-talk:focus-visible .lt-arrow-next {
+    transform: translate3d(0, 0, 0);
+}
+
+.lets-talk:focus-visible {
+    outline: 2px solid var(--accent-orange);
+    outline-offset: 4px;
 }
 
 /* The split needs room for a headline and a 480px to 560px column side by
@@ -943,6 +1071,26 @@ html[data-lang="el"] .pm-title {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    /* The flood becomes a plain change of fill, and the arrow stays where it
+       is: the second one is only there to replace a departure, so with nothing
+       departing it comes out of the button altogether. */
+    .lt-fill {
+        transition: none;
+    }
+
+    .lt-arrow {
+        transition: none;
+    }
+
+    .lt-arrow-next {
+        display: none;
+    }
+
+    .lets-talk:hover .lt-arrow,
+    .lets-talk:focus-visible .lt-arrow {
+        transform: none;
+    }
+
     .btn,
     .btn svg {
         transition: none;
