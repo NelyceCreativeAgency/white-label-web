@@ -402,17 +402,17 @@ html[data-lang="el"] .hero-aside {
     background: linear-gradient(180deg, #16161d 0, #0e0e14 340px, #0a0a0e 820px);
     border-top: 1px solid rgba(255, 255, 255, 0.07);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09),
-                0 -18px 44px rgba(0, 0, 0, 0.5),
-                0 24px 56px rgba(0, 0, 0, 0.3);
+                0 -18px 44px rgba(0, 0, 0, 0.28),
+                0 24px 56px rgba(0, 0, 0, 0.16);
     overflow: hidden;
 }
 
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .featured-panel {
         background: linear-gradient(180deg,
-            rgba(22, 22, 29, 0.84) 0,
-            rgba(14, 14, 20, 0.88) 340px,
-            rgba(10, 10, 14, 0.9) 820px);
+            rgba(22, 22, 29, 0.64) 0,
+            rgba(14, 14, 20, 0.7) 340px,
+            rgba(10, 10, 14, 0.74) 820px);
         -webkit-backdrop-filter: blur(30px) saturate(135%);
                 backdrop-filter: blur(30px) saturate(135%);
     }
