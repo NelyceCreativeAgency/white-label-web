@@ -337,7 +337,18 @@
     const boot = async () => {
         let session;
         try { session = await api('/api/session'); }
-        catch { return; }
+        catch (err) {
+            // A portal that cannot ask who is here has nothing to show, and
+            // used to show exactly that: the empty shell, in silence, which
+            // reads as a portal with nothing in it rather than one that could
+            // not be reached. It says so now, and keeps saying it, because
+            // there is no next step for anybody until this call works.
+            if (err.message === 'not-signed-in') return;
+            console.error('session', err);
+            busy(`Δεν φόρτωσε: ${explain(err)}`);
+            toast(explain(err), 'bad');
+            return;
+        }
 
         if (!session.user) { location.replace(LOGIN); return; }
 
