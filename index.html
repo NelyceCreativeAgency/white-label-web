@@ -67,6 +67,14 @@
         </nav>
     </div>
 
+    <!-- The hero and the projects are wrapped together so the hero can be
+         sticky inside the pair: it holds still at the top of the screen while
+         the projects panel rises over it, and it is released again the moment
+         the panel has passed. Nothing below this wrapper needs a background of
+         its own, which is the whole reason the two are wrapped rather than the
+         hero being pinned for the length of the page. -->
+    <div class="hero-stack">
+
     <!-- Home hero: headline down the left, the supporting copy and the button
          in a narrow column on the right, over the page's own ambient gradient.
          The title is split into two spans so the last words can carry the
@@ -112,11 +120,10 @@
          (the second copy is cloned by js/home.js and hidden from assistive tech),
          so the loop can restart mid-animation without a visible seam. -->
     <section class="featured-section" id="featured">
-        <!-- Everything the section holds sits on one glass panel, whose edges
-             land on the same gutter the logo and the hero headline stand on.
-             The panel is what separates this section from the hero above it,
-             so the heading itself can stay as it was, centred over the rows. -->
-        <div class="home-bleed">
+        <!-- Everything the section holds sits on one dark panel that runs the
+             full width of the screen and is rounded along its top edge only,
+             so it reads as a card sliding up over the hero rather than as a
+             box floating in the middle of it. -->
         <div class="featured-panel">
         <div class="container text-center">
             <h2 class="featured-title scroll-reveal" data-en="Featured Projects">Επιλεγμένα Projects</h2>
@@ -311,8 +318,9 @@
             </div>
         </div>
         </div>
-        </div>
     </section>
+
+    </div><!-- /.hero-stack -->
 
     <!-- The partnership model. It sits after the work and before the closing CTA:
          by this point a visitor knows what we make, and the question that stops
