@@ -34,6 +34,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="css/style.min.css"/>
     <link type="text/css" rel="stylesheet" href="css/portal-app.css"/>
+
+    <!-- The colour of the light at the top of the page, put on the document
+         before anything is drawn. Five lines here rather than a wait for the
+         portal's own script, which is three hundred kilobytes further down the
+         page: by the time that ran, the first frame could already have been
+         somebody else's orange. -->
+    <script>
+        try {
+            var root = document.documentElement;
+            var glow = localStorage.getItem('nelyce-glow');
+            var level = localStorage.getItem('nelyce-level');
+
+            if (level !== null) root.style.setProperty('--glow-lvl', level);
+            if (glow && (level === null || Number(level) > 0)) {
+                var pair = glow.split('|');
+                root.style.setProperty('--glow', pair[0]);
+                if (pair[1]) root.style.setProperty('--glow-2', pair[1]);
+                root.classList.add('is-lit');
+            }
+        } catch (e) { /* nothing to remember with */ }
+    </script>
 </head>
 <body class="app-body">
 
@@ -96,18 +117,18 @@
                 <p class="app-nav-label">Διαχείριση</p>
                 <button class="app-nav-item" type="button" data-view="partners">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    <span>Συνεργάτες</span>
+                    <span class="app-nav-text"><strong>Συνεργάτες</strong></span>
                 </button>
                 <button class="app-nav-item" type="button" data-view="clients">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"/>
                         <path d="M9 21v-6h6v6"/></svg>
-                    <span>Πελάτες</span>
+                    <span class="app-nav-text"><strong>Πελάτες</strong></span>
                 </button>
                 <button class="app-nav-item" type="button" data-view="accounts">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/>
                         <rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>
                         <rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-                    <span>Grids</span>
+                    <span class="app-nav-text"><strong>Grids</strong></span>
                 </button>
             </div>
         </nav>
@@ -128,6 +149,43 @@
 
             <div class="me-menu" id="me-menu" role="menu" hidden>
                 <button type="button" role="menuitem" id="me-settings">Ρυθμίσεις</button>
+
+                <!-- The light at the top of the page, in whatever colour suits
+                     the person looking at it. It stays open while they try
+                     them, because choosing a colour is looking at it. -->
+                <div class="me-tint" id="me-tint" role="group" aria-label="Φωτισμός">
+                    <p class="me-tint-what">Φωτισμός</p>
+                    <div class="me-tint-dots">
+                        <button class="me-tint-dot" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Πορτοκαλί" title="Πορτοκαλί"
+                                data-glow="255, 107, 53" data-glow-two="236, 72, 153"
+                                style="--dot: 255, 107, 53; --dot-2: 236, 72, 153"></button>
+                        <button class="me-tint-dot" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Ροζ" title="Ροζ"
+                                data-glow="236, 72, 153" data-glow-two="139, 92, 246"
+                                style="--dot: 236, 72, 153; --dot-2: 139, 92, 246"></button>
+                        <button class="me-tint-dot" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Μωβ" title="Μωβ"
+                                data-glow="139, 92, 246" data-glow-two="56, 130, 246"
+                                style="--dot: 139, 92, 246; --dot-2: 56, 130, 246"></button>
+                        <button class="me-tint-dot" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Μπλε" title="Μπλε"
+                                data-glow="56, 130, 246" data-glow-two="34, 211, 238"
+                                style="--dot: 56, 130, 246; --dot-2: 34, 211, 238"></button>
+                        <button class="me-tint-dot" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Πράσινο" title="Πράσινο"
+                                data-glow="34, 197, 94" data-glow-two="56, 130, 246"
+                                style="--dot: 34, 197, 94; --dot-2: 56, 130, 246"></button>
+                        <button class="me-tint-dot is-off" type="button" role="menuitemradio"
+                                aria-checked="false" aria-label="Σβηστό" title="Σβηστό"
+                                data-glow=""></button>
+                    </div>
+
+                    <input class="me-tint-bar" id="me-tint-bar" type="range"
+                           min="0" max="100" step="1" value="40"
+                           aria-label="Ένταση φωτισμού">
+                </div>
+
                 <button type="button" role="menuitem" id="logout">Έξοδος</button>
             </div>
         </div>
@@ -597,6 +655,18 @@
     <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" multiple hidden>
 
     <div class="toast" id="toast" hidden></div>
+
+    <!-- Said once a day, to whoever opens the portal first that morning. It
+         points at the row it is talking about, because a sentence about a gear
+         nobody has noticed yet is a sentence about nothing. -->
+    <aside class="hello" id="hello" role="note" aria-label="Καλωσήρθες" hidden>
+        <strong>Καλωσήρθες</strong>
+        <p>Το portal ανοίγει στα σκοτεινά.
+            <span class="hello-here">Από το γρανάζι, εδώ κάτω,</span>
+            <span class="hello-there">Άνοιξε το μενού και, από το γρανάζι δίπλα στο όνομά σου,</span>
+            ανάβεις τα φώτα και διαλέγεις χρώμα.</p>
+        <button class="btn btn-primary" type="button" id="hello-ok">Εντάξει</button>
+    </aside>
 
     <script type="text/javascript" src="js/portal-app.js" defer></script>
 </body>
