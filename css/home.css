@@ -306,7 +306,7 @@ html[data-lang="el"] .hero-aside {
 
 
 .featured-section {
-    padding: 40px 0 56px;
+    padding: clamp(24px, 4vh, 48px) 0 56px;
     position: relative;
     z-index: 1;
 }
@@ -347,6 +347,15 @@ html[data-lang="el"] .hero-aside {
     align-items: end;
     column-gap: 48px;
     margin-bottom: 44px;
+    /* The hero and this section are built on the same left line and the same
+       split, which left them reading as one long block. A hairline across the
+       page closes the one and opens the other. It is drawn on the head rather
+       than on the section so that it starts and ends on the gutter the logo
+       and the headline stand on, and it is a fade rather than a flat rule so
+       it does not cut the page in two. */
+    padding-top: clamp(36px, 5vw, 60px);
+    border-image: linear-gradient(to right, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.02) 62%, transparent) 1;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .featured-title {
