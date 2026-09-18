@@ -25,7 +25,7 @@ exports.SLOTS = SLOTS;
 
 exports.newId = (prefix) => `${prefix}_${crypto.randomBytes(8).toString('hex')}`;
 
-const EMPTY = () => ({ users: [], grids: [], clients: [], projects: [], updatedAt: null });
+const EMPTY = () => ({ users: [], grids: [], clients: [], projects: [], house: null, updatedAt: null });
 
 exports.readAccounts = async () => {
     const doc = await store.readJson(ACCOUNTS_KEY);
@@ -41,6 +41,11 @@ exports.readAccounts = async () => {
         // asks what somebody may open, so it lives here beside the grids
         // rather than in a document of its own that would have to be fetched.
         projects: Array.isArray(doc.projects) ? doc.projects : [],
+        // Our own details for a paper. One record rather than one per admin:
+        // there may be several of you, but there is one of us, and a partner
+        // asked to invoice whichever admin they happened to speak to would be
+        // right to think the place was disorganised.
+        house: (doc.house && typeof doc.house === 'object') ? doc.house : null,
         updatedAt: doc.updatedAt || null
     };
 };
@@ -85,6 +90,31 @@ exports.billingOf = (user) => {
     Object.keys(BILLING).forEach(field => { out[field] = String(was[field] || ''); });
     return out;
 };
+
+// The same shape as anybody's, read off the document rather than off a user.
+exports.houseOf = (doc) => {
+    const was = (doc && doc.house) || {};
+    const out = {};
+    Object.keys(BILLING).forEach(field => { out[field] = String(was[field] || ''); });
+    return out;
+};
+
+exports.setHouse = (doc, given) => {
+    if (!given || typeof given !== 'object') return;
+
+    const out = exports.houseOf(doc);
+    Object.keys(BILLING).forEach(field => {
+        if (given[field] === undefined) return;
+        out[field] = String(given[field] == null ? '' : given[field]).trim().slice(0, BILLING[field]);
+    });
+
+    doc.house = out;
+};
+
+// Whether there is anything in it worth showing anybody. An empty record is
+// not a panel with nothing in it, it is no panel.
+exports.hasHouse = (doc) =>
+    Object.values(exports.houseOf(doc)).some(one => one !== '');
 
 exports.setBilling = (user, given) => {
     if (!given || typeof given !== 'object') return;

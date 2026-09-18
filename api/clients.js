@@ -485,8 +485,10 @@ const patchEntry = (money, body) => {
 // account is the key, because there is no client record standing in for them
 // and there should not be: they are not being invoiced by anybody here, they
 // are invoicing.
-const partnerMoney = async (user) => ({
+const partnerMoney = async (user, doc) => ({
     partner: { ...accounts.publicUser(user), billing: accounts.billingOf(user) },
+    // Ours, so that somebody about to invoice us does not have to ask for it.
+    house: accounts.hasHouse(doc) ? accounts.houseOf(doc) : null,
     money: moneyOut(await readMoney(user.id), true)
 });
 
@@ -535,7 +537,7 @@ module.exports = async (req, res) => {
         // half is what we have invoiced them, and that is read only: a bill is
         // not something its recipient gets to edit.
         if (me.role === 'partner') {
-            if (req.method === 'GET') return res.status(200).json(await partnerMoney(me));
+            if (req.method === 'GET') return res.status(200).json(await partnerMoney(me, doc));
 
             const ledger = await readMoney(me.id);
             const answer = () => res.status(200).json({ money: moneyOut(ledger, true) });
@@ -554,6 +556,18 @@ module.exports = async (req, res) => {
                 // may be asked for a VAT number by the person invoicing them,
                 // and having to ask somebody else to type it in is a small
                 // indignity that costs a message each time.
+                // Our own details, written by whichever admin is here and
+                // read by everybody. Kept on the document rather than on an
+                // admin's account, because there is one of us however many
+                // admins there are.
+                if (body.kind === 'house' && req.method === 'PATCH') {
+                    if (me.role !== 'admin') throw new Error('not-allowed');
+                    const doc = await accounts.readAccounts();
+                    accounts.setHouse(doc, body.billing);
+                    await accounts.writeAccounts(doc);
+                    return res.status(200).json({ house: accounts.houseOf(doc) });
+                }
+
                 if (body.kind === 'partner' && req.method === 'PATCH') {
                     const doc = await accounts.readAccounts();
                     const mine = accounts.findUser(doc, me.id);
@@ -608,9 +622,16 @@ module.exports = async (req, res) => {
                 const money = await readMoney(client.id);
                 return res.status(200).json({
                     client: clientOut(client, true, doc),
+                    house: accounts.hasHouse(doc) ? accounts.houseOf(doc) : null,
                     money: moneyOut(money, true),
                     files: files.listOut(await files.read(client.id), true)
                 });
+            }
+
+            // Ours, for the admin who is about to edit it. Everybody else is
+            // handed it with their own page and never asks for it by name.
+            if (req.query && req.query.house) {
+                return res.status(200).json({ house: accounts.houseOf(doc) });
             }
 
             const asked = text(req.query && req.query.partner, 40);

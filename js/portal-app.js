@@ -358,6 +358,7 @@
         renderMe();
         greet();
         $('app-admin-nav').hidden = state.me.role !== 'admin';
+        $('me-card').hidden = state.me.role !== 'admin';
 
         await loadGrids();
         await loadClients();
@@ -3672,6 +3673,23 @@
 
     $('me-settings').addEventListener('click', () => { closeMeMenu(); openMe(); });
 
+    // Ours, which only an admin has and only an admin is shown the way to.
+    // Read on the way in rather than at boot: it is one small document and
+    // nobody needs it until the moment they ask to look at it.
+    $('me-card').addEventListener('click', async () => {
+        closeMeMenu();
+        busy('Φόρτωση…');
+        try {
+            const data = await api('/api/clients?house=1');
+            house.mine = data.house;
+            openMoney('house', null);
+        } catch (err) {
+            toast(explain(err), 'bad');
+        } finally {
+            busy('');
+        }
+    });
+
     // --- the light the portal is lit by --------------------------------------
     // Everything the lights are is in the stylesheet. This says two things to
     // it: which pair of colours, and whether there is to be any light at all.
@@ -6215,6 +6233,10 @@
                     partner: null, money: null, files: [], seesGrids: false,
                     people: [], grids: [] };
 
+    // Our own card. The admin reads it to edit it; everybody else is handed it
+    // with their own page and reads it to know who they are dealing with.
+    const house = { mine: null };
+
     // How long a link is the client's. The server decides it; this is only the
     // same number, for the sentence that explains it.
     const FILE_MONTHS = 12;
@@ -6367,6 +6389,7 @@
                 purse.client = null;
                 purse.files = [];
                 purse.money = data.money || { subs: [], entries: [], owed: 0 };
+                if ('house' in data) house.mine = data.house;
 
                 $('app-title').textContent = mine ? 'Ο λογαριασμός μου' : data.partner.name;
                 renderClient();
@@ -6391,6 +6414,7 @@
             purse.seesGrids = Boolean(data.seesGrids);
             purse.people = data.people || [];
             purse.grids = data.grids || [];
+            if ('house' in data) house.mine = data.house;
 
             $('app-title').textContent = mine ? 'Ο λογαριασμός μου' : data.client.name;
             renderClient();
@@ -6654,6 +6678,28 @@
         ['address', 'Διεύθυνση']
     ];
 
+    // Ours, on the page of whoever we are working with. A card rather than a
+    // form: there is nothing here for them to change, and the only reason it
+    // is on their page at all is so they never have to ask us for it.
+    // The same fields in the same order as anybody's card, drawn the same way.
+    const housePanel = () => {
+        const card = house.mine;
+        if (!card) return '';
+
+        const said = BILL_FIELDS.filter(([key]) => card[key]);
+        if (!said.length) return '';
+
+        return `
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Η καρτέλα της Nelyce</h2>
+                    <p>Τα στοιχεία μας, για ό,τι χρειαστείς.</p>
+                </div>
+                <ul class="bill">${said.map(([key, label]) =>
+                    `<li><span>${label}</span><strong>${esc(card[key])}</strong></li>`).join('')}</ul>
+            </section>`;
+    };
+
     const billingPanel = (who, boss) => {
         const bill = who.billing || {};
         const said = BILL_FIELDS.filter(([key]) => bill[key]);
@@ -6716,6 +6762,8 @@
 
             ${billingPanel(who, boss)}
 
+            ${boss ? '' : housePanel()}
+
             ${billsPanel('in', 'Τιμολόγια προς Nelyce',
                 boss
                     ? ['Ό,τι σου έχει τιμολογήσει αυτός ο συνεργάτης.',
@@ -6775,6 +6823,8 @@
                 ${boss && client.note
                     ? `<p class="client-note"><span>Μόνο εσύ</span>${esc(client.note)}</p>` : ''}
             </section>
+
+            ${boss ? '' : housePanel()}
 
             <details class="panel panel-fold" data-fold="subs"${folded.open('subs', true) ? ' open' : ''}>
                 <summary class="panel-head">
@@ -7081,6 +7131,37 @@
             }
         }
 
+        // Ours. The same card everybody else has, with the same fields in the
+        // same order, so that what a partner reads on their page and what we
+        // fill in here are recognisably one thing.
+        if (kind === 'house') {
+            const bill = house.mine || {};
+            const box = (key, label, extra = '') =>
+                `<label>${label}<input data-f="${key}" value="${esc(bill[key] || '')}"${extra}></label>`;
+
+            $('money-title').textContent = 'Η καρτέλα μου';
+            $('money-sub').textContent = 'Τη βλέπουν οι συνεργάτες και οι πελάτες στη σελίδα τους.';
+
+            body.innerHTML = `
+                <div class="row-fields">
+                    ${box('company', 'Επωνυμία', ' maxlength="90"')}
+                    ${box('vat', 'ΑΦΜ', ' maxlength="20" inputmode="numeric" spellcheck="false"')}
+                    ${box('taxOffice', 'ΔΟΥ', ' maxlength="60"')}
+                </div>
+
+                <div class="row-fields">
+                    ${box('email', 'Email', ' maxlength="140" inputmode="email" autocapitalize="none" spellcheck="false"')}
+                    ${box('phone', 'Τηλέφωνο', ' maxlength="40" inputmode="tel"')}
+                </div>
+
+                <label class="edit-label pw-head" for="house-address">Διεύθυνση</label>
+                <input class="me-name-field" id="house-address" data-f="address"
+                       value="${esc(bill.address || '')}" maxlength="160">
+                <p class="pw-note">Ό,τι αφήσεις κενό δεν εμφανίζεται πουθενά.${tip(
+                    'Ένας συνεργάτης που θέλει να σου κόψει παραστατικό τα βρίσκει μόνος του αντί να σου τα ζητήσει, και ένας πελάτης βλέπει σε ποιον πλήρωσε.')}</p>
+            `;
+        }
+
         if (kind === 'partner') {
             const who = purse.partner;
             if (!who) return;
@@ -7209,7 +7290,7 @@
         // There is nothing to delete about a set of details: emptying the boxes
         // is how they go away, and a red button beside them would only ever be
         // pressed by mistake.
-        $('money-delete').hidden = kind === 'partner';
+        $('money-delete').hidden = kind === 'partner' || kind === 'house';
 
         tray.kind = kind;
         tray.id = id;
@@ -7309,6 +7390,20 @@
         busy('Αποθήκευση…');
 
         try {
+            if (tray.kind === 'house') {
+                const data = await api('/api/clients', {
+                    method: 'PATCH',
+                    body: { kind: 'house', billing: fields(body) }
+                });
+                house.mine = data.house;
+                closeMoney();
+                toast('Αποθηκεύτηκε.');
+                // Every page that draws it is redrawn by being reopened, and
+                // the admin is never standing on one of them: ours is read by
+                // partners and clients, on their own pages.
+                return;
+            }
+
             if (tray.kind === 'partner') {
                 await api('/api/clients', {
                     method: 'PATCH',
