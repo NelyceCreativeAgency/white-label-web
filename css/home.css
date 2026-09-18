@@ -323,12 +323,14 @@ html[data-lang="el"] .hero-aside {
 .featured-section {
     padding: 0;
     position: relative;
-    /* Over the hero, and far enough up its skirt to cap it. The overlap is
-       taken out of the hero's own bottom padding, which never runs under
-       64px, so the panel's top edge lands on empty hero rather than on the
-       button. */
+    /* Over the hero, but starting below the fold: the card's lip has no
+       business showing while the hero is still the whole screen. The hero's
+       box already ends a little under the first screenful, since it is a
+       screen tall less the header; this holds it a further step down, so the
+       lip is clear of the fold on any viewport and arrives only once the page
+       has been scrolled a little. */
     z-index: 1;
-    margin-top: calc(-1 * clamp(40px, 6vh, 80px));
+    margin-top: clamp(20px, 5vh, 56px);
 }
 
 /* One rule for both section headings on this page, so they cannot drift apart
