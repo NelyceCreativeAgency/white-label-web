@@ -28,70 +28,96 @@
     padding: 0;
 }
 
-/* --- The band of projects ---
-   A circle whose centre is far above the page, carrying the project cards on
-   its rim. Only a short piece of the bottom of it crosses the screen, so what
-   shows is a long shallow dip: lowest in the middle, lifting a little towards
-   both edges, and running off the sides rather than ending in view.
+/* --- The ring of projects ---
+   A ring standing upright in the page with the project cards mounted around
+   it facing outwards, turning slowly. Not a curve drawn to look like depth:
+   the cards are placed in depth and the browser does the rest, so the one at
+   the front is genuinely nearer the eye and larger for it, and the ones coming
+   round to the sides are turned away from us and foreshorten as they go. The
+   far half has its back to us and is not drawn.
 
-   Everything here is set off one number. The radius is a fixed multiple of the
-   card, so the gap between one card and the next on the rim is the same
-   fraction of the card at every screen width, and the 4.2deg each card is
-   placed at in the markup keeps meaning what it meant. Change the multiple and
-   that spacing changes with it: at 16 the cards sit a sixth of their own width
-   apart.
+   Three numbers, and the card's own width sets all of them.
 
-   What is held still as the radius moves is the floor of the dip, not the
-   centre of the circle, which is why the centre is put a whole radius above
-   the line the band is wanted on.
+   The radius is 6.2 cards, which is what leaves about a third of a card of air
+   between one and the next around the rim. The viewing distance is two radii:
+   near enough that the card at the front comes up twice the size of one turning
+   away at the side, far enough that it is a carousel and not a fisheye.
+   Together they put the widest point of the ring at about 1.15 radii from the
+   middle of the screen, so at 10vw a card the ring always runs out past both
+   edges rather than ending in view.
 
-   The cards lie tangent to the rim rather than upright. Across a screen's
-   worth of a circle this size that is a lean of about ten degrees at the
-   edges — the tilt in the band is the curve of the circle and nothing else,
-   no card here is distorted. */
+   The tip back is the last of it. A ring lying flat to the eye is a straight
+   row of cards; a few degrees of it and we are looking at the ring from a
+   little under, which drops its front below its sides and gives the row the
+   dip through the middle that it should have. Only a few: what the tip does to
+   the front of the ring the perspective then doubles, so at much more than
+   this the row bows out of the space it has.
+
+   Where the ring is said to sit is the front of it, not its axis, for the
+   same reason: the front is the part anyone looks at, and it is the part that
+   has to keep clear of the headline. */
 .hero-orbit {
     /* The one number everything else here is measured from. The floor is what
-       a phone gets: 17vw of a phone is a stamp, and a band of three cards is
-       already as much as that width holds. */
-    --orbit-w: clamp(96px, 17vw, 300px);
-    --orbit-r: calc(var(--orbit-w) * 16);
-    /* Where the floor of the dip sits, measured from the top of the section.
-       Mostly the screen's own height: the headline is pinned to the bottom of
-       the hero, so on a short screen it comes up to meet whatever is above it
-       and the band has to give way. */
-    --orbit-line: clamp(150px, 22vh, 280px);
+       a phone gets: 9vw of a phone is a stamp. */
+    --orbit-w: clamp(100px, 10vw, 200px);
+    --orbit-r: calc(var(--orbit-w) * 6.2);
+    /* Where the card at the front of the ring sits, measured from the top of
+       the section. Mostly the screen's own height: the headline is pinned to
+       the bottom of the hero, so on a short screen it comes up to meet
+       whatever is above it and the ring has to give way. */
+    --orbit-line: clamp(170px, 23vh, 285px);
+    /* The axis of the ring is a quarter of a radius above that. The tip takes
+       the front of the ring down by a fixed share of the radius and the
+       perspective then enlarges what it took, and with the tip and the viewing
+       distance both fixed that share is a constant of this geometry: a quarter,
+       measured off the page. Everything about the ring scales with the card, so
+       one number holds at every width. */
+    --orbit-axis: calc(var(--orbit-line) - var(--orbit-r) * 0.25);
     position: absolute;
     inset: 0;
     z-index: 0;
     overflow: hidden;
+    /* The eye, level with the middle of the ring rather than the middle of the
+       hero: off its axis the ring would come out skewed, one side of it nearer
+       than the other for no reason. */
+    perspective: calc(var(--orbit-r) * 2);
+    perspective-origin: 50% var(--orbit-axis);
     /* Decoration. It never takes a click, and a click never reaches it. */
     pointer-events: none;
     /* Down at the level of the gradient behind it: present, not competing. */
     opacity: 0.4;
     /* Off under the header, and gone again well before the headline. The mask
-       is on this box and not on the band, so it stays where it is while the
-       band moves underneath it. */
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 44%, transparent 66%);
-            mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 44%, transparent 66%);
+       is on this box and not on the ring, so it stays where it is while the
+       ring turns underneath it. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 7%, #000 46%, transparent 68%);
+            mask-image: linear-gradient(to bottom, transparent 0%, #000 7%, #000 46%, transparent 68%);
     contain: paint;
 }
 
-/* One set of cards is 15 x 4.2deg of rim. Turning by exactly that and starting
-   over puts every card where its own repeat stood, so there is no seam to
-   see. */
-.hero-orbit-wheel {
+/* The tip is held apart from the turn: one transform cannot be animated in
+   part, and nesting is cheaper than restating the tilt in every frame. The
+   sign is the whole point of it — tipped the other way the row comes out a
+   hump rather than a dip, and rides up into the header. */
+.hero-orbit-stage {
     position: absolute;
     left: 50%;
-    top: calc(var(--orbit-line) - var(--orbit-r));
+    top: var(--orbit-axis);
     width: 0;
     height: 0;
-    animation: orbit-drift 78s linear infinite;
+    transform: rotateX(-4deg);
+    transform-style: preserve-3d;
+}
+
+.hero-orbit-wheel {
+    position: absolute;
+    transform-style: preserve-3d;
+    animation: orbit-turn 150s linear infinite;
     will-change: transform;
 }
 
-/* Half its own size back to put its centre on the wheel's, then turned to its
-   place on the circle and pushed down to the rim. No counter-turn after, which
-   is what leaves it tangent. */
+/* Half its own size back to put its centre on the ring's axis, then turned to
+   its place around the ring and pushed out to the rim, where it ends up facing
+   away from the axis. */
 .orbit-item {
     position: absolute;
     top: 0;
@@ -103,13 +129,17 @@
     border-radius: 14px;
     /* Half the work here is done by the rim rather than the picture. Most of
        these mockups are dark on a dark ground, and at the opacity this whole
-       band is held to they would be a few bright patches with nothing between
-       them. The rim gives every card its edge back, so the band reads as one
-       run of cards whatever is printed on them. */
+       ring is held to they would be a few bright patches with nothing between
+       them. The rim gives every card its edge back, so the run of cards reads
+       as one whatever is printed on them. */
     border: 1px solid rgba(255, 255, 255, 0.28);
     background: rgba(255, 255, 255, 0.05);
     overflow: hidden;
-    transform: rotate(var(--a)) translateY(var(--orbit-r));
+    /* The far half of the ring is turned away from us. Nothing is drawn of a
+       card's back, so it leaves on its own as it goes round, at the moment it
+       is edge-on and has no width to lose. */
+    backface-visibility: hidden;
+    transform: rotateY(var(--a)) translateZ(var(--orbit-r));
 }
 
 .orbit-item img {
@@ -117,7 +147,7 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    /* Most of these are dark mockups on a dark ground, and behind a band held
+    /* Most of these are dark mockups on a dark ground, and behind a ring held
        at this opacity their blacks and the page's are the same thing. Dropping
        the contrast pulls the picture towards its middle before the brightness
        lifts it, so what comes through is the work rather than only whichever
@@ -125,10 +155,11 @@
     filter: contrast(0.7) brightness(1.8) saturate(1.2);
 }
 
-/* Leftwards, the way the first row of the marquee below drifts. */
-@keyframes orbit-drift {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(63deg); }
+/* Anticlockwise from above, so the cards at the front cross to the left, the
+   way the first row of the marquee below drifts. */
+@keyframes orbit-turn {
+    from { transform: rotateY(0deg); }
+    to   { transform: rotateY(-360deg); }
 }
 
 .hero-home-inner {
@@ -1174,7 +1205,7 @@ html[data-lang="el"] .pm-title {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    /* The arch stays, it just stops coming round. */
+    /* The ring stays where it is, it just stops coming round. */
     .hero-orbit-wheel {
         animation: none;
     }
