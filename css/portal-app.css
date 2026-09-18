@@ -415,10 +415,24 @@ html.is-lit .app-body::after {
 
 .app-nav-item:hover { background: rgba(255, 255, 255, .05); color: var(--text-primary); }
 
+/* The one you are on. A solid violet that runs to a deeper violet, so the
+   selected row is a filled object rather than a tinted one: at a glance down
+   the column there is no question which it is. */
 .app-nav-item.is-on {
-    color: var(--text-primary);
-    background: rgba(255, 107, 53, .12);
-    border-color: rgba(255, 107, 53, .28);
+    color: #fff;
+    background: linear-gradient(145deg, #8b5cf6 0%, #6d3ae0 45%, #4c1d95 100%);
+    border-color: transparent;
+    box-shadow: 0 6px 18px rgba(76, 29, 149, .45);
+}
+
+/* On a filled row the second line cannot stay grey against violet, and the
+   badge cannot stay orange. Both take their contrast from the fill instead. */
+.app-nav-item.is-on .app-nav-text small { color: rgba(255, 255, 255, .72); }
+.app-nav-item.is-on .app-nav-badge { color: #4c1d95; background: #fff; }
+
+.app-nav-item.is-on:hover {
+    background: linear-gradient(145deg, #9670f7 0%, #7847e6 45%, #57219f 100%);
+    color: #fff;
 }
 
 .app-nav-dot {
@@ -480,6 +494,18 @@ html.is-lit .app-body::after {
 .app-nav-item.has-new { background: rgba(255, 107, 53, .07); }
 .app-nav-item.has-new .app-nav-text strong { color: #ffc4a4; }
 .app-nav-item.has-new:hover { background: rgba(255, 107, 53, .13); }
+
+/* Being on a row outranks the row having something waiting: the same weight of
+   selector, further down, so the violet wins and the peach title does not
+   fight it. Written here rather than up there because that is what makes it
+   later. */
+.app-nav-item.is-on.has-new {
+    background: linear-gradient(145deg, #8b5cf6 0%, #6d3ae0 45%, #4c1d95 100%);
+}
+.app-nav-item.is-on.has-new:hover {
+    background: linear-gradient(145deg, #9670f7 0%, #7847e6 45%, #57219f 100%);
+}
+.app-nav-item.is-on .app-nav-text strong { color: #fff; }
 
 .app-nav-count {
     display: grid;
