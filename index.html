@@ -119,12 +119,13 @@
          left again. Each row's track holds the same set of cards twice
          (the second copy is cloned by js/home.js and hidden from assistive tech),
          so the loop can restart mid-animation without a visible seam. -->
+    <!-- The dark card. It runs the full width of the screen, is rounded along
+         its top edge only, and carries both the projects and the partnership
+         model, so the pair reads as one surface sliding up over the hero
+         rather than as two boxes stacked on it. -->
+    <div class="featured-panel">
+
     <section class="featured-section" id="featured">
-        <!-- Everything the section holds sits on one dark panel that runs the
-             full width of the screen and is rounded along its top edge only,
-             so it reads as a card sliding up over the hero rather than as a
-             box floating in the middle of it. -->
-        <div class="featured-panel">
         <div class="container text-center">
             <h2 class="featured-title scroll-reveal" data-en="Featured Projects">Επιλεγμένα Projects</h2>
             <p class="featured-subtitle scroll-reveal" data-en="A selection of recent projects across design, branding, websites and content.">
@@ -317,10 +318,7 @@
                 </div>
             </div>
         </div>
-        </div>
     </section>
-
-    </div><!-- /.hero-stack -->
 
     <!-- The partnership model. It sits after the work and before the closing CTA:
          by this point a visitor knows what we make, and the question that stops
@@ -388,6 +386,10 @@
 
         </div>
     </section>
+
+    </div><!-- /.featured-panel -->
+
+    </div><!-- /.hero-stack -->
 
     <section class="final-cta-section scroll-reveal">
         <div class="container text-center">

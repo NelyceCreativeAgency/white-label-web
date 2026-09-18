@@ -323,18 +323,6 @@ html[data-lang="el"] .hero-aside {
 .featured-section {
     padding: 0;
     position: relative;
-    /* Over the hero, but starting below the fold: the card's lip has no
-       business showing while the hero is still the whole screen.
-
-       What was still showing at rest was not the lip but its shadow. The
-       panel throws one upwards to look lifted, and a 24px offset on a 60px
-       blur reaches some eighty pixels above the edge that casts it, which was
-       enough to haze the bottom of the hero. So the gap has to clear the
-       shadow's reach, not just the edge: the hero's box ends a little under
-       the first screenful already, and this holds the card far enough below
-       that for the shadow to start below the fold too. */
-    z-index: 1;
-    margin-top: clamp(96px, 14vh, 160px);
 }
 
 /* One rule for both section headings on this page, so they cannot drift apart
@@ -372,13 +360,28 @@ html[data-lang="el"] .hero-aside {
 }
 
 /* --- The panel ---
-   The whole section rides on one dark card that runs edge to edge and comes up
-   over the held hero. It is what separates the two: not a rule, not a gap, but
-   a surface arriving on top of another. It is clipped, so the rows end where
-   it does, and their own mask fades them out well before that. */
+   The projects and the partnership model ride on one dark card that runs edge
+   to edge and comes up over the held hero. It is what separates the hero from
+   the rest: not a rule, not a gap, but a surface arriving on top of another.
+   It is clipped, so the project rows end where it does, and their own mask
+   fades them out well before that. */
 .featured-panel {
     position: relative;
-    padding: clamp(40px, 5vw, 72px) 0 clamp(40px, 5vw, 64px);
+    /* Over the hero, but starting below the fold: the card's lip has no
+       business showing while the hero is still the whole screen.
+
+       What was showing at rest was not the lip but its shadow. The card
+       throws one upwards to look lifted, and an 18px offset on a 44px blur
+       reaches well above the edge that casts it, which was enough to haze the
+       bottom of the hero. So the gap has to clear the shadow's reach, not
+       just the edge: the hero's box ends a little under the first screenful
+       already, and this holds the card far enough below that for the shadow
+       to start below the fold too. */
+    z-index: 1;
+    margin-top: clamp(96px, 14vh, 160px);
+    /* Nothing at the foot: the partnership model, which is the last thing on
+       the card, brings its own 100px. */
+    padding: clamp(40px, 5vw, 72px) 0 0;
     /* Rounded along the top only: the sides run off the screen, so the card
        has a lip and no corners at the bottom to explain. */
     border-radius: clamp(20px, 2.6vw, 40px) clamp(20px, 2.6vw, 40px) 0 0;
@@ -388,7 +391,10 @@ html[data-lang="el"] .hero-aside {
        that edge the way it would on a real lip, and the shadow under the
        panel is thrown upwards as well as down, so the card looks lifted off
        the hero instead of printed on it. */
-    background: linear-gradient(180deg, #16161d 0%, #0e0e14 46%, #0a0a0e 100%);
+    /* Measured in pixels rather than percentages: the lift belongs to the top
+       edge, and on a card this tall a percentage stop would stretch it over
+       the whole thing and leave no lift at all. */
+    background: linear-gradient(180deg, #16161d 0, #0e0e14 340px, #0a0a0e 820px);
     border-top: 1px solid rgba(255, 255, 255, 0.07);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09),
                 0 -18px 44px rgba(0, 0, 0, 0.5),
