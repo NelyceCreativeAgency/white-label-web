@@ -415,19 +415,18 @@ html.is-lit .app-body::after {
 
 .app-nav-item:hover { background: rgba(255, 255, 255, .05); color: var(--text-primary); }
 
-/* The one you are on: drawn, not filled. An outline says which row is yours
-   without putting a block of colour in a column that is mostly faces, and it
-   leaves the row the same weight as the ones around it.
-   Grey until somebody lights the portal. From then on the outline is the
-   colour they chose, which is the same answer the whole page is already
-   giving — see html.is-lit, further down. */
+/* The one you are on: filled, with no line around it. A soft block of colour
+   reads as the row being lit from underneath rather than as the row being
+   outlined, which is nearer what the rest of the page is doing.
+   Grey until somebody lights the portal, and from then on a dimmed version of
+   the pair they chose — see html.is-lit, further down. */
 .app-nav-item.is-on {
     color: var(--text-primary);
-    background: none;
-    border-color: rgba(255, 255, 255, .3);
+    background: rgba(255, 255, 255, .09);
+    border-color: transparent;
 }
 
-.app-nav-item.is-on:hover { background: rgba(255, 255, 255, .05); }
+.app-nav-item.is-on:hover { background: rgba(255, 255, 255, .13); }
 
 .app-nav-dot {
     display: grid;
@@ -493,8 +492,8 @@ html.is-lit .app-body::after {
    The tint of has-new would fill a row that is meant to be drawn, so being on
    it wins: the same weight of selector, further down. The peach title stays,
    because that is the part that says something is waiting. */
-.app-nav-item.is-on.has-new { background: none; }
-.app-nav-item.is-on.has-new:hover { background: rgba(255, 255, 255, .05); }
+.app-nav-item.is-on.has-new { background: rgba(255, 255, 255, .09); }
+.app-nav-item.is-on.has-new:hover { background: rgba(255, 255, 255, .13); }
 
 .app-nav-count {
     display: grid;
@@ -1158,8 +1157,8 @@ body.is-messages .app-main {
 .chat-pick:hover { background: rgba(255, 255, 255, .05); }
 
 .chat-pick.is-on {
-    background: none;
-    border-color: rgba(255, 255, 255, .3);
+    background: rgba(255, 255, 255, .09);
+    border-color: transparent;
 }
 
 /* --- the selection takes the colour of the light ---------------------------
@@ -1171,15 +1170,20 @@ body.is-messages .app-main {
    of the pair sits on the title, so the row is drawn in both of them rather
    than only the first. */
 html.is-lit .app-nav-item.is-on,
-html.is-lit .chat-pick.is-on {
-    border-color: rgba(var(--glow), .9);
-    box-shadow: 0 0 0 1px rgba(var(--glow), .25),
-                0 4px 18px rgba(var(--glow), .18);
+html.is-lit .chat-pick.is-on,
+html.is-lit .app-nav-item.is-on.has-new {
+    background: linear-gradient(135deg,
+        rgba(var(--glow), calc(var(--glow-a) * .36)) 0%,
+        rgba(var(--glow-2), calc(var(--glow-a) * .20)) 100%);
+    border-color: transparent;
 }
 
 html.is-lit .app-nav-item.is-on:hover,
-html.is-lit .chat-pick.is-on:hover {
-    background: rgba(var(--glow), .09);
+html.is-lit .chat-pick.is-on:hover,
+html.is-lit .app-nav-item.is-on.has-new:hover {
+    background: linear-gradient(135deg,
+        rgba(var(--glow), calc(var(--glow-a) * .50)) 0%,
+        rgba(var(--glow-2), calc(var(--glow-a) * .30)) 100%);
 }
 
 /* --- the lines that divide things --------------------------------------
