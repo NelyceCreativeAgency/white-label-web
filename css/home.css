@@ -21,158 +21,14 @@
 /* --- Hero ---
    A full-bleed two-column block: the headline runs down the left, the copy and
    the button sit in a narrow column to its right, and both bottom-align the
-   way the two halves of a poster do. Behind them the page's ambient gradient,
-   and on top of that the wheel of projects below. */
+   way the two halves of a poster do. The backdrop stays the page's own ambient
+   gradient, so the hero adds no artwork of its own. */
 .hero-section.hero-home {
     position: relative;
     padding: 0;
 }
 
-/* --- The ring of projects ---
-   A ring standing upright in the page with the project cards mounted around
-   it, facing inwards, turning slowly. We are inside it, looking at the far
-   wall: the card straight ahead is the furthest away and the smallest, and the
-   ones to either side are nearer, larger, and turned towards us as the wall
-   comes round. The near half of the ring is behind us, its cards facing away,
-   and none of it is drawn.
-
-   Facing the cards inwards is the whole of it. Turned outwards they present
-   the convex side, which bulges towards the middle of the screen; turned in,
-   the same ring reads as a wall wrapping past on both sides. The near half
-   goes on its own: a card is visible only while its face is towards us, and it
-   is edge-on at the moment it would otherwise cross the eye, so there is no
-   card that ever swells up as it passes.
-
-   Three numbers, and the card's own width sets all of them.
-
-   The radius is 5.6 cards, which leaves about a sixth of a card of air between
-   one and the next around the rim — they crowd towards the edges of the screen
-   as the wall turns away, so the rim can be tighter than the middle of the
-   screen makes it look. The viewing distance is 1.3 radii, which is to stand
-   well inside the ring rather than at its axis: the far wall falls away to
-   about four fifths of the size it has at the sides, and a card at the edge of
-   the screen is turned sixty degrees towards us. Together they put the widest
-   point of the ring one radius from the middle of the screen, so at 22vw a
-   card the wall always runs out past both edges rather than ending in view.
-
-   The tip is the last of it. A ring lying flat to the eye is a straight row of
-   cards; a few degrees and we are looking at the wall from a little above,
-   which drops the far middle of it below the sides and gives the row the dip
-   it should have. */
-.hero-orbit {
-    /* The one number everything else here is measured from. The floor is what
-       a phone gets: 22vw of a phone is a stamp. Standing inside the ring the
-       far wall falls away from us, so a card is drawn smaller than it is set
-       here, about four fifths straight ahead, and this is set larger than it
-       wants to look to allow for that. */
-    --orbit-w: clamp(150px, 22vw, 400px);
-    --orbit-r: calc(var(--orbit-w) * 5.6);
-    /* Where the card straight ahead sits, measured from the top of the section.
-       Mostly the screen's own height: the headline is pinned to the bottom of
-       the hero, so on a short screen it comes up to meet whatever is above it
-       and the ring has to give way. */
-    --orbit-line: clamp(200px, 36vh, 420px);
-    /* The axis of the ring is a little above that. The tip takes the far wall
-       down by a fixed share of the radius, and with the tip and the viewing
-       distance both fixed that share is a constant of this geometry, measured
-       off the page. Everything scales with the card, so one number holds at
-       every width. */
-    --orbit-axis: calc(var(--orbit-line) - var(--orbit-r) * 0.069);
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-    /* The eye, level with the axis of the ring rather than the middle of the
-       hero: off its axis the wall would come out skewed, one side of it nearer
-       than the other for no reason. */
-    perspective: calc(var(--orbit-r) * 1.3);
-    perspective-origin: 50% var(--orbit-axis);
-    /* Decoration. It never takes a click, and a click never reaches it. */
-    pointer-events: none;
-    /* Down at the level of the gradient behind it: present, not competing. */
-    opacity: 0.4;
-    /* Off under the header, and gone again well before the headline. The mask
-       is on this box and not on the ring, so it stays where it is while the
-       ring turns underneath it. */
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 7%, #000 46%, transparent 68%);
-            mask-image: linear-gradient(to bottom, transparent 0%, #000 7%, #000 46%, transparent 68%);
-    contain: paint;
-}
-
-/* The tip is held apart from the turn: one transform cannot be animated in
-   part, and nesting is cheaper than restating the tilt in every frame. The
-   sign is the whole point of it — tipped the other way the far wall lifts
-   instead of dropping, and the row comes out a hump that rides up into the
-   header. */
-.hero-orbit-stage {
-    position: absolute;
-    left: 50%;
-    top: var(--orbit-axis);
-    width: 0;
-    height: 0;
-    transform: rotateX(7deg);
-    transform-style: preserve-3d;
-}
-
-.hero-orbit-wheel {
-    position: absolute;
-    transform-style: preserve-3d;
-    animation: orbit-turn 150s linear infinite;
-    will-change: transform;
-}
-
-/* Half its own size back to put its centre on the ring's axis, then turned to
-   its place around the ring and pushed out to the rim, where it ends up facing
-   away from the axis. */
-.orbit-item {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: var(--orbit-w);
-    height: calc(var(--orbit-w) * 0.6);
-    margin-left: calc(var(--orbit-w) / -2);
-    margin-top: calc(var(--orbit-w) * -0.3);
-    border-radius: 14px;
-    /* Half the work here is done by the rim rather than the picture. Most of
-       these mockups are dark on a dark ground, and at the opacity this whole
-       ring is held to they would be a few bright patches with nothing between
-       them. The rim gives every card its edge back, so the run of cards reads
-       as one whatever is printed on them. */
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    background: rgba(255, 255, 255, 0.05);
-    overflow: hidden;
-    /* The near half of the ring is behind us with its back turned. Nothing is
-       drawn of a card's back, so it leaves on its own as it comes round, at
-       the moment it is edge-on and has no width left to lose. */
-    backface-visibility: hidden;
-    /* Out to the rim on the far side, which leaves it facing the axis, and us
-       inside it. */
-    transform: rotateY(var(--a)) translateZ(calc(var(--orbit-r) * -1));
-}
-
-.orbit-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    /* Most of these are dark mockups on a dark ground, and behind a ring held
-       at this opacity their blacks and the page's are the same thing. Dropping
-       the contrast pulls the picture towards its middle before the brightness
-       lifts it, so what comes through is the work rather than only whichever
-       corner of it happened to be lit. */
-    filter: contrast(0.7) brightness(1.8) saturate(1.2);
-}
-
-/* Anticlockwise from above, so the cards at the front cross to the left, the
-   way the first row of the marquee below drifts. */
-@keyframes orbit-turn {
-    from { transform: rotateY(0deg); }
-    to   { transform: rotateY(-360deg); }
-}
-
 .hero-home-inner {
-    position: relative;
-    z-index: 1;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
@@ -398,12 +254,6 @@ html[data-lang="el"] .hero-aside {
    side. Below that the two stack, and the headline is free to run wider than
    the 15ch it holds to above. */
 @media (max-width: 1280px) {
-    /* Stacked, the headline is two or three lines instead of two and it starts
-       higher up the screen. The ring has to come up with it. */
-    .hero-orbit {
-        --orbit-line: clamp(170px, 23vh, 280px);
-    }
-
     .hero-home-inner {
         grid-template-columns: minmax(0, 1fr);
         row-gap: 32px;
@@ -1219,11 +1069,6 @@ html[data-lang="el"] .pm-title {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    /* The ring stays where it is, it just stops coming round. */
-    .hero-orbit-wheel {
-        animation: none;
-    }
-
     /* The flood becomes a plain change of fill, and the arrow stays where it
        is: the second one is only there to replace a departure, so with nothing
        departing it comes out of the button altogether. */
