@@ -5517,6 +5517,7 @@
     });
 
     $('app-scrim').addEventListener('click', closeSidebar);
+    $('app-side-x').addEventListener('click', closeSidebar);
 
     $('app-side').addEventListener('click', (event) => {
         const item = event.target.closest('.app-nav-item');
@@ -5529,6 +5530,9 @@
         else if (item.dataset.view === 'accounts') openAccounts();
         else if (item.dataset.view === 'clients') openClients();
         else if (item.dataset.view === 'partners') openPartners();
+
+        // On a phone the drawer is over the thing it was just asked to open.
+        closeSidebar();
     });
 
     $('logout').addEventListener('click', async () => {

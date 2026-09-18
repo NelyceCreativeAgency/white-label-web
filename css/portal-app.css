@@ -230,7 +230,10 @@ html.is-lit .app-body::after {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 0 8px 28px;
+    /* No margin on the right: the button at that end is meant to finish on the
+       same line as the rows of the nav below it, and eight pixels of margin
+       held it short of them. */
+    margin: 0 0 28px 8px;
     overflow: hidden;
     transition: margin var(--fold-ms) var(--fold-ease),
                 gap var(--fold-ms) var(--fold-ease);
@@ -244,6 +247,25 @@ html.is-lit .app-body::after {
     transition: opacity .18s var(--fold-ease);
 }
 .app-brand-logo { width: 132px; height: auto; }
+
+/* Only on a phone, where the sidebar is a drawer and there is nothing to fold.
+   It takes the fold button's place rather than sitting beside it, so the head
+   holds one button at a time and it is always the one that does something. */
+.app-side-x {
+    display: none;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 32px; height: 32px;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: rgba(184, 186, 194, .75);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+.app-side-x:hover { color: var(--text-primary); background: rgba(255, 255, 255, .06); }
 
 /* Folding the sidebar away. The icon is a panel with a rail down one side,
    which says the same thing whichever way it is about to go, so the button
@@ -293,7 +315,9 @@ html.is-lit .app-body::after {
     /* The button is the one thing that has to move, because it was at the far
        end of a line that is no longer there. It lands on the column of icons
        rather than somewhere near it. */
-    .app-body.is-folded .app-head { margin-right: 13px; gap: 0; }
+    /* Folded, the rows below are 46px squares centred in a 59px rail, so they
+       finish 6.5px short of its edge. The button finishes there too. */
+    .app-body.is-folded .app-head { margin-right: 6.5px; gap: 0; }
 
     /* Faded and squeezed to nothing rather than taken away, so the room they
        were taking goes with the sidebar instead of an instant before it.
@@ -2810,8 +2834,10 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
 .cell-menu .is-danger { color: #ff8b6b; }
 
 @media (max-width: 900px) {
-    /* Nothing to fold: the sidebar is over the page or off it. */
+    /* Nothing to fold: the sidebar is over the page or off it. What the head
+       holds instead is the way out of the drawer. */
     .app-fold { display: none; }
+    .app-side-x { display: grid; }
 
     /* And nothing to point at, with the row it would point at behind a
        drawer. It says where to look instead. */
@@ -3172,6 +3198,24 @@ body.is-dragging-cell .cell img { cursor: grabbing; }
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+
+/* Beside the picture the column is as tall as the picture and no taller, and a
+   caption written at the length people actually write them ran off the bottom
+   of it: no scrollbar, no comments under it, and no way to reach either.
+   It scrolls on its own now, inside a share of the column, so that however
+   long it is there is always a panel of comments under it and a box to write
+   one in. A short caption is untouched — this is a ceiling, not a height.
+   Only here: on a phone the whole modal is one scroll, and a second one
+   nested inside it would fight the finger. */
+@media (min-width: 861px) {
+    .post-caption {
+        flex: 0 1 auto;
+        min-height: 0;
+        max-height: 46%;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
 }
 
 .post-notes { flex: 1; display: flex; flex-direction: column; min-height: 0; }
