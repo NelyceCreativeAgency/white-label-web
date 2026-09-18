@@ -359,6 +359,16 @@ html[data-lang="el"] .hero-aside {
     margin: 0 auto 40px;
 }
 
+/* The lens lives in the markup, where a filter has to live, but it is not
+   something to be seen or laid out. */
+.glass-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
 /* --- The panel ---
    Everything under the hero rides on one dark card that runs edge to edge and
    comes up over the held hero: the projects, the partnership model and the
@@ -401,7 +411,9 @@ html[data-lang="el"] .hero-aside {
        instead of showing it through clear glass. */
     background: linear-gradient(180deg, #16161d 0, #0e0e14 340px, #0a0a0e 820px);
     border-top: 1px solid rgba(255, 255, 255, 0.04);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    box-shadow: inset 2px 2px 0 -2px rgba(255, 255, 255, 0.5),
+                inset 0 0 3px 1px rgba(255, 255, 255, 0.14),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
                 0 -18px 44px rgba(0, 0, 0, 0.16),
                 0 24px 56px rgba(0, 0, 0, 0.08);
     overflow: hidden;
@@ -431,6 +443,18 @@ html[data-lang="el"] .hero-aside {
        edge where it stops. That difference between rim and sheet is what reads
        as light bending round the edge of something thick.
 
+       And it genuinely bends it: backdrop-filter puts the page behind this
+       layer into the layer itself, and the SVG lens in the markup then pushes
+       those pixels about by a field of soft noise. That is refraction, not a
+       drawing of it. Chromium does it; the other two ignore the displacement
+       and keep the blur and the brightness, which is the effect this had
+       before the lens existed.
+
+       The band is kept thin and the displacement small on purpose. A phone
+       bends light at the edge of the glass and leaves the middle of the sheet
+       calm, and a lens over a surface three screens tall would cost far more
+       than it is worth.
+
        It is the panel's first child, so everything the panel holds paints over
        it, and it takes no pointer events. */
     .featured-panel::before {
@@ -441,10 +465,13 @@ html[data-lang="el"] .hero-aside {
         right: 0;
         height: clamp(28px, 4vw, 56px);
         border-radius: inherit;
-        -webkit-backdrop-filter: blur(9px) saturate(200%) brightness(1.22);
-                backdrop-filter: blur(9px) saturate(200%) brightness(1.22);
+        -webkit-backdrop-filter: blur(7px) saturate(200%) brightness(1.2);
+                backdrop-filter: blur(7px) saturate(200%) brightness(1.2);
+        -webkit-filter: url(#lip-glass);
+                filter: url(#lip-glass);
         -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.45) 40%, transparent 100%);
                 mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.45) 40%, transparent 100%);
+        isolation: isolate;
         pointer-events: none;
         z-index: 0;
     }

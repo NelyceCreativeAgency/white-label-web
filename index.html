@@ -34,6 +34,24 @@
 
     <div class="night-sky"></div>
 
+    <!-- The lens the projects card bends its top edge with. feTurbulence draws
+         a field of smooth noise, the blur takes the grain out of it, and
+         feDisplacementMap pushes each pixel of what the layer holds by the
+         amount the noise says. Applied to a layer whose content IS the page
+         behind it (that is what backdrop-filter puts there), it refracts the
+         backdrop rather than distorting anything of our own.
+
+         Chromium does the refraction; Safari and Firefox apply the layer's
+         blur and brightness and ignore the displacement, which leaves the lip
+         looking as it did before this was added. Nothing breaks either way. -->
+    <svg class="glass-defs" width="0" height="0" aria-hidden="true" focusable="false">
+        <filter id="lip-glass" x="-6%" y="-6%" width="112%" height="112%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="92" result="noise"/>
+            <feGaussianBlur in="noise" stdDeviation="0.02" result="noise-soft"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise-soft" scale="26" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+    </svg>
+
     <header class="main-header">
         <div class="nav-container">
             <div class="logo">
