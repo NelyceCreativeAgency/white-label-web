@@ -415,23 +415,24 @@ html.is-lit .app-body::after {
 
 .app-nav-item:hover { background: rgba(255, 255, 255, .05); color: var(--text-primary); }
 
-/* The one you are on. A solid violet that runs to a deeper violet, so the
-   selected row is a filled object rather than a tinted one: at a glance down
-   the column there is no question which it is. */
+/* The one you are on. The red of the logo, run down into a near-black red so
+   the row is a filled object rather than a tinted one. The light end stops at
+   #e00434 rather than the logo's own #ff023c because white type on that is
+   under four to one, and the second line here is small type. */
 .app-nav-item.is-on {
     color: #fff;
-    background: linear-gradient(145deg, #7c3aed 0%, #5b21b6 48%, #2e1065 100%);
+    background: linear-gradient(145deg, #e00434 0%, #9b0022 48%, #4a0011 100%);
     border-color: transparent;
-    box-shadow: 0 6px 18px rgba(46, 16, 101, .55);
+    box-shadow: 0 6px 18px rgba(74, 0, 17, .55);
 }
 
 /* On a filled row the second line cannot stay grey against violet, and the
    badge cannot stay orange. Both take their contrast from the fill instead. */
-.app-nav-item.is-on .app-nav-text small { color: rgba(255, 255, 255, .72); }
-.app-nav-item.is-on .app-nav-badge { color: #2e1065; background: #fff; }
+.app-nav-item.is-on .app-nav-text small { color: rgba(255, 255, 255, .82); }
+.app-nav-item.is-on .app-nav-badge { color: #4a0011; background: #fff; }
 
 .app-nav-item.is-on:hover {
-    background: linear-gradient(145deg, #8b4ff5 0%, #6829cc 48%, #3b1580 100%);
+    background: linear-gradient(145deg, #f51042 0%, #b3002a 48%, #5e0017 100%);
     color: #fff;
 }
 
@@ -496,14 +497,13 @@ html.is-lit .app-body::after {
 .app-nav-item.has-new:hover { background: rgba(255, 107, 53, .13); }
 
 /* Being on a row outranks the row having something waiting: the same weight of
-   selector, further down, so the violet wins and the peach title does not
-   fight it. Written here rather than up there because that is what makes it
-   later. */
+   selector, further down, so the fill wins and the peach title does not fight
+   it. Written here rather than up there because that is what makes it later. */
 .app-nav-item.is-on.has-new {
-    background: linear-gradient(145deg, #7c3aed 0%, #5b21b6 48%, #2e1065 100%);
+    background: linear-gradient(145deg, #e00434 0%, #9b0022 48%, #4a0011 100%);
 }
 .app-nav-item.is-on.has-new:hover {
-    background: linear-gradient(145deg, #8b4ff5 0%, #6829cc 48%, #3b1580 100%);
+    background: linear-gradient(145deg, #f51042 0%, #b3002a 48%, #5e0017 100%);
 }
 .app-nav-item.is-on .app-nav-text strong { color: #fff; }
 
