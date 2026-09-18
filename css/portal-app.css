@@ -1182,18 +1182,28 @@ html.is-lit .chat-pick.is-on:hover {
     background: rgba(var(--glow), .09);
 }
 
-html.is-lit .app-nav-item.is-on .app-nav-text strong,
-html.is-lit .chat-pick.is-on .chat-pick-text strong {
-    color: rgb(var(--glow-2));
+/* --- the lines that divide things --------------------------------------
+   A rule across the sidebar is the one thing on the page long enough to show
+   a gradient running along it, so the light falls on these the way it falls
+   on the top of the page: strongest where it starts, gone by the far end.
+   Every alpha is a small share of --glow-a, which is the bar under the
+   swatches, so turning the light down takes these down with it and they never
+   become a thing you notice. They are meant to be felt, not read. */
+html.is-lit .app-nav > .is-cut,
+html.is-lit .app-me {
+    border-image: linear-gradient(90deg,
+        rgba(var(--glow), calc(var(--glow-a) * .45)) 0%,
+        rgba(var(--glow-2), calc(var(--glow-a) * .28)) 62%,
+        rgba(255, 255, 255, .04) 100%) 1;
 }
 
-/* Except when something is waiting on the row you are on. The peach is the
-   only thing in the column that means "answer me", and the outline has
-   already said which row is yours, so the peach outranks the light. */
-html.is-lit .app-nav-item.is-on.has-new .app-nav-text strong,
-html.is-lit .chat-pick.is-on.has-new .chat-pick-text strong {
-    color: #ffc4a4;
+html.is-lit .app-top {
+    border-image: linear-gradient(90deg,
+        rgba(var(--glow), calc(var(--glow-a) * .40)) 0%,
+        rgba(var(--glow-2), calc(var(--glow-a) * .24)) 55%,
+        rgba(255, 255, 255, .035) 100%) 1;
 }
+
 
 .chat-pick.has-new .chat-pick-text strong { color: #ffc4a4; }
 .chat-pick.has-new .chat-pick-text small { color: rgba(255, 196, 164, .75); }
