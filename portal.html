@@ -68,12 +68,6 @@
                      width="273" height="58" class="app-brand-logo">
             </a>
 
-            <!-- On a phone the sidebar is a drawer, there is nothing to fold,
-                 and the only way out was the strip of page beside it. This is
-                 the way out that looks like one. -->
-            <button class="app-side-x" id="app-side-x" type="button"
-                    aria-label="Κλείσιμο μενού" title="Κλείσιμο μενού">&times;</button>
-
             <button class="app-fold" id="app-fold" type="button"
                     aria-label="Σύμπτυξη μενού" aria-expanded="true" title="Σύμπτυξη μενού">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -156,8 +150,8 @@
             </button>
 
             <div class="me-menu" id="me-menu" role="menu" hidden>
+                <button type="button" role="menuitem" id="me-profile">Το προφίλ μου</button>
                 <button type="button" role="menuitem" id="me-settings">Ρυθμίσεις</button>
-                <button type="button" role="menuitem" id="me-card" hidden>Η καρτέλα μου</button>
 
                 <!-- The light at the top of the page, in whatever colour suits
                      the person looking at it. It stays open while they try
@@ -200,7 +194,6 @@
         </div>
     </aside>
 
-    <div class="app-scrim" id="app-scrim" hidden></div>
 
     <!-- On a phone the sidebar is a drawer, and a drawer is a thing you have
          to remember to open. This is the same rail the desktop folds down to,
@@ -250,9 +243,6 @@
     <!-- Main ------------------------------------------------------------- -->
     <main class="app-main">
         <header class="app-top">
-            <button class="app-burger" id="app-burger" type="button" aria-label="Μενού">
-                <span></span><span></span><span></span>
-            </button>
             <!-- The way back to the list this page was opened from. It lives
                  on the bar because that is where you are when you want it, and
                  there is only ever one of it. -->
@@ -439,6 +429,12 @@
         </section>
 
         <!-- Nothing to show ----------------------------------------------- -->
+        <section class="app-view" id="view-mygrids" hidden></section>
+
+        <section class="app-view" id="view-myprojects" hidden></section>
+
+        <section class="app-view" id="view-profile" hidden></section>
+
         <section class="app-view app-blank" id="view-blank" hidden>
             <h2>Δεν υπάρχει ακόμα grid για σένα</h2>
             <p>Μόλις σου ανοίξουμε ένα, θα το βρεις εδώ αριστερά.</p>

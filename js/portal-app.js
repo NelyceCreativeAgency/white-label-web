@@ -358,7 +358,6 @@
         renderMe();
         greet();
         $('app-admin-nav').hidden = state.me.role !== 'admin';
-        $('me-card').hidden = state.me.role !== 'admin';
 
         await loadGrids();
         await loadClients();
@@ -376,6 +375,10 @@
             openChat(kind && id ? { kind, id } : null);
             return;
         }
+
+        if (view === 'mygrids') { openMyGrids(); return; }
+        if (view === 'myprojects') { openMyProjects(); return; }
+        if (view === 'profile') { openProfile(); return; }
 
         if (view === 'accounts' && state.me.role === 'admin') { openAccounts(); return; }
         if (view === 'clients' && state.me.role === 'admin') { openClients(); return; }
@@ -1436,7 +1439,8 @@
         document.querySelectorAll('.app-nav-item.is-on')
             .forEach(one => one.classList.remove('is-on'));
 
-        ['grid', 'accounts', 'clients', 'partners', 'chat', 'client', 'project', 'blank']
+        ['grid', 'accounts', 'clients', 'partners', 'chat', 'client', 'project',
+         'mygrids', 'myprojects', 'profile', 'blank']
             .forEach(view => {
             $(`view-${view}`).hidden = view !== name;
         });
@@ -1450,7 +1454,9 @@
         // the bottom of a phone. The admin's three pages are one section, and
         // somebody else's own page is theirs.
         const SECTION = {
-            grid: 'grids', project: 'projects', chat: 'chat',
+            grid: 'grids', mygrids: 'grids',
+            project: 'projects', myprojects: 'projects',
+            chat: 'chat', profile: 'me',
             accounts: 'admin', clients: 'admin', partners: 'admin',
             client: state.me && state.me.role === 'admin' ? 'admin' : 'account'
         };
@@ -1487,34 +1493,26 @@
         $('app-tabs').hidden = false;
     };
 
-    // A section with a list behind it opens the drawer at that list, because
-    // the list is what the sidebar already is and there is no second copy of it
-    // worth keeping in step. A section that is one place goes straight there.
+    // Every tab lands on a page. Where the desktop has a list in the sidebar
+    // the phone gets that list as a page of its own, and where the list holds
+    // one thing there is no list worth showing: it goes straight to the thing.
     const openSection = (which) => {
-        const drawerTo = (id) => {
-            document.body.classList.add('side-open');
-            $('app-scrim').hidden = false;
-            const block = $(id);
-            if (block) block.scrollIntoView({ block: 'start', behavior: 'smooth' });
-        };
+        if (which === 'chat') return openChat();
+        if (which === 'me')   return openProfile();
 
-        if (which === 'grids')    return drawerTo('app-grids-wrap');
-        if (which === 'projects') return drawerTo('app-projects-nav');
-        if (which === 'admin')    return drawerTo('app-admin-nav');
-        if (which === 'chat')     return openChat();
-
-        if (which === 'account') {
-            if (purse.list.length) openClient(purse.list[0].id);
-            return;
+        if (which === 'grids') {
+            if (state.grids.length === 1) return openGrid(state.grids[0].id);
+            return openMyGrids();
         }
 
-        // The account menu lives at the foot of the sidebar, so the way to it
-        // is the sidebar, open, with the menu already up.
-        if (which === 'me') {
-            document.body.classList.add('side-open');
-            $('app-scrim').hidden = false;
-            $('me-menu').hidden = false;
-            $('me-open').setAttribute('aria-expanded', 'true');
+        // Projects always land on the list, even when it holds one, because the
+        // way to start a second one is a button on that page. Walking straight
+        // past it would leave somebody with one project and no way to have two.
+        if (which === 'projects') return openMyProjects();
+
+        if (which === 'admin')   return openClients();
+        if (which === 'account') {
+            if (purse.list.length) openClient(purse.list[0].id);
         }
     };
 
@@ -1522,6 +1520,206 @@
         const tab = event.target.closest('.app-tab');
         if (tab) openSection(tab.dataset.tab);
     });
+
+    // --- the sections as pages ---------------------------------------------
+    // What the sidebar holds as a list, a phone gets as a screen. The same
+    // rows, the same faces, the same order; a page rather than a drawer.
+    const openMyGrids = () => {
+        $('view-mygrids').innerHTML = `
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Τα grids μου</h2>
+                    <p>Πάτα ένα για να το ανοίξεις.</p>
+                </div>
+                <ul class="lister">${state.grids.length
+                    ? state.grids.map(grid => `
+                        <li>
+                            ${faceOf(grid, 'lister-face')}
+                            <span class="lister-who">
+                                <span class="lister-name">${esc(grid.name)}</span>
+                                <span class="lister-sub">${grid.handle
+                                    ? `@${esc(grid.handle)}` : 'Χωρίς handle'}</span>
+                            </span>
+                            <span class="lister-acts">
+                                <button class="lister-gear" type="button" data-grid="${esc(grid.id)}"
+                                        aria-label="Άνοιγμα: ${esc(grid.name)}">${ARROW}</button>
+                            </span>
+                        </li>`).join('')
+                    : '<li class="none-yet">Κανένα grid ακόμα</li>'}</ul>
+            </section>`;
+
+        $('app-title').textContent = 'Τα grids μου';
+        showView('mygrids');
+        where.write('mygrids');
+    };
+
+    const openMyProjects = () => {
+        const mayStart = state.me && state.me.role !== 'client';
+
+        $('view-myprojects').innerHTML = `
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Projects</h2>
+                    <p>Οι ομάδες στις οποίες δουλεύεις.</p>
+                </div>
+
+                ${mayStart ? `
+                <div class="new-row">
+                    <button class="btn btn-primary" type="button" id="myprojects-new">Νέο project</button>
+                </div>` : ''}
+
+                <ul class="lister">${rooms.list.length
+                    ? rooms.list.map(one => `
+                        <li>
+                            ${faceOf({ id: one.id, name: one.name, icon: one.icon }, 'lister-face')}
+                            <span class="lister-who">
+                                <span class="lister-name">${esc(one.name)}</span>
+                                <span class="lister-sub">${one.members.length === 1
+                                    ? '1 άτομο' : `${one.members.length} άτομα`}</span>
+                            </span>
+                            <span class="lister-acts">
+                                ${one.lit ? `<span class="app-nav-badge"
+                                    title="Αιτήματα που περιμένουν εσένα">${one.lit}</span>` : ''}
+                                <button class="lister-gear" type="button" data-project="${esc(one.id)}"
+                                        aria-label="Άνοιγμα: ${esc(one.name)}">${ARROW}</button>
+                            </span>
+                        </li>`).join('')
+                    : '<li class="none-yet">Κανένα project ακόμα</li>'}</ul>
+            </section>`;
+
+        $('app-title').textContent = 'Projects';
+        showView('myprojects');
+        where.write('myprojects');
+    };
+
+    // Both pages hand a tap on to whatever already opens that thing.
+    $('view-mygrids').addEventListener('click', (event) => {
+        const go = event.target.closest('[data-grid]');
+        if (go) openGrid(go.dataset.grid);
+    });
+
+    $('view-myprojects').addEventListener('click', (event) => {
+        if (event.target.closest('#myprojects-new')) return openProjectPanel(null);
+        const go = event.target.closest('[data-project]');
+        if (go) openProject(go.dataset.project);
+    });
+
+    // --- the profile --------------------------------------------------------
+    // Everybody had a card and nobody had anywhere to read one, their own least
+    // of all: the details were behind a gear, in a form, which is a thing you
+    // fill in rather than a thing you look at. This is the looking at it, with
+    // the filling in one press away.
+    //
+    // Whose card it is depends on who is asking. The admin's is the house's,
+    // kept on the document. A partner keeps their own. A client's card is the
+    // details we hold about them, which is why there is nothing to press: the
+    // one who changes those is us.
+    const cardOf = () => {
+        if (!state.me) return { fields: [], mine: false, why: '' };
+
+        if (state.me.role === 'admin') {
+            return {
+                fields: house.mine || {},
+                mine: true,
+                why: 'Τα στοιχεία μας, όπως τα βλέπουν οι συνεργάτες και οι πελάτες στη σελίδα τους.'
+            };
+        }
+
+        const own = purse.list[0];
+
+        if (state.me.role === 'partner') {
+            return {
+                fields: (own && own.billing) || {},
+                mine: true,
+                why: 'Τα στοιχεία σου για τα παραστατικά, όπως τα βλέπει η Nelyce.'
+            };
+        }
+
+        return {
+            fields: {
+                company: (own && own.company) || '',
+                email: (own && own.email) || '',
+                phone: (own && own.phone) || ''
+            },
+            mine: false,
+            why: 'Τα στοιχεία που έχουμε για σένα. Αν κάτι δεν είναι σωστό, γράψε μας.'
+        };
+    };
+
+    const openProfile = async () => {
+        // The house's card is not carried about with everything else, so it is
+        // fetched the first time somebody goes looking for it.
+        if (state.me.role === 'admin' && !house.mine) {
+            busy('Φόρτωση…');
+            try {
+                const data = await api('/api/clients?house=1');
+                house.mine = data.house;
+            } catch { /* the rest of the page is still worth drawing */ }
+            finally { busy(''); }
+        }
+
+        const card = cardOf();
+        const said = BILL_FIELDS.filter(([key]) => card.fields[key]);
+
+        $('view-profile').innerHTML = `
+            <section class="panel">
+                <div class="client-id">
+                    <span class="client-face" id="profile-me"></span>
+                    <span class="client-who">
+                        <strong>${esc(state.me.name)}</strong>
+                        <span>@${esc(state.me.username)} · ${esc(ROLE_NAMES[state.me.role] || '')}</span>
+                    </span>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-top">
+                    <div class="panel-head">
+                        <h2>Η καρτέλα μου</h2>
+                        <p>${esc(card.why)}</p>
+                    </div>
+                    ${card.mine ? `<button class="lister-gear" type="button" id="profile-edit"
+                            aria-label="Αλλαγή καρτέλας">${GEAR}</button>` : ''}
+                </div>
+
+                ${said.length
+                    ? `<ul class="bill">${said.map(([key, label]) =>
+                        `<li><span>${label}</span><strong>${esc(card.fields[key])}</strong></li>`).join('')}</ul>`
+                    : `<p class="bill-none">${card.mine
+                        ? 'Δεν τα έχεις συμπληρώσει ακόμα. Πάτα το γρανάζι.'
+                        : 'Δεν έχουμε ακόμα στοιχεία για σένα.'}</p>`}
+            </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <h2>Ο λογαριασμός μου</h2>
+                    <p>Η φωτογραφία και το όνομα που βλέπουν οι υπόλοιποι δίπλα σου.</p>
+                </div>
+                <div class="profile-acts">
+                    <button class="app-ghost" type="button" id="profile-settings">Ρυθμίσεις</button>
+                    <button class="app-ghost app-danger" type="button" id="profile-out">Έξοδος</button>
+                </div>
+            </section>`;
+
+        paintFace($('profile-me'), state.me, 'client-face');
+
+        $('app-title').textContent = 'Το προφίλ μου';
+        showView('profile');
+        where.write('profile');
+    };
+
+    $('view-profile').addEventListener('click', (event) => {
+        if (event.target.closest('#profile-settings')) return openMe();
+        if (event.target.closest('#profile-out')) return $('logout').click();
+        if (!event.target.closest('#profile-edit')) return;
+
+        // The same drawer that edits anybody's card, pointed at whichever one
+        // is theirs to change.
+        if (state.me.role === 'admin') openMoney('house', null);
+        else if (purse.list.length) openClient(purse.list[0].id);
+    });
+
+    $('me-profile').addEventListener('click', () => { closeMeMenu(); openProfile(); });
 
     // --- opening a grid ----------------------------------------------------
     const openGrid = async (id) => {
@@ -3747,22 +3945,6 @@
 
     $('me-settings').addEventListener('click', () => { closeMeMenu(); openMe(); });
 
-    // Ours, which only an admin has and only an admin is shown the way to.
-    // Read on the way in rather than at boot: it is one small document and
-    // nobody needs it until the moment they ask to look at it.
-    $('me-card').addEventListener('click', async () => {
-        closeMeMenu();
-        busy('Φόρτωση…');
-        try {
-            const data = await api('/api/clients?house=1');
-            house.mine = data.house;
-            openMoney('house', null);
-        } catch (err) {
-            toast(explain(err), 'bad');
-        } finally {
-            busy('');
-        }
-    });
 
     // --- the light the portal is lit by --------------------------------------
     // Everything the lights are is in the stylesheet. This says two things to
@@ -5585,18 +5767,13 @@
     renderSwatches();
 
     // --- sidebar plumbing --------------------------------------------------
-    const closeSidebar = () => {
-        document.body.classList.remove('side-open');
-        $('app-scrim').hidden = true;
-    };
-
-    $('app-burger').addEventListener('click', () => {
-        const open = document.body.classList.toggle('side-open');
-        $('app-scrim').hidden = !open;
-    });
-
-    $('app-scrim').addEventListener('click', closeSidebar);
-    $('app-side-x').addEventListener('click', closeSidebar);
+    // There is no drawer any more, on any screen. On a phone every section has
+    // a tab along the bottom and every tab lands on a page of its own; on a
+    // desktop the sidebar is simply standing there. Nothing is slid over
+    // anything, so there is nothing to close: this is kept because every screen
+    // calls it on its way in and one empty function is cheaper than finding
+    // them all to say the same nothing.
+    const closeSidebar = () => {};
 
     $('app-side').addEventListener('click', (event) => {
         const item = event.target.closest('.app-nav-item');

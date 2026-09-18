@@ -248,25 +248,6 @@ html.is-lit .app-body::after {
 }
 .app-brand-logo { width: 132px; height: auto; }
 
-/* Only on a phone, where the sidebar is a drawer and there is nothing to fold.
-   It takes the fold button's place rather than sitting beside it, so the head
-   holds one button at a time and it is always the one that does something. */
-.app-side-x {
-    display: none;
-    place-items: center;
-    flex: 0 0 auto;
-    width: 32px; height: 32px;
-    font-size: 1.5rem;
-    line-height: 1;
-    color: rgba(184, 186, 194, .75);
-    background: none;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: var(--transition-smooth);
-}
-.app-side-x:hover { color: var(--text-primary); background: rgba(255, 255, 255, .06); }
-
 /* Folding the sidebar away. The icon is a panel with a rail down one side,
    which says the same thing whichever way it is about to go, so the button
    does not have to turn around and mean the opposite of what it just meant. */
@@ -932,11 +913,6 @@ html.is-lit .app-body::after {
 .app-ghost:hover { color: var(--text-primary); border-color: var(--border-hover); }
 .app-danger:hover { color: #ff8b6b; border-color: rgba(255, 107, 53, .45); }
 
-.app-scrim {
-    position: fixed; inset: 0; z-index: 35;
-    background: rgba(0, 0, 0, .55);
-}
-
 /* --- main --------------------------------------------------------------- */
 .app-main {
     margin-left: 268px;
@@ -1116,19 +1092,10 @@ html.is-lit .app-body::after {
 
 .bell-none { padding: 4px 10px 14px; font-size: .82rem; color: rgba(184, 186, 194, .6); }
 
-.app-burger {
-    display: none;
-    flex-direction: column;
-    gap: 4px;
-    padding: 8px;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
-.app-burger span { display: block; width: 20px; height: 2px; background: var(--text-primary); border-radius: 2px; }
-
 .app-view { padding: 28px 32px 80px; }
+
+.profile-acts { display: flex; flex-wrap: wrap; gap: 10px; }
+.profile-acts .app-ghost { flex: 0 1 auto; }
 
 .app-blank { max-width: 520px; margin: 60px auto; text-align: center; }
 
@@ -2939,10 +2906,8 @@ html.is-lit .app-tab.is-on svg {
        goes, the same way the title bar above already does. */
     body.is-inroom .app-tabs { display: none; }
 
-    /* Nothing to fold: the sidebar is over the page or off it. What the head
-       holds instead is the way out of the drawer. */
+    /* Nothing to fold: there is no sidebar here at all. */
     .app-fold { display: none; }
-    .app-side-x { display: grid; }
 
     /* And nothing to point at, with the row it would point at behind a
        drawer. It says where to look instead. */
@@ -2950,10 +2915,11 @@ html.is-lit .app-tab.is-on svg {
     .hello::after { display: none; }
     .hello .hello-here { display: none; }
     .hello .hello-there { display: inline; }
-    .app-side { transform: translateX(-100%); }
-    body.side-open .app-side { transform: translateX(0); }
+    /* Not slid off the side any more: gone. Every section it held has a tab
+       along the bottom and a page of its own to land on, so there is no drawer
+       to open and nothing to remember to close. */
+    .app-side { display: none; }
     .app-main { margin-left: 0; }
-    .app-burger { display: flex; }
     .app-view { padding: 20px 16px 72px; }
     .app-top { padding: 14px 16px; }
     .profile-card { grid-template-columns: auto 1fr; gap: 16px; padding: 18px; }
