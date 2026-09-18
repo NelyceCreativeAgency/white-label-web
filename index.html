@@ -78,6 +78,54 @@
          switcher only swaps an element's own text nodes and re-appends its
          children at the end. -->
     <section class="hero-section hero-home">
+
+        <!-- The projects come round behind the hero: one wheel, its centre off
+             the bottom of the section, so what crosses the screen is the top of
+             it. The cards are laid along the rim and turn with it, which is why
+             the ones out at the edges lean the way they do.
+
+             Decoration and nothing else — no links, no alt text, out of the
+             accessibility tree, and the whole thing untouchable by the pointer.
+             The files are the ones the rows below already use, so the wheel
+             costs the page no bytes it was not going to spend. The set goes
+             round twice, close enough together to read as one band: a card and
+             its own repeat are then half a turn apart, which is further than
+             the screen is wide, so the two are never up at once. -->
+        <div class="hero-orbit" aria-hidden="true">
+            <div class="hero-orbit-wheel">
+                <div class="orbit-item" style="--a: 0deg"><img src="images/cards/1.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 12deg"><img src="images/cards/melina-foteinou-website.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 24deg"><img src="images/cards/2.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 36deg"><img src="images/cards/congress.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 48deg"><img src="images/cards/3.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 60deg"><img src="images/cards/melinainstagram.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 72deg"><img src="images/cards/mc-luxury-hospitality.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 84deg"><img src="images/cards/custom-illustration.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 96deg"><img src="images/cards/4.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 108deg"><img src="images/cards/siva.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 120deg"><img src="images/cards/master-roast-pc.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 132deg"><img src="images/cards/7.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 144deg"><img src="images/cards/1b.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 156deg"><img src="images/cards/asimina-habipi.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 168deg"><img src="images/cards/6.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 180deg"><img src="images/cards/1.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 192deg"><img src="images/cards/melina-foteinou-website.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 204deg"><img src="images/cards/2.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 216deg"><img src="images/cards/congress.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 228deg"><img src="images/cards/3.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 240deg"><img src="images/cards/melinainstagram.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 252deg"><img src="images/cards/mc-luxury-hospitality.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 264deg"><img src="images/cards/custom-illustration.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 276deg"><img src="images/cards/4.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 288deg"><img src="images/cards/siva.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 300deg"><img src="images/cards/master-roast-pc.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 312deg"><img src="images/cards/7.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 324deg"><img src="images/cards/1b.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 336deg"><img src="images/cards/asimina-habipi.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+                <div class="orbit-item" style="--a: 348deg"><img src="images/cards/6.webp" alt="" width="1040" height="599" decoding="async" fetchpriority="low"></div>
+            </div>
+        </div>
+
         <div class="hero-home-inner home-bleed">
             <h1 class="hero-title animate-fade">
                 <span data-en="Creative work, delivered under">Δημιουργική δουλειά, με τη δική σου</span>

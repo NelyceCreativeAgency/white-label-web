@@ -20,17 +20,111 @@
 
 /* --- Hero ---
    A full-bleed two-column block: the headline runs down the left, the copy and
-   the buttons sit in a narrow column to its right, and both bottom-align the
-   way the two halves of a poster do. The backdrop stays the page's own ambient
-   gradient, so the hero adds no artwork of its own.
-
-   The buttons are the site's own .btn-primary / .btn-secondary, untouched. */
+   the button sit in a narrow column to its right, and both bottom-align the
+   way the two halves of a poster do. Behind them the page's ambient gradient,
+   and on top of that the wheel of projects below. */
 .hero-section.hero-home {
     position: relative;
     padding: 0;
 }
 
+/* --- The wheel ---
+   A circle far bigger than the section, centred on the middle of the bottom
+   edge, carrying the project cards around its rim. Only the top of it is in
+   the section, so what shows is an arch that leaves the screen at both sides,
+   and the whole circle turns slowly anticlockwise: the cards drift left across
+   the top, the same way the first row of the marquee below drifts.
+
+   Each card sits tangent to the rim rather than upright, so the further one is
+   from the top of the arch the more it leans. That lean is the only reason the
+   ones near the edges look stretched — there is no distortion anywhere in
+   here, just a circle seen across its own width.
+
+   The radius is given in vw so the arch always runs out past both edges: at
+   any width it is more than half the screen, which puts the ends of it off the
+   sides rather than in view.
+
+   What is held still as the radius moves is the top of the arch, not the
+   centre of the circle. The centre is put a whole radius below the line the
+   arch is wanted on, so that line is where it peaks at every width — pin the
+   centre instead and a wide screen throws the top of the arch off the ceiling
+   while a narrow one drops it into the headline. */
+.hero-orbit {
+    --orbit-r: clamp(330px, 62vw, 1060px);
+    --orbit-peak: clamp(88px, 15vh, 180px);
+    /* Narrower than the 12deg the cards are spaced at is wide on the rim, so
+       the band has a gap between one card and the next at every width. */
+    --orbit-w: clamp(84px, 10.5vw, 188px);
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    /* Decoration. It never takes a click, and a click never reaches it. */
+    pointer-events: none;
+    /* Down at the level of the gradient behind it: present, not competing. */
+    opacity: 0.4;
+    /* Off under the header, and gone again well before the headline. The mask
+       is on this box and not on the wheel, so it stays where it is while the
+       wheel turns underneath it. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 11%, #000 44%, transparent 74%);
+            mask-image: linear-gradient(to bottom, transparent 0%, #000 11%, #000 44%, transparent 74%);
+    contain: paint;
+}
+
+.hero-orbit-wheel {
+    position: absolute;
+    left: 50%;
+    top: calc(var(--orbit-peak) + var(--orbit-r));
+    width: 0;
+    height: 0;
+    animation: orbit-turn 240s linear infinite;
+    will-change: transform;
+}
+
+/* Laid on the rim at its own angle: half its own size back to put its centre
+   on the wheel's, then turned to its place on the circle and pushed out to
+   the rim. No counter-turn after, which is what leaves it tangent. */
+.orbit-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--orbit-w);
+    height: calc(var(--orbit-w) * 0.62);
+    margin-left: calc(var(--orbit-w) / -2);
+    margin-top: calc(var(--orbit-w) * -0.31);
+    border-radius: 12px;
+    /* Half the work here is done by the rim rather than the picture. Most of
+       these mockups are dark on a dark ground, and at the opacity this whole
+       band is held to they would be a few bright patches with nothing between
+       them. The rim gives every card its edge back, so the band reads as one
+       run of cards whatever is printed on them. */
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    transform: rotate(var(--a)) translateY(calc(var(--orbit-r) * -1));
+}
+
+.orbit-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    /* Most of these are dark mockups on a dark ground, and behind a band held
+       at this opacity their blacks and the page's are the same thing. Dropping
+       the contrast pulls the picture towards its middle before the brightness
+       lifts it, so what comes through is the work rather than only whichever
+       corner of it happened to be lit. */
+    filter: contrast(0.78) brightness(1.55) saturate(1.15);
+}
+
+@keyframes orbit-turn {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(-360deg); }
+}
+
 .hero-home-inner {
+    position: relative;
+    z-index: 1;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
@@ -1071,6 +1165,11 @@ html[data-lang="el"] .pm-title {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    /* The arch stays, it just stops coming round. */
+    .hero-orbit-wheel {
+        animation: none;
+    }
+
     /* The flood becomes a plain change of fill, and the arrow stays where it
        is: the second one is only there to replace a departure, so with nothing
        departing it comes out of the button altogether. */
