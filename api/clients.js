@@ -528,6 +528,22 @@ module.exports = async (req, res) => {
 
         const boss = me.role === 'admin';
 
+        // Our own card, which is not a client's and not a partner's and so is
+        // answered before the request is handed to either of those. It was
+        // written inside the partner's own branch to begin with, where an
+        // admin never arrived: the save fell through to the client code and
+        // came back saying the client could not be found, which was true and
+        // no help to anybody.
+        if (req.method === 'PATCH') {
+            const said = readBody(req);
+            if (said.kind === 'house') {
+                if (!boss) return res.status(403).json({ error: 'not-allowed' });
+                accounts.setHouse(doc, said.billing);
+                await accounts.writeAccounts(doc);
+                return res.status(200).json({ house: accounts.houseOf(doc) });
+            }
+        }
+
         // A partner's own column, and nothing else at all: not the clients, not
         // what any of them was charged, not even the shape of the question. It
         // is answered here and the request goes no further.
@@ -556,18 +572,6 @@ module.exports = async (req, res) => {
                 // may be asked for a VAT number by the person invoicing them,
                 // and having to ask somebody else to type it in is a small
                 // indignity that costs a message each time.
-                // Our own details, written by whichever admin is here and
-                // read by everybody. Kept on the document rather than on an
-                // admin's account, because there is one of us however many
-                // admins there are.
-                if (body.kind === 'house' && req.method === 'PATCH') {
-                    if (me.role !== 'admin') throw new Error('not-allowed');
-                    const doc = await accounts.readAccounts();
-                    accounts.setHouse(doc, body.billing);
-                    await accounts.writeAccounts(doc);
-                    return res.status(200).json({ house: accounts.houseOf(doc) });
-                }
-
                 if (body.kind === 'partner' && req.method === 'PATCH') {
                     const doc = await accounts.readAccounts();
                     const mine = accounts.findUser(doc, me.id);

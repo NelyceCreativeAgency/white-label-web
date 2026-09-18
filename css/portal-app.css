@@ -310,12 +310,39 @@ html.is-lit .app-body::after {
     }
     .app-body.is-folded .app-me-gear { opacity: 0; }
 
-    /* Nothing is centred here. The icon is first in the row and the row keeps
-       the padding it had, so it cannot go anywhere; anything that will not
-       shrink runs off the end and is clipped, rather than shoving the icon off
-       the other one — which is what the three admin rows used to do. */
+    /* Folded, every row becomes the same square, centred in the rail. A row
+       that keeps a full-width box while only its icon is showing reads as a
+       long tile with an icon stranded at one end of it, and the tiles no
+       longer line up with each other — which is what the selected row looked
+       like before this.
+       One size for all of them, whatever the row was built from: a tile, a
+       line drawing, or the plus at the foot of the projects. */
     .app-body.is-folded .app-nav-item,
+    .app-body.is-folded .app-nav-new,
     .app-body.is-folded .app-me-who { position: relative; gap: 0; }
+
+    .app-body.is-folded .app-nav-item,
+    .app-body.is-folded .app-nav-new {
+        width: 46px; height: 46px;
+        margin-left: auto; margin-right: auto;
+        padding: 0;
+        justify-content: center;
+        border-radius: 14px;
+    }
+
+    /* The icons carried side margins for the gap between them and their words.
+       There are no words now, and a margin on a centred thing is a nudge off
+       centre. */
+    .app-body.is-folded .app-nav-item > svg,
+    .app-body.is-folded .app-nav-new > svg { margin: 0; }
+
+    .app-nav-item,
+    .app-nav-new { transition: background .25s, color .25s, border-color .25s,
+                               width var(--fold-ms) var(--fold-ease),
+                               height var(--fold-ms) var(--fold-ease),
+                               padding var(--fold-ms) var(--fold-ease),
+                               border-radius var(--fold-ms) var(--fold-ease),
+                               gap var(--fold-ms) var(--fold-ease); }
 
     /* The count of what is waiting has nowhere to be a number, and a number
        nobody can read is worse than a dot that says the same thing. It sits on
@@ -323,7 +350,7 @@ html.is-lit .app-body::after {
     .app-body.is-folded .app-nav-badge,
     .app-body.is-folded .app-nav-count {
         position: absolute;
-        top: 50%; right: 8px;
+        top: 50%; right: 5px;
         transform: translateY(-16px);
         min-width: 9px; width: 9px; height: 9px;
         padding: 0;
@@ -337,8 +364,8 @@ html.is-lit .app-body::after {
        to put there. */
     .app-body.is-folded .app-nav-item > svg ~ .app-nav-badge,
     .app-body.is-folded .app-nav-item > svg ~ .app-nav-count {
-        right: 14px;
-        transform: translateY(-14px);
+        right: 10px;
+        transform: translateY(-13px);
     }
 
     .app-nav-badge,
