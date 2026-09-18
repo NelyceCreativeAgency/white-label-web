@@ -3071,7 +3071,7 @@ html.is-lit .app-tab.is-on svg {
        some state: dvh does not shrink for a keyboard, svh and lvh are the two
        ends of a browser's toolbars rather than where they are now, and a
        keyboard's accessory bar is in none of them. */
-    body.is-chatting:not(.is-blindkeys) {
+    body.is-chatting {
         position: fixed;
         top: var(--vvtop, 0px);
         left: 0;
@@ -3081,26 +3081,12 @@ html.is-lit .app-tab.is-on svg {
         overflow: hidden;
     }
 
-    body.is-chatting:not(.is-blindkeys) .app-main { height: 100%; min-height: 0; }
-    body.is-chatting:not(.is-blindkeys) .app-chat { min-height: 0; }
-    body.is-chatting:not(.is-blindkeys) .chat-log { overscroll-behavior: contain; }
+    body.is-chatting .app-main { height: 100%; min-height: 0; }
+    body.is-chatting .app-chat { min-height: 0; }
+    body.is-chatting .chat-log { overscroll-behavior: contain; }
 
     /* Nothing between the box and the bottom of what is showing. */
-    body.is-chatting:not(.is-blindkeys) .chat-form { margin-bottom: 0; padding-bottom: 10px; }
-
-    /* --- browsers that never mention the keyboard --------------------------
-       Everything above rests on the browser saying how much screen is left
-       when a keyboard covers half of it. Some do not: the keyboard comes up,
-       the page is told nothing, and the box somebody is typing into is under
-       it. That is not a bug this end can measure its way out of, so when it is
-       caught happening the page stops being pinned at all and goes back to
-       being a page that scrolls, which is the one thing every browser will
-       still carry to a focused field. */
-    body.is-blindkeys .app-chat { height: auto; min-height: 0; }
-    body.is-blindkeys .chat-log { overflow: visible; max-height: none; }
-
-    /* Room under the box for a keyboard toolbar nobody can see the size of. */
-    body.is-blindkeys .chat-form { padding-bottom: 18px; scroll-margin-bottom: 18px; }
+    body.is-chatting .chat-form { margin-bottom: 0; padding-bottom: 10px; }
 
     /* Nothing moves when somebody taps the box.
 

@@ -1233,14 +1233,6 @@
             return;
         }
 
-        // A browser that has been caught saying nothing about its keyboard is
-        // not asked for a height: the page is scrolling now, and writing one
-        // would only pin it again behind the keys.
-        if (document.body.classList.contains('is-blindkeys')) {
-            document.body.classList.add('is-chatting');
-            return;
-        }
-
         const view = window.visualViewport;
 
         // The height the browser says is showing, and where that showing part
@@ -1297,7 +1289,6 @@
     const trueUp = () => {
         const view = window.visualViewport;
         if (!view || !document.body.classList.contains('is-chatting')) return;
-        if (document.body.classList.contains('is-blindkeys')) return;
 
         const form = $('chat-form');
         if (!form.offsetParent) return;
@@ -5005,50 +4996,6 @@
     // A keyboard arriving takes half the screen, and the half it takes is the
     // half the last message was in. What is left goes to the messages: the
     // stylesheet folds away everything between the name and them.
-    // Whether this browser tells the page that a keyboard has come up.
-    //
-    // Everything the conversation does about keyboards rests on being told. A
-    // browser inside another app often is not: the keys arrive, visualViewport
-    // says the screen is exactly as tall as it was, and the box being typed
-    // into sits under them. Nothing here can measure a keyboard it has not been
-    // told about — the box reports itself as sitting nicely at the bottom of a
-    // viewport that no longer exists — so instead of guessing at its height we
-    // watch for the silence itself.
-    //
-    // The keyboard is up, and a third of a second later nothing has moved: that
-    // is the tell. From then on the page stops being pinned and goes back to
-    // scrolling, and the field is scrolled to, which is the one thing every
-    // browser will still do.
-    const KEYS_MOVED = 8;
-
-    const watchForSilence = () => {
-        const view = window.visualViewport;
-        if (!view) return blindKeys();
-
-        const was = view.height;
-        setTimeout(() => {
-            if (!document.body.classList.contains('is-typing')) return;
-            if (Math.abs(view.height - was) > KEYS_MOVED) return;
-            blindKeys();
-        }, 450);
-    };
-
-    const blindKeys = () => {
-        if (document.body.classList.contains('is-blindkeys')) return;
-        document.body.classList.add('is-blindkeys');
-        root.style.removeProperty('--vvh');
-        root.style.removeProperty('--vvtop');
-        reachTheBox();
-    };
-
-    const reachTheBox = () => {
-        const form = $('chat-form');
-        if (!form) return;
-        [0, 200, 500].forEach(ms => setTimeout(() => {
-            form.scrollIntoView({ block: 'end', behavior: 'smooth' });
-        }, ms));
-    };
-
     $('chat-text').addEventListener('focus', () => {
         document.body.classList.add('is-typing');
 
@@ -5056,14 +5003,9 @@
         // between that and the page being given a new height the two of them
         // leave a band of nothing. Put back once, here, rather than argued with
         // continuously inside the measuring, which is what shook the screen.
-        if (!document.body.classList.contains('is-blindkeys')) window.scrollTo(0, 0);
+        window.scrollTo(0, 0);
 
         settle();
-
-        // Once a browser has been caught keeping quiet it is not asked again:
-        // it will keep quiet every time, and the page is already scrolling.
-        if (document.body.classList.contains('is-blindkeys')) reachTheBox();
-        else watchForSilence();
 
         setTimeout(() => {
             const log = $('chat-log');
