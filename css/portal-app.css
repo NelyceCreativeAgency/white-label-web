@@ -2999,14 +2999,18 @@ html.is-lit .app-tab.is-on svg {
        one was a border drawn a few pixels outside another border.
        The panel stays in the markup — it is what the page is built from — and
        here it simply stops being drawn. */
-    #view-myprojects > .panel {
+    #view-myprojects > .panel,
+    #view-mygrids > .panel {
         padding: 0;
         background: none;
         border: none;
     }
 
-    #view-myprojects .lister { gap: 8px; }
-    #view-myprojects .lister li { padding: 10px 10px 10px 12px; }
+    #view-myprojects .lister,
+    #view-mygrids .lister { gap: 8px; }
+
+    #view-myprojects .lister li,
+    #view-mygrids .lister li { padding: 10px 10px 10px 12px; }
 
     /* Nothing to fold: there is no sidebar here at all, which is also why the
        bar is the only place left that can say whose portal this is. */
