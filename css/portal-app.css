@@ -2983,8 +2983,13 @@ html.is-lit .app-tab.is-on svg {
     }
 
     /* Room for it under everything that scrolls, and above everything that was
-       already sitting on the bottom edge. */
-    .app-view { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+       already sitting on the bottom edge.
+       Not the conversation, though: it is an app-view like the others, but it
+       owns the bottom edge itself — the box you type in lives there, with the
+       keyboard under it — and the bar is not on screen while it is open. Room
+       left for a bar that is not there is a band of nothing between the box
+       and the keys. */
+    .app-view:not(.app-chat) { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
     .toast { bottom: calc(78px + env(safe-area-inset-bottom)); }
     .why-more { bottom: calc(78px + env(safe-area-inset-bottom)); }
 
@@ -3025,7 +3030,11 @@ html.is-lit .app-tab.is-on svg {
        to open and nothing to remember to close. */
     .app-side { display: none; }
     .app-main { margin-left: 0; }
-    .app-view { padding: 20px 16px 72px; }
+    /* The conversation is left out of this for the same reason: it ends at the
+       bottom of the screen, on purpose, and every pixel of padding under it is
+       a pixel between the box you type in and the keys. */
+    .app-view:not(.app-chat) { padding: 20px 16px 72px; }
+    .app-chat { padding: 0; }
     .app-top { padding: 14px 16px; }
     .profile-card { grid-template-columns: auto 1fr; gap: 16px; padding: 18px; }
     .profile-avatar { width: 64px; height: 64px; font-size: 1.4rem; }
@@ -4256,7 +4265,7 @@ body.is-dragging-strip .strip-tile[data-index] { cursor: grabbing; }
 
 /* --- a phone -------------------------------------------------------------- */
 @media (max-width: 560px) {
-    .app-view { padding: 16px 12px calc(78px + env(safe-area-inset-bottom)); }
+    .app-view:not(.app-chat) { padding: 16px 12px calc(78px + env(safe-area-inset-bottom)); }
 
     /* Instagram's own gap, which is most of what makes a grid read as a grid. */
     .ig-grid { gap: 2px; }
