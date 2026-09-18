@@ -1173,8 +1173,8 @@ html.is-lit .app-nav-item.is-on,
 html.is-lit .chat-pick.is-on,
 html.is-lit .app-nav-item.is-on.has-new {
     background: linear-gradient(135deg,
-        rgba(var(--glow), calc(var(--glow-a) * .95)) 0%,
-        rgba(var(--glow-2), calc(var(--glow-a) * .58)) 100%);
+        rgba(var(--glow), min(calc(var(--glow-a) * .95), .46)) 0%,
+        rgba(var(--glow-2), min(calc(var(--glow-a) * .58), .28)) 100%);
     border-color: transparent;
 }
 
@@ -1182,9 +1182,29 @@ html.is-lit .app-nav-item.is-on:hover,
 html.is-lit .chat-pick.is-on:hover,
 html.is-lit .app-nav-item.is-on.has-new:hover {
     background: linear-gradient(135deg,
-        rgba(var(--glow), calc(var(--glow-a) * 1.15)) 0%,
-        rgba(var(--glow-2), calc(var(--glow-a) * .74)) 100%);
+        rgba(var(--glow), min(calc(var(--glow-a) * 1.15), .56)) 0%,
+        rgba(var(--glow-2), min(calc(var(--glow-a) * .74), .35)) 100%);
 }
+
+/* --- keeping the words off the colour ----------------------------------
+   The fill rises with the light, so anything written on it has to rise too or
+   the two meet in the middle. The title is white outright on a row that is
+   filled, and the line under it climbs from the grey it has in the dark to
+   nearly white at the top of the bar, which is where the fill is strongest.
+   Both stop short of the fill's own ceiling, so the gap never closes. */
+html.is-lit .app-nav-item.is-on .app-nav-text strong,
+html.is-lit .chat-pick.is-on .chat-pick-text strong { color: #fff; }
+
+html.is-lit .app-nav-item.is-on .app-nav-text small,
+html.is-lit .chat-pick.is-on .chat-pick-text small {
+    color: rgba(255, 255, 255, min(calc(.58 + var(--glow-a) * .52), .94));
+}
+
+/* Except when something is waiting on the row you are on. The peach is the
+   only thing in the column that means "answer me", and it reads on any of
+   these fills, so it keeps the title. */
+html.is-lit .app-nav-item.is-on.has-new .app-nav-text strong,
+html.is-lit .chat-pick.is-on.has-new .chat-pick-text strong { color: #ffc4a4; }
 
 /* --- the lines that divide things --------------------------------------
    A rule across the sidebar is the one thing on the page long enough to show

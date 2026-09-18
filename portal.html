@@ -46,7 +46,9 @@
             var glow = localStorage.getItem('nelyce-glow');
             var level = localStorage.getItem('nelyce-level');
 
-            if (level !== null) root.style.setProperty('--glow-lvl', level);
+            if (level !== null) {
+                root.style.setProperty('--glow-lvl', Math.min(Number(level) || 0, 80));
+            }
             if (glow && (level === null || Number(level) > 0)) {
                 var pair = glow.split('|');
                 root.style.setProperty('--glow', pair[0]);
@@ -182,7 +184,7 @@
                     </div>
 
                     <input class="me-tint-bar" id="me-tint-bar" type="range"
-                           min="0" max="100" step="1" value="40"
+                           min="0" max="80" step="1" value="40"
                            aria-label="Ένταση φωτισμού">
                 </div>
 
@@ -285,7 +287,6 @@
                     </button>
                 </div>
 
-                <p class="chat-note" id="chat-note"></p>
                 <div class="chat-picks" id="chat-list"></div>
             </aside>
 

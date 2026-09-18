@@ -3688,6 +3688,13 @@
     // arriving on a new one is told where the switch is (see greet, below).
     const LEVEL = 40;
 
+    // The top of the bar. It was a hundred, which let somebody light the room
+    // brightly enough that the tinted things in it stopped being tinted: the
+    // selected row went nearly solid, the rules across the sidebar became
+    // stripes. Eighty is the brightest the portal looks good at, so the bar
+    // ends there rather than ending past it and asking people not to go.
+    const MOST = 80;
+
     const glow = {
         read() { try { return localStorage.getItem('nelyce-glow'); } catch { return null; } },
         write(value) {
@@ -3696,18 +3703,23 @@
         }
     };
 
-    // How much of it, nought to a hundred. Nothing written yet is not nought:
+    // How much of it, nought to MOST. Nothing written yet is not nought:
     // Number(null) is nought, and reading it that way would open the portal
     // dark for everybody and call it their choice. Anything else that is not a
-    // number in range is somebody else's rubbish in our key, and is ignored.
+    // number at all is somebody else's rubbish in our key, and is ignored.
+    //
+    // A number above MOST is not rubbish, though — it is somebody who set the
+    // bar higher back when the bar went higher. That is brought down to the
+    // new top rather than thrown away for the default: they asked for as much
+    // light as there was, and this is as much as there is.
     const level = {
         read() {
             try {
                 const saved = localStorage.getItem('nelyce-level');
                 if (!saved) return LEVEL;
                 const asked = Number(saved);
-                return Number.isFinite(asked) && asked >= 0 && asked <= 100
-                    ? asked : LEVEL;
+                if (!Number.isFinite(asked) || asked < 0) return LEVEL;
+                return Math.min(asked, MOST);
             } catch { return LEVEL; }
         },
         write(value) {
@@ -3742,7 +3754,7 @@
         root.classList.toggle('is-lit', Boolean(one) && much > 0);
 
         bar.value = much;
-        bar.style.setProperty('--fill', `${much}%`);
+        bar.style.setProperty('--fill', `${(much / MOST) * 100}%`);
         bar.disabled = !one;
 
         dots().forEach(dot => {
@@ -4107,11 +4119,6 @@
         + '<rect x="3" y="11" width="18" height="11" rx="2"/>'
         + '<path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
 
-    const NOTES = {
-        teams: 'Τις διαβάζουν όλοι όσοι δουλεύουν στο project.',
-        people: 'Τα βλέπετε μόνο εσείς οι δύο.'
-    };
-
     // The grid of the project thread that is open, and nothing when the open
     // conversation is a private one. The links and the brainstorming hang off
     // it, and neither of those belongs to two people.
@@ -4176,8 +4183,6 @@
             button.setAttribute('aria-selected', on ? 'true' : 'false');
             button.querySelector('.chat-pip').hidden = !count(kind === 'teams' ? c.teams : c.people);
         });
-
-        $('chat-note').textContent = NOTES[c.kind];
 
         const rows = c.kind === 'teams'
             ? c.teams.map(one => ({
