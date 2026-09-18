@@ -4110,7 +4110,7 @@
 
     // Going to the gear is the same answer as pressing the button, and a
     // better one: they have done the thing it was asking for.
-    $('me-open').addEventListener('click', hush);
+    $('tint-open').addEventListener('click', hush);
     $('me-tint').addEventListener('click', hush);
 
     document.addEventListener('click', (event) => {
@@ -4348,8 +4348,24 @@
         openViewer(slot, at < 0 ? 0 : at);
     });
 
+    const closeTint = () => {
+        $('tint-panel').hidden = true;
+        $('tint-open').setAttribute('aria-expanded', 'false');
+    };
+
+    $('tint-open').addEventListener('click', () => {
+        const open = $('tint-panel').hidden;
+        $('tint-panel').hidden = !open;
+        $('tint-open').setAttribute('aria-expanded', open ? 'true' : 'false');
+        // Two panels hanging off the same bar, and room on it for one.
+        if (open) closeBell();
+    });
+
     document.addEventListener('click', (event) => {
-        if (!$('bell-panel').hidden && !event.target.closest('.bell-wrap')) closeBell();
+        // Both panels live in a .bell-wrap, so which one a click was inside is
+        // a question about the panel itself rather than about the wrapper.
+        if (!$('bell-panel').hidden && !event.target.closest('#bell-panel, #bell')) closeBell();
+        if (!$('tint-panel').hidden && !event.target.closest('#tint-panel, #tint-open')) closeTint();
     });
 
     // Nothing pushes from the server, so the bell asks. Once a minute while the

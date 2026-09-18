@@ -153,42 +153,6 @@
                 <button type="button" role="menuitem" id="me-profile">Το προφίλ μου</button>
                 <button type="button" role="menuitem" id="me-settings">Ρυθμίσεις</button>
 
-                <!-- The light at the top of the page, in whatever colour suits
-                     the person looking at it. It stays open while they try
-                     them, because choosing a colour is looking at it. -->
-                <div class="me-tint" id="me-tint" role="group" aria-label="Φωτισμός">
-                    <p class="me-tint-what">Φωτισμός</p>
-                    <div class="me-tint-dots">
-                        <button class="me-tint-dot" type="button" role="menuitemradio"
-                                aria-checked="false" aria-label="Πορτοκαλί" title="Πορτοκαλί"
-                                data-glow="255, 107, 53" data-glow-two="236, 72, 153"
-                                style="--dot: 255, 107, 53; --dot-2: 236, 72, 153"></button>
-                        <button class="me-tint-dot" type="button" role="menuitemradio"
-                                aria-checked="false" aria-label="Ροζ" title="Ροζ"
-                                data-glow="236, 72, 153" data-glow-two="139, 92, 246"
-                                style="--dot: 236, 72, 153; --dot-2: 139, 92, 246"></button>
-                        <button class="me-tint-dot" type="button" role="menuitemradio"
-                                aria-checked="false" aria-label="Μωβ" title="Μωβ"
-                                data-glow="139, 92, 246" data-glow-two="56, 130, 246"
-                                style="--dot: 139, 92, 246; --dot-2: 56, 130, 246"></button>
-                        <button class="me-tint-dot" type="button" role="menuitemradio"
-                                aria-checked="false" aria-label="Μπλε" title="Μπλε"
-                                data-glow="56, 130, 246" data-glow-two="34, 211, 238"
-                                style="--dot: 56, 130, 246; --dot-2: 34, 211, 238"></button>
-                        <button class="me-tint-dot" type="button" role="menuitemradio"
-                                aria-checked="false" aria-label="Πράσινο" title="Πράσινο"
-                                data-glow="34, 197, 94" data-glow-two="56, 130, 246"
-                                style="--dot: 34, 197, 94; --dot-2: 56, 130, 246"></button>
-                        <button class="me-tint-dot is-off" type="button" role="menuitemradio"
-                                aria-checked="false" aria-label="Σβηστό" title="Σβηστό"
-                                data-glow=""></button>
-                    </div>
-
-                    <input class="me-tint-bar" id="me-tint-bar" type="range"
-                           min="0" max="80" step="1" value="40"
-                           aria-label="Ένταση φωτισμού">
-                </div>
-
                 <button type="button" role="menuitem" id="logout">Έξοδος</button>
             </div>
         </div>
@@ -251,6 +215,56 @@
             </button>
             <h1 class="app-top-title" id="app-title">Portal</h1>
             <span class="app-top-status" id="app-status" aria-live="polite"></span>
+
+            <!-- The light the portal is lit by. It used to live at the foot
+                 of the sidebar, which is a place a phone does not have, and it
+                 is a thing about the page rather than about the account: it
+                 belongs on the bar, beside the other thing you reach for
+                 without leaving what you are doing. -->
+            <div class="bell-wrap">
+                <button class="bell" id="tint-open" type="button" aria-label="Φωτισμός"
+                        aria-expanded="false" aria-controls="tint-panel" title="Φωτισμός">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="4"/>
+                        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+                    </svg>
+                </button>
+
+                <div class="tint-panel" id="tint-panel" hidden>
+                    <div class="me-tint" id="me-tint" role="group" aria-label="Φωτισμός">
+                        <p class="me-tint-what">Φωτισμός</p>
+                        <div class="me-tint-dots">
+                            <button class="me-tint-dot" type="button" role="menuitemradio"
+                                    aria-checked="false" aria-label="Πορτοκαλί" title="Πορτοκαλί"
+                                    data-glow="255, 107, 53" data-glow-two="236, 72, 153"
+                                    style="--dot: 255, 107, 53; --dot-2: 236, 72, 153"></button>
+                            <button class="me-tint-dot" type="button" role="menuitemradio"
+                                    aria-checked="false" aria-label="Ροζ" title="Ροζ"
+                                    data-glow="236, 72, 153" data-glow-two="139, 92, 246"
+                                    style="--dot: 236, 72, 153; --dot-2: 139, 92, 246"></button>
+                            <button class="me-tint-dot" type="button" role="menuitemradio"
+                                    aria-checked="false" aria-label="Μωβ" title="Μωβ"
+                                    data-glow="139, 92, 246" data-glow-two="56, 130, 246"
+                                    style="--dot: 139, 92, 246; --dot-2: 56, 130, 246"></button>
+                            <button class="me-tint-dot" type="button" role="menuitemradio"
+                                    aria-checked="false" aria-label="Μπλε" title="Μπλε"
+                                    data-glow="56, 130, 246" data-glow-two="34, 211, 238"
+                                    style="--dot: 56, 130, 246; --dot-2: 34, 211, 238"></button>
+                            <button class="me-tint-dot" type="button" role="menuitemradio"
+                                    aria-checked="false" aria-label="Πράσινο" title="Πράσινο"
+                                    data-glow="34, 197, 94" data-glow-two="56, 130, 246"
+                                    style="--dot: 34, 197, 94; --dot-2: 56, 130, 246"></button>
+                            <button class="me-tint-dot is-off" type="button" role="menuitemradio"
+                                    aria-checked="false" aria-label="Σβηστό" title="Σβηστό"
+                                    data-glow=""></button>
+                        </div>
+
+                        <input class="me-tint-bar" id="me-tint-bar" type="range"
+                            min="0" max="80" step="1" value="40"
+                            aria-label="Ένταση φωτισμού">
+                    </div>
+                </div>
+            </div>
 
             <!-- What everybody else has been doing on the grids you are on -->
             <div class="bell-wrap">
@@ -710,10 +724,8 @@
          nobody has noticed yet is a sentence about nothing. -->
     <aside class="hello" id="hello" role="note" aria-label="Καλωσήρθες" hidden>
         <strong>Καλωσήρθες</strong>
-        <p>Το portal ανοίγει στα σκοτεινά.
-            <span class="hello-here">Από το γρανάζι, εδώ κάτω,</span>
-            <span class="hello-there">Άνοιξε το μενού και, από το γρανάζι δίπλα στο όνομά σου,</span>
-            ανάβεις τα φώτα και διαλέγεις χρώμα.</p>
+        <p>Το portal ανοίγει στα σκοτεινά. Από τον ήλιο πάνω δεξιά, δίπλα στις
+            ειδοποιήσεις, ανάβεις τα φώτα και διαλέγεις χρώμα.</p>
         <button class="btn btn-primary" type="button" id="hello-ok">Εντάξει</button>
     </aside>
 

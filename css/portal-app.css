@@ -630,11 +630,28 @@ html.is-lit .app-body::after {
    one person is. Six swatches rather than a picker: it is a colour you judge by
    looking at the page behind it, so it wants one press and a glance, not a
    second screen with a hex field on it. */
+/* Out of the sidebar's menu and into a panel of its own on the bar. It kept
+   its name because everything that already speaks to it calls it that, but it
+   has no menu above it to be divided from any more. */
 .me-tint {
-    margin: 4px 0;
-    padding: 10px 6px 4px;
-    border-top: 1px solid rgba(255, 255, 255, .08);
+    margin: 0;
+    padding: 0;
+    border-top: none;
 }
+
+.tint-panel {
+    position: absolute; top: calc(100% + 10px); right: 0;
+    z-index: 60;
+    width: min(268px, calc(100vw - 32px));
+    padding: 14px 16px 12px;
+    background: rgba(20, 20, 26, .98);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 16px;
+    box-shadow: 0 26px 60px rgba(0, 0, 0, .55);
+}
+
+/* Lit, the button says what it is about without being read. */
+html.is-lit #tint-open { color: rgb(var(--glow)); border-color: rgba(var(--glow), .45); }
 
 .me-tint-what {
     margin: 0 0 9px;
@@ -825,7 +842,7 @@ html.is-lit .app-body::after {
    instead. */
 .hello {
     position: fixed;
-    left: 18px; bottom: 92px;
+    right: 18px; top: 74px;
     z-index: 60;
     width: 288px;
     padding: 18px 18px 15px;
@@ -849,11 +866,11 @@ html.is-lit .app-body::after {
 .hello::after {
     content: '';
     position: absolute;
-    left: 26px; bottom: -8px;
+    right: 26px; top: -8px;
     width: 14px; height: 14px;
     background: rgba(26, 26, 33, .99);
-    border-right: 1px solid rgba(var(--glow), .45);
-    border-bottom: 1px solid rgba(var(--glow), .45);
+    border-left: 1px solid rgba(var(--glow), .45);
+    border-top: 1px solid rgba(var(--glow), .45);
     transform: rotate(45deg);
 }
 
@@ -871,7 +888,6 @@ html.is-lit .app-body::after {
     color: rgba(226, 227, 232, .92);
 }
 
-.hello .hello-there { display: none; }
 .hello button { width: 100%; padding: 10px 14px; border-radius: 10px; }
 
 /* While it is up, the row it is pointing at breathes, so the eye goes there
@@ -2897,7 +2913,6 @@ html.is-lit .app-tab.is-on svg {
     /* Room for it under everything that scrolls, and above everything that was
        already sitting on the bottom edge. */
     .app-view { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
-    .hello { bottom: calc(78px + env(safe-area-inset-bottom)); }
     .toast { bottom: calc(78px + env(safe-area-inset-bottom)); }
     .why-more { bottom: calc(78px + env(safe-area-inset-bottom)); }
 
@@ -2909,12 +2924,9 @@ html.is-lit .app-tab.is-on svg {
     /* Nothing to fold: there is no sidebar here at all. */
     .app-fold { display: none; }
 
-    /* And nothing to point at, with the row it would point at behind a
-       drawer. It says where to look instead. */
-    .hello { left: 16px; right: 16px; bottom: 16px; width: auto; }
-    .hello::after { display: none; }
-    .hello .hello-here { display: none; }
-    .hello .hello-there { display: inline; }
+    /* The switch is on the bar here too, so the card can go on pointing at
+       it. Only its width gives, so it never runs off the side. */
+    .hello { left: 16px; right: 16px; top: 66px; width: auto; }
     /* Not slid off the side any more: gone. Every section it held has a tab
        along the bottom and a page of its own to land on, so there is no drawer
        to open and nothing to remember to close. */
