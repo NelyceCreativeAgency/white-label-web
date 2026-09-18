@@ -411,78 +411,102 @@ html[data-lang="el"] .hero-aside {
        instead of showing it through clear glass. */
     background: linear-gradient(180deg, #16161d 0, #0e0e14 340px, #0a0a0e 820px);
     border-top: 1px solid rgba(255, 255, 255, 0.04);
-    box-shadow: inset 2px 2px 0 -2px rgba(255, 255, 255, 0.5),
-                inset 0 0 3px 1px rgba(255, 255, 255, 0.14),
-                inset 0 1px 0 rgba(255, 255, 255, 0.05),
-                0 -18px 44px rgba(0, 0, 0, 0.16),
+    /* Only the two cast shadows here. The lights that belong to the edge are
+       on the rim layer instead: an inset shadow on the panel would be painted
+       under everything the panel holds, including the sheet, and all but
+       disappear. */
+    box-shadow: 0 -18px 44px rgba(0, 0, 0, 0.16),
                 0 24px 56px rgba(0, 0, 0, 0.08);
     overflow: hidden;
 }
 
 /* --- The glass ---
-   What a phone does at the edge of one of these panels is not a blur: the rim
-   bends what is behind it, brightens it and throws a specular line along the
-   lip, and the middle of the sheet stays calm. Three layers do the same here,
-   and none of them is a picture.
+   What a phone does at the edge of one of these panels is not a blur. The rim
+   bends what is behind it, brightens it and catches a line of light along the
+   lip, while the middle of the sheet stays calm. Three layers do that here,
+   and none of them is a picture:
 
-   The sheet itself is the thinnest of the three: a dark wash over a wide blur
-   with the colour pushed up, so the hero behind it stays recognisable as
-   colour and light rather than turning to grey. */
+     ::before    the sheet: a dark wash over a wide blur
+     .glass-lip  the rim: a thin band that refracts what is behind it
+     ::after     the line of light along the top edge
+
+   The order matters, and so does where the blur is NOT. A backdrop-filter
+   makes the element that carries it a backdrop root: anything inside it can
+   only see what is painted inside it. While the wash and the blur sat on the
+   panel itself, the rim's backdrop was the panel's own dark wash rather than
+   the hero, so refracting it changed nothing that could be seen. That is why
+   the panel is left plain here and the wash moved down onto a layer of its
+   own, beside the rim rather than around it.
+
+   The sheet is masked away at the top, so the rim has the hero to bend and not
+   a sheet of grey, and it fades in over the next few dozen pixels rather than
+   starting on an edge. */
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    /* Plain, so that it is not a backdrop root. */
     .featured-panel {
+        background: none;
+    }
+
+    .featured-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
         background: linear-gradient(180deg,
             rgba(22, 22, 29, 0.6) 0,
             rgba(14, 14, 20, 0.68) 340px,
             rgba(10, 10, 14, 0.72) 820px);
         -webkit-backdrop-filter: blur(34px) saturate(165%) brightness(1.06);
                 backdrop-filter: blur(34px) saturate(165%) brightness(1.06);
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgba(0, 0, 0, 0.55) 26px, #000 66px);
+                mask-image: linear-gradient(to bottom, transparent 0, rgba(0, 0, 0, 0.55) 26px, #000 66px);
     }
 
-    /* The rim. A band along the top lip that blurs and brightens what is
-       behind it harder than the sheet does, faded out downwards so there is no
-       edge where it stops. That difference between rim and sheet is what reads
-       as light bending round the edge of something thick.
+    /* The rim, and the one piece of real refraction on the page: the blur puts
+       the hero behind this band into the band itself, and the lens in the
+       markup then pushes those pixels about by a field of soft noise.
 
-       And it genuinely bends it: backdrop-filter puts the page behind this
-       layer into the layer itself, and the SVG lens in the markup then pushes
-       those pixels about by a field of soft noise. That is refraction, not a
-       drawing of it. Chromium does it; the other two ignore the displacement
-       and keep the blur and the brightness, which is the effect this had
-       before the lens existed.
+       Kept thin, and the displacement small. A phone bends light at the edge
+       of the glass and leaves the middle of the sheet alone, and a lens over a
+       surface three screens tall would cost far more than it is worth.
 
-       The band is kept thin and the displacement small on purpose. A phone
-       bends light at the edge of the glass and leaves the middle of the sheet
-       calm, and a lens over a surface three screens tall would cost far more
-       than it is worth.
-
-       It is the panel's first child, so everything the panel holds paints over
-       it, and it takes no pointer events. */
-    .featured-panel::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: clamp(28px, 4vw, 56px);
-        border-radius: inherit;
-        -webkit-backdrop-filter: blur(7px) saturate(200%) brightness(1.2);
-                backdrop-filter: blur(7px) saturate(200%) brightness(1.2);
+       Chromium does the bending. Safari and Firefox keep the blur and the
+       brightness and ignore the displacement, which still leaves a lit rim. */
+    .glass-lip {
+        -webkit-backdrop-filter: blur(6px) saturate(200%) brightness(1.18);
+                backdrop-filter: blur(6px) saturate(200%) brightness(1.18);
         -webkit-filter: url(#lip-glass);
                 filter: url(#lip-glass);
-        -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.45) 40%, transparent 100%);
-                mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.45) 40%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.5) 45%, transparent 100%);
+                mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.5) 45%, transparent 100%);
         isolation: isolate;
-        pointer-events: none;
-        z-index: 0;
     }
 }
 
-/* The specular line: the lip catching the light, brightest across the middle
-   and gone by the corners, the way a curved edge is lit. It sits on top of the
-   rim rather than inside the border, which cannot be graded along its length.
+.glass-lip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: clamp(30px, 4vw, 58px);
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 0;
+    /* The lights that sit just inside the edge, which is where the pen this
+       came from puts them: a hard one biting into the top corner and a soft
+       one all round. Where the lens is doing its work these get pushed about
+       with everything else on this layer, which is what the edge of a thick
+       piece of glass does to its own highlight. */
+    box-shadow: inset 2px 2px 0 -2px rgba(255, 255, 255, 0.55),
+                inset 0 0 3px 1px rgba(255, 255, 255, 0.14);
+}
 
-   Outside the @supports block on purpose: a browser with no backdrop-filter
-   still gets the lit edge, it simply has no bend behind it. */
+/* The line of light: the lip catching it, brightest across the middle and gone
+   by the corners, the way a curved edge is lit. It is drawn over the rim
+   rather than in the border, which cannot be graded along its length, and it
+   is outside the @supports block on purpose: a browser with no backdrop-filter
+   still gets the lit edge, it simply has nothing bending behind it. */
 .featured-panel::after {
     content: "";
     position: absolute;

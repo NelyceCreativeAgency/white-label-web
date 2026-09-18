@@ -48,7 +48,7 @@
         <filter id="lip-glass" x="-6%" y="-6%" width="112%" height="112%">
             <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="92" result="noise"/>
             <feGaussianBlur in="noise" stdDeviation="0.02" result="noise-soft"/>
-            <feDisplacementMap in="SourceGraphic" in2="noise-soft" scale="26" xChannelSelector="R" yChannelSelector="G"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise-soft" scale="20" xChannelSelector="R" yChannelSelector="G"/>
         </filter>
     </svg>
 
@@ -142,6 +142,12 @@
          model, so the pair reads as one surface sliding up over the hero
          rather than as two boxes stacked on it. -->
     <div class="featured-panel">
+
+        <!-- The lip's own layer. It has to be an element rather than one of
+             the panel's two pseudo-elements, which are spoken for: the sheet
+             and the line of light along the edge. It holds nothing and is
+             hidden from assistive tech; what it is for is in home.css. -->
+        <div class="glass-lip" aria-hidden="true"></div>
 
     <section class="featured-section" id="featured">
         <div class="container text-center">
