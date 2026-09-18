@@ -41,7 +41,6 @@
                 <span class="logo-badge">PARTNERS</span>
             </div>
             <div class="nav-right">
-                <a href="social-calculator.html" class="nav-cta nav-cta-header" data-en="Social Calculator">Υπολογιστής Social Media</a>
                 <a href="faq.html" class="nav-cta nav-cta-header" data-en="FAQ">Συχνές Ερωτήσεις</a>
                 <div class="nav-meta">
                     <div class="lang-switcher">
@@ -64,7 +63,6 @@
         <button class="mobile-sidebar-close" id="mobile-sidebar-close" aria-label="Close menu">&times;</button>
         <nav class="mobile-sidebar-nav">
             <a href="https://www.nelycedesign.com/en/contact" target="_blank" class="mobile-sidebar-link">Contact Hub</a>
-            <a href="social-calculator.html" class="mobile-sidebar-link" data-en="Social Media Calculator">Υπολογιστής Social Media</a>
             <a href="faq.html" class="mobile-sidebar-link" data-en="FAQ">Συχνές Ερωτήσεις</a>
         </nav>
     </div>
@@ -114,6 +112,12 @@
          (the second copy is cloned by js/home.js and hidden from assistive tech),
          so the loop can restart mid-animation without a visible seam. -->
     <section class="featured-section" id="featured">
+        <!-- Everything the section holds sits on one glass panel, whose edges
+             land on the same gutter the logo and the hero headline stand on.
+             The panel is what separates this section from the hero above it,
+             so the heading itself can stay as it was, centred over the rows. -->
+        <div class="home-bleed">
+        <div class="featured-panel">
         <div class="container text-center">
             <h2 class="featured-title scroll-reveal" data-en="Featured Projects">Επιλεγμένα Projects</h2>
             <p class="featured-subtitle scroll-reveal" data-en="A selection of recent projects across design, branding, websites and content.">
@@ -305,6 +309,8 @@
                     </a>
                 </div>
             </div>
+        </div>
+        </div>
         </div>
     </section>
 
