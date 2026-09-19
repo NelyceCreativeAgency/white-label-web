@@ -243,6 +243,13 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
     .sparkle { animation: none; opacity: 0.2; }
+
+    /* Colour alone, then: the buttons keep their hover, minus the pixel. */
+    .btn:hover,
+    .btn:focus-visible,
+    .btn:active {
+        transform: none;
+    }
 }
 
 /* --- Elegant Sticky Navigation --- */
@@ -767,10 +774,15 @@ body {
     color: var(--bg-dark);
 }
 
-.btn-primary:hover {
-    background: transparent;
-    color: var(--text-primary);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+/* The fill stays put on hover — it used to empty out into a hairline outline,
+   which read as the button turning into a different button. Now it only warms
+   to pure white and rises a pixel, with a soft shadow under it to make the
+   pixel legible. Small enough to be felt rather than watched. */
+.btn-primary:hover,
+.btn-primary:focus-visible {
+    background: #ffffff;
+    color: var(--bg-dark);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
 }
 
 .btn-secondary {
@@ -779,13 +791,26 @@ body {
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover,
+.btn-secondary:focus-visible {
     box-shadow: inset 0 0 0 1px var(--accent-orange);
     color: var(--accent-orange);
 }
 
+/* The lift is the whole of the movement, and it is shared: one pixel up under
+   the pointer, back down the moment it is pressed. */
+.btn:hover,
+.btn:focus-visible {
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
 .btn-large {
-    padding: 18px 36px;
+    padding: 15px 20px;
+    border-radius: 999px;
     font-size: 15px;
     letter-spacing: 0.5px;
 }
@@ -2008,7 +2033,7 @@ footer.main-footer {
     .emb-value { font-size: 22px; }
 
     .cta-title { font-size: 24px; }
-    .btn-large { padding: 14px 24px; font-size: 14px; }
+    .btn-large { padding: 15px 20px; font-size: 14px; }
 }
 
 /* --- Per-Service Customize Button --- */

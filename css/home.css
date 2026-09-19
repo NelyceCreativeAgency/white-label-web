@@ -1096,8 +1096,9 @@ html[data-lang="el"] .pm-title {
     line-height: 1.2;
     text-decoration: none;
     cursor: pointer;
-    /* Colour only: the button stays put under the pointer. */
-    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    /* Colour, and a pixel: see the lift below. */
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease,
+                transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* The two buttons that lead somewhere the page is built to send people — the
@@ -1149,6 +1150,23 @@ html[data-lang="el"] .pm-title {
     background: linear-gradient(100deg, #ff8452, #ffc633);
     box-shadow: none;
     color: var(--bg-dark);
+}
+
+/* One pixel up under the pointer, with a soft shadow to make the pixel read,
+   and straight back down when it is pressed. The same lift the buttons on the
+   other pages take, so the two families move alike. */
+.btn:hover,
+.btn:focus-visible {
+    transform: translateY(-1px);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+    box-shadow: 0 8px 20px rgba(255, 122, 45, 0.22);
+}
+
+.btn:active {
+    transform: translateY(0);
 }
 
 .btn:focus-visible {
@@ -1203,6 +1221,12 @@ html[data-lang="el"] .pm-title {
     }
 
     .btn:hover svg {
+        transform: none;
+    }
+
+    .btn:hover,
+    .btn:focus-visible,
+    .btn:active {
         transform: none;
     }
 }
