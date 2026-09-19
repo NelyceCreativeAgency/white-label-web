@@ -5,6 +5,41 @@
     padding: 0;
 }
 
+/* --- The stand-in the page sets in while the real fonts arrive ---
+
+   The web fonts are served with font-display: swap, so the first paint is in
+   whatever sans the machine has and the real face replaces it a moment later.
+   The swap itself is fine; what was worth fixing is the lurch that came with
+   it, the text having been laid out to different metrics and every line moving
+   when it changed.
+
+   So the fallback is told to stand in at the right size. Arial by name (and
+   the metric-compatible Liberation Sans, for machines that have that instead),
+   scaled and with its line box overridden so a paragraph occupies the same
+   space in it as in the font it is waiting for. Measured against Arial at
+   100px: Montserrat sets 1.10 of its width, Geologica 1.07 of it in Greek, and
+   the ascent and descent follow from the same measure.
+
+   Nothing else is asked of the stand-in. It is the wrong typeface and it looks
+   it; it just no longer moves the page when it leaves. */
+@font-face {
+    font-family: 'Montserrat Fallback';
+    src: local('Arial'), local('Liberation Sans'), local('Helvetica');
+    size-adjust: 110%;
+    ascent-override: 88.2%;
+    descent-override: 22.7%;
+    line-gap-override: 0%;
+}
+
+@font-face {
+    font-family: 'Geologica Fallback';
+    src: local('Arial'), local('Liberation Sans'), local('Helvetica');
+    size-adjust: 107%;
+    ascent-override: 91.6%;
+    descent-override: 25.2%;
+    line-gap-override: 0%;
+}
+
 :root {
     --bg-dark: #0a0a0e;
     --bg-card: #232329;
@@ -15,8 +50,8 @@
     --accent-amber: #ffb800;
     --border-color: rgba(255, 255, 255, 0.06);
     --border-hover: rgba(255, 107, 53, 0.3);
-    --font-sans: 'Montserrat', sans-serif;
-    --font-serif: 'Montserrat', sans-serif;
+    --font-sans: 'Montserrat', 'Montserrat Fallback', sans-serif;
+    --font-serif: 'Montserrat', 'Montserrat Fallback', sans-serif;
     --transition-smooth: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 
     /* The weights every stylesheet asks for by name rather than by number, so
@@ -41,8 +76,8 @@
    200..700 in their font URL) rather than a handful of fixed cuts, so 350 is a
    weight it can actually draw rather than one it rounds to 400. */
 html[data-lang="el"] {
-    --font-sans: 'Geologica', sans-serif;
-    --font-serif: 'Geologica', sans-serif;
+    --font-sans: 'Geologica', 'Geologica Fallback', sans-serif;
+    --font-serif: 'Geologica', 'Geologica Fallback', sans-serif;
 
     --fw-light: 250;
     --fw-regular: 250;
