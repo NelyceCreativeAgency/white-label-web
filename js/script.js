@@ -670,6 +670,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             localStorage.setItem('site-lang', lang);
+
+            // Anything built out of a label has to be built again: this swap
+            // rewrites text nodes and knows nothing of what was made from them.
+            document.dispatchEvent(new CustomEvent('site:languagechange', { detail: { lang } }));
         };
 
         langButtons.forEach(btn => {
@@ -678,6 +682,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const savedLang = localStorage.getItem('site-lang') || 'en';
         applyLanguage(savedLang);
+    };
+
+    // 4b. The invitation buttons roll their label over under the pointer: each
+    // letter drops out of the bottom while its twin arrives from the top, a
+    // beat behind the letter before it. Nothing but movement — the fill, the
+    // shape and the colour are the button's own.
+    //
+    // The spans are built here rather than written into the markup because the
+    // language switcher rewrites these labels, and it only ever swaps an
+    // element's own text nodes: with the letters in the markup it would insert
+    // the new label beside them instead of replacing them. So this runs after
+    // the switcher, and again every time it reports a change.
+    const setupButtonLetters = () => {
+        const buttons = document.querySelectorAll('.btn-large, .hero-actions .btn');
+        if (!buttons.length) return;
+
+        const ownText = (el) => {
+            let text = '';
+            el.childNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) text += node.textContent;
+            });
+            return text.trim();
+        };
+
+        const row = (label, klass) => {
+            const rowEl = document.createElement('span');
+            rowEl.className = klass;
+            Array.from(label).forEach((char, i) => {
+                const letter = document.createElement('span');
+                // A space of its own would collapse, and the row would come
+                // apart into its words.
+                letter.textContent = char === ' ' ? '\u00a0' : char;
+                letter.style.setProperty('--i', i);
+                rowEl.appendChild(letter);
+            });
+            return rowEl;
+        };
+
+        const build = (btn) => {
+            const label = ownText(btn) || btn.dataset.letters || '';
+            if (!label) return;
+            btn.dataset.letters = label;
+
+            const previous = btn.querySelector('.btn-letters');
+            if (previous) previous.remove();
+            Array.from(btn.childNodes).forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) btn.removeChild(node);
+            });
+
+            const holder = document.createElement('span');
+            holder.className = 'btn-letters';
+            holder.setAttribute('aria-hidden', 'true');
+            holder.appendChild(row(label, 'bl-row bl-row-out'));
+            holder.appendChild(row(label, 'bl-row bl-row-in'));
+
+            // The letters are scenery; the label the button answers to is this.
+            btn.setAttribute('aria-label', label);
+            btn.insertBefore(holder, btn.firstChild);
+        };
+
+        buttons.forEach(build);
+        document.addEventListener('site:languagechange', () => buttons.forEach(build));
     };
 
     // 5. Mobile Sidebar (Contact Hub + Currency, hidden from the header on small screens)
@@ -852,6 +918,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCategoryFilters();
     setupScrollReveal();
     setupLanguageSwitcher();
+    setupButtonLetters();
     setupMobileSidebar();
     setupCategoryScrollSpy();
     setupPortfolioCarousels();
