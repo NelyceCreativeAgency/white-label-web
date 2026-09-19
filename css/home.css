@@ -313,6 +313,21 @@ html[data-lang="el"] .hero-aside {
    then 12px + 12px). The page follows it both times, for the same reason. */
 @media (max-width: 768px) {
     .home-bleed { padding-inline: 28px; }
+
+    /* On a phone the hero sits on the floor of the first screen instead of in
+       the middle of it, and it is already there when the page paints: the
+       fade-up would otherwise lift the headline into place after load. */
+    .hero-home-inner {
+        align-content: end;
+        padding-top: 88px;
+        padding-bottom: 56px;
+    }
+
+    .hero-home .animate-fade {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
 }
 
 @media (max-width: 480px) {
