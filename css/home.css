@@ -1101,25 +1101,22 @@ html[data-lang="el"] .pm-title {
                 transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* The two buttons that lead somewhere the page is built to send people — the
-   price list at the top, the conversation at the bottom — are solid, and they
-   are solid in the same orange-to-amber the headline gives to the last words
-   of itself. The same gradient declaration, so the two cannot drift apart.
+/* The button the page closes with is solid, and it is solid in the deep violet
+   the panel already sits in: the mesh behind the glass is this colour, a shade
+   or two darker where the card covers it. So it reads as the background come
+   forward rather than as a colour brought in, and the orange is left to the
+   headline and the hero's own button, which is where the page wants the eye
+   first.
 
-   Dark text on it, not white. White clears about three to one against the
-   orange end, which is not enough; the page's near-black clears seven there
-   and eleven at the amber, and it is what the buttons on the other pages
-   already do with their light fill.
-
-   A notch heavier than its neighbour, which is not an inconsistency: dark on
-   light sets lighter to the eye than light on dark, and at the same number the
-   two would not have looked it. */
+   White on it, and a notch heavier than its neighbour: light on dark sets
+   lighter to the eye, and at the same number the two would not have looked
+   alike. The violet clears white at better than twelve to one. */
 .btn-primary {
-    border-color: transparent;
-    background: linear-gradient(100deg, var(--accent-orange), var(--accent-amber));
+    border-color: rgba(255, 255, 255, 0.14);
+    background: linear-gradient(180deg, #3b2f6b 0, #2a2150 100%);
     -webkit-backdrop-filter: none;
             backdrop-filter: none;
-    color: var(--bg-dark);
+    color: #ffffff;
     font-weight: var(--fw-semibold);
 }
 
@@ -1142,14 +1139,14 @@ html[data-lang="el"] .pm-title {
     color: var(--text-primary);
 }
 
-/* The solid one has nowhere to warm to, so it brightens instead: the same two
-   colours a step up each. */
+/* The solid one has nowhere to warm to, so it lightens instead: the same two
+   violets a step up each, and the hairline with them. */
 .btn-primary:hover,
 .btn-primary:focus-visible {
-    border-color: transparent;
-    background: linear-gradient(100deg, #ff8452, #ffc633);
+    border-color: rgba(255, 255, 255, 0.22);
+    background: linear-gradient(180deg, #483a80 0, #342a63 100%);
     box-shadow: none;
-    color: var(--bg-dark);
+    color: #ffffff;
 }
 
 /* One pixel up under the pointer, with a soft shadow to make the pixel read,
@@ -1162,7 +1159,7 @@ html[data-lang="el"] .pm-title {
 
 .btn-primary:hover,
 .btn-primary:focus-visible {
-    box-shadow: 0 8px 20px rgba(255, 122, 45, 0.22);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
 }
 
 .btn:active {
