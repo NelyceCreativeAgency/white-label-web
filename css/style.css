@@ -1911,7 +1911,21 @@ footer.main-footer {
         display: flex;
     }
 
-    .hero-section { padding: 90px 0 50px 0; }
+    /* Hero sits at the bottom of the first screen, already in place on load */
+    .hero-section {
+        padding: 24px 0 50px 0;
+        /* 66px is the sticky header, which sits above the hero in the flow */
+        min-height: calc(100vh - 66px);
+        min-height: calc(100svh - 66px);
+        display: flex;
+        align-items: flex-end;
+    }
+    .hero-section > .container { width: 100%; }
+    .hero-section .animate-fade {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
     .hero-title { font-size: 34px; }
     .hero-subtitle { font-size: 16px; }
     .hero-actions {
