@@ -35,17 +35,20 @@
    heavier than the same page in English even though nothing about the setting
    had changed. Light-on-dark widens everything a little further still.
 
-   So every weight steps down one notch in Greek. The lightest stays where it
-   is, being the lightest of the five loaded, and nothing asks for a weight the
-   font is not already serving. */
+   So every weight steps down in Greek, and by more than the notch it used to:
+   a further half step, which is where the Greek finally sets as light as the
+   English reads. Half steps because the pages ask for the variable font (the
+   200..700 in their font URL) rather than a handful of fixed cuts, so 350 is a
+   weight it can actually draw rather than one it rounds to 400. */
 html[data-lang="el"] {
     --font-sans: 'Geologica', sans-serif;
     --font-serif: 'Geologica', sans-serif;
 
-    --fw-regular: 300;
-    --fw-medium: 400;
-    --fw-semibold: 500;
-    --fw-bold: 600;
+    --fw-light: 250;
+    --fw-regular: 250;
+    --fw-medium: 350;
+    --fw-semibold: 450;
+    --fw-bold: 550;
 }
 
 /* The elements a browser sets bold on its own, brought onto the same scale so

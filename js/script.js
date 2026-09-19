@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Prefetch Geologica on EL hover/focus/touch, so switching to Greek
-    // doesn't cause a flash while the 5 weight files download on demand.
+    // doesn't cause a flash while the font downloads on demand. The weights
+    // are the four the Greek is set in, so what is warmed is what is used.
     const setupGeologicaPrefetch = () => {
         if (!('fonts' in document)) return;
 
@@ -28,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const prefetch = () => {
             if (prefetched) return;
             prefetched = true;
-            ['300', '400', '500', '600', '700'].forEach(weight => {
+            ['250', '350', '450', '550'].forEach(weight => {
                 document.fonts.load(`${weight} 16px Geologica`).catch(() => {});
             });
         };
