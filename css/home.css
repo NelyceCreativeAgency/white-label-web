@@ -1124,7 +1124,7 @@ html[data-lang="el"] .pm-title {
     /* A pill, like the hero's own button: on this page the two are the same
        invitation, at the top of the screen and at the end of it. Tighter than
        it was, the shape carrying the size the padding used to. */
-    padding: 15px 20px;
+    padding: 15px 24px;
     border-radius: 999px;
     font-size: 16px;
 }
@@ -1186,7 +1186,7 @@ html[data-lang="el"] .pm-title {
     }
 
     .btn-large {
-        padding: 15px 20px;
+        padding: 15px 24px;
         font-size: 15px;
     }
 }
