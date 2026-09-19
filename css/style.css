@@ -754,6 +754,12 @@ body {
     margin-bottom: 32px;
 }
 
+/* The hero's invitation is the same invitation the page closes with, so it
+   takes the same shape. */
+.hero-actions .btn {
+    border-radius: 999px;
+}
+
 /* --- Premium Typography Buttons --- */
 .btn {
     display: inline-flex;
@@ -1955,9 +1961,11 @@ footer.main-footer {
     .hero-subtitle { font-size: 16px; }
     .hero-actions {
         flex-direction: column;
+        align-items: center;
         gap: 12px;
     }
-    .hero-actions .btn { width: 100%; }
+    /* Not stretched: full width, a pill is only a bar with rounded ends. */
+    .hero-actions .btn { width: auto; }
 
     .pricing-grid {
         grid-template-columns: 1fr;
@@ -2002,9 +2010,12 @@ footer.main-footer {
     .category-title { font-size: 22px; }
     .cta-title { font-size: 30px; }
     .cta-desc { font-size: 15px; }
+    /* Stacked, but not stretched: a pill that runs the full width of the
+       screen is a bar with rounded ends, and reads as nothing like the one
+       the wide screen shows. It keeps its own width and sits centred. */
     .cta-button-holder {
         flex-direction: column;
-        align-items: stretch;
+        align-items: center;
     }
 }
 
