@@ -19,9 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(raf);
     };
 
-    // Prefetch Geologica on EL hover/focus/touch, so switching to Greek
+    // Prefetch TikTok Sans on EL hover/focus/touch, so switching to Greek
     // doesn't cause a flash while the 5 weight files download on demand.
-    const setupGeologicaPrefetch = () => {
+    const setupGreekFontPrefetch = () => {
         if (!('fonts' in document)) return;
 
         let prefetched = false;
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (prefetched) return;
             prefetched = true;
             ['300', '400', '500', '600', '700'].forEach(weight => {
-                document.fonts.load(`${weight} 16px Geologica`).catch(() => {});
+                document.fonts.load(`${weight} 16px "TikTok Sans"`).catch(() => {});
             });
         };
 
@@ -908,7 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize UI Actions
     setupInertiaScroll();
-    setupGeologicaPrefetch();
+    setupGreekFontPrefetch();
     setupNightSky();
     setupSidebarUnstick();
     setupHeaderScrollState();

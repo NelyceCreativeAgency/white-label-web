@@ -30,22 +30,13 @@
     --fw-bold: 700;
 }
 
-/* Geologica carries more weight than Montserrat at the same number: its 400
-   reads about as dark as Montserrat's 500, and a page of Greek came out looking
-   heavier than the same page in English even though nothing about the setting
-   had changed. Light-on-dark widens everything a little further still.
-
-   So every weight steps down one notch in Greek. The lightest stays where it
-   is, being the lightest of the five loaded, and nothing asks for a weight the
-   font is not already serving. */
+/* The Greek is set in TikTok Sans, which keeps its own weights: unlike the
+   Geologica that stood here, it sits at about Montserrat's colour at the same
+   number, so the Greek no longer has to step down a notch to stop reading
+   heavier than the English. */
 html[data-lang="el"] {
-    --font-sans: 'Geologica', sans-serif;
-    --font-serif: 'Geologica', sans-serif;
-
-    --fw-regular: 300;
-    --fw-medium: 400;
-    --fw-semibold: 500;
-    --fw-bold: 600;
+    --font-sans: 'TikTok Sans', sans-serif;
+    --font-serif: 'TikTok Sans', sans-serif;
 }
 
 /* The elements a browser sets bold on its own, brought onto the same scale so
